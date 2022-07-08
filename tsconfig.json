@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+    "target": "es6",
+      "module": "commonjs",
+      "esModuleInterop": true,
+      "outDir": "dist",
+      "sourceMap": true,
+      "allowJs": true,
+      "resolveJsonModule": true,
+      "moduleResolution": "node"
+    },
+        "include": [
+        "./test/state-transition/state-transition.test.js",
+        "./test/state-transition/state-transition-evm.test.js",
+        "./test/evm"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

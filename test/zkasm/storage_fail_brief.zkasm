@@ -1,0 +1,30 @@
+VAR GLOBAL tmp
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        0 => SR
+
+        0x03 => A
+        2021 => D
+        $ => SR :SSTORE
+
+        0x13 => A
+        2020 => D
+        $ => SR :SSTORE
+
+        0x73 => A
+        0 => B,C
+        0 => D
+        $ => SR :SSTORE
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

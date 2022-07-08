@@ -1,0 +1,45 @@
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        0 => A
+        CNT_ARITH :ASSERT
+        CNT_BINARY :ASSERT
+        CNT_KECCAK_F: ASSERT
+        CNT_MEM_ALIGN :ASSERT
+        CNT_POSEIDON_G :ASSERT
+        CNT_PADDING_PG :ASSERT
+
+        0 => A,B,C,D    :ARITH
+
+        CNT_ARITH => A
+        1               :ASSERT
+
+        CNT_ARITH => A
+        1               :ASSERT
+
+        0x2000000000000000000000000000000000000000000000000000000000000001n => A
+        0x100    => B
+        0x73     => C
+        0x20    => D
+        0x173   :ARITH
+
+
+        2 => A
+        CNT_ARITH :ASSERT
+
+        0 => A
+        CNT_KECCAK_F: ASSERT
+        CNT_MEM_ALIGN :ASSERT
+        CNT_POSEIDON_G :ASSERT
+        CNT_PADDING_PG :ASSERT
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

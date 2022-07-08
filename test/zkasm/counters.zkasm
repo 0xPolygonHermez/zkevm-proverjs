@@ -1,0 +1,118 @@
+VAR GLOBAL tmp
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        0 => SR
+
+        0x23 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        ;0x23 => A
+        ;2022 => D
+        ;$ => SR :SSTORE
+
+        ;0x23 => A
+        ;2021 => D
+        ;$ => SR :SSTORE
+
+        0x13 => A
+        0x2025 => D
+        $ => SR :SSTORE
+
+        0x23 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0    :ASSERT
+
+        0x13 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0x2025    :ASSERT
+
+        0x73 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x13 => A
+        1 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x33 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x30 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x13 => A
+        0 => B,C
+        12020 => D
+        ;$ => SR :SSTORE
+
+        0x73 => A
+        0 => B,C
+        0 => D
+        $ => SR :SSTORE
+
+        0x13 => A
+        0 => B,C
+        0 => D
+        $ => SR :SSTORE
+
+        0x23 => A
+        0x2024 => D
+        $ => SR :SSTORE
+
+        0x23 => A
+        0x2025 => D
+        $ => SR :SSTORE
+
+        0x13 => A
+        0x2026 => D
+        $ => SR :SSTORE
+
+        0x23 => A
+        0 => D
+        $ => SR :SSTORE
+
+        0x43 => A
+        0x2020 => D
+        $ => SR :SSTORE
+
+        0x43 => A
+        0 => D
+        $ => SR :SSTORE
+
+        ;0x13 => A
+        ;0 => D
+        ;0 => B,C
+        ;$ => SR :SSTORE
+
+        0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn => A
+        0 => B,C
+        0x2020 => D
+        $ => SR :SSTORE
+
+        0x31 => A
+        0 => B,C
+        0x2020 => D
+        $ => SR :SSTORE
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

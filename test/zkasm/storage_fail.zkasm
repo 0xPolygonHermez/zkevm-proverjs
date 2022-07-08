@@ -1,0 +1,75 @@
+VAR GLOBAL tmp
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        0 => SR
+
+        0x23 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x23 => A
+        2022 => D
+        $ => SR :SSTORE
+
+        0x03 => A
+        2021 => D
+        $ => SR :SSTORE
+
+        0x13 => A
+        2020 => D
+        $ => SR :SSTORE
+
+        0x23 => A
+        0 => B,C
+        $ => A  :SLOAD
+        2022    :ASSERT
+
+        0x03 => A
+        0 => B,C
+        $ => A  :SLOAD
+        2021    :ASSERT
+
+        0x13 => A
+        0 => B,C
+        $ => A  :SLOAD
+        2020    :ASSERT
+
+        0x33 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x30 => A
+        0 => B,C
+        $ => A  :SLOAD
+        0       :ASSERT
+
+        0x13 => A
+        0 => B,C
+        12020 => D
+        $ => SR :SSTORE
+
+        ${dumphex(SR)}
+        0x73 => A
+        0 => B,C
+        0 => D
+        $ => SR :SSTORE
+
+        0x13 => A
+        0 => D
+        0 => B,C
+        $ => SR :SSTORE
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

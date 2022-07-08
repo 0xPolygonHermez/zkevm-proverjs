@@ -1,0 +1,44 @@
+{
+  "name": "@polygon-hermez/zkproverjs",
+  "version": "0.0.1",
+  "description": "JS version of the zkProver.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:storage": "mocha test/sm_storage_test.js",
+    "test:mem_align": "mocha test/sm_mem_align_test.js",
+    "test:counters:arith": "mocha test/counter_arith.js",
+    "test:counters:binary": "mocha test/counter_binary.js",
+    "test:counters:keccak": "mocha test/counter_keccak.js",
+    "test:counters:mem_align": "mocha test/counter_mem_align.js",
+    "test:counters:padding_pg": "mocha test/counter_padding_pg.js",
+    "test:counters:poseidon": "mocha test/counter_poseidon.js",
+    "test:counters:storage": "mocha test/counter_storage.js"
+  },
+  "author": "Jordi Baylina",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@ethereumjs/common": "^2.6.0",
+    "@ethereumjs/vm": "^5.6.0",
+    "@polygon-hermez/zkasm": "git+ssh://git@github.com/hermeznetwork/zkasm.git",
+    "@polygon-hermez/zkevm-commonjs": "https://github.com/hermeznetwork/zkevm-commonjs.git#v0.0.31",
+    "chalk": "^3.0.0",
+    "circomlib": "^2.0.3",
+    "circomlibjs": "0.1.1",
+    "ejs": "^3.1.6",
+    "ethers": "^5.4.7",
+    "ffjavascript": "^0.2.55",
+    "fs": "^0.0.1-security",
+    "solc": "^0.8.10",
+    "source-map-loader": "^3.0.0",
+    "ts-loader": "^9.2.6",
+    "yargs": "^17.4.0",
+    "zkpil": "git+ssh://git@github.com/hermeznetwork/zkpil.git"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "circom_tester": "^0.0.9",
+    "mocha": "^9.1.3",
+    "ts-node": "^10.4.0"
+  }
+}

@@ -1,0 +1,3 @@
+node run-inputs.js -f ../../../test-vectors/inputs-executor/no-data/ -r ../../../zkrom/build/rom.json -p ../../../zkvmpil/build/zkevm.pil.json > output.txt
+node run-inputs.js -f ../../../test-vectors/inputs-executor/calldata/ -r ../../../zkrom/build/rom.json -p ../../../zkvmpil/build/zkevm.pil.json >> output.txt
+node run-inputs.js -f ../../../test-vectors/inputs-executor/rlp-error/ -r ../../../zkrom/build/rom.json -p ../../../zkvmpil/build/zkevm.pil.json >> output.txt
