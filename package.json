@@ -1,5 +1,5 @@
 {
-  "name": "@polygon-hermez/zkproverjs",
+  "name": "@0xpolygonhermez/zkevm-proverjs",
   "version": "0.0.1",
   "description": "JS version of the zkProver.",
   "main": "index.js",
@@ -16,12 +16,12 @@
     "test:counters:storage": "mocha test/counter_storage.js"
   },
   "author": "Jordi Baylina",
-  "license": "GPL-3.0",
+  "license": "UNLICENSED",
   "dependencies": {
     "@ethereumjs/common": "^2.6.0",
     "@ethereumjs/vm": "^5.6.0",
-    "@polygon-hermez/zkasm": "git+ssh://git@github.com/hermeznetwork/zkasm.git",
-    "@polygon-hermez/zkevm-commonjs": "https://github.com/hermeznetwork/zkevm-commonjs.git#v0.0.31",
+    "@0xpolygonhermez/zkasm": "git+ssh://git@github.com/0xpolygonhermez/zkasmcom.git",
+    "@0xpolygonhermez/zkevm-commonjs": "git+ssh://git@github.com/0xpolygonhermez/zkevm-commonjs.git",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "0.1.1",
@@ -33,7 +33,7 @@
     "source-map-loader": "^3.0.0",
     "ts-loader": "^9.2.6",
     "yargs": "^17.4.0",
-    "zkpil": "git+ssh://git@github.com/hermeznetwork/zkpil.git"
+    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git"
   },
   "devDependencies": {
     "chai": "^4.3.4",

@@ -2,7 +2,7 @@ const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("zkpil");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit.js");
 const smNine2one = require("../src/sm/sm_nine2one.js");
@@ -18,7 +18,7 @@ const input = [
         reads: [ 32 ]
     },
     {
-        data:  
+        data:
             "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"+
             "2122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40"+
             "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"+

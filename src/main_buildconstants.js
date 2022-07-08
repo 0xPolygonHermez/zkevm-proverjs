@@ -6,7 +6,7 @@ const buildPoseidonBN128 = require("circomlibjs").buildPoseidon;
 
 const version = require("../package").version;
 
-const exportPolynomials = require("zkpil").exportPolynomials;
+const exportPolynomials = require("pilcom").exportPolynomials;
 
 const { exportMerkleGroupMultipol } = require("./binfiles.js");
 
@@ -35,7 +35,7 @@ const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
 const smStorage = require("./sm/sm_storage.js");
 
-const { createConstantPols, compile } = require("zkpil");
+const { createConstantPols, compile } = require("pilcom");
 const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")

@@ -3,7 +3,7 @@ const assert = chai.assert;
 const fs = require("fs");
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("zkpil");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 
 
@@ -13,7 +13,7 @@ describe("test poseidon goldilocks state machine", async function () {
     it("It should check standard l", async () => {
         const F = new F1Field("0xFFFFFFFF00000001");
 
-        const pil = await compile(F, "pil/poseidong_test.pil");       
+        const pil = await compile(F, "pil/poseidong_test.pil");
         const [constPols, constPolsArray, constPolsDef] = createConstantPols(pil);
         const [cmPols, cmPolsArray, cmPolsDef] = createCommitedPols(pil);
 

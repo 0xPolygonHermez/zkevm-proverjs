@@ -2,10 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const version = require("../package").version;
 
-const exportPols = require("zkpil").exportPolynomials;
+const exportPols = require("pilcom").exportPolynomials;
 const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
-const createCommitedPols = require("zkpil").createCommitedPols;
-const { compile } = require("zkpil");
+const createCommitedPols = require("pilcom").createCommitedPols;
+const { compile } = require("pilcom");
 
 
 const smArith = require("./sm/sm_arith.js");

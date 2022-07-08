@@ -5,9 +5,9 @@ const chalk = require("chalk");
 const helpers = require("./helpers");
 const { performance } = require("perf_hooks");
 const smMain = require("../../src/sm/sm_main");
-const { compile } = require("zkpil");
+const { compile } = require("pilcom");
 const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
-const createCommitedPols = require("zkpil").createCommitedPols;
+const createCommitedPols = require("pilcom").createCommitedPols;
 const fileCachePil = path.join(__dirname, "../../cache-main-pil.json");
 
 const argv = require("yargs")

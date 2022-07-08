@@ -3,7 +3,7 @@ const { assert } = require("chai");
 const keccakF = require("../keccak.js").keccakF;
 const { log2 } = require("../utils");
 const { F1Field } = require("ffjavascript");
-const getKs = require("zkpil").getKs;
+const getKs = require("pilcom").getKs;
 
 
 const SlotSize = 158418;

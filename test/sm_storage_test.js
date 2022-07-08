@@ -10,7 +10,7 @@ const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("zkpil");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 const StorageRom = require("../src/sm/sm_storage_rom.js").StorageRom;
 const sm_storage = require("../src/sm/sm_storage.js");
 const sm_poseidong = require("../src/sm/sm_poseidong.js");
@@ -31,24 +31,24 @@ describe("Test storage operations", async function () {
 
     this.timeout(10000000);
 
-    before(async () => { 
+    before(async () => {
         poseidon = await buildPoseidon();
         fr = poseidon.F;
 
-        pil = await compile(fr, "pil/storage.pil");        
+        pil = await compile(fr, "pil/storage.pil");
     })
 
     function initContext () {
         [constPols, constPolsArray, constPolsDef] = createConstantPols(pil);
         [cmPols, cmPolsArray, cmPolsDef] = createCommitedPols(pil);
-        
+
         db = new MemDB(fr);
-        smt = new SMT(db, poseidon, fr);    
+        smt = new SMT(db, poseidon, fr);
     }
 
     async function smtSet (oldRoot, key, value) {
         const r = await smt.set(oldRoot, key, value);
-        required.Storage.push({bIsSet: true, 
+        required.Storage.push({bIsSet: true,
             setResult: {
                 oldRoot: [...r.oldRoot],
                 newRoot: [...r.newRoot],
@@ -60,14 +60,14 @@ describe("Test storage operations", async function () {
                 oldValue: r.oldValue,
                 newValue: r.newValue,
                 mode: r.mode
-            }}); 
-        if (LOG_SMT_RESULT) console.log(r);  
+            }});
+        if (LOG_SMT_RESULT) console.log(r);
         return r;
     }
 
     async function smtGet (root, key) {
         const r = await smt.get(root, key);
-        required.Storage.push({bIsSet: false, 
+        required.Storage.push({bIsSet: false,
             getResult: {
                 root: [...r.root],
                 key: [...r.key],
@@ -76,15 +76,15 @@ describe("Test storage operations", async function () {
                 insValue: r.insValue,
                 isOld0: r.isOld0,
                 value: r.value
-            }});   
-        if (LOG_SMT_RESULT) console.log(r);  
+            }});
+        if (LOG_SMT_RESULT) console.log(r);
         return r;
     }
 
     async function executeAndVerify () {
         await sm_storage.buildConstants(constPols.Storage, constPolsDef.Storage);
         const req = await sm_storage.execute(cmPols.Storage, cmPolsDef.Storage, required.Storage);
-        
+
         await sm_poseidong.buildConstants(constPols.PoseidonG, constPolsDef.PoseidonG);
         await sm_poseidong.execute(cmPols.PoseidonG, cmPolsDef.PoseidonG, req.PoseidonG);
 
@@ -105,7 +105,7 @@ describe("Test storage operations", async function () {
         it('Storage Unit test', async () => {
 
             initContext();
-        
+
             let sr, gr;
             let root;
             let value = Scalar.e(10);
@@ -114,7 +114,7 @@ describe("Test storage operations", async function () {
             // Get zero
             gr = await smtGet(smt.empty, key);
             console.log("0: StorageSMTest Get zero value=" + gr.value.toString(16));
-        
+
             // Set insertNotFound
             sr = await smtSet(smt.empty, key, value);
             root = [...sr.newRoot];
@@ -185,7 +185,7 @@ describe("Test storage operations", async function () {
             root = [...sr.newRoot];
             assert(sr.mode=="insertFound");
             console.log("12: StorageSMTest Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-            
+
             // Get non zero
             gr = await smtGet(root, key);
             console.log("13: StorageSMTest Get nonZero value=" + gr.value.toString(16));
@@ -213,20 +213,20 @@ describe("Test storage operations", async function () {
 
     function zeroToZeroTest () {
         console.log("StorageSM_ZeroToZeroTest starting...");
-        it('zeroTozeroTest', async () => {  
+        it('zeroTozeroTest', async () => {
             initContext();
 
             let sr, gr;
             let root;
             let value = Scalar.e(10);
             let key = [Scalar.one, Scalar.zero, Scalar.zero, Scalar.zero];
-        
+
             // Set insertNotFound
             sr = await smtSet(smt.empty, key, value);
             root = [...sr.newRoot];
             assert(sr.mode=="insertNotFound");
             console.log("0: StorageSM_ZeroToZeroTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" << sr.mode);
-        
+
             // Set zeroToZzero
             key[0] = Scalar.zero;
             key[1] = Scalar.one;
@@ -235,23 +235,23 @@ describe("Test storage operations", async function () {
             root = [...sr.newRoot];
             assert(sr.mode=="zeroToZero");
             console.log("1: StorageSM_ZeroToZeroTest Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
-        
+
             await executeAndVerify();
         });
         console.log("StorageSM_ZeroToZeroTest done");
     }
-    
+
     function zeroToZero2Test ()
     {
         console.log("StorageSM_ZeroToZero2Test starting...");
-        it('zeroTozero2Test', async () => {  
+        it('zeroTozero2Test', async () => {
             initContext();
 
             let sr, gr;
             let root;
             let value = Scalar.e(10);
             let key = [Scalar.e(0x23), Scalar.zero, Scalar.zero, Scalar.zero];
-        
+
             // Set insertNotFound
             sr = await smtSet(smt.empty, key, value);
             root = [...sr.newRoot];
@@ -281,9 +281,9 @@ describe("Test storage operations", async function () {
 
     function emptyTest () {
         console.log ("StorageSM_EmptyTest starting...");
-        it('emptyTest', async () => {    
+        it('emptyTest', async () => {
             initContext();
-        
+
             await executeAndVerify();
         });
         console.log("StorageSM_EmptyTest done");
@@ -383,7 +383,7 @@ describe("Test storage operations", async function () {
 
         it('Should read random', async () => {
             initContext();
-            
+
             let r = {
                 newRoot: smt.empty,
             };
@@ -422,7 +422,7 @@ describe("Test storage operations", async function () {
             assert(smtUtils.nodeIsEq(expectedRoot, r2.newRoot, fr));
 
             executeAndVerify();
-        });    
+        });
 
         it('It should update leaf with more than one level depth', async () => {
             initContext();

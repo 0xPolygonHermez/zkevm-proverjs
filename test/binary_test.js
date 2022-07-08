@@ -4,12 +4,12 @@ const expect = chai.expect;
 
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("zkpil");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 const smBinary = require("../src/sm/sm_binary.js");
 
 const input = [
-    /////////   
-    // ADD 
+    /////////
+    // ADD
     /////////
     {
         a: "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -30,7 +30,7 @@ const input = [
         opcode: "0",
     },
     /////////
-    // SUB 
+    // SUB
     /////////
     {
         a: "2",
@@ -116,7 +116,7 @@ const input = [
         opcode: "2",
     },
     /////////
-    // SLT 
+    // SLT
     /////////
     {
         a: "8000000000000000000000000000000000000000000000000000000000000000",
@@ -224,7 +224,7 @@ const input = [
         opcode: "3",
     },
     /////////
-    // EQ 
+    // EQ
     /////////
     {
         a: "3e9",
@@ -270,7 +270,7 @@ const input = [
     },
 
     /////////
-    // AND 
+    // AND
     /////////
     {
         a: "0F01",
@@ -295,7 +295,7 @@ const input = [
         opcode: "5",
     },
     /////////
-    // OR 
+    // OR
     /////////
     {
         a: "b01465104267f84effb2ed7b9c1d7ec65f4652652b2367e75549a06e692cb53f",
@@ -305,7 +305,7 @@ const input = [
     },
 
     /////////
-    // XOR 
+    // XOR
     /////////
     {
         a: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
