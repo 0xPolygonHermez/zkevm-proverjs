@@ -47,6 +47,8 @@ class FullTracer {
                 this[tag.params[0].varName](ctx, tag);
             } else if (tag.funcName === 'storeLog') {
                 this.onStoreLog(ctx, tag);
+            } else if (tag.params[0].funcName === 'onOpcode') {
+                this.onOpcode(ctx, tag.params[0].params[0]);
             }
 
         } catch (e) {
@@ -249,14 +251,18 @@ class FullTracer {
     }
 
     // Triggered just before processing an opcode
-    onOpcode(ctx) {
-
+    onOpcode(ctx, params) {
         const singleInfo = {};
 
         //Get opcode info
-        const codeId = Number(fea2scalar(ctx.Fr, ctx.B));
-        const opcode = codes[codeId].slice(2);
+        let codeId;
 
+        if (params.op === "number") {
+            codeId = Scalar.e(params.num)
+        } else {
+            codeId = ctx[params.regName]
+        }
+        const opcode = codes[codeId].slice(2);
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
         let addrMem = 0;

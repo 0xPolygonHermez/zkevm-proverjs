@@ -2416,12 +2416,12 @@ function eval_storeLog(ctx, tag){
 function eval_log(ctx, tag) {
     const frLog = ctx[tag.params[0].regName];
     const label = typeof tag.params[1] === "undefined" ? "notset" : tag.params[1].varName;
-    if(typeof(frLog) == "number") {
-        console.log(frLog)
+    if(typeof(frLog) == "number" || typeof(frLog) == "bigint") {
+        console.log(`Log regname ${tag.params[0].regName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        console.log("       Scalar: ", frLog);
     } else {
         let scalarLog;
         let hexLog;
-
         if (tag.params[0].regName !== "HASHPOS"){
             scalarLog = fea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;
