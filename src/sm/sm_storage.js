@@ -547,6 +547,16 @@ module.exports.execute = async function (pols, polsDef, action) {
             pols.selSiblingValueHash[i] = 1n;
         }
 
+        // If inROTL_VH then op=rotate_left(VALUE_HIGH)
+        if (rom.line[l].inROTL_VH)
+        {
+            op[0] = pols.valueHigh3[i];
+            op[1] = pols.valueHigh0[i];
+            op[2] = pols.valueHigh1[i];
+            op[3] = pols.valueHigh2[i];
+            pols.selRotlVh[i] = 1n;
+        }
+
         /****************/
         /* Instructions */
         /****************/

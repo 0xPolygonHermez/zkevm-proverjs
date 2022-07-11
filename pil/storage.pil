@@ -28,6 +28,7 @@ namespace Storage(%N);
     pol commit selRkeyBit;
     pol commit selSiblingRkey;
     pol commit selFree;
+    pol commit selRotlVh;
 
     pol commit setHashLeft;
     pol commit setHashRight;
@@ -71,11 +72,8 @@ namespace Storage(%N);
         selRkey*rkey0 +
         selFree*free0 +
         selRkeyBit*rkeyBit +
+        selRotlVh*valueHigh3 +
         iConst0;
-        //iClimbRkey*climbedKey0 +
-        //iClimbSiblingRkey*climbedSiblingKey0 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN0 +
-        //iRotateLevel*rotatedLevel0;
 
     pol op1 =
         selOldRoot*oldRoot1 +
@@ -86,11 +84,8 @@ namespace Storage(%N);
         selSiblingRkey*siblingRkey1 +
         selRkey*rkey1 +
         selFree*free1 +
+        selRotlVh*valueHigh0 +
         iConst1;
-        //iClimbRkey*climbedKey1 +
-        //iClimbSiblingRkey*climbedSiblingKey1 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN1 +
-        //iRotateLevel*rotatedLevel1;
 
     pol op2 =
         selOldRoot*oldRoot2 +
@@ -101,11 +96,8 @@ namespace Storage(%N);
         selSiblingRkey*siblingRkey2 +
         selRkey*rkey2 +
         selFree*free2 +
+        selRotlVh*valueHigh1 +
         iConst2;
-        //iClimbRkey*climbedKey2 +
-        //iClimbSiblingRkey*climbedSiblingKey2 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN2 +
-        //iRotateLevel*rotatedLevel2;
 
     pol op3 =
         selOldRoot*oldRoot3 +
@@ -116,11 +108,8 @@ namespace Storage(%N);
         selSiblingRkey*siblingRkey3 +
         selRkey*rkey3 +
         selFree*free3 +
+        selRotlVh*valueHigh2 +
         iConst3;
-        //iClimbRkey*climbedKey3 +
-        //iClimbSiblingRkey*climbedSiblingKey3 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN3 +
-        //iRotateLevel*rotatedLevel3;
 
     // Setters
 

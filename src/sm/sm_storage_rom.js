@@ -1,50 +1,50 @@
 class StorageRomLine
 {
-    constructor () 
+    constructor ()
     {
         // Mandatory fields
         this.line = 0;
         this.fileName = "";
 
         // Instructions
-        this.iJmpz = false;  
-        this.iJmp = false;  
-        this.iRotateLevel = false;  
-        this.iHash = false;  
-        this.iHashType = 0; 
-        this.iClimbRkey = false;  
-        this.iClimbSiblingRkey = false;  
-        this.iClimbSiblingRkeyN = false;  
-        this.iLatchGet = false;  
-        this.iLatchSet = false;  
+        this.iJmpz = false;
+        this.iJmp = false;
+        this.iRotateLevel = false;
+        this.iHash = false;
+        this.iHashType = 0;
+        this.iClimbRkey = false;
+        this.iClimbSiblingRkey = false;
+        this.iClimbSiblingRkeyN = false;
+        this.iLatchGet = false;
+        this.iLatchSet = false;
 
         // Selectors
-        this.inFREE = false;  
-        this.nOLD_ROOT = false;  
-        this.nNEW_ROOT = false;  
-        this.nRKEY_BIT = false;  
-        this.nVALUE_LOW = false;  
-        this.nVALUE_HIGH = false;  
-        this.nRKEY = false;  
-        this.nSIBLING_RKEY = false;  
-        this.nSIBLING_VALUE_HASH = false;  
+        this.inFREE = false;
+        this.nOLD_ROOT = false;
+        this.nNEW_ROOT = false;
+        this.nRKEY_BIT = false;
+        this.nVALUE_LOW = false;
+        this.nVALUE_HIGH = false;
+        this.nRKEY = false;
+        this.nSIBLING_RKEY = false;
+        this.nSIBLING_VALUE_HASH = false;
 
         // Setters
-        this.etRKEY = false;  
-        this.etRKEY_BIT = false;  
-        this.etVALUE_LOW = false;  
-        this.etVALUE_HIGH = false;  
-        this.etLEVEL = false;  
-        this.etOLD_ROOT = false;  
-        this.etNEW_ROOT = false;  
-        this.etHASH_LEFT = false;   
-        this.etHASH_RIGHT = false;  
-        this.etSIBLING_RKEY = false;  
-        this.etSIBLING_VALUE_HASH = false;  
+        this.etRKEY = false;
+        this.etRKEY_BIT = false;
+        this.etVALUE_LOW = false;
+        this.etVALUE_HIGH = false;
+        this.etLEVEL = false;
+        this.etOLD_ROOT = false;
+        this.etNEW_ROOT = false;
+        this.etHASH_LEFT = false;
+        this.etHASH_RIGHT = false;
+        this.etSIBLING_RKEY = false;
+        this.etSIBLING_VALUE_HASH = false;
 
         // Jump parameters
         this.addressLabel = "";
-        this.address = 0; 
+        this.address = 0;
 
         // inFREE parameters
         this.op = "";
@@ -61,10 +61,10 @@ class StorageRomLine
         if (found==-1) found = this.fileName.lastIndexOf("\\");
         let path = this.fileName.substring(0,found);
         let file = this.fileName.substring(found+1);
-    
+
         // Mandatory fields
         let logstr = "StorageRomLine l="+l+" line="+this.line+" file="+file+" ";
-    
+
          // Selectors
         if (this.inFREE) logstr += "inFREE ";
         if (this.op.length>0) // inFREE parameters
@@ -86,7 +86,8 @@ class StorageRomLine
         if (this.inRKEY) logstr += "inRKEY ";
         if (this.inSIBLING_RKEY) logstr += "inSIBLING_RKEY ";
         if (this.inSIBLING_VALUE_HASH) logstr += "inSIBLING_VALUE_HASH ";
-    
+        if (this.inROTL_VH) logstr += "inROTL_VH ";
+
         // Instructions
         if (this.iJmpz) logstr += "iJmpz ";
         if (this.iJmp) logstr += "iJmp ";
@@ -99,7 +100,7 @@ class StorageRomLine
         if (this.iClimbSiblingRkeyN) logstr += "iClimbSiblingRkeyN ";
         if (this.iLatchGet) logstr += "iLatchGet ";
         if (this.iLatchSet) logstr += "iLatchSet ";
-    
+
         // Setters
         if (this.setRKEY) logstr += "setRKEY ";
         if (this.setRKEY_BIT) logstr += "setRKEY_BIT ";
@@ -112,23 +113,23 @@ class StorageRomLine
         if (this.setHASH_RIGHT) logstr += "setHASH_RIGHT ";
         if (this.setSIBLING_RKEY) logstr += "setSIBLING_RKEY ";
         if (this.setSIBLING_VALUE_HASH) logstr += "setSIBLING_VALUE_HASH ";
-    
-        console.log(logstr);    
+
+        console.log(logstr);
     }
 }
 
-class StorageRom 
+class StorageRom
 {
-    constructor () 
+    constructor ()
     {
         this.line = [];
     }
 
     load (j)
     {
-        if (!j.hasOwnProperty("program") || !j.program.length>0) { 
+        if (!j.hasOwnProperty("program") || !j.program.length>0) {
             console.error("Error: StorageRom::load() could not find a root program array");
-            process.exit(-1); 
+            process.exit(-1);
         }
 
         for (let i=0; i<j.program.length; i++) {
@@ -160,6 +161,7 @@ class StorageRom
             if (j.program[i].hasOwnProperty("inRKEY_BIT")) romLine.inRKEY_BIT = true;
             if (j.program[i].hasOwnProperty("inSIBLING_RKEY")) romLine.inSIBLING_RKEY = true;
             if (j.program[i].hasOwnProperty("inSIBLING_VALUE_HASH")) romLine.inSIBLING_VALUE_HASH = true;
+            if (j.program[i].hasOwnProperty("inROTL_VH")) romLine.inROTL_VH = true;
 
             // Setters
             if (j.program[i].hasOwnProperty("setRKEY")) romLine.setRKEY = true;
@@ -179,8 +181,8 @@ class StorageRom
             {
                 romLine.addressLabel = j.program[i].addressLabel;
                 romLine.address = j.program[i].address;
-            }            
-                 
+            }
+
             // inFREE parameters
             if (romLine.inFREE)
             {
@@ -193,8 +195,8 @@ class StorageRom
                         romLine.params.push(j.program[i].freeInTag.params[p].num);
                     }
                 }
-            }    
-            
+            }
+
             // Constant
             if (j.program[i].hasOwnProperty("CONST"))
             {
