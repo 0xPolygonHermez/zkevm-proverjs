@@ -124,6 +124,11 @@ module.exports = async function execute(pols, polsDef, input, rom, config = {}) 
         ctx.fileName = l.fileName;
         ctx.line = l.line;
 
+        // breaks the loop in debug mode in order to test and debug faster
+        if (config.debug && l.fileName.includes("end.zkasm")) {
+            break;
+        }
+
         let incHashPos = 0;
         let incCounter = 0;
 
@@ -135,7 +140,6 @@ module.exports = async function execute(pols, polsDef, input, rom, config = {}) 
 
         if (iTracer)
             await iTracer.getTrace(ctx, l, false);
-
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
