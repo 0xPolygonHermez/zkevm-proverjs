@@ -8,12 +8,12 @@ const zkasm = require("@0xpolygonhermez/zkasm");
 const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 
 
-const smArith = require("../src/sm/sm_arith.js");
+const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
 const smByte4 = require("../src/sm/sm_byte4.js");
 const smGlobal = require("../src/sm/sm_global.js");
-const smKeccakF = require("../src/sm/sm_keccakf.js");
-const smMain = require("../src/sm/sm_main.js");
+const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
+const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
 const smNine2One = require("../src/sm/sm_nine2one.js");
@@ -23,7 +23,7 @@ const smPaddingKKBit = require("../src/sm/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
-const smStorage = require("../src/sm/sm_storage.js");
+const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 
 describe("test main sm", async function () {
     this.timeout(10000000);
@@ -34,7 +34,7 @@ describe("test main sm", async function () {
         const [constPols, constPolsArray, constPolsDef] =  createConstantPols(pil);
         const [cmPols, cmPolsArray, cmPolsDef] =  createCommitedPols(pil);
 
-        const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "testvectors", "input_executor.json"), "utf8"));
+        const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
 //        const rom = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "build", "rom.json"), "utf8"));
 //        const rom = await zkasm.compile(path.join(__dirname, "zkasm", "mem_align.zkasm"));
         const rom = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "build", "zkasm_program.json"), "utf8"));

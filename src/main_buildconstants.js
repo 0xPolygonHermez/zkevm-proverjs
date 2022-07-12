@@ -14,12 +14,12 @@ const Merkle = require("./merkle.js");
 const MerkleGroupMultipol = require("./merkle_group_multipol.js");
 const starkStruct = require("./starkstruct");
 
-const smArith = require("./sm/sm_arith.js");
+const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
 const smByte4 = require("./sm/sm_byte4.js");
 const smGlobal = require("./sm/sm_global.js");
-const smKeccakF = require("./sm/sm_keccakf.js");
-const smMain = require("./sm/sm_main.js");
+const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
+const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
 const smNine2One = require("./sm/sm_nine2one.js");
@@ -29,7 +29,7 @@ const smPaddingKKBit = require("./sm/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
 const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
-const smStorage = require("./sm/sm_storage.js");
+const smStorage = require("./sm/sm_storage/sm_storage.js");
 
 const { newConstantPolsArray, compile } = require("@0xpolygonhermez/pilcom");
 const { F1Field } = require("ffjavascript");

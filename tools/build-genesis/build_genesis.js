@@ -7,7 +7,7 @@ const {
 
 // paths files
 const pathInput = path.join(__dirname, "../testvectors/input_gen.json");
-const pathOutput = path.join(__dirname, "../testvectors/input_executor.json");
+const pathOutput = path.join(__dirname, "../tools/build-genesis/input_executor.json");
 
 async function main(){
     // build poseidon

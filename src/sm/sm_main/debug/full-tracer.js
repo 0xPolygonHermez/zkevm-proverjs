@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const codes = require("../src/opcodes");
+const codes = require("./opcodes");
 const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const { ethers } = require("ethers");
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];

@@ -3,17 +3,17 @@ const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 const fs = require("fs");
 const path = require("path");
-const zkasm = require("zkasm");
+const zkasm = require("@0xpolygonhermez/zkasmcom");
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
+const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
 
 
-const smArith = require("../src/sm/sm_arith.js");
+const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
 const smByte4 = require("../src/sm/sm_byte4.js");
 const smGlobal = require("../src/sm/sm_global.js");
-const smKeccakF = require("../src/sm/sm_keccakf.js");
-const smMain = require("../src/sm/sm_main.js");
+const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
+const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
 const smNine2One = require("../src/sm/sm_nine2one.js");
@@ -23,7 +23,7 @@ const smPaddingKKBit = require("../src/sm/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
-const smStorage = require("../src/sm/sm_storage.js");
+const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 
 describe("test main sm", async function () {
     this.timeout(10000000);
@@ -31,22 +31,22 @@ describe("test main sm", async function () {
     it("It should create the pols main", async () => {
         const Fr = new F1Field("0xFFFFFFFF00000001");
         const pil = await compile(Fr, "pil/main.pil");
-        const [constPols, constPolsArray, constPolsDef] =  createConstantPols(pil);
-        const [cmPols, cmPolsArray, cmPolsDef] =  createCommitedPols(pil);
+        const constPols =  newConstantPolsArray(pil);
+        const cmPols =  newCommitPolsArray(pil);
 
-        const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "testvectors", "input_executor.json"), "utf8"));
+        const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
 //        const rom = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "build", "rom.json"), "utf8"));
         const rom = await zkasm.compile(path.join(__dirname, "zkasm", "mem_align.zkasm"));
         // const rom = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "build", "test_mem_align.json"), "utf8"));
 
         console.log("Const Global...");
-        await smGlobal.buildConstants(constPols.Global, constPolsDef.Global);
+        await smGlobal.buildConstants(constPols.Global);
         console.log("Const Main...");
-        await smMain.buildConstants(constPols.Main, constPolsDef.Main);
+        await smMain.buildConstants(constPols.Main);
         console.log("Const Rom...");
-        await smRom.buildConstants(constPols.Rom, constPolsDef.Rom, rom);
+        await smRom.buildConstants(constPols.Rom, rom);
         console.log("Const Byte4...");
-        await smByte4.buildConstants(constPols.Byte4, constPolsDef.Byte4);
+        await smByte4.buildConstants(constPols.Byte4);
 /*        console.log("Const PaddingKK...");
         await smPaddingKK.buildConstants(constPols.PaddingKK, constPolsDef.PaddingKK);
         console.log("Const PaddingKKBits...");
@@ -64,7 +64,7 @@ describe("test main sm", async function () {
         console.log("Const Storage...");
         await smStorage.buildConstants(constPols.Storage, constPolsDef.Storage);*/
         console.log("Const MemAlign...");
-        await smMemAlign.buildConstants(constPols.MemAlign, constPolsDef.MemAlign);
+        await smMemAlign.buildConstants(constPols.MemAlign);
 /*        console.log("Const NormGate9...");
         await smNormGate9.buildConstants(constPols.NormGate9, constPolsDef.NormGate9);*/
 /*        console.log("Const Arith...");
@@ -72,9 +72,9 @@ describe("test main sm", async function () {
 /*        console.log("Const Binary...");
         await smBinary.buildConstants(constPols.Binary, constPolsDef.Binary);*/
 
-        const requiredMain = await smMain.execute(cmPols.Main, cmPolsDef.Main, input, rom);
+        const requiredMain = await smMain.execute(cmPols.Main, input, rom);
         console.log("Exec Byte4...");
-        await smByte4.execute(cmPols.Byte4, cmPolsDef.Byte4, requiredMain.Byte4);
+        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
 /*        console.log("Exec PaddingKK...");
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, cmPolsDef.PaddingKK, requiredMain.PaddingKK);
         console.log("Exec PaddingKKbit...");
@@ -86,7 +86,7 @@ describe("test main sm", async function () {
         console.log("Exec NormGate9...");
         await smNormGate9.execute(cmPols.NormGate9, cmPolsDef.NormGate9, requiredKeccakF.NormGate9);*/
         console.log("Exec MemAlign...");
-        await smMemAlign.execute(cmPols.MemAlign, cmPolsDef.MemAlign, requiredMain.MemAlign);
+        await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
 
 /*        console.log("Exec Mem...");
         await smMem.execute(cmPols.Mem, cmPolsDef.Mem, requiredMain.Mem);*/
@@ -102,7 +102,7 @@ describe("test main sm", async function () {
         await smArith.execute(cmPols.Arith, cmPolsDef.Arith, requiredMain.Arith);*/
 /*        console.log("Exec Binary...");
         await smBinary.execute(cmPols.Binary, cmPolsDef.Binary, requiredMain.Binary);*/
-        const res = await verifyPil(Fr, pil, cmPolsArray , constPolsArray);
+        const res = await verifyPil(Fr, pil, cmPols, constPols);
 
 /*
         const index = 2;

@@ -3,17 +3,17 @@ const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 const fs = require("fs");
 const path = require("path");
-const zkasm = require("@0xpolygonhermez/zkasm");
+const zkasm = require("@0xpolygonhermez/zkasmcom");
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
+const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
 
 
-const smArith = require("../src/sm/sm_arith.js");
+const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
 const smByte4 = require("../src/sm/sm_byte4.js");
 const smGlobal = require("../src/sm/sm_global.js");
-const smKeccakF = require("../src/sm/sm_keccakf.js");
-const smMain = require("../src/sm/sm_main.js");
+const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
+const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
 const smNine2One = require("../src/sm/sm_nine2one.js");
@@ -23,8 +23,8 @@ const smPaddingKKBit = require("../src/sm/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
-const smStorage = require("../src/sm/sm_storage.js");
-const { index } = require("../src/test_tools.js");
+const smStorage = require("../src/sm/sm_storage/sm_storage.js");
+const { index } = require("../src/sm/sm_main/test_tools.js");
 
 const pilModuleInfo = {
     mem_align: {
@@ -124,21 +124,21 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
     const pil = await compile(Fr, "pil/main.pil", null,  pilConfig);
     console.log('using N = 2 ** '+Math.log2(pilConfig.defines.N));
 
-    const [constPols, constPolsArray, constPolsDef] =  createConstantPols(pil);
-    const [cmPols, cmPolsArray, cmPolsDef] =  createCommitedPols(pil);
+    const constPols =  newConstantPolsArray(pil);
+    const cmPols =  newCommitPolsArray(pil);
 
-    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "testvectors", "input_executor.json"), "utf8"));
+    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
     const rom = await zkasm.compile(path.join(__dirname, "zkasm", zkasmFile));
 
     console.log("Const Global...");
-    await smGlobal.buildConstants(constPols.Global, constPolsDef.Global);
+    await smGlobal.buildConstants(constPols.Global);
     console.log("Const Main...");
-    await smMain.buildConstants(constPols.Main, constPolsDef.Main);
+    await smMain.buildConstants(constPols.Main);
 
     console.log("Const Rom...");
-    await smRom.buildConstants(constPols.Rom, constPolsDef.Rom, rom);
+    await smRom.buildConstants(constPols.Rom, rom);
     console.log("Const Byte4...");
-    await smByte4.buildConstants(constPols.Byte4, constPolsDef.Byte4);
+    await smByte4.buildConstants(constPols.Byte4);
 
     const includeArith = verifyPilFlag && !exclusions.modules.includes('arith');
     const includeBinary = verifyPilFlag && !exclusions.modules.includes('binary');
@@ -151,60 +151,60 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
 
     if (includePaddingKK) {
         console.log("Const PaddingKK...");
-        await smPaddingKK.buildConstants(constPols.PaddingKK, constPolsDef.PaddingKK);
+        await smPaddingKK.buildConstants(constPols.PaddingKK);
         console.log("Const PaddingKKBits...");
-        await smPaddingKKBit.buildConstants(constPols.PaddingKKBit, constPolsDef.PaddingKKBit);
+        await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
         console.log("Const Nine2One...");
-        await smNine2One.buildConstants(constPols.Nine2One, constPolsDef.Nine2One);
+        await smNine2One.buildConstants(constPols.Nine2One);
         console.log("Const KeccakF...");
-        await smKeccakF.buildConstants(constPols.KeccakF, constPolsDef.KeccakF);
+        await smKeccakF.buildConstants(constPols.KeccakF);
         console.log("Const NormGate9...");
-        await smNormGate9.buildConstants(constPols.NormGate9, constPolsDef.NormGate9);
+        await smNormGate9.buildConstants(constPols.NormGate9);
     }
 
     if (includeMem) {
         console.log("Const Mem...");
-        await smMem.buildConstants(constPols.Mem, constPolsDef.Mem);
+        await smMem.buildConstants(constPols.Mem);
     }
 
     if (includePaddingPG) {
         console.log("Const PaddingPG...");
-        await smPaddingPG.buildConstants(constPols.PaddingPG, constPolsDef.PaddingPG);
+        await smPaddingPG.buildConstants(constPols.PaddingPG);
     }
 
     if (includePoseidonG) {
         console.log("Const PoseidonG...");
-        await smPoseidonG.buildConstants(constPols.PoseidonG, constPolsDef.PoseidonG);
+        await smPoseidonG.buildConstants(constPols.PoseidonG);
     }
 
     if (includeStorage) {
         console.log("Const Storage...");
-        await smStorage.buildConstants(constPols.Storage, constPolsDef.Storage);
+        await smStorage.buildConstants(constPols.Storage);
     }
 
     if (includeMemAlign) {
         console.log("Const MemAlign...");
-        await smMemAlign.buildConstants(constPols.MemAlign, constPolsDef.MemAlign);
+        await smMemAlign.buildConstants(constPols.MemAlign);
     }
 
     if (includeArith) {
         console.log("Const Arith...");
-        await smArith.buildConstants(constPols.Arith, constPolsDef.Arith);
+        await smArith.buildConstants(constPols.Arith);
     }
 
     if (includeBinary) {
         console.log("Const Binary...");
-        await smBinary.buildConstants(constPols.Binary, constPolsDef.Binary);
+        await smBinary.buildConstants(constPols.Binary);
     }
 
-    const requiredMain = await smMain.execute(cmPols.Main, cmPolsDef.Main, input, rom);
+    const requiredMain = await smMain.execute(cmPols.Main, input, rom);
 
     console.log("Exec Byte4...");
-    await smByte4.execute(cmPols.Byte4, cmPolsDef.Byte4, requiredMain.Byte4);
+    await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
 
     if (includePaddingKK) {
         console.log("Exec PaddingKK...");
-        const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, cmPolsDef.PaddingKK, requiredMain.PaddingKK);
+        const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
 /*
         let cp = constPols.PaddingKK; let p = cmPols.PaddingKK;
         const P = 0xFFFFFFFF00000001n;
@@ -213,33 +213,33 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
 
         EXIT_HERE;*/
         console.log("Exec PaddingKKbit...");
-        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, cmPolsDef.PaddingKKBit, requiredKK.paddingKKBits);
+        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
         console.log("Exec Nine2One...");
-        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, cmPolsDef.Nine2One, requiredKKbit.Nine2One);
+        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
         console.log("Exec KeccakF...");
-        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, cmPolsDef.KeccakF, requiredNine2One.KeccakF);
+        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
         console.log("Exec NormGate9...");
-        await smNormGate9.execute(cmPols.NormGate9, cmPolsDef.NormGate9, requiredKeccakF.NormGate9);
+        await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
     } else if (verifyPilFlag && requiredMain.PaddingKK.length) {
         throw new Error(`PaddingKK was excluded, but zkasm has ${requiredMain.PaddingKK.length} PaddingKK operations`);
     }
 
     if (includeMemAlign) {
         console.log("Exec MemAlign...");
-        await smMemAlign.execute(cmPols.MemAlign, cmPolsDef.MemAlign, requiredMain.MemAlign);
+        await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
     } else if (verifyPilFlag && requiredMain.MemAlign.length) {
         throw new Error(`MemAlign was excluded, but zkasm has ${requiredMain.PaddingKK.length} MemAlign operations`);
     }
 
     if (includeMem) {
         console.log("Exec Mem...");
-        await smMem.execute(cmPols.Mem, cmPolsDef.Mem, requiredMain.Mem);
+        await smMem.execute(cmPols.Mem, requiredMain.Mem);
     } else if (verifyPilFlag && requiredMain.Mem.length) {
         throw new Error(`Mem was excluded, but zkasm has ${requiredMain.Mem.length} Mem operations`);
     }
 
     if (includeStorage) console.log("Exec Storage...");
-    const requiredStorage = includeStorage ? await smStorage.execute(cmPols.Storage, cmPolsDef.Storage, requiredMain.Storage) : {PoseidonG: []};
+    const requiredStorage = includeStorage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage) : {PoseidonG: []};
 
 
     if (!includeStorage && verifyPilFlag && requiredMain.Storage.length) {
@@ -248,7 +248,7 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
 
 
     if (includePaddingPG) console.log("Exec PaddingPG...");
-    const requiredPaddingPG = includePaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, cmPolsDef.PaddingPG, requiredMain.PaddingPG) : {PoseidonG:[]};
+    const requiredPaddingPG = includePaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG,  requiredMain.PaddingPG) : {PoseidonG:[]};
 
     const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
     if (includePoseidonG) {
@@ -261,19 +261,19 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
 
     if (includeArith) {
         console.log("Exec Arith...");
-        await smArith.execute(cmPols.Arith, cmPolsDef.Arith, requiredMain.Arith);
+        await smArith.execute(cmPols.Arith, requiredMain.Arith);
     } else if (verifyPilFlag && requiredMain.Arith.length) {
         throw new Error(`Arith was excluded, but zkasm has ${requiredMain.Arith.length} Arith operations`);
     }
 
     if (includeBinary) {
         console.log("Exec Binary...");
-        await smBinary.execute(cmPols.Binary, cmPolsDef.Binary, requiredMain.Binary);
+        await smBinary.execute(cmPols.Binary, requiredMain.Binary);
     } else if (verifyPilFlag && requiredMain.Binary.length) {
         throw new Error(`Binary was excluded, but zkasm has ${requiredMain.Binary.length} Binary operations`);
     }
 
-    const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPolsArray , constPolsArray) : [];
+    const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols) : [];
 
     if (res.length != 0) {
         console.log("Pil does not pass");
