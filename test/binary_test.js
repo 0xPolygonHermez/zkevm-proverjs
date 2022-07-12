@@ -4,7 +4,7 @@ const expect = chai.expect;
 
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
 const smBinary = require("../src/sm/sm_binary.js");
 
 const input = [

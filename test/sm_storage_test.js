@@ -10,7 +10,7 @@ const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
 const StorageRom = require("../src/sm/sm_storage_rom.js").StorageRom;
 const sm_storage = require("../src/sm/sm_storage.js");
 const sm_poseidong = require("../src/sm/sm_poseidong.js");
