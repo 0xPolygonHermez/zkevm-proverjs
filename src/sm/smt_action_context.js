@@ -7,7 +7,7 @@ class SmtActionContext
         // Deepest level and current level
         this.level = 0; // Level at which the proof starts
         this.currentLevel = 0; // Current level, from level to zero, as we climb up the tree
-        
+
         // Remaining key and preceding bits
         this.rkey = []
         this.siblingRkey = [];
@@ -20,9 +20,9 @@ class SmtActionContext
             a.setResult.oldRoot = a.setResult.oldRoot ?? new Array(4).fill(fr.zero); //Array of FieldElement
             a.setResult.newRoot = a.setResult.newRoot ?? new Array(4).fill(fr.zero); //Array of FieldElement
             a.setResult.key = a.setResult.key ?? new Array(4).fill(fr.zero); //Array of FieldElement
-            a.setResult.siblings = a.setResult.siblings ?? []; 
+            a.setResult.siblings = a.setResult.siblings ?? [];
             a.setResult.insKey = a.setResult.insKey ?? new Array(4).fill(fr.zero); //Array of FieldElement
-            a.setResult.insValue = a.setResult.insValue ?? Scalar.zero; 
+            a.setResult.insValue = a.setResult.insValue ?? Scalar.zero;
             a.setResult.isOld0 = a.setResult.isOld0 ?? false;
             a.setResult.oldValue = a.setResult.oldValue ?? Scalar.zero;
             a.setResult.newValue = a.setResult.newValue ?? Scalar.zero;
@@ -30,11 +30,11 @@ class SmtActionContext
         } else {
             a.getResult.root = a.getResult.root ?? new Array(4).fill(fr.zero); //Array of FieldElement
             a.getResult.key = a.getResult.key ?? new Array(4).fill(fr.zero); //Array of FieldElement
-            a.getResult.siblings = a.getResult.siblings ?? []; 
+            a.getResult.siblings = a.getResult.siblings ?? [];
             a.getResult.insKey = a.getResult.insKey ?? new Array(4).fill(fr.zero);
             a.getResult.insValue = a.getResult.insValue ?? Scalar.zero; // value found
             a.getResult.isOld0 = a.getResult.isOld0 ?? false; // is new insert or delete
-            a.getResult.value = a.getResult.value ?? Scalar.zero; // value retrieved            
+            a.getResult.value = a.getResult.value ?? Scalar.zero; // value retrieved
         }
     }
 
@@ -70,7 +70,7 @@ class SmtActionContext
             this.siblingRkey[0] = fr.zero;
             this.siblingRkey[1] = fr.zero;
             this.siblingRkey[2] = fr.zero;
-            this.siblingRkey[3] = fr.zero;            
+            this.siblingRkey[3] = fr.zero;
         }
 
         if (true) {
@@ -87,10 +87,10 @@ class SmtActionContext
                 }
                 logger(logstr);
             }
-        }    
+        }
 
         // Reset bits vectors
-        this.bits = []; 
+        this.bits = [];
         this.siblingBits = [];
 
         if (!action.bIsSet ||

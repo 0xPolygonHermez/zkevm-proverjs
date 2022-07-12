@@ -41,17 +41,18 @@ module.exports.buildConstants = async function (pols, polsDef) {
     FACTORS
     =========
     FACTOR0 => 0x1  0x100   0x10000 0x01000000  0x0  0x0    0x0     0x0         ... 0x0  0x0    0x0     0x0         0x1 0x100   0x10000 0x01000000  0x0  ...
-    FACTOR1 => 0x0  0x0     0x0     0x0         0x1  0x100  0x10000 0x01000000  ... 0x0  0x0    0x0     0x0         0x0 0x0     0x0     0x0         0x0  ...     
+    FACTOR1 => 0x0  0x0     0x0     0x0         0x1  0x100  0x10000 0x01000000  ... 0x0  0x0    0x0     0x0         0x0 0x0     0x0     0x0         0x0  ...
     ...
     FACTOR7 => 0x0  0x0     0x0     0x0         0x0  0x0     0x0     0x0        ... 0x1  0x100  0x10000 0x01000000  0x0 0x0     0x0     0x0         0x0  ...
 */
 function buildFACTORS(FACTORS, N) {
     // The REGISTERS_NUM is equal to the number of factors
+    let index = 0;
     for (let i = 0; i < REGISTERS_NUM; i++) {
         for (let j = 0; j < N; j += BYTES_PER_REGISTER) {
             for (let k = 0; k < BYTES_PER_REGISTER; k++) {
                 let factor = BigInt((2 ** 8) ** k) * BigInt((j % (REGISTERS_NUM * BYTES_PER_REGISTER)) / BYTES_PER_REGISTER == i);
-                FACTORS[i].push(factor);
+                FACTORS[i][index++] = factor;
             }
         }
     }
@@ -67,7 +68,7 @@ function buildFACTORS(FACTORS, N) {
 */
 function buildRESET(pol, N) {
     for (let i = 0; i < N; i++) {
-        pol.push(BigInt(i % (REGISTERS_NUM * BYTES_PER_REGISTER) == 0));
+        pol[i] = BigInt(i % (REGISTERS_NUM * BYTES_PER_REGISTER) == 0);
     }
 }
 
@@ -75,16 +76,17 @@ function buildRESET(pol, N) {
     A
     =========
     0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15 (size * size)
-    0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15 
+    0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15
     ...
     0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15
 */
 function buildP_A(pol, size, N) {
+    let index = 0;
     for (let i = 0; i < N; i += (size * size)) {
         let value = 0;
         for (let j = 0; j < size; j++) {
             for (let k = 0; k < size; k++) {
-                pol.push(BigInt(value));
+                pol[index++] = BigInt(value);
             }
             value++;
         }
@@ -100,18 +102,19 @@ function buildP_A(pol, size, N) {
     0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 ... {size} ... 15 (size * size)
  */
 function buildP_B(pol, size, N) {
+    let index = 0;
     for (let i = 0; i < N; i = i + (size * size)) {
         for (let j = 0; j < size; j++) {
             let value = 0;
             for (let k = 0; k < size; k++) {
-                pol.push(BigInt(value));
+                pol[index++] = BigInt(value);
                 value++;
             }
         }
     }
 }
 
-/* 
+/*
     =========
     CIN
     =========
@@ -121,49 +124,52 @@ function buildP_B(pol, size, N) {
     0 0 0 ... {AccumulatedSize} ... 0 0 0 1 1 1 ... {AccumulatedSize} ... 1 1 1
  */
 function buildP_P_CIN(pol, pol_size, accumulated_size, N) {
+    let index = 0;
     for (let i = 0; i < N; i += (accumulated_size * pol_size)) {
         let value = 0;
         for (let j = 0; j < pol_size; j++) {
             for (let k = 0; k < accumulated_size; k++) {
-                pol.push(BigInt(value));
+                pol[index++] = BigInt(value);
             }
             value++;
         }
     }
 }
 
-/* 
+/*
     =========
     OPCODE
     =========
-    0 0 0 ... {current_size} ... 0 0 0 
+    0 0 0 ... {current_size} ... 0 0 0
     1 1 1 ... {current_size} ... 1 1 1
     2 2 2 ... {current_size} ... 2 2 2
     ...
  */
 function buildP_OPCODE(pol, current_size, N) {
+    let index = 0;
     let value = 0;
     for (let i = 0; i < N; i = i + current_size) {
-        for (let i = 0; i < current_size; i++) {
-            pol.push(BigInt(value));
+        for (let j = 0; j < current_size; j++) {
+            pol[index++] = BigInt(value);
         }
         value++;
     }
 }
 
 function buildP_LAST(pol, pol_size, accumulated_size, N) {
+    let index = 0;
     for (let i = 0; i < N; i += (accumulated_size * pol_size)) {
         let value = 0;
         for (let j = 0; j < pol_size; j++) {
             for (let k = 0; k < accumulated_size; k++) {
-                pol.push(BigInt(value));
+                pol[index++] = BigInt(value);
             }
             value++;
         }
     }
 }
 
-/* 
+/*
     =========
     C & COUT
     =========
@@ -185,110 +191,110 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
             // ADD   (OPCODE = 0)
             case 0n:
                 let sum = pol_cin[i] + pol_a[i] + pol_b[i];
-                pol_c.push(sum & 255n);
-                pol_cout.push(sum >> 8n);
-                pol_use_carry.push(0n);
+                pol_c[i] = sum & 255n;
+                pol_cout[i] = sum >> 8n;
+                pol_use_carry[i] = 0n;
                 break;
             // SUB   (OPCODE = 1)
             case 1n:
                 if (pol_a[i] - pol_cin[i] >= pol_b[i]) {
-                    pol_c.push(pol_a[i] - pol_cin[i] - pol_b[i]);
-                    pol_cout.push(0n);
+                    pol_c[i] = pol_a[i] - pol_cin[i] - pol_b[i];
+                    pol_cout[i] = 0n;
                 } else {
-                    pol_c.push(255n - pol_b[i] + pol_a[i] - pol_cin[i] + 1n);
-                    pol_cout.push(1n);
+                    pol_c[i] =  255n - pol_b[i] + pol_a[i] - pol_cin[i] + 1n;
+                    pol_cout[i] = 1n;
                 }
-                pol_use_carry.push(0n);
+                pol_use_carry[i] = 0n;
                 break;
             // LT    (OPCODE = 2)
             case 2n:
                 if (pol_a[i] < pol_b[i]) {
-                    pol_cout.push(1n);
-                    pol_last[i] ? pol_c.push(1n) : pol_c.push(0n);
+                    pol_cout[i] = 1n;
+                    pol_c[i] = pol_last[i] ? 1n : 0n;
                 } else if (pol_a[i] == pol_b[i]) {
-                    pol_cout.push(pol_cin[i]);
-                    pol_last[i] ? pol_c.push(pol_cin[i]) : pol_c.push(0n);
+                    pol_cout[i] = pol_cin[i];
+                    pol_c[i] = pol_last[i] ? pol_cin[i] : 0n;
                 } else {
-                    pol_cout.push(0n);
-                    pol_c.push(0n);
+                    pol_cout[i] = 0n;
+                    pol_c[i] = 0n;
                 }
-                pol_last[i] ? pol_use_carry.push(1n) : pol_use_carry.push(0n);
+                pol_use_carry[i] = pol_last[i] ? 1n : 0n;
                 break;
             // SLT   (OPCODE = 3)
             case 3n:
                 if (!pol_last[i]) {
                     if (pol_a[i] < pol_b[i]) {
-                        pol_cout.push(1n);
-                        pol_c.push(0n);
+                        pol_cout[i] = 1n;
+                        pol_c[i] = 0n;
                     } else if (pol_a[i] == pol_b[i]) {
-                        pol_cout.push(pol_cin[i]);
-                        pol_c.push(0n);
+                        pol_cout[i] = pol_cin[i];
+                        pol_c[i] = 0n;
                     } else {
-                        pol_cout.push(0n);
-                        pol_c.push(0n);
+                        pol_cout[i] = 0n;
+                        pol_c[i] = 0n;
                     }
                 } else {
                     let sig_a = pol_a[i] >> 7n;
                     let sig_b = pol_b[i] >> 7n;
                     // A Negative ; B Positive
                     if (sig_a > sig_b) {
-                        pol_cout.push(1n);
-                        pol_c.push(1n);
+                        pol_cout[i] = 1n;
+                        pol_c[i] = 1n;
                         // A Positive ; B Negative
                     } else if (sig_a < sig_b) {
-                        pol_cout.push(0n);
-                        pol_c.push(0n);
+                        pol_cout[i] = 0n;
+                        pol_c[i] = 0n;
                         // A and B equals
                     } else {
                         if (pol_a[i] < pol_b[i]) {
-                            pol_cout.push(1n);
-                            pol_c.push(1n);
+                            pol_cout[i] = 1n;
+                            pol_c[i] = 1n;
                         } else if (pol_a[i] == pol_b[i]) {
-                            pol_cout.push(pol_cin[i]);
-                            pol_c.push(pol_cin[i]);
+                            pol_cout[i] = pol_cin[i];
+                            pol_c[i] = pol_cin[i];
                         } else {
-                            pol_cout.push(0n);
-                            pol_c.push(0n);
+                            pol_cout[i] = 0n;
+                            pol_c[i] = 0n;
                         }
                     }
                 }
-                pol_last[i] ? pol_use_carry.push(1n) : pol_use_carry.push(0n);
+                pol_use_carry[i] = pol_last[i] ? 1n : 0n;
                 break;
             // EQ    (OPCODE = 4)
             case 4n:
                 if (pol_a[i] == pol_b[i] && pol_cin[i] == 1n) {
-                    pol_cout.push(1n);
-                    pol_last[i] ? pol_c.push(1n) : pol_c.push(0n);
+                    pol_cout[i] = 1n;
+                    pol_c[i] = pol_last[i] ? 1n : 0n;
                 } else {
-                    pol_cout.push(0n);
-                    pol_c.push(0n)
+                    pol_cout[i] = 0n;
+                    pol_c[i] = 0n
                 }
-                pol_last[i] ? pol_use_carry.push(1n) : pol_use_carry.push(0n);
+                pol_use_carry[i] = pol_last[i] ? 1n : 0n;
 
                 break;
             // AND   (OPCODE = 5)
             case 5n:
-                pol_c.push(pol_a[i] & pol_b[i]);
-                pol_cout.push(0n);
-                pol_use_carry.push(0n);
+                pol_c[i] = pol_a[i] & pol_b[i];
+                pol_cout[i] = 0n;
+                pol_use_carry[i] = 0n;
                 break;
             // OR    (OPCODE = 6)
             case 6n:
-                pol_c.push(pol_a[i] | pol_b[i]);
-                pol_cout.push(0n);
-                pol_use_carry.push(0n);
+                pol_c[i] = pol_a[i] | pol_b[i];
+                pol_cout[i] = 0n;
+                pol_use_carry[i] = 0n;
                 break;
             // XOR   (OPCODE = 7)
             case 7n:
-                pol_c.push(pol_a[i] ^ pol_b[i]);
-                pol_cout.push(0n);
-                pol_use_carry.push(0n);
+                pol_c[i] = pol_a[i] ^ pol_b[i];
+                pol_cout[i] = 0n;
+                pol_use_carry[i] = 0n;
                 break;
             // NOP   (OPCODE = 0)
             default:
-                pol_c.push(0n);
-                pol_cout.push(0n);
-                pol_use_carry.push(0n);
+                pol_c[i] = 0n;
+                pol_cout[i] = 0n;
+                pol_use_carry[i] = 0n;
         }
     }
 }
@@ -298,7 +304,7 @@ module.exports.execute = async function (pols, polsDef, input) {
     // Get N from definitions
     const N = Number(polsDef.freeInA.polDeg);
 
-    // Split the input in little-endian bytes 
+    // Split the input in little-endian bytes
     prepareInput256bits(input, N);
 
     var c0Temp = new Array();
@@ -306,20 +312,20 @@ module.exports.execute = async function (pols, polsDef, input) {
     // Initialization
     for (var i = 0; i < N; i++) {
         for (let j = 0; j < REGISTERS_NUM; j++) {
-            pols[`a${j}`].push(0n);
-            pols[`b${j}`].push(0n);
-            pols[`c${j}`].push(0n);
+            pols[`a${j}`][i] = 0n;
+            pols[`b${j}`][i] = 0n;
+            pols[`c${j}`][i] = 0n;
         }
-        pols.last.push(0n);
-        pols.opcode.push(0n);
-        pols.freeInA.push(0n);
-        pols.freeInB.push(0n);
-        pols.freeInC.push(0n);
-        pols.cIn.push(0n);
-        pols.cOut.push(0n);
-        pols.lCout.push(0n);
-        pols.lOpcode.push(0n);
-        pols.useCarry.push(0n);
+        pols.last[i] = 0n;
+        pols.opcode[i] = 0n;
+        pols.freeInA[i] = 0n;
+        pols.freeInB[i] = 0n;
+        pols.freeInC[i] = 0n;
+        pols.cIn[i] = 0n;
+        pols.cOut[i] = 0n;
+        pols.lCout[i] = 0n;
+        pols.lOpcode[i] = 0n;
+        pols.useCarry[i] = 0n;
     }
     let FACTOR = [[], [], [], [], [], [], [], []];
     let RESET = [];

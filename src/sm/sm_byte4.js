@@ -1,7 +1,7 @@
 module.exports.buildConstants = async function (pols, polsDef) {
     const N = Number(polsDef.SET.polDeg);
 
-    for ( let i=0; i<N; i++) pols.SET.push((i % 2 == 0) ? 1n : 0n);
+    for ( let i=0; i<N; i++) pols.SET[i] = (i % 2 == 0) ? 1n : 0n;
 }
 
 

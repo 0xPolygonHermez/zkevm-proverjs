@@ -3,7 +3,7 @@ const assert = chai.assert;
 const fs = require("fs");
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 
 

@@ -5,7 +5,7 @@ const Merkle = require("../src/merkle.js");
 const MerkleGroup = require("../src/merkle_group.js");
 const MerkleMultipol = require("../src/merkle_group_multipol.js");
 const { stringifyFElements } = require("ffjavascript").utils;
-const {log2} = require("../src/utils");
+const { log2 } = require("@0xpolygonhermez/zkevm-commonjs");
 
 const assert = chai.assert;
 

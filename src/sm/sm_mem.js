@@ -1,5 +1,5 @@
 
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const Scalar = require("ffjavascript");
 const { existsSync } = require("fs");
 const { exit } = require("process");
@@ -14,11 +14,11 @@ module.exports.buildConstants = async function (pols, polsDef) {
     const degree = polsDef.ISNOTLAST.polDeg;
 
     for (let i=0; i<degree; i++) {
-        pols.INCS.push(BigInt(i+1)); //1,2,3,...,N
+        pols.INCS[i] = BigInt(i+1); //1,2,3,...,N
     }
 
     for (let i=0; i<degree; i++) {
-        pols.ISNOTLAST.push((i==degree-1) ? 0n : 1n); //1,1,1,...,0
+        pols.ISNOTLAST[i] = (i==degree-1) ? 0n : 1n; //1,1,1,...,0
     }
 }
 

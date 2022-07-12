@@ -1,18 +1,14 @@
 
 const fs = require("fs");
 const path = require("path");
-const buildPoseidonGolden = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const { buildPoseidonGolden,log2 } = require("@0xpolygonhermez/zkevm-commonjs");
 const buildPoseidonBN128 = require("circomlibjs").buildPoseidon;
 
 const version = require("../package").version;
 
-const exportPolynomials = require("pilcom").exportPolynomials;
-
 const { exportMerkleGroupMultipol } = require("./binfiles.js");
 
 const { extendPol } = require("./polutils");
-
-const { log2 } = require("./utils");
 
 const Merkle = require("./merkle.js");
 const MerkleGroupMultipol = require("./merkle_group_multipol.js");
@@ -35,7 +31,7 @@ const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
 const smStorage = require("./sm/sm_storage.js");
 
-const { createConstantPols, compile } = require("pilcom");
+const { exportPolynomials, createConstantPols, compile } = require("@0xpolygonhermez/pilcom");
 const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")

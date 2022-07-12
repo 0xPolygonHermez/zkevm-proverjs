@@ -1,9 +1,11 @@
 const { assert } = require("chai");
 
-const keccakF = require("../keccak.js").keccakF;
-const { log2 } = require("../utils");
+const keccak256 = require("ethers").utils.keccak256;
+
+const { log2 } = require("@0xpolygonhermez/zkevm-commonjs");
+
 const { F1Field } = require("ffjavascript");
-const getKs = require("pilcom").getKs;
+const getKs = require("@0xpolygonhermez/pilcom").getKs;
 
 
 const SlotSize = 158418;
@@ -250,7 +252,7 @@ module.exports.execute = async function (pols, polsDef, input) {
             p += 1;
         }
 
-        curState = keccakF(stateWithR);
+        curState = keccak256(stateWithR);
         required.Nine2One.push([stateWithR, curState]);
 
         for (let k=0; k<8; k++) pols.sOut[k][p] = 0n;

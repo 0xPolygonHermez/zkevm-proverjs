@@ -3,7 +3,7 @@ const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 const fs = require("fs");
 const path = require("path");
-const zkasm = require("@polygon-hermez/zkasm");
+const zkasm = require("@0xpolygonhermez/zkasm");
 
 const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 

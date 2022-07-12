@@ -63,20 +63,20 @@ module.exports.execute = async function (pols, polsDef, input) {
     // Initialization
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < 8; j++) {
-            pols.m0[j].push(0n);
-            pols.m1[j].push(0n);
-            pols.w0[j].push(0n);
-            pols.w1[j].push(0n);
-            pols.v[j].push(0n);
-            pols.factorV[j].push(0n);
+            pols.m0[j][i] = 0n;
+            pols.m1[j][i] = 0n;
+            pols.w0[j][i] = 0n;
+            pols.w1[j][i] = 0n;
+            pols.v[j][i] = 0n;
+            pols.factorV[j][i] = 0n;
         }
-        pols.inV.push(0n);
-        pols.inM[0].push(0n);
-        pols.inM[1].push(0n);
-        pols.wr8.push(0n);
-        pols.wr256.push(0n);
-        pols.offset.push(0n);
-        pols.selM1.push(0n);
+        pols.inV[i]= 0n;
+        pols.inM[0][i]= 0n;
+        pols.inM[1][i]= 0n;
+        pols.wr8[i]= 0n;
+        pols.wr256[i]= 0n;
+        pols.offset[i]= 0n;
+        pols.selM1[i]= 0n;
     }
     const factors = [ 1, 2 ** 8, 2 ** 16, 2 ** 24];
     for (let i = 0; i < input.length; i++) {
