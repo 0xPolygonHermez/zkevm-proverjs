@@ -2,11 +2,11 @@ const { F1Field } = require("ffjavascript");
 
 const F = require("ffjavascript").F1Field;
 
-module.exports.buildConstants = async function (pols, polsDef) {
+module.exports.buildConstants = async function (pols) {
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
-    const N = Number(polsDef.BYTE.polDeg);
+    const N = pols.BYTE.length;
     buidBYTE(pols.BYTE, F, N);
     buidBYTE2(pols.BYTE2, F, N);
     buildL1(pols.L1, F, N);

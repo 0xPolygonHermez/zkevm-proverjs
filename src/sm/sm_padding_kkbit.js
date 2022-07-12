@@ -10,12 +10,12 @@ const getKs = require("@0xpolygonhermez/pilcom").getKs;
 
 const SlotSize = 158418;
 
-module.exports.buildConstants = async function (pols, polsDef) {
+module.exports.buildConstants = async function (pols) {
 
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
-    const N = Number(polsDef.r8Id.polDeg);
+    const N = pols.r8Id.length;
 
     const nSlots = 9*Math.floor((N-1) / SlotSize);
 
@@ -180,13 +180,13 @@ module.exports.buildConstants = async function (pols, polsDef) {
 
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
 
     const required = {
         Nine2One: []
     }
 
-    const N = Number(polsDef.r8.polDeg);
+    const N = pols.r8.length;
 
     const nSlots = 9*Math.floor((N-1) / SlotSize);
 

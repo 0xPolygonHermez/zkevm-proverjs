@@ -8,7 +8,7 @@ const SmtActionContext = require("./smt_action_context.js");
 const { StorageRomLine } = require("./sm_storage_rom.js");
 const StorageRom = require("./sm_storage_rom.js").StorageRom;
 
-module.exports.buildConstants = async function (pols, polsDef) {
+module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
 
@@ -18,7 +18,7 @@ module.exports.buildConstants = async function (pols, polsDef) {
     rom = new StorageRom;
     rom.load(j);
 
-    const polSize = Number(polsDef.rLine.polDeg);
+    const polSize = pols.rLine.length;
     const romlength = rom.line.length;
 
     for (let i=0; i<polSize; i++) {
@@ -49,8 +49,8 @@ module.exports.buildConstants = async function (pols, polsDef) {
     }
 }
 
-module.exports.execute = async function (pols, polsDef, action) {
-    const polSize = Number(polsDef.pc.polDeg);
+module.exports.execute = async function (pols, action) {
+    const polSize = pols.pc.length;
 
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;

@@ -1,8 +1,8 @@
 
 
-module.exports = async function (pols, polsDef) {
+module.exports = async function (pols) {
 
-    const N = Number(polsDef.STEP.polDeg);
+    const N = pols.STEP.length;
 
     for ( let i=0; i<N; i++) {
         pols.STEP[i] = BigInt(i);

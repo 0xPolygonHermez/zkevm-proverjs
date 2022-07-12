@@ -31,7 +31,7 @@ const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
 const smStorage = require("./sm/sm_storage.js");
 
-const { exportPolynomials, createConstantPols, compile } = require("@0xpolygonhermez/pilcom");
+const { newConstantPolsArray, compile } = require("@0xpolygonhermez/pilcom");
 const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")
@@ -64,44 +64,46 @@ async function run() {
 
 
 
-    const [constPols, constPolsArray, constPolsDef, constPolsArrayDef] =  createConstantPols(pil);
+    const constPols = newConstantPolsArray(pil);
 
-    const N = constPolsDef.Main.STEP.polDeg;
+    // BREAK HERE TO DETECT N
+
+    const N = constPols.Main.STEP.polDeg;
     const Nbits = log2(N);
     const extendBits = 1;
 
     console.log("Arith...");
-    await smArith.buildConstants(constPols.Arith, constPolsDef.Arith);
+    await smArith.buildConstants(constPols.Arith);
     console.log("Binary...");
-    await smBinary.buildConstants(constPols.Binary, constPolsDef.Binary);
+    await smBinary.buildConstants(constPols.Binary);
     console.log("Byte4...");
-    await smByte4.buildConstants(constPols.Byte4, constPolsDef.Byte4);
+    await smByte4.buildConstants(constPols.Byte4);
     console.log("Global...");
-    await smGlobal.buildConstants(constPols.Global, constPolsDef.Global);
+    await smGlobal.buildConstants(constPols.Global);
     console.log("KeccakF...");
-    await smKeccakF.buildConstants(constPols.KeccakF, constPolsDef.KeccakF);
+    await smKeccakF.buildConstants(constPols.KeccakF);
     console.log("Main...");
-    await smMain.buildConstants(constPols.Main, constPolsDef.Main);
+    await smMain.buildConstants(constPols.Main);
     console.log("MemAlign...");
-    await smMemAlign.buildConstants(constPols.MemAlign, constPolsDef.MemAlign);
+    await smMemAlign.buildConstants(constPols.MemAlign);
     console.log("Mem...");
-    await smMem.buildConstants(constPols.Mem, constPolsDef.Mem);
+    await smMem.buildConstants(constPols.Mem);
     console.log("Nine2One...");
-    await smNine2One.buildConstants(constPols.Nine2One, constPolsDef.Nine2One);
+    await smNine2One.buildConstants(constPols.Nine2One);
     console.log("NormGate9...");
-    await smNormGate9.buildConstants(constPols.NormGate9, constPolsDef.NormGate9);
+    await smNormGate9.buildConstants(constPols.NormGate9);
     console.log("PaddingKK...");
-    await smPaddingKK.buildConstants(constPols.PaddingKK, constPolsDef.PaddingKK);
+    await smPaddingKK.buildConstants(constPols.PaddingKK);
     console.log("PaddingKKBits...");
-    await smPaddingKKBit.buildConstants(constPols.PaddingKKBit, constPolsDef.PaddingKKBit);
+    await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     console.log("PaddingPG...");
-    await smPaddingPG.buildConstants(constPols.PaddingPG, constPolsDef.PaddingPG);
+    await smPaddingPG.buildConstants(constPols.PaddingPG);
     console.log("PoseidonG...");
-    await smPoseidonG.buildConstants(constPols.PoseidonG, constPolsDef.PoseidonG);
+    await smPoseidonG.buildConstants(constPols.PoseidonG);
     console.log("Rom...");
-    await smRom.buildConstants(constPols.Rom, constPolsDef.Rom, rom);
+    await smRom.buildConstants(constPols.Rom, rom);
     console.log("Storage...");
-    await smStorage.buildConstants(constPols.Storage, constPolsDef.Storage);
+    await smStorage.buildConstants(constPols.Storage);
 
     for (let i=0; i<constPolsArrayDef.length; i++) {
         if (constPolsArray[i].length != N) {
@@ -109,7 +111,7 @@ async function run() {
         }
     }
 
-    await exportPolynomials(F, outputFile, constPolsArray, constPolsArrayDef);
+    await constPols.saveToFile(outputFile);
 
     console.log("Constants generated succefully!");
 }

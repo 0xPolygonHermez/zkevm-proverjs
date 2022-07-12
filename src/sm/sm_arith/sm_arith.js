@@ -8,8 +8,9 @@ const arithEq4 = require('./sm_arith_eq4');
 
 const F1Field = require("ffjavascript").F1Field;
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Object.entries(polsDef)[0][1]['polDeg'] || Object.entries(polsDef)[0][1][0]['polDeg'];
+module.exports.buildConstants = async function (pols) {
+    const N = pols.CLK[0].length;
+
     buildClocks(pols, N, 32);
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_4BITS_C0', -16n, 16n);
@@ -58,9 +59,9 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
     }
 }
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = Object.entries(polsDef)[0][1]['polDeg'] || Object.entries(polsDef)[0][1][0]['polDeg'];
+    const N = pols.x1[0].length;
 
     // Field Elliptic Curve
     let pFec = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;

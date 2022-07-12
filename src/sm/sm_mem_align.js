@@ -38,8 +38,8 @@ const CONST_F = {
     FACTORV: (index, i) => (CONST_F.V_BYTE(i) >> 2) == index ? [1, 0x100, 0x10000, 0x1000000][CONST_F.V_BYTE(i) % 4] : 0,
 }
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Object.entries(polsDef)[0][1]['polDeg'] || Object.entries(polsDef)[0][1][0]['polDeg'];
+module.exports.buildConstants = async function (pols) {
+    const N = pols.STEP.length;
     Object.entries(CONST_F).forEach(([name, func]) => {
         if (typeof pols[name] === 'undefined') return;
 
@@ -56,9 +56,9 @@ module.exports.buildConstants = async function (pols, polsDef) {
 }
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = Object.entries(polsDef)[0][1]['polDeg'] || Object.entries(polsDef)[0][1][0]['polDeg'];
+    const N = pols.v.length;
 
     // Initialization
     for (let i = 0; i < N; i++) {

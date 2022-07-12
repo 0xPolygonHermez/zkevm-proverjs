@@ -1,13 +1,13 @@
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Number(polsDef.SET.polDeg);
+module.exports.buildConstants = async function (pols) {
+    const N = pols.SET.length;
 
     for ( let i=0; i<N; i++) pols.SET[i] = (i % 2 == 0) ? 1n : 0n;
 }
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
 
-    const N = Number(polsDef.freeIN.polDeg);
+    const N = pols.freeIN.length;
 
     let p=0;
     let last = 0;

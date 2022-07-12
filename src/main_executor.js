@@ -4,7 +4,7 @@ const version = require("../package").version;
 
 const exportPols = require("@0xpolygonhermez/pilcom").exportPolynomials;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { compile, createCommitedPols } = require("@0xpolygonhermez/pilcom");
+const { newCommitPolsArray, compile  } = require("@0xpolygonhermez/pilcom");
 
 
 const smArith = require("./sm/sm_arith.js");
@@ -74,7 +74,7 @@ async function run() {
     }
 
     const test = testFile ? JSON.parse(await fs.promises.readFile(testFile, "utf8")) : false;
-    const [cmPols, cmPolsArray, cmPolsDef, cmPolsDefArray] = createCommitedPols(pil);
+    const cmPols = newCommitPolsArray(pil);
     const config = {
         test: test,
         debug: (argv.debug === true),
@@ -85,42 +85,42 @@ async function run() {
     if (argv.n) {
         config.debugInfo["N"] = Number(argv.n);
     }
-    const requiredMain = await smMain.execute(cmPols.Main, cmPolsDef.Main, input, rom, config);
+    const requiredMain = await smMain.execute(cmPols.Main, input, rom, config);
     if (typeof outputFile !== "undefined") {
         console.log("Storage...");
-        const requiredStorage = await smStorage.execute(cmPols.Storage, cmPolsDef.Storage, requiredMain.Storage);
+        const requiredStorage = await smStorage.execute(cmPols.Storage, requiredMain.Storage);
         console.log("Byte4...");
-        await smByte4.execute(cmPols.Byte4, cmPolsDef.Byte4, requiredMain.Byte4);
+        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
         console.log("Arith...");
-        await smArith.execute(cmPols.Arith, cmPolsDef.Arith, requiredMain.Arith);
+        await smArith.execute(cmPols.Arith, requiredMain.Arith);
         console.log("Binary...");
-        await smBinary.execute(cmPols.Binary, cmPolsDef.Binary, requiredMain.Binary);
+        await smBinary.execute(cmPols.Binary, requiredMain.Binary);
         console.log("MemAlign...");
-        await smMemAlign.execute(cmPols.MemAlign, cmPolsDef.MemAlign, requiredMain.MemAlign);
+        await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
         console.log("Mem...");
-        await smMem.execute(cmPols.Mem, cmPolsDef.Mem, requiredMain.Mem);
+        await smMem.execute(cmPols.Mem, requiredMain.Mem);
 
         console.log("PaddingKK...");
-        const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, cmPolsDef.PaddingKK, requiredMain.PaddingKK);
+        const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
         console.log("PaddingKKbit...");
-        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, cmPolsDef.PaddingKKBit, requiredKK.paddingKKBits);
+        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
         console.log("Nine2One...");
-        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, cmPolsDef.Nine2One, requiredKKbit.Nine2One);
+        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
         console.log("KeccakF...");
-        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, cmPolsDef.KeccakF, requiredNine2One.KeccakF);
+        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
         console.log("NormGate9...");
-        await smNormGate9.execute(cmPols.NormGate9, cmPolsDef.NormGate9, requiredKeccakF.NormGate9);
+        await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
 
         console.log("PaddingPG...");
-        const requiredPaddingPG = await smPaddingPG.execute(cmPols.PaddingPG, cmPolsDef.PaddingPG, requiredMain.PaddingPG);
+        const requiredPaddingPG = await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG);
 
 
         console.log("PoseidonG...");
         const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
-        await smPoseidonG.execute(cmPols.PoseidonG, cmPolsDef.PoseidonG, allPoseidonG);
+        await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
 
         console.log("Exporting Polynomials...");
-        await exportPols(F, outputFile, cmPolsArray, cmPolsDefArray);
+        await cmPols.saveToFile(outputFile);
     }
 
     if (logsFile) {

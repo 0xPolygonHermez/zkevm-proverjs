@@ -9,8 +9,8 @@ const getKs = require("@0xpolygonhermez/pilcom").getKs;
 
 const SlotSize = 158418;
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Number(polsDef.ConnA.polDeg);
+module.exports.buildConstants = async function (pols) {
+    const N = pols.ConnA.length;
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
@@ -122,8 +122,8 @@ module.exports.buildConstants = async function (pols, polsDef) {
     }
 }
 
-module.exports.execute = async function (pols, polsDef, input) {
-    const N = Number(polsDef.a.polDeg);
+module.exports.execute = async function (pols, input) {
+    const N = pols.a.length;
 
     const required = {
         NormGate9: []

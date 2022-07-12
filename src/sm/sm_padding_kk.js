@@ -7,11 +7,11 @@ const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const BYTESPERBLOCK = 136;
 const BlockSize = 158418;
 
-module.exports.buildConstants = async function (pols, polsDef) {
+module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
 
-    const N = Number(polsDef.lastBlock.polDeg);
+    const N = pols.lastBlock.length;
 
     const nBlocks = 9*Math.floor((N-1)/BlockSize);
 
@@ -65,7 +65,7 @@ module.exports.buildConstants = async function (pols, polsDef) {
 }
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
 
@@ -75,7 +75,7 @@ module.exports.execute = async function (pols, polsDef, input) {
         paddingKKBits: []
     };
 
-    const N = Number(polsDef.freeIn.polDeg);
+    const N = pols.freeIn.length;
 
     pols.crF = [];
     pols.crV = [];

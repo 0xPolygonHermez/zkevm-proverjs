@@ -5,11 +5,11 @@ const BYTESPERELEMENT = 7;
 const NELEMENTS = 8;
 const BYTESPERBLOCK = BYTESPERELEMENT*NELEMENTS;
 
-module.exports.buildConstants = async function (pols, polsDef) {
+module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
 
-    const N = Number(polsDef.lastBlock.polDeg);
+    const N = pols.lastBlock.length;
 
 
     const nBlocks = Math.floor((N - 1)/BYTESPERBLOCK)+1;
@@ -63,7 +63,7 @@ module.exports.buildConstants = async function (pols, polsDef) {
 }
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
 
     prepareInput(input);
     const poseidon = await buildPoseidon();
@@ -73,7 +73,7 @@ module.exports.execute = async function (pols, polsDef, input) {
         PoseidonG: [],
     };
 
-    const N = Number(polsDef.acc[0].polDeg);
+    const N = pols.acc[0].length;
 
     pols.crF = [];
     pols.crV = [];

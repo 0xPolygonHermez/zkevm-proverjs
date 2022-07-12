@@ -116,8 +116,8 @@ for (let i = 0; i < 12; i++) {
 }
 
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Number(polsDef.LAST.polDeg);
+module.exports.buildConstants = async function (pols) {
+    const N = pols.LAST.length;
 
     const maxHashes = Math.floor(N / (nRoundsF + nRoundsP + 1));
 
@@ -135,15 +135,15 @@ module.exports.buildConstants = async function (pols, polsDef) {
 };
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
 
-    const N = Number(polsDef.in0.polDeg);
+    const N = pols.in0.length;
 
     const pow7 = (a) => {
         const a2 = F.square(a);
         const a4 = F.square(a2);
         const a3 = F.mul(a, a2);
-    
+
         return F.mul(a3, a4);
     };
 
@@ -175,17 +175,17 @@ module.exports.execute = async function (pols, polsDef, input) {
         pols.hash3[p] = F.e(input[i][15]);
         p += 1;
         let state = [
-            pols.in0[p-1], 
-            pols.in1[p-1], 
-            pols.in2[p-1], 
-            pols.in3[p-1], 
-            pols.in4[p-1], 
-            pols.in5[p-1], 
-            pols.in6[p-1], 
-            pols.in7[p-1], 
-            pols.hashType[p-1], 
-            pols.cap1[p-1], 
-            pols.cap2[p-1], 
+            pols.in0[p-1],
+            pols.in1[p-1],
+            pols.in2[p-1],
+            pols.in3[p-1],
+            pols.in4[p-1],
+            pols.in5[p-1],
+            pols.in6[p-1],
+            pols.in7[p-1],
+            pols.hashType[p-1],
+            pols.cap1[p-1],
+            pols.cap2[p-1],
             pols.cap3[p-1]
         ];
 

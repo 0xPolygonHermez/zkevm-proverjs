@@ -25,7 +25,7 @@ const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8
 let iTracer;
 let fullTracer;
 
-module.exports = async function execute(pols, polsDef, input, rom, config = {}) {
+module.exports = async function execute(pols, input, rom, config = {}) {
 
     const required = {
         Byte4: {},
@@ -51,7 +51,7 @@ module.exports = async function execute(pols, polsDef, input, rom, config = {}) 
         else
             N = Number(2**17);
     } else {
-        N = Number(polsDef.zkPC.polDeg);
+        N = pols.zkPC.length;
     }
 
     const poseidon = await buildPoseidon();

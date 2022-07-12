@@ -13,9 +13,9 @@ let OPCODE_SIZE = 2 ** 2
     ==================
     FACTOR0_7, P_A, P_B, P_C, P_CIN, P_COUT, P_OPCODE, RESET
 */
-module.exports.buildConstants = async function (pols, polsDef) {
+module.exports.buildConstants = async function (pols) {
 
-    const N = Number(polsDef.RESET.polDeg);
+    const N = pols.RESET.length;
     buildFACTORS(pols.FACTOR, N);
     buildRESET(pols.RESET, N);
 
@@ -300,9 +300,9 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
 }
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = Number(polsDef.freeInA.polDeg);
+    const N = pols.freeInA.length;
 
     // Split the input in little-endian bytes
     prepareInput256bits(input, N);

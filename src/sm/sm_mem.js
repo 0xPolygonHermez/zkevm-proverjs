@@ -10,8 +10,8 @@ function logger (m) {
     if (LOG_STORAGE_EXECUTOR) console.log(m);
 }
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const degree = polsDef.ISNOTLAST.polDeg;
+module.exports.buildConstants = async function (pols) {
+    const degree = pols.ISNOTLAST.length;
 
     for (let i=0; i<degree; i++) {
         pols.INCS[i] = BigInt(i+1); //1,2,3,...,N
@@ -23,7 +23,7 @@ module.exports.buildConstants = async function (pols, polsDef) {
 }
 
 
-module.exports.execute = async function (pols, polsDef, access) {
+module.exports.execute = async function (pols, access) {
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
 
@@ -43,7 +43,7 @@ module.exports.execute = async function (pols, polsDef, access) {
         }
     });
 
-    const degree = polsDef.addr.polDeg;
+    const degree = pols.addr.length;
 
     for (let i=0; i<degree; i++) {
         if (a<access.length) {

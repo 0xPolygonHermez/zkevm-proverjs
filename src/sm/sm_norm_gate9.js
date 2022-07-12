@@ -1,7 +1,7 @@
 const assert = require("assert");
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Number(polsDef.Value3.polDeg);
+module.exports.buildConstants = async function (pols) {
+    const N = pols.Value3.length;
 
     if (N < (1<<21)) throw new Error("GateNorm9 Minimum deg = 2**21");
 
@@ -38,8 +38,8 @@ module.exports.buildConstants = async function (pols, polsDef) {
 
 }
 
-module.exports.execute = async function (pols, polsDef, input) {
-    const N = Number(polsDef.a.polDeg);
+module.exports.execute = async function (pols, input) {
+    const N = pols.a.length;
 
     const nBlocks = Math.floor(N/3);
 
