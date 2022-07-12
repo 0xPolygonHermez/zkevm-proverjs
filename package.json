@@ -18,10 +18,10 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
+    "@0xpolygonhermez/zkasmcom": "git+ssh://git@github.com/0xpolygonhermez/zkasmcom.git",
+    "@0xpolygonhermez/zkevm-commonjs": "git+ssh://git@github.com/0xpolygonhermez/zkevm-commonjs.git",
     "@ethereumjs/common": "^2.6.0",
     "@ethereumjs/vm": "^5.6.0",
-    "@0xpolygonhermez/zkasm": "git+ssh://git@github.com/0xpolygonhermez/zkasmcom.git",
-    "@0xpolygonhermez/zkevm-commonjs": "git+ssh://git@github.com/0xpolygonhermez/zkevm-commonjs.git",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "0.1.1",
@@ -29,11 +29,11 @@
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
+    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git",
     "solc": "^0.8.10",
     "source-map-loader": "^3.0.0",
     "ts-loader": "^9.2.6",
-    "yargs": "^17.4.0",
-    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git"
+    "yargs": "^17.4.0"
   },
   "devDependencies": {
     "chai": "^4.3.4",

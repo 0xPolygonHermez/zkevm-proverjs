@@ -1,5 +1,5 @@
 
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 
 const BYTESPERELEMENT = 7;
 const NELEMENTS = 8;

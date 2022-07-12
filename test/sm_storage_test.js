@@ -1,10 +1,10 @@
 const fs = require('fs');
 
-const SMT = require("@polygon-hermez/zkevm-commonjs").SMT;
-const MemDB = require("@polygon-hermez/zkevm-commonjs").MemDB;
-const smtUtils = require("@polygon-hermez/zkevm-commonjs").smtUtils;
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
-const scalar2key = require("@polygon-hermez/zkevm-commonjs/test/helpers/test-utils.js").scalar2key;
+const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
+const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
+const smtUtils = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
+const scalar2key = require("@0xpolygonhermez/zkevm-commonjs/test/helpers/test-utils.js").scalar2key;
 const Scalar = require("ffjavascript").Scalar;
 const chai = require("chai");
 const assert = chai.assert;

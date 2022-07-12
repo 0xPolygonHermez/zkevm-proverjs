@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { smtUtils } = require("@polygon-hermez/zkevm-commonjs");
+const { smtUtils } = require("@0xpolygonhermez/zkevm-commonjs");
 const codes = require("../src/opcodes");
 
 class Tracer {

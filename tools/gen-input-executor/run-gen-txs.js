@@ -6,7 +6,7 @@ const { performance } = require("perf_hooks");
 
 const execute = require("../../src/executor");
 
-const zkcommonjs = require("@polygon-hermez/zkevm-commonjs");
+const zkcommonjs = require("@0xpolygonhermez/zkevm-commonjs");
 const helpers = require("./helpers");
 
 const argv = require("yargs")

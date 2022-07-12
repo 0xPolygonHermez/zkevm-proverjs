@@ -1,5 +1,5 @@
 
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const Scalar = require("ffjavascript");
 const { existsSync } = require("fs");
 const { exit } = require("process");

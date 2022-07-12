@@ -3,7 +3,7 @@ const path = require("path");
 const version = require("../package").version;
 
 const exportPols = require("pilcom").exportPolynomials;
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const createCommitedPols = require("pilcom").createCommitedPols;
 const { compile } = require("pilcom");
 

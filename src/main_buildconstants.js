@@ -1,7 +1,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const buildPoseidonGolden = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidonGolden = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const buildPoseidonBN128 = require("circomlibjs").buildPoseidon;
 
 const version = require("../package").version;

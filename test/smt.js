@@ -1,5 +1,5 @@
-const SMT = require("@polygon-hermez/zkevm-commonjs").SMT;
-const MemDB = require("@polygon-hermez/zkevm-commonjs").MemDB;
+const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
+const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
 const buildPoseidon = require("circomlibjs").buildPoseidon;
 const Scalar = require("ffjavascript").Scalar;
 const chai = require("chai");
