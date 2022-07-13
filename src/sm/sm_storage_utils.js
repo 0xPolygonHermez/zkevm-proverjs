@@ -1,4 +1,4 @@
-const { h4toString, h4toScalar } = require("@polygon-hermez/zkevm-commonjs").smtUtils;
+const { h4toString, h4toScalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const Scalar = require("ffjavascript").Scalar;
 
 const LOG_STORAGE_EXECUTOR = false;

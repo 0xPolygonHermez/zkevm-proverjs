@@ -1,8 +1,8 @@
-const { scalar2fea } = require("@polygon-hermez/zkevm-commonjs/src/smt-utils");
+const { scalar2fea } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
 const { ethers } = require("ethers");
 Scalar = require("ffjavascript").Scalar;
 
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 
 const BYTESPERBLOCK = 136;
 const BlockSize = 158418;

@@ -2,7 +2,7 @@ const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit.js");
 const smNine2one = require("../src/sm/sm_nine2one.js");

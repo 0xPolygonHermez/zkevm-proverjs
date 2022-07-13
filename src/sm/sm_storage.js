@@ -1,7 +1,7 @@
 const fs = require('fs');
 
-const { scalar2fea } = require("@polygon-hermez/zkevm-commonjs").smtUtils;
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const { scalar2fea } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 
 const { isLogging, logger, fea42String, scalar2fea4, fea4IsEq }  = require("./sm_storage_utils.js");
 const SmtActionContext = require("./smt_action_context.js");

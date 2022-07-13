@@ -1,4 +1,4 @@
-const { smtUtils, stateUtils } = require("@polygon-hermez/zkevm-commonjs");
+const { smtUtils, stateUtils } = require("@0xpolygonhermez/zkevm-commonjs");
 const utils = require("./utils");
 
 class Prints {

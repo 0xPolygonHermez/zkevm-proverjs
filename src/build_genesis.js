@@ -1,7 +1,7 @@
-const { SMT, MemDB }  = require("@polygon-hermez/zkevm-commonjs");
-const { stringToH4 } = require("@polygon-hermez/zkevm-commonjs/src/smt-utils");
-const { keyEthAddrBalance, h4toString } = require("@polygon-hermez/zkevm-commonjs").smtUtils;
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const { SMT, MemDB }  = require("@0xpolygonhermez/zkevm-commonjs");
+const { stringToH4 } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
+const { keyEthAddrBalance, h4toString } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const fs = require("fs");
 const version = require("../package").version;
 

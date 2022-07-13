@@ -1,13 +1,13 @@
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
 
-const { calculateStarkInput, calculateBatchHashData } = require("@polygon-hermez/zkevm-commonjs").contractUtils;
+const { calculateStarkInput, calculateBatchHashData } = require("@0xpolygonhermez/zkevm-commonjs").contractUtils;
 const { scalar2fea, fea2scalar, fe2n, scalar2h4, h4toString,
-    stringToH4, nodeIsEq, hashContractBytecode, fea2String } = require("@polygon-hermez/zkevm-commonjs").smtUtils;
-const SMT = require("@polygon-hermez/zkevm-commonjs").SMT;
-const MemDB = require("@polygon-hermez/zkevm-commonjs").MemDB;
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
-const { byteArray2HexString } = require("@polygon-hermez/zkevm-commonjs").utils;
+    stringToH4, nodeIsEq, hashContractBytecode, fea2String } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
+const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
+const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
 
 const testTools = require("../test_tools.js");

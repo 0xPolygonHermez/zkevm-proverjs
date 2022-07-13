@@ -2,7 +2,7 @@
 
 const { Scalar } = require('ffjavascript');
 
-const { scalar2fea, fea2scalar } = require('@polygon-hermez/zkevm-commonjs/src/smt-utils');
+const { scalar2fea, fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs/src/smt-utils');
 
 class TestTools {
 
