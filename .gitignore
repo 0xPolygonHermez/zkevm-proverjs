@@ -1,10 +1,12 @@
 node_modules
 .vscode
+build/tmp
 dist
 proof.json
 logs.json
 logs-trace
 logs-full-trace
+package-lock.json
 cache-main-pil.json
 testvectors/commit.bin
 testvectors/constants.bin

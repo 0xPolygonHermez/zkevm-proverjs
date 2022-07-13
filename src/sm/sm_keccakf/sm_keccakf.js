@@ -129,7 +129,7 @@ module.exports.execute = async function (pols, input) {
         NormGate9: []
     };
 
-    const script = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "keccak_script.json"), "utf8"));
+    const script = JSON.parse(await fs.promises.readFile(path.join(__dirname, "keccak_script.json"), "utf8"));
 
     let c_xor=0;
     let c_xorn=0;

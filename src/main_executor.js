@@ -7,20 +7,20 @@ const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { newCommitPolsArray, compile  } = require("pilcom");
 
 
-const smArith = require("./sm/sm_arith.js");
+const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
 const smByte4 = require("./sm/sm_byte4.js");
-const smKeccakF = require("./sm/sm_keccakf.js");
-const smMain = require("./sm/sm_main.js");
+const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
+const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
 const smNine2One = require("./sm/sm_nine2one.js");
 const smNormGate9 = require("./sm/sm_norm_gate9.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
-const smPaddingKKBit = require("./sm/sm_padding_kkbit.js");
+const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
 const smPoseidonG = require("./sm/sm_poseidong.js");
-const smStorage = require("./sm/sm_storage.js");
+const smStorage = require("./sm/sm_storage/sm_storage.js");
 
 
 const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
@@ -85,6 +85,9 @@ async function run() {
     if (argv.n) {
         config.debugInfo["N"] = Number(argv.n);
     }
+
+    const N = cmPols.Main.PC.length;
+
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, config);
     if (typeof outputFile !== "undefined") {
         console.log("Storage...");
@@ -118,6 +121,14 @@ async function run() {
         console.log("PoseidonG...");
         const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
         await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
+
+        for (let i=0; i<cmPols.$$array.length; i++) {
+            for (let j=0; j<N; j++) {
+                if (typeof cmPols.$$array[i][j] === "undefined") {
+                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                }
+            }
+        }
 
         console.log("Exporting Polynomials...");
         await cmPols.saveToFile(outputFile);

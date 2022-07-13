@@ -7,8 +7,8 @@
     "buildgenesis": "",
     "buildinput": "",
     "buildrom": "",
-    "buildconstants": "node --max-old-space-size src/main_buildconstants -r node_modules/zkevm-rom/build/rom.json -o tmp/zkevm.const",
-    "exec": "node --max-old-space-size src/main_exec -p pil/main.pil -r  node_modules/zkevm-rom/build/rom.json -i tools/build-genesis/input_executor.json -o tmp/zkevm.commit",
+    "buildconstants": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_buildconstants -r build/rom.json -o build/proof/zkevm.const",
+    "exec": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_executor tools/build-genesis/input_executor.json -p pil/main.pil -r build/rom.json -o build/proof/zkevm.commit && cp build/rom.json tools/build-genesis/input_executor.json build/proof",
     "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
@@ -25,6 +25,7 @@
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "git+ssh://git@github.com/0xpolygonhermez/zkasmcom.git",
     "@0xpolygonhermez/zkevm-commonjs": "git+ssh://git@github.com/0xpolygonhermez/zkevm-commonjs.git#v0.0.36",
+    "@0xpolygonhermez/zkevm-rom": "git+ssh://git@github.com/0xpolygonhermez/zkevm-rom.git",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "0.1.1",

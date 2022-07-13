@@ -58,7 +58,7 @@ module.exports.buildConstants = async function (pols) {
 
 module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = pols.v.length;
+    const N = pols.offset.length;
 
     // Initialization
     for (let i = 0; i < N; i++) {

@@ -2179,11 +2179,6 @@ function eval_getSequencerAddr(ctx, tag) {
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
 }
 
-function eval_getChainId(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
-    return [ctx.Fr.e(ctx.input.chainId), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
 function eval_getBatchHashData(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.batchHashData));

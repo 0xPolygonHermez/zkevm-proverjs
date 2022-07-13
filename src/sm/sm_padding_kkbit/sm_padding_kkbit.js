@@ -1,6 +1,6 @@
 const { assert } = require("chai");
 
-const keccak256 = require("ethers").utils.keccak256;
+const keccakF = require("./keccak.js").keccakF;
 
 const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
@@ -251,8 +251,7 @@ module.exports.execute = async function (pols, input) {
 
             p += 1;
         }
-
-        curState = keccak256(stateWithR);
+        curState = keccakF(stateWithR);
         required.Nine2One.push([stateWithR, curState]);
 
         for (let k=0; k<8; k++) pols.sOut[k][p] = 0n;
