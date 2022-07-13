@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const zkasm = require("@0xpolygonhermez/zkasmcom");
 
-const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
+const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
 
 
 const smArith = require("../src/sm/sm_arith/sm_arith.js");

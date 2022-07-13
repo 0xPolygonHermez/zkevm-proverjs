@@ -5,7 +5,7 @@ const { connect } = require("http2");
 const path = require("path");
 const { log2 } = require("@0xpolygonhermez/zkevm-commonjs");
 const { F1Field } = require("ffjavascript");
-const getKs = require("@0xpolygonhermez/pilcom").getKs;
+const getKs = require("pilcom").getKs;
 
 const SlotSize = 158418;
 

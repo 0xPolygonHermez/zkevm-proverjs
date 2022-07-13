@@ -28,7 +28,7 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "yargs": "^17.4.0",
-    "@0xpolygonhermez/pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git/tree/accjs"
+    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git/tree/accjs"
   },
   "devDependencies": {
     "chai": "^4.3.4",

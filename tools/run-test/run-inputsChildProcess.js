@@ -6,7 +6,7 @@ const helpers = require("./helpers");
 const { performance } = require("perf_hooks");
 const smMain = require("../../src/sm/sm_main");
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { compile, createCommitedPols } = require("@0xpolygonhermez/pilcom");
+const { compile, createCommitedPols } = require("pilcom");
 const fileCachePil = path.join(__dirname, "../../cache-main-pil.json");
 const { execFile } = require("child_process");
 

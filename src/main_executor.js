@@ -2,9 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const version = require("../package").version;
 
-const exportPols = require("@0xpolygonhermez/pilcom").exportPolynomials;
+const exportPols = require("pilcom").exportPolynomials;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { newCommitPolsArray, compile  } = require("@0xpolygonhermez/pilcom");
+const { newCommitPolsArray, compile  } = require("pilcom");
 
 
 const smArith = require("./sm/sm_arith.js");

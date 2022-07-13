@@ -4,7 +4,7 @@ const F1Field = require("ffjavascript").F1Field;
 const fs = require("fs");
 const path = require("path");
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("@0xpolygonhermez/pilcom");
+const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 
 
 const smArith = require("../src/sm/sm_arith/sm_arith.js");

@@ -31,7 +31,7 @@ const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
 
-const { newConstantPolsArray, compile } = require("@0xpolygonhermez/pilcom");
+const { newConstantPolsArray, compile } = require("pilcom");
 const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")
