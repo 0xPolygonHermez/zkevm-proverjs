@@ -1,8 +1,8 @@
 const Scalar = require("ffjavascript").Scalar;
 const ethers = require("ethers");
 
-const smtKeyUtils = require("@polygon-hermez/zkevm-commonjs").smtUtils;
-const stateUtils = require("@polygon-hermez/zkevm-commonjs").stateUtils;
+const smtKeyUtils = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const stateUtils = require("@0xpolygonhermez/zkevm-commonjs").stateUtils;
 
 function checkParam(param, paramStr){
     if (typeof param === "undefined"){

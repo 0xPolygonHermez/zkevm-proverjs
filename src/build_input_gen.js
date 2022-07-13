@@ -3,7 +3,7 @@ const path = require("path");
 const ethers = require("ethers");
 const {
     MemDB, ZkEVMDB, processorUtils, smtUtils, getPoseidon,
-} = require('@polygon-hermez/zkevm-commonjs');
+} = require('@0xpolygonhermez/zkevm-commonjs');
 
 // paths files
 const pathInput = path.join(__dirname, "../testvectors/input_gen.json");

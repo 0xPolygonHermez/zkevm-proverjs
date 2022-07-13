@@ -3,7 +3,7 @@
 const {Scalar, F1Field}  = require("ffjavascript");
 
 const codes = require("../opcodes.js");
-const { scalar2fea } = require("@polygon-hermez/zkevm-commonjs").smtUtils;
+const { scalar2fea } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 module.exports.buildConstants = async function buildConstants(pols, polsDef, rom) {
 
