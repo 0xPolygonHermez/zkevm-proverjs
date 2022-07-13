@@ -1031,6 +1031,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (l.hashPLen) {
             pols.hashPLen[i] = 1n;
             const lm = fe2n(Fr, op0, ctx);
+            // If it's undefined compute hash 0f 0 bytes
+            if(typeof ctx.hashP[addr] === "undefined") {
+                // len must be 0
+                if (lm != 0) throw new Error(`HashP length does not match ${addr}  is ${lm} and should be ${0}`);
+                ctx.hashP[addr] = { data: [], reads: {} };
+                ctx.hashP[addr].digest = await hashContractBytecode("0x");;
+                await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data)
+            }
             const lh = ctx.hashP[addr].data.length;
             if (lm != lh) throw new Error(`HashP length does not match ${addr}  is ${lm} and should be ${lh}`);
             if (typeof ctx.hashP[addr].digest === "undefined") {
