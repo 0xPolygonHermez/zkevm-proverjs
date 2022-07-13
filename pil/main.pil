@@ -349,7 +349,7 @@ namespace Main(%N);
     {Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7, Rom.offset,
     Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inSTEP, Rom.inFREE, Rom.inRR, Rom.inHASHPOS,
     Rom.setA, Rom.setB, Rom.setC, Rom.setD, Rom.setE, Rom.setSR, Rom.setCTX, Rom.setSP, Rom.setPC, Rom.setGAS, Rom.setMAXMEM, Rom.setRR, Rom.setHASHPOS,
-    Rom.JMP, Rom.JMPN, JMPC,
+    Rom.JMP, Rom.JMPN, Rom.JMPC,
     Rom.isStack, Rom.isCode, Rom.isMem, Rom.incStack, Rom.incCode, Rom.useCTX, Rom.ind, Rom.indRR,
     Rom.mOp, Rom.mWR, Rom.sWR, Rom.sRD, Rom.arith, Rom.arithEq0, Rom.arithEq1, Rom.arithEq2, Rom.arithEq3, Rom.hashK, Rom.hashKLen, Rom.hashKDigest, Rom.hashP, Rom.hashPLen, Rom.hashPDigest,
     Rom.bin, Rom.binOpcode, Rom.assert, Rom.memAlign, Rom.memAlignWR, Rom.memAlignWR8,
