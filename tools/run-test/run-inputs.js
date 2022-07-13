@@ -92,22 +92,10 @@ async function main() {
             const config = {
                     debug: true,
                     debugInfo: {
-                        inputName: path.basename(fileName)
+                        inputName: path.basename(fileName),
+                        N: 23
                     }
                 }
-            if(fileName.includes("stack-errors") ||
-                fileName.includes("erc20") ||
-                fileName.includes("call_16") ||
-                fileName.includes("call_24") ||
-                fileName.includes("call_3") ||
-                fileName.includes("call_25")){
-                config.debugInfo["N"] = 18;
-            } else {
-                if (fileName.includes("e2e") ||
-                fileName.includes("CrashingTransaction")) {
-                    config.debugInfo["N"] = 20;
-                }
-            }
             await smMain.execute(cmPols.Main, cmPolsDef.Main, input, rom, config);
             const stopTime = performance.now();
             info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime) / 1000} s\n`)}`;
