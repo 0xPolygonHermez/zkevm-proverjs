@@ -1,18 +1,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const { buildPoseidonGolden,log2 } = require("@0xpolygonhermez/zkevm-commonjs");
-const buildPoseidonBN128 = require("circomlibjs").buildPoseidon;
-
 const version = require("../package").version;
-
-const { exportMerkleGroupMultipol } = require("./binfiles.js");
-
-const { extendPol } = require("./polutils");
-
-const Merkle = require("./merkle.js");
-const MerkleGroupMultipol = require("./merkle_group_multipol.js");
-const starkStruct = require("./starkstruct");
+const { newConstantPolsArray, compile } = require("pilcom");
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
@@ -31,7 +21,6 @@ const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
 
-const { newConstantPolsArray, compile } = require("pilcom");
 const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")
@@ -42,10 +31,6 @@ const argv = require("yargs")
     .argv;
 
 async function run() {
-    const poseidonGolden = await buildPoseidonGolden();
-    const F = poseidonGolden.F;
-
-    const poseidonBN128 = await buildPoseidonBN128();
 
     if (typeof(argv.rom) !== "string") {
         throw new Error("A rom file needs to be specified")
@@ -68,9 +53,7 @@ async function run() {
 
     // BREAK HERE TO DETECT N
 
-    const N = constPols.Main.STEP.polDeg;
-    const Nbits = log2(N);
-    const extendBits = 1;
+    const N = constPols.Main.STEP.length;
 
     console.log("Arith...");
     await smArith.buildConstants(constPols.Arith);
@@ -105,9 +88,11 @@ async function run() {
     console.log("Storage...");
     await smStorage.buildConstants(constPols.Storage);
 
-    for (let i=0; i<constPolsArrayDef.length; i++) {
-        if (constPolsArray[i].length != N) {
-            throw new Error(`Polinomial not fited ${constPolsArrayDef[i].name}` )
+    for (let i=0; i<constPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof constPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+            }
         }
     }
 

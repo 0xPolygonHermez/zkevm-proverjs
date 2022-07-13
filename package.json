@@ -4,7 +4,12 @@
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "buildgenesis": "",
+    "buildinput": "",
+    "buildrom": "",
+    "buildconstants": "node --max-old-space-size src/main_buildconstants -r node_modules/zkevm-rom/build/rom.json -o tmp/zkevm.const",
+    "exec": "node --max-old-space-size src/main_exec -p pil/main.pil -r  node_modules/zkevm-rom/build/rom.json -i tools/build-genesis/input_executor.json -o tmp/zkevm.commit",
+    "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
     "test:counters:arith": "mocha test/counters/arith.js",

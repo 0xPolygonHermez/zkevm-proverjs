@@ -47,8 +47,8 @@ module.exports.buildConstants = async function (pols) {
 */
 function buildFACTORS(FACTORS, N) {
     // The REGISTERS_NUM is equal to the number of factors
-    let index = 0;
     for (let i = 0; i < REGISTERS_NUM; i++) {
+        let index = 0;
         for (let j = 0; j < N; j += BYTES_PER_REGISTER) {
             for (let k = 0; k < BYTES_PER_REGISTER; k++) {
                 let factor = BigInt((2 ** 8) ** k) * BigInt((j % (REGISTERS_NUM * BYTES_PER_REGISTER)) / BYTES_PER_REGISTER == i);

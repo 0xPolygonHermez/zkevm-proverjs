@@ -2,7 +2,7 @@ const { assert } = require("chai");
 
 const keccak256 = require("ethers").utils.keccak256;
 
-const { log2 } = require("@0xpolygonhermez/zkevm-commonjs");
+const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
 const { F1Field } = require("ffjavascript");
 const getKs = require("pilcom").getKs;
