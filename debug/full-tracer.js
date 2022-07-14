@@ -29,10 +29,10 @@ class FullTracer {
         // Final output json to log
         this.finalTrace = {};
 
-        this.depth = 1;
+        this.depth = 0;
         this.initGas = 0;
         this.txCount = 0;
-        this.deltaStorage = { 1: {} };
+        this.deltaStorage = { 0: {} };
         this.txTime = 0;
         this.txGAS = {};
         this.accBatchGas = 0;
@@ -63,7 +63,11 @@ class FullTracer {
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
         this.info[this.info.length - 1].error = errorName;
-        this.depth--
+        // Dont decrease depth if the error is from processing a RETURN opcode
+        const lastOpcode = this.info[this.info.length - 1]        
+        if (!opDecContext.includes(lastOpcode.opcode)) {
+            this.depth--
+        }
         // Revert logs
         this.logs[ctx.CTX] = null
     }
@@ -139,8 +143,8 @@ class FullTracer {
         this.finalTrace.responses.push(response);
         this.txTime = Date.now();
         //Reset values
-        this.depth = 1;
-        this.deltaStorage = { 1: {} };
+        this.depth = 0;
+        this.deltaStorage = { 0: {} };
         this.txGAS[this.depth] = context.gas;
     }
 
@@ -468,7 +472,7 @@ class FullTracer {
         const s = {
             r: this.toHexStringRlp(ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txR"))),
             s: this.toHexStringRlp(ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txS"))),
-            v: this.toHexStringRlp(ethers.utils.hexlify(v - 27 + txu.chainId*2 + 35))
+            v: this.toHexStringRlp(ethers.utils.hexlify(v - 27 + txu.chainId * 2 + 35))
         }
 
         const fields = [txu.nonce, txu.gasPrice, txu.gasLimit, txu.to, txu.value, txu.data, s.v, s.r, s.s];
