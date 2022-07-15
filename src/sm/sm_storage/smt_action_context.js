@@ -40,8 +40,6 @@ class SmtActionContext
     }
 
     init (fr, action) {
-        console.log('========== ACTION ================');
-        console.log(action);
 
         this.completeAction(fr, action);
 
