@@ -2145,8 +2145,10 @@ function eval_functionCall(ctx, tag) {
         return eval_loadScalar(ctx, tag);
     } else if (tag.funcName == "log") {
         return eval_log(ctx, tag);
-    } else if (tag.funcName == "copyTouchedAddress"){
-        return eval_copyTouchedAddress(ctx,tag)
+    } else if (tag.funcName == "resetTouchedAddress"){
+        return eval_resetTouchedAddress(ctx,tag)
+    } else if (tag.funcName == "resetStorageSlots"){
+        return eval_resetStorageSlots(ctx,tag)
     } else if (tag.funcName == "exp"){
         return eval_exp(ctx,tag)
     } else if (tag.funcName == "storeLog") {
@@ -2268,9 +2270,8 @@ function eval_getBytecode(ctx, tag) {
 }
 
 function eval_touchedAddress(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
     let addr = evalCommand(ctx,tag.params[0]);
-    let context = evalCommand(ctx,tag.params[1]);
 
     // if address is precompiled smart contract considered warm access
     if (Scalar.gt(addr, 0) && Scalar.lt(addr, 10)){
@@ -2278,47 +2279,51 @@ function eval_touchedAddress(ctx, tag) {
     }
 
     // if address in touchedAddress return 0
-    if(ctx.input.touchedAddress[context] && ctx.input.touchedAddress[context].filter(x => x == addr).length > 0) {
+
+    if(ctx.input.touchedAddress && ctx.input.touchedAddress.filter(x => x == addr).length > 0) {
         return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     } else {
     //if address not in touchedAddress, return 1
-        if(ctx.input.touchedAddress[context]) {
-            ctx.input.touchedAddress[context].push(addr);
+        if(ctx.input.touchedAddress) {
+            ctx.input.touchedAddress.push(addr);
         } else {
-            ctx.input.touchedAddress[context] = [addr];
+            ctx.input.touchedAddress = [addr];
         }
         return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 }
 
-function eval_copyTouchedAddress(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let ctx1 = evalCommand(ctx,tag.params[0]);
-    let ctx2 = evalCommand(ctx,tag.params[1]);
-    // if address in touchedAddress return 0
-    if(ctx.input.touchedAddress[ctx1])
-        ctx.input.touchedAddress[ctx2] = ctx.input.touchedAddress[ctx1];
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+function eval_resetTouchedAddress(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+     ctx.input.touchedAddress = [];
+     return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
 function eval_touchedStorageSlots(ctx, tag) {
-    if (tag.params.length != 3) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
     let addr = evalCommand(ctx,tag.params[0]);
     let key = evalCommand(ctx,tag.params[1])
-    let context = evalCommand(ctx,tag.params[2]);
+
     // if address in touchedStorageSlots return 0
-    if(ctx.input.touchedStorageSlots[context] && ctx.input.touchedStorageSlots[context].filter(x => (x.addr == addr && x.key == key)).length > 0) {
+    if(ctx.input.touchedStorageSlots && ctx.input.touchedStorageSlots.filter(x => (x.addr == addr && x.key == key)).length > 0) {
         return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     } else {
     //if addres not in touchedStorageSlots, return 1
-        if(ctx.input.touchedStorageSlots[context]) {
-            ctx.input.touchedStorageSlots[context].push({addr, key});
+        if(ctx.input.touchedStorageSlots) {
+            ctx.input.touchedStorageSlots.push({addr, key});
         } else {
-            ctx.input.touchedStorageSlots[context] = [{addr, key}];
+            ctx.input.touchedStorageSlots = [{addr, key}];
         }
         return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 }
+
+function eval_resetStorageSlots(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+     ctx.input.touchedStorageSlots = [];
+     return scalar2fea(ctx.Fr, Scalar.e(0));
+}
+
 
 function eval_exp(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
