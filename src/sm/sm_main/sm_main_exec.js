@@ -124,11 +124,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.fileName = l.fileName;
         ctx.line = l.line;
 
-        // breaks the loop in debug mode in order to test and debug faster
-        if (config.debug && l.fileName.includes("end.zkasm")) {
-            break;
-        }
-
         let incHashPos = 0;
         let incCounter = 0;
 
@@ -140,6 +135,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (iTracer)
             await iTracer.getTrace(ctx, l, false);
+
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
@@ -838,6 +834,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
             incCounter = res.proofHashCounter + 2;
 
+
+
             required.Storage.push({
                 bIsSet: false,
                 getResult: {
@@ -858,6 +856,34 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.sKeyI[k][i] =  keyI[k];
                 pols.sKey[k][i] = key[k];
             }
+
+            /*
+            sRD {
+                SR0 + 2**32*SR1, SR2 + 2**32*SR3, SR4 + 2**32*SR5, SR6 + 2**32*SR7,
+                sKey[0], sKey[1], sKey[2], sKey[3],
+                op0, op1, op2, op3,
+                op4, op5, op6, op7,
+                incCounter
+            } in
+            Storage.iLatchGet {
+                Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
+                Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
+                Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
+                Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
+                Storage.incCounter + 2
+            };
+            */
+
+            let sr = sr8to4(ctx.Fr, ctx.SR);
+
+            console.log([pols.SR0[i] + (2n ** 32n) * pols.SR1[i],
+                         pols.SR2[i] + (2n ** 32n) * pols.SR3[i],
+                         pols.SR4[i] + (2n ** 32n) * pols.SR5[i],
+                         pols.SR6[i] + (2n ** 32n) * pols.SR7[i],
+                         pols.sKey[0][i], pols.sKey[1][i], pols.sKey[2][i], pols.sKey[3][i],
+                         op0, op1, op2, op3,
+                         op4, op5, op6, op7,
+                         incCounter]);
 
         } else {
             pols.sRD[i] = 0n;
@@ -2149,10 +2175,8 @@ function eval_functionCall(ctx, tag) {
         return eval_loadScalar(ctx, tag);
     } else if (tag.funcName == "log") {
         return eval_log(ctx, tag);
-    } else if (tag.funcName == "resetTouchedAddress"){
-        return eval_resetTouchedAddress(ctx,tag)
-    } else if (tag.funcName == "resetStorageSlots"){
-        return eval_resetStorageSlots(ctx,tag)
+    } else if (tag.funcName == "copyTouchedAddress"){
+        return eval_copyTouchedAddress(ctx,tag)
     } else if (tag.funcName == "exp"){
         return eval_exp(ctx,tag)
     } else if (tag.funcName == "storeLog") {
@@ -2274,8 +2298,9 @@ function eval_getBytecode(ctx, tag) {
 }
 
 function eval_touchedAddress(ctx, tag) {
-    if (tag.params.length != 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
     let addr = evalCommand(ctx,tag.params[0]);
+    let context = evalCommand(ctx,tag.params[1]);
 
     // if address is precompiled smart contract considered warm access
     if (Scalar.gt(addr, 0) && Scalar.lt(addr, 10)){
@@ -2283,51 +2308,47 @@ function eval_touchedAddress(ctx, tag) {
     }
 
     // if address in touchedAddress return 0
-
-    if(ctx.input.touchedAddress && ctx.input.touchedAddress.filter(x => x == addr).length > 0) {
+    if(ctx.input.touchedAddress[context] && ctx.input.touchedAddress[context].filter(x => x == addr).length > 0) {
         return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     } else {
     //if address not in touchedAddress, return 1
-        if(ctx.input.touchedAddress) {
-            ctx.input.touchedAddress.push(addr);
+        if(ctx.input.touchedAddress[context]) {
+            ctx.input.touchedAddress[context].push(addr);
         } else {
-            ctx.input.touchedAddress = [addr];
+            ctx.input.touchedAddress[context] = [addr];
         }
         return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 }
 
-function eval_resetTouchedAddress(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-     ctx.input.touchedAddress = [];
-     return scalar2fea(ctx.Fr, Scalar.e(0));
+function eval_copyTouchedAddress(ctx, tag) {
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+    let ctx1 = evalCommand(ctx,tag.params[0]);
+    let ctx2 = evalCommand(ctx,tag.params[1]);
+    // if address in touchedAddress return 0
+    if(ctx.input.touchedAddress[ctx1])
+        ctx.input.touchedAddress[ctx2] = ctx.input.touchedAddress[ctx1];
+    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_touchedStorageSlots(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+    if (tag.params.length != 3) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
     let addr = evalCommand(ctx,tag.params[0]);
     let key = evalCommand(ctx,tag.params[1])
-
+    let context = evalCommand(ctx,tag.params[2]);
     // if address in touchedStorageSlots return 0
-    if(ctx.input.touchedStorageSlots && ctx.input.touchedStorageSlots.filter(x => (x.addr == addr && x.key == key)).length > 0) {
+    if(ctx.input.touchedStorageSlots[context] && ctx.input.touchedStorageSlots[context].filter(x => (x.addr == addr && x.key == key)).length > 0) {
         return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     } else {
     //if addres not in touchedStorageSlots, return 1
-        if(ctx.input.touchedStorageSlots) {
-            ctx.input.touchedStorageSlots.push({addr, key});
+        if(ctx.input.touchedStorageSlots[context]) {
+            ctx.input.touchedStorageSlots[context].push({addr, key});
         } else {
-            ctx.input.touchedStorageSlots = [{addr, key}];
+            ctx.input.touchedStorageSlots[context] = [{addr, key}];
         }
         return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 }
-
-function eval_resetStorageSlots(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-     ctx.input.touchedStorageSlots = [];
-     return scalar2fea(ctx.Fr, Scalar.e(0));
-}
-
 
 function eval_exp(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
@@ -2420,12 +2441,12 @@ function eval_storeLog(ctx, tag){
 function eval_log(ctx, tag) {
     const frLog = ctx[tag.params[0].regName];
     const label = typeof tag.params[1] === "undefined" ? "notset" : tag.params[1].varName;
-    if(typeof(frLog) == "number" || typeof(frLog) == "bigint") {
-        console.log(`Log regname ${tag.params[0].regName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-        console.log("       Scalar: ", frLog);
+    if(typeof(frLog) == "number") {
+        console.log(frLog)
     } else {
         let scalarLog;
         let hexLog;
+
         if (tag.params[0].regName !== "HASHPOS"){
             scalarLog = fea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;

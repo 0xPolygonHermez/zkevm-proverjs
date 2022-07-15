@@ -76,8 +76,9 @@ module.exports.execute = async function (pols, action) {
     if (!actionListEmpty) {
         ctx.init (fr, action[a]);
     }
-
+    let prevlineId
     for (let i=0; i<polSize; i++) {
+
         // op is the internal register, reset to 0 at every evaluation
         let op = [fr.zero, fr.zero, fr.zero, fr.zero];
 
@@ -87,14 +88,19 @@ module.exports.execute = async function (pols, action) {
         // Set the next evaluation index, which will be 0 when we reach the last evaluation
         let nexti = (i+1)%polSize;
 
-/*        if (rom.line[l].fileName) {
-            console.log(`### w:${i} a:${a} ${rom.line[l].fileName}:${rom.line[l].line} `+
-                `[${pols.valueLow0[i]}, ${pols.valueLow1[i]}, ${pols.valueLow2[i]}, ${pols.valueLow3[i]}]`+
-                `[${pols.valueHigh0[i]}, ${pols.valueHigh1[i]}, ${pols.valueHigh2[i]}, ${pols.valueHigh3[i]}]`);
+        const lineId = rom.line[l].fileName + ':' + rom.line[l].line;
+        if (prevlineId !== lineId) {
+            prevlineId = lineId;
+
+            if (rom.line[l].fileName) {
+                console.log(`### w:${i} a:${a} ${rom.line[l].fileName}:${rom.line[l].line} `+
+                    `[${pols.valueLow0[i]}, ${pols.valueLow1[i]}, ${pols.valueLow2[i]}, ${pols.valueLow3[i]}]`+
+                    `[${pols.valueHigh0[i]}, ${pols.valueHigh1[i]}, ${pols.valueHigh2[i]}, ${pols.valueHigh3[i]}]`);
+            }
+            else {
+                console.log(`### w:${i} a:${a} `+l);
+            }
         }
-        else {
-            console.log(`### w:${i} a:${a} `+l);
-        }*/
 
         if (isLogging) {
             if (rom.line[l].funcName!="isAlmostEndPolynomial") {
@@ -195,6 +201,15 @@ module.exports.execute = async function (pols, action) {
                     }
                 }
 
+                // The SMT action can be a final leaf (isOld0 = true)
+                else if (rom.line[l].funcName=="GetIsOld0")
+                {
+                    if (!actionListEmpty && (action[a].bIsSet ? action[a].setResult.isOld0 : action[a].getResult.isOld0))
+                    {
+                        op[0] = fr.one;
+                        logger("StorageExecutor isOld0 returns " + fea42String(fr, op));
+                    }
+                }
                 // The SMT action can be a get, which can return a zero value (key not found) or a non-zero value
                 else if (rom.line[l].funcName=="isGet")
                 {
@@ -225,6 +240,17 @@ module.exports.execute = async function (pols, action) {
                     op[3] = ctx.siblingRkey[3];
 
                     logger("StorageExecutor GetSiblingRKey returns " + fea42String(fr, op));
+                }
+
+                // Get the insKey, i.e. the part that is not common to the value key
+                else if (rom.line[l].funcName=="GetInsRKey")
+                {
+                    op[0] = ctx.insRKey[0];
+                    op[1] = ctx.insRKey[1];
+                    op[2] = ctx.insRKey[2];
+                    op[3] = ctx.insRKey[3];
+
+                    logger("StorageExecutor GetInsRKey returns " + fea42String(fr, op));
                 }
 
                 // Get the sibling hash, obtained from the siblings array of the current level,
@@ -758,6 +784,7 @@ module.exports.execute = async function (pols, action) {
                 process.exit(-1);
             }
 
+            // TODO: it's a bug?
             // Check only if key was found
             if (action[a].getResult.isOld0)
             {
@@ -1070,6 +1097,7 @@ module.exports.execute = async function (pols, action) {
             pols.op0inv[i] = fr.inv(op[0]);
         }
 
+
         // Increment counter at every hash, and reset it at every latch
         if (rom.line[l].iHash)
         {
@@ -1084,6 +1112,23 @@ module.exports.execute = async function (pols, action) {
             pols.incCounter[nexti] = pols.incCounter[i];
         }
 
+        if (rom.line[l].iLatchGet) {
+            /*
+                        Storage.iLatchGet {
+                Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
+                Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
+                Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
+                Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
+                Storage.incCounter + 2
+            };
+            */
+            console.log(['#'+i, pols.newRoot0[i], pols.newRoot1[i], pols.newRoot2[i], pols.newRoot3[i]]);
+            console.log([ pols.oldRoot0[i], pols.oldRoot1[i], pols.oldRoot2[i], pols.oldRoot3[i]
+                        , pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i]
+                        , pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i]
+                        , pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i]
+                        , pols.incCounter[i] + 2n]);
+        }
         if ((i%1000)==0) logger("StorageExecutor step "+ i +" done");
 
     }

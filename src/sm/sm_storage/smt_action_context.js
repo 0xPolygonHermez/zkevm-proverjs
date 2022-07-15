@@ -9,7 +9,8 @@ class SmtActionContext
         this.currentLevel = 0; // Current level, from level to zero, as we climb up the tree
 
         // Remaining key and preceding bits
-        this.rkey = []
+        this.rkey = [];
+        this.insRKey = [];
         this.siblingRkey = [];
         this.bits = []; // Key bits consumed in the tree nodes, i.e. preceding remaining key rKey
         this.siblingBits = []; // Sibling key bits consumed in the tree nodes, i.e. preceding sibling remaining key siblingRKey
@@ -39,7 +40,11 @@ class SmtActionContext
     }
 
     init (fr, action) {
+        console.log('========== ACTION ================');
+        console.log(action);
+
         this.completeAction(fr, action);
+
         if (action.bIsSet) {
             // Deepest, initial level
             this.level = action.setResult.siblings.length;
@@ -49,6 +54,12 @@ class SmtActionContext
             this.rkey[1] = action.setResult.key[1];
             this.rkey[2] = action.setResult.key[2];
             this.rkey[3] = action.setResult.key[3];
+
+            // Initial value of insRKey is key
+            this.insRKey[0] = fr.zero;
+            this.insRKey[1] = fr.zero;
+            this.insRKey[2] = fr.zero;
+            this.insRKey[3] = fr.zero;
 
             this.siblingRkey[0] = action.setResult.insKey[0];
             this.siblingRkey[1] = action.setResult.insKey[1];
@@ -65,6 +76,12 @@ class SmtActionContext
             this.rkey[1] = action.getResult.key[1];
             this.rkey[2] = action.getResult.key[2];
             this.rkey[3] = action.getResult.key[3];
+
+            // Initial value of insRKey is key
+            this.insRKey[0] = action.getResult.insKey[0];
+            this.insRKey[1] = action.getResult.insKey[1];
+            this.insRKey[2] = action.getResult.insKey[2];
+            this.insRKey[3] = action.getResult.insKey[3];
 
             // Reset siblingRKey from previous actions
             this.siblingRkey[0] = fr.zero;
@@ -107,6 +124,7 @@ class SmtActionContext
                 this.bits.push(bit);
                 this.siblingBits.push(siblingBit);
                 this.rkey[keyNumber] /= 2n;
+                this.insRKey[keyNumber] /= 2n;
                 this.siblingRkey[keyNumber] /= 2n;
             }
             logger("SmtActionContext::init() rKey=" + fea42String10 (fr, this.rkey));

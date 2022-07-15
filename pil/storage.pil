@@ -1,4 +1,3 @@
-include "config.pil";
 include "poseidong.pil";
 
 namespace Storage(%N);

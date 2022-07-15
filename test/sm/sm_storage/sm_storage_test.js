@@ -1,21 +1,19 @@
 const fs = require('fs');
 
-const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
-const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
-const smtUtils = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
-const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
+const { SMT, MemDB, smtUtils, getPoseidon} = require("@0xpolygonhermez/zkevm-commonjs");
 const scalar2key = require("@0xpolygonhermez/zkevm-commonjs/test/helpers/test-utils.js").scalar2key;
 const Scalar = require("ffjavascript").Scalar;
 const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
-const StorageRom = require("../src/sm/sm_storage_rom.js").StorageRom;
-const sm_storage = require("../src/sm/sm_storage.js");
-const sm_poseidong = require("../src/sm/sm_poseidong.js");
+const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
+const sm_global = require("../../../src/sm/sm_global");
+const StorageRom = require("../../../src/sm/sm_storage/sm_storage_rom.js").StorageRom;
+const sm_storage = require("../../../src/sm/sm_storage/sm_storage.js");
+const sm_poseidong = require("../../../src/sm/sm_poseidong.js");
 
-const { isLogging, logger, fea42String, fea42String10, scalar2fea4, fea4IsEq }  = require("../src/sm/sm_storage_utils.js");
+const { isLogging, logger, fea42String, fea42String10, scalar2fea4, fea4IsEq }  = require("../../../src/sm/sm_storage/sm_storage_utils.js");
 
 const LOG_SMT_RESULT = false;
 
@@ -27,20 +25,45 @@ describe("Test storage operations", async function () {
     let cmPols, cmPolsArray, cmPolsDef;
     let db;
     let smt;
+    let plookUpIndex;
     const required = {Storage: []};
 
     this.timeout(10000000);
 
     before(async () => {
-        poseidon = await buildPoseidon();
+        poseidon = await getPoseidon();
         fr = poseidon.F;
 
-        pil = await compile(fr, "pil/storage.pil");
+        pil = await compile(fr, __dirname + "/storage_main.pil");
     })
 
     function initContext () {
-        [constPols, constPolsArray, constPolsDef] = createConstantPols(pil);
-        [cmPols, cmPolsArray, cmPolsDef] = createCommitedPols(pil);
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
+        plookUpIndex = 0;
+        for (let index = 0; index < cmPols.Main.sRD.length; ++index) {
+            cmPols.Main.sRD[index] = 0n;
+            cmPols.Main.SR0[index] = 0n;
+            cmPols.Main.SR1[index] = 0n;
+            cmPols.Main.SR2[index] = 0n;
+            cmPols.Main.SR3[index] = 0n;
+            cmPols.Main.SR4[index] = 0n;
+            cmPols.Main.SR5[index] = 0n;
+            cmPols.Main.SR6[index] = 0n;
+            cmPols.Main.SR7[index] = 0n;
+            cmPols.Main.sKey[0][index] = 0n;
+            cmPols.Main.sKey[1][index] = 0n;
+            cmPols.Main.sKey[2][index] = 0n;
+            cmPols.Main.sKey[3][index] = 0n;
+            cmPols.Main.op0[index] = 0n;
+            cmPols.Main.op1[index] = 0n;
+            cmPols.Main.op2[index] = 0n;
+            cmPols.Main.op3[index] = 0n;
+            cmPols.Main.op4[index] = 0n;
+            cmPols.Main.op5[index] = 0n;
+            cmPols.Main.op6[index] = 0n;
+            cmPols.Main.op7[index] = 0n;
+        }
 
         db = new MemDB(fr);
         smt = new SMT(db, poseidon, fr);
@@ -67,6 +90,38 @@ describe("Test storage operations", async function () {
 
     async function smtGet (root, key) {
         const r = await smt.get(root, key);
+        console.log(['r', r, root, key]);
+        const index = plookUpIndex++;
+        cmPols.Main.sRD[index] = fr.e(1n);
+        cmPols.Main.SR0[index] = fr.e(r.root[0] & 0xFFFFFFFFn);
+        cmPols.Main.SR1[index] = fr.e(r.root[0] >> 32n);
+        cmPols.Main.SR2[index] = fr.e(r.root[1] & 0xFFFFFFFFn);
+        cmPols.Main.SR3[index] = fr.e(r.root[1] >> 32n);
+        cmPols.Main.SR4[index] = fr.e(r.root[2] & 0xFFFFFFFFn);
+        cmPols.Main.SR5[index] = fr.e(r.root[2] >> 32n);
+        cmPols.Main.SR6[index] = fr.e(r.root[3] & 0xFFFFFFFFn);
+        cmPols.Main.SR7[index] = fr.e(r.root[3] >> 32n);
+        cmPols.Main.sKey[0][index] = key[0];
+        cmPols.Main.sKey[1][index] = key[1];
+        cmPols.Main.sKey[2][index] = key[2];
+        cmPols.Main.sKey[3][index] = key[3];
+        let rvalue = r.value;
+        cmPols.Main.op0[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op1[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op2[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op3[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op4[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op5[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op6[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
+        cmPols.Main.op7[index] = rvalue & 0xFFFFFFFFn;
+        rvalue = rvalue >> 32n;
         required.Storage.push({bIsSet: false,
             getResult: {
                 root: [...r.root],
@@ -82,14 +137,15 @@ describe("Test storage operations", async function () {
     }
 
     async function executeAndVerify () {
-        await sm_storage.buildConstants(constPols.Storage, constPolsDef.Storage);
-        const req = await sm_storage.execute(cmPols.Storage, cmPolsDef.Storage, required.Storage);
+        await sm_global.buildConstants(constPols.Global);
+        await sm_storage.buildConstants(constPols.Storage);
+        const req = await sm_storage.execute(cmPols.Storage, required.Storage);
 
-        await sm_poseidong.buildConstants(constPols.PoseidonG, constPolsDef.PoseidonG);
-        await sm_poseidong.execute(cmPols.PoseidonG, cmPolsDef.PoseidonG, req.PoseidonG);
+        await sm_poseidong.buildConstants(constPols.PoseidonG);
+        await sm_poseidong.execute(cmPols.PoseidonG, req.PoseidonG);
 
         // Verify
-        const res = await verifyPil(fr, pil, cmPolsArray, constPolsArray);
+        const res = await verifyPil(fr, pil, cmPols, constPols);
 
         if (res.length != 0) {
             console.log("Pil does not pass");
@@ -98,6 +154,38 @@ describe("Test storage operations", async function () {
             }
             assert(0);
         }
+    }
+
+    function bugTest () {
+        console.log ("StorageSM_BugTest starting...");
+
+        it('Set & Clear', async () => {
+            initContext();
+
+            const r1 = await smtSet (smt.empty, scalar2key(0x01, fr), Scalar.e(2));
+            // console.log({r1});
+            const r2 = await smtSet (r1.newRoot, scalar2key(0x03, fr), Scalar.e(4));
+            // console.log({r2});
+            const r3 = await smtSet (r2.newRoot, scalar2key(0x07, fr), Scalar.e(4));
+            // console.log({r3});
+
+            const rGet = await smtGet (r3.newRoot, scalar2key(0x02, fr));
+            console.log({rGet});
+            assert(Scalar.eq(rGet.value, Scalar.e(0)));
+
+            const rGet2 = await smtGet (r3.newRoot, scalar2key(0xFFFF, fr));
+            console.log({rGet2});
+            assert(Scalar.eq(rGet2.value, Scalar.e(0)));
+
+            /* const rGet = await smtGet (r3.newRoot, scalar2key(0x02, fr));
+            console.log(rGet.value);
+            assert(Scalar.eq(rGet.value, Scalar.e(0)));*/
+/*
+            const r2 = await smtSet (r1.newRoot, scalar2key(1, fr), Scalar.e(0));
+            assert(smtUtils.nodeIsZero(r2.newRoot, fr));*/
+
+            await executeAndVerify();
+        });
     }
 
     function unitTest () {
@@ -288,6 +376,8 @@ describe("Test storage operations", async function () {
         });
         console.log("StorageSM_EmptyTest done");
     }
+
+
 
     function useCaseTest () {
         console.log ("StorageSM_UseCasteTest starting...");
@@ -481,9 +571,10 @@ describe("Test storage operations", async function () {
         });
     }
 
-    unitTest();
+    bugTest();
+/*    unitTest();
     zeroToZeroTest();
     zeroToZero2Test();
     emptyTest();
-    useCaseTest();
+    useCaseTest();*/
 });
