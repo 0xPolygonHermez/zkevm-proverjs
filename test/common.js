@@ -253,7 +253,7 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
     const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
     if (includePoseidonG) {
         console.log("Exec PoseidonG...");
-        await smPoseidonG.execute(cmPols.PoseidonG, cmPolsDef.PoseidonG, allPoseidonG);
+        await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
     } else if (verifyPilFlag && allPoseidonG.length) {
         throw new Error(`PoseidonG was excluded, but zkasm has ${allPoseidonG.length} PoseidonG operations `+
                         `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);

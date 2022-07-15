@@ -834,8 +834,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
             incCounter = res.proofHashCounter + 2;
 
-
-
             required.Storage.push({
                 bIsSet: false,
                 getResult: {
@@ -856,34 +854,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.sKeyI[k][i] =  keyI[k];
                 pols.sKey[k][i] = key[k];
             }
-
-            /*
-            sRD {
-                SR0 + 2**32*SR1, SR2 + 2**32*SR3, SR4 + 2**32*SR5, SR6 + 2**32*SR7,
-                sKey[0], sKey[1], sKey[2], sKey[3],
-                op0, op1, op2, op3,
-                op4, op5, op6, op7,
-                incCounter
-            } in
-            Storage.iLatchGet {
-                Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
-                Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
-                Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
-                Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
-                Storage.incCounter + 2
-            };
-            */
-
-            let sr = sr8to4(ctx.Fr, ctx.SR);
-
-            console.log([pols.SR0[i] + (2n ** 32n) * pols.SR1[i],
-                         pols.SR2[i] + (2n ** 32n) * pols.SR3[i],
-                         pols.SR4[i] + (2n ** 32n) * pols.SR5[i],
-                         pols.SR6[i] + (2n ** 32n) * pols.SR7[i],
-                         pols.sKey[0][i], pols.sKey[1][i], pols.sKey[2][i], pols.sKey[3][i],
-                         op0, op1, op2, op3,
-                         op4, op5, op6, op7,
-                         incCounter]);
 
         } else {
             pols.sRD[i] = 0n;

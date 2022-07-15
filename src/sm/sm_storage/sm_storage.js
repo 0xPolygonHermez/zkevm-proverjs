@@ -88,6 +88,7 @@ module.exports.execute = async function (pols, action) {
         // Set the next evaluation index, which will be 0 when we reach the last evaluation
         let nexti = (i+1)%polSize;
 
+        /*
         const lineId = rom.line[l].fileName + ':' + rom.line[l].line;
         if (prevlineId !== lineId) {
             prevlineId = lineId;
@@ -100,7 +101,7 @@ module.exports.execute = async function (pols, action) {
             else {
                 console.log(`### w:${i} a:${a} `+l);
             }
-        }
+        }*/
 
         if (isLogging) {
             if (rom.line[l].funcName!="isAlmostEndPolynomial") {
@@ -784,37 +785,32 @@ module.exports.execute = async function (pols, action) {
                 process.exit(-1);
             }
 
-            // TODO: it's a bug?
-            // Check only if key was found
-            if (action[a].getResult.isOld0)
+            // Check that the calculated old root is the same as the provided action root
+            let oldRoot = [pols.oldRoot0[i], pols.oldRoot1[i], pols.oldRoot2[i], pols.oldRoot3[i]];
+            if ( !fea4IsEq(fr, oldRoot, action[a].getResult.root) )
             {
-                // Check that the calculated old root is the same as the provided action root
-                let oldRoot = [pols.oldRoot0[i], pols.oldRoot1[i], pols.oldRoot2[i], pols.oldRoot3[i]];
-                if ( !fea4IsEq(fr, oldRoot, action[a].getResult.root) )
-                {
-                    console.error("Error: StorageExecutor() LATCH GET found action " + a + " pols.oldRoot=" + fea42String(fr,oldRoot) + " different from action.getResult.root=" + fea42String(fr,action[a].getResult.root));
-                    process.exit(-1);
-                }
+                console.error("Error: StorageExecutor() LATCH GET found action " + a + " pols.oldRoot=" + fea42String(fr,oldRoot) + " different from action.getResult.root=" + fea42String(fr,action[a].getResult.root));
+                process.exit(-1);
+            }
 
-                // Check that the calculated complete key is the same as the provided action key
-                if ( pols.rkey0[i] != action[a].getResult.key[0] ||
-                     pols.rkey1[i] != action[a].getResult.key[1] ||
-                     pols.rkey2[i] != action[a].getResult.key[2] ||
-                     pols.rkey3[i] != action[a].getResult.key[3] )
-                {
-                    console.error("Error: StorageExecutor() LATCH GET found action " + a + " pols.rkey!=action.getResult.key");
-                    process.exit(-1);
-                }
+            // Check that the calculated complete key is the same as the provided action key
+            if ( pols.rkey0[i] != action[a].getResult.key[0] ||
+                    pols.rkey1[i] != action[a].getResult.key[1] ||
+                    pols.rkey2[i] != action[a].getResult.key[2] ||
+                    pols.rkey3[i] != action[a].getResult.key[3] )
+            {
+                console.error("Error: StorageExecutor() LATCH GET found action " + a + " pols.rkey!=action.getResult.key");
+                process.exit(-1);
+            }
 
-                // Check that final level state is consistent
-                if ( pols.level0[i] != fr.one ||
-                     pols.level1[i] != fr.zero ||
-                     pols.level2[i] != fr.zero ||
-                     pols.level3[i] != fr.zero )
-                {
-                    console.error("Error: StorageExecutor() LATCH GET found action " + a + " wrong level=" + pols.level3[i] + ":" + pols.level2[i] + ":" + pols.level1[i] + ":" + pols.level0[i]);
-                    process.exit(-1);
-                }
+            // Check that final level state is consistent
+            if ( pols.level0[i] != fr.one ||
+                    pols.level1[i] != fr.zero ||
+                    pols.level2[i] != fr.zero ||
+                    pols.level3[i] != fr.zero )
+            {
+                console.error("Error: StorageExecutor() LATCH GET found action " + a + " wrong level=" + pols.level3[i] + ":" + pols.level2[i] + ":" + pols.level1[i] + ":" + pols.level0[i]);
+                process.exit(-1);
             }
 
             logger("StorageExecutor LATCH GET");
@@ -1112,23 +1108,6 @@ module.exports.execute = async function (pols, action) {
             pols.incCounter[nexti] = pols.incCounter[i];
         }
 
-        if (rom.line[l].iLatchGet) {
-            /*
-                        Storage.iLatchGet {
-                Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
-                Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
-                Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
-                Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
-                Storage.incCounter + 2
-            };
-            */
-            console.log(['#'+i, pols.newRoot0[i], pols.newRoot1[i], pols.newRoot2[i], pols.newRoot3[i]]);
-            console.log([ pols.oldRoot0[i], pols.oldRoot1[i], pols.oldRoot2[i], pols.oldRoot3[i]
-                        , pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i]
-                        , pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i]
-                        , pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i]
-                        , pols.incCounter[i] + 2n]);
-        }
         if ((i%1000)==0) logger("StorageExecutor step "+ i +" done");
 
     }
