@@ -7,8 +7,14 @@
     "buildgenesis": "",
     "buildinput": "",
     "buildrom": "",
-    "buildconstants": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_buildconstants -r build/rom.json -o build/proof/zkevm.const",
-    "exec": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_executor tools/build-genesis/input_executor.json -p pil/main.pil -r build/rom.json -o build/proof/zkevm.commit && cp build/rom.json tools/build-genesis/input_executor.json build/proof",
+    "buildconstants": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_buildconstants -r ../zkevm-rom/build/rom.json -o build/proof/zkevm.const",
+    "exec": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_executor tools/build-genesis/input_executor.json -p pil/main.pil -r ../zkevm-rom/build/rom.json -o build/proof/zkevm.commit && cp build/rom.json tools/build-genesis/input_executor.json build/proof",
+    "pilverify": "node --max-old-space-size=524288 node_modules/pilcom/src/main_pilverifier.js build/proof/zkevm.commit -c build/proof/zkevm.const -p pil/main.pil",
+    "buildstarkinfo": "mkdir -p build/proof && node --max-old-space-size=524288 node_modules/pil-stark/src/main_genstarkinfo.js  -p pil/main.pil -s src/zkevm.starkstruct.json -i build/proof/zkevm.starkinfo.json && cp src/zkevm.starkstruct.json build/proof",
+    "buildchelpers": "mkdir -p build/proof && node --max-old-space-size=524288 node_modules/pil-stark/src/main_buildchelpers.js  -p pil/main.pil -s src/zkevm.starkstruct.json -c build/proof/zkevm.chelpers.cpp",
+    "buildconstanttree": "mkdir -p build/proof && node --trace-gc --trace-gc-ignore-scavenger --max-semi-space-size=1024 --max-old-space-size=32000 node_modules/pil-stark/src/main_buildconsttree.js  -c build/proof/zkevm.const -p pil/main.pil -s src/zkevm.starkstruct.json -t build/proof/zkevm.consttree -v build/proof/zkevm.verkey.json",
+    "prove": "mkdir -p build/proof && node --trace-gc --trace-gc-ignore-scavenger --max-semi-space-size=1024 --max-old-space-size=128000 node_modules/pil-stark/src/main_prover.js  -m build/proof/zkevm.commit  -c build/proof/zkevm.const -t build/proof/zkevm.consttree -p pil/main.pil -s src/zkevm.starkstruct.json -o build/proof/zkevm.proof.json -z build/proof/zkevm.proof.json -b build/proof/zkevm.public.json",
+    "verify": "mkdir -p build/proof && node --trace-gc --trace-gc-ignore-scavenger --max-semi-space-size=1024 --max-old-space-size=128000 node_modules/pil-stark/src/main_verifier.js  -p pil/main.pil -s src/zkevm.starkstruct.json -o build/proof/zkevm.proof.json -b build/proof/zkevm.public.json -v build/proof/zkevm.verkey.json",
     "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
@@ -24,7 +30,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "git+ssh://git@github.com/0xpolygonhermez/zkasmcom.git",
-    "@0xpolygonhermez/zkevm-commonjs": "git+ssh://git@github.com/0xpolygonhermez/zkevm-commonjs.git#v0.0.36",
+    "@0xpolygonhermez/zkevm-commonjs": "git+ssh://git@github.com/0xpolygonhermez/zkevm-commonjs.git",
     "@0xpolygonhermez/zkevm-rom": "git+ssh://git@github.com/0xpolygonhermez/zkevm-rom.git",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
@@ -34,7 +40,8 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "yargs": "^17.4.0",
-    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git/tree/accjs"
+    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git",
+    "pil-stark": "git+ssh://git@github.com/0xpolygonhermez/pil-stark.git"
   },
   "devDependencies": {
     "chai": "^4.3.4",
