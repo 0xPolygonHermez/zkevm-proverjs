@@ -1,0 +1,17 @@
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        5 => A
+        10 => B
+        A + B => C
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

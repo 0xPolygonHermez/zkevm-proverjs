@@ -1,6 +1,6 @@
-constant %N = 2**16;
+constant %N = 2**12;
 
-include "global.pil";
+// include "global.pil";
 // include "byte4.pil";
 
 namespace Main(%N);
@@ -306,7 +306,7 @@ namespace Main(%N);
     public globalHash5 = FREE5(0);
     public globalHash6 = FREE6(0);
     public globalHash7 = FREE7(0);
-
+/*
     Global.L1 * (FREE0 - :globalHash0) = 0;
     Global.L1 * (FREE1 - :globalHash1) = 0;
     Global.L1 * (FREE2 - :globalHash2) = 0;
@@ -315,6 +315,6 @@ namespace Main(%N);
     Global.L1 * (FREE5 - :globalHash5) = 0;
     Global.L1 * (FREE6 - :globalHash6) = 0;
     Global.L1 * (FREE7 - :globalHash7) = 0;
-
+*/
     pol commit sKeyI[4];
     pol commit sKey[4];
