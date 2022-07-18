@@ -1,7 +1,7 @@
-constant %N = 2**16;
+constant %N = 2**8;
 
 include "global.pil";
-include "byte4.pil";
+// include "byte4.pil";
 
 namespace Main(%N);
 
@@ -202,7 +202,7 @@ namespace Main(%N);
 
     /////// isNeg
 
-    JMPN*(isNeg*2**32 + op0) in Byte4.out;
+    // JMPN*(isNeg*2**32 + op0) in Byte4.out;
 
     /////// MAXMEM intermediary vals New State
 

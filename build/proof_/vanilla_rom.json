@@ -1,0 +1,66 @@
+{
+ "program": [
+  {
+   "inSTEP": "1",
+   "setA": 1,
+   "line": 3,
+   "fileName": "/home/zkronos73/devel/zkevm-proverjs/test/zkasm/vanilla.zkasm",
+   "lineStr": "        STEP => A"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 4,
+   "fileName": "/home/zkronos73/devel/zkevm-proverjs/test/zkasm/vanilla.zkasm",
+   "lineStr": "        0 :ASSERT"
+  },
+  {
+   "CONST": "0",
+   "setA": 1,
+   "setB": 1,
+   "setC": 1,
+   "setD": 1,
+   "setE": 1,
+   "setCTX": 1,
+   "setSP": 1,
+   "setPC": 1,
+   "setGAS": 1,
+   "setMAXMEM": 1,
+   "setSR": 1,
+   "line": 7,
+   "fileName": "/home/zkronos73/devel/zkevm-proverjs/test/zkasm/vanilla.zkasm",
+   "lineStr": "       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR"
+  },
+  {
+   "freeInTag": {
+    "op": "functionCall",
+    "funcName": "beforeLast",
+    "params": []
+   },
+   "inFREE": "1",
+   "JMPC": 0,
+   "JMPN": 1,
+   "offset": 3,
+   "line": 10,
+   "offsetLabel": "finalWait",
+   "fileName": "/home/zkronos73/devel/zkevm-proverjs/test/zkasm/vanilla.zkasm",
+   "lineStr": "        ${beforeLast()}  : JMPN(finalWait)"
+  },
+  {
+   "JMP": 1,
+   "JMPC": 0,
+   "JMPN": 0,
+   "offset": 0,
+   "line": 12,
+   "offsetLabel": "start",
+   "fileName": "/home/zkronos73/devel/zkevm-proverjs/test/zkasm/vanilla.zkasm",
+   "lineStr": "                         : JMP(start)"
+  }
+ ],
+ "labels": {
+  "start": 0,
+  "end": 2,
+  "finalWait": 3,
+  "opINVALID": 5
+ }
+}

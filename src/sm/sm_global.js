@@ -6,10 +6,10 @@ module.exports.buildConstants = async function (pols) {
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
-    const N = pols.BYTE.length;
-    buidBYTE(pols.BYTE, F, N);
-    buidBYTE2(pols.BYTE2, F, N);
-    buildL1(pols.L1, F, N);
+    const N = pols.BYTE.length || pols.BYTE2.length || pols.L1.length;
+    if (pols.BYTE) buidBYTE(pols.BYTE, F, N);
+    if (pols.BYTE2) buidBYTE2(pols.BYTE2, F, N);
+    if (pols.L1)  buildL1(pols.L1, F, N);
 
 };
 
