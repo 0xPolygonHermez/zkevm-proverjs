@@ -1,4 +1,4 @@
-constant %N = 2**17;
+constant %N = 2**16;
 
 include "global.pil";
 include "byte4.pil";
