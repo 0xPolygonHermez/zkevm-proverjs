@@ -127,6 +127,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         let incHashPos = 0;
         let incCounter = 0;
 
+        // breaks the loop in debug mode in order to test and debug faster
+        if (config.debug && l.fileName.includes("end.zkasm")) {
+            break;
+        }
+
         // if (i%1000==0) console.log(`Step: ${i}`);
 
         if (i==330) {
@@ -2416,8 +2421,9 @@ function eval_storeLog(ctx, tag){
 function eval_log(ctx, tag) {
     const frLog = ctx[tag.params[0].regName];
     const label = typeof tag.params[1] === "undefined" ? "notset" : tag.params[1].varName;
-    if(typeof(frLog) == "number") {
-        console.log(frLog)
+    if(typeof(frLog) == "number" || typeof(frLog) == "bigint") {
+        console.log(`Log regname ${tag.params[0].regName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        console.log("       Scalar: ", frLog);
     } else {
         let scalarLog;
         let hexLog;

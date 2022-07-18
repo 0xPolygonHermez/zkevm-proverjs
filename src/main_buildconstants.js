@@ -28,6 +28,7 @@ const argv = require("yargs")
     .usage("zkprover -r <rom.json> -o <constant.bin|json>")
     .alias("r", "rom")
     .alias("o", "output")
+    .alias("p", "pil")
     .argv;
 
 async function run() {
@@ -41,11 +42,13 @@ async function run() {
         throw new Error("A output file needs to be specified")
     }
     const outputFile = argv.output.trim();
+    const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : path.join(__dirname, "..", "pil", "main.pil");
+
 
     Fr = new F1Field("0xFFFFFFFF00000001");
 
     const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
-    const pil = await compile(Fr, path.join(__dirname, "..", "pil", "main.pil"));
+    const pil = await compile(Fr, pilFile);
 
 
 
@@ -55,38 +58,83 @@ async function run() {
 
     const N = constPols.Main.STEP.length;
 
-    console.log("Arith...");
-    await smArith.buildConstants(constPols.Arith);
-    console.log("Binary...");
-    await smBinary.buildConstants(constPols.Binary);
-    console.log("Byte4...");
-    await smByte4.buildConstants(constPols.Byte4);
-    console.log("Global...");
-    await smGlobal.buildConstants(constPols.Global);
-    console.log("KeccakF...");
-    await smKeccakF.buildConstants(constPols.KeccakF);
-    console.log("Main...");
-    await smMain.buildConstants(constPols.Main);
-    console.log("MemAlign...");
-    await smMemAlign.buildConstants(constPols.MemAlign);
-    console.log("Mem...");
-    await smMem.buildConstants(constPols.Mem);
-    console.log("Nine2One...");
-    await smNine2One.buildConstants(constPols.Nine2One);
-    console.log("NormGate9...");
-    await smNormGate9.buildConstants(constPols.NormGate9);
-    console.log("PaddingKK...");
-    await smPaddingKK.buildConstants(constPols.PaddingKK);
-    console.log("PaddingKKBits...");
-    await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
-    console.log("PaddingPG...");
-    await smPaddingPG.buildConstants(constPols.PaddingPG);
-    console.log("PoseidonG...");
-    await smPoseidonG.buildConstants(constPols.PoseidonG);
-    console.log("Rom...");
-    await smRom.buildConstants(constPols.Rom, rom);
-    console.log("Storage...");
-    await smStorage.buildConstants(constPols.Storage);
+    let modules = [];
+    Object.keys(pil.references).forEach((ref) => { parts = ref.split('.'); modules[parts[0]] = (modules[parts[0]] ?? 0) + 1; })
+
+    if (modules.Arith) {
+        console.log("Arith...");
+        await smArith.buildConstants(constPols.Arith);
+    }
+    if (modules.Binary) {
+        console.log("Binary...");
+        await smBinary.buildConstants(constPols.Binary);
+    }
+    if (modules.Byte4) {
+        console.log("Byte4...");
+        await smByte4.buildConstants(constPols.Byte4);
+    }
+    if (modules.Global) {
+        console.log("Global...");
+        await smGlobal.buildConstants(constPols.Global);
+    }
+    if (modules.KeccackF) {
+        console.log("KeccakF...");
+        await smKeccakF.buildConstants(constPols.KeccakF);
+    }
+    if (modules.Main) {
+        console.log("Main...");
+        await smMain.buildConstants(constPols.Main);
+    }
+
+    if (modules.MemAlign) {
+        console.log("MemAlign...");
+        await smMemAlign.buildConstants(constPols.MemAlign);
+    }
+
+    if (modules.Mem) {
+        console.log("Mem...");
+        await smMem.buildConstants(constPols.Mem);
+    }
+
+    if (modules.Nine2One) {
+        console.log("Nine2One...");
+        await smNine2One.buildConstants(constPols.Nine2One);
+    }
+
+    if (modules.NormGate9) {
+        console.log("NormGate9...");
+        await smNormGate9.buildConstants(constPols.NormGate9);
+    }
+
+    if (modules.PaddingKK) {
+        console.log("PaddingKK...");
+        await smPaddingKK.buildConstants(constPols.PaddingKK);
+    }
+
+    if (modules.PaddingKKBits) {
+        console.log("PaddingKKBits...");
+        await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
+    }
+
+    if (modules.PaddingPG) {
+        console.log("PaddingPG...");
+        await smPaddingPG.buildConstants(constPols.PaddingPG);
+    }
+
+    if (modules.PoseidongG) {
+        console.log("PoseidonG...");
+        await smPoseidonG.buildConstants(constPols.PoseidonG);
+    }
+
+    if (modules.Rom) {
+        console.log("Rom...");
+        await smRom.buildConstants(constPols.Rom, rom);
+    }
+
+    if (modules.Storage) {
+        console.log("Storage...");
+        await smStorage.buildConstants(constPols.Storage);
+    }
 
     for (let i=0; i<constPols.$$array.length; i++) {
         for (let j=0; j<N; j++) {
