@@ -1,7 +1,7 @@
-constant %N = 2**16;
+constant %N = 2**10;
 
 include "global.pil";
-include "byte4.pil";
+include "rom.pil";
 
 namespace Main(%N);
 
@@ -197,21 +197,21 @@ namespace Main(%N);
 
     pol addrRel = ind*E0 + indRR*RR + offset;
     pol addr = useCTX*CTX*2**18 + isStack*2**17 + isCode*2**16 + isMem*(2**17+2**16) + addrRel;
-    pol maxMemRel = isMem * addrRel;
+    // pol maxMemRel = isMem * addrRel;
 
     /////// isNeg
 
     // minThread: 12 maxThread: 18
 
-    JMPN*(isNeg*2**32 + op0) in Byte4.out;
+    // JMPN*(isNeg*2**32 + op0) in Byte4.out;
 
     /////// MAXMEM intermediary vals New State
 
-    pol diffMem = isMaxMem* ( (maxMemRel - MAXMEM) -
+    /* pol diffMem = isMaxMem* ( (maxMemRel - MAXMEM) -
                        (MAXMEM - maxMemRel) ) +
-              (MAXMEM - maxMemRel);
+              (MAXMEM - maxMemRel);*/
 
-    diffMem in Global.BYTE2;
+    // diffMem in Global.BYTE2;
     pol maxMemCalculated = isMaxMem*(addrRel - MAXMEM) + MAXMEM;
 
 ///////////
@@ -316,6 +316,45 @@ namespace Main(%N);
     Global.L1 * (FREE5 - :globalHash5) = 0;
     Global.L1 * (FREE6 - :globalHash6) = 0;
     Global.L1 * (FREE7 - :globalHash7) = 0;
+
+/////////
+// ROM Plookpups
+/////////
+
+    {/*CONST0,*/ CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7, offset ,
+    /*inA, inB, inC, inROTL_C, inD, inE, inSR, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inFREE, inRR, inHASHPOS,
+    setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setRR, setHASHPOS,
+    JMP, JMPN, JMPC,
+    isStack, isCode, isMem, incStack, incCode, useCTX, ind, indRR,
+    mOp, mWR, sWR, sRD, arith, arithEq0, arithEq1, arithEq2, arithEq3, hashK, hashKLen, hashKDigest, hashP, hashPLen, hashPDigest,
+    bin, binOpcode,*/assert, /*memAlign, memAlignWR, memAlignWR8,*/
+    zkPC} in
+    {/*Rom.CONST0,*/ Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7, Rom.offset,
+    /*Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inSTEP, Rom.inFREE, Rom.inRR, Rom.inHASHPOS,
+    Rom.setA, Rom.setB, Rom.setC, Rom.setD, Rom.setE, Rom.setSR, Rom.setCTX, Rom.setSP, Rom.setPC, Rom.setGAS, Rom.setMAXMEM, Rom.setRR, Rom.setHASHPOS,
+    Rom.JMP, Rom.JMPN, Rom.JMPC,
+    Rom.isStack, Rom.isCode, Rom.isMem, Rom.incStack, Rom.incCode, Rom.useCTX, Rom.ind, Rom.indRR,
+    Rom.mOp, Rom.mWR, Rom.sWR, Rom.sRD, Rom.arith, Rom.arithEq0, Rom.arithEq1, Rom.arithEq2, Rom.arithEq3, Rom.hashK, Rom.hashKLen, Rom.hashKDigest, Rom.hashP, Rom.hashPLen, Rom.hashPDigest,
+    Rom.bin, Rom.binOpcode,*/Rom.assert,/* Rom.memAlign, Rom.memAlignWR, Rom.memAlignWR8,*/
+    Rom.line};
+
+
+    {CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7, offset ,
+    inA, inB, inC, inROTL_C, inD, inE, inSR, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inFREE, inRR, inHASHPOS,
+    setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, /*setGAS, setMAXMEM, setRR, setHASHPOS,
+    JMP, JMPN, JMPC,
+    isStack, isCode, isMem, incStack, incCode, useCTX, ind, indRR,
+    mOp, mWR, sWR, sRD, arith, arithEq0, arithEq1, arithEq2, arithEq3, hashK, hashKLen, hashKDigest, hashP, hashPLen, hashPDigest,
+    bin, binOpcode,assert,memAlign, memAlignWR, memAlignWR8,*/
+    zkPC} in
+    {Rom.CONST0,Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7, Rom.offset,
+    Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inSTEP, Rom.inFREE, Rom.inRR, Rom.inHASHPOS,
+    Rom.setA, Rom.setB, Rom.setC, Rom.setD, Rom.setE, Rom.setSR, Rom.setCTX, Rom.setSP, Rom.setPC, /*Rom.setGAS, Rom.setMAXMEM, Rom.setRR, Rom.setHASHPOS,
+    Rom.JMP, Rom.JMPN, Rom.JMPC,
+    Rom.isStack, Rom.isCode, Rom.isMem, Rom.incStack, Rom.incCode, Rom.useCTX, Rom.ind, Rom.indRR,
+    Rom.mOp, Rom.mWR, Rom.sWR, Rom.sRD, Rom.arith, Rom.arithEq0, Rom.arithEq1, Rom.arithEq2, Rom.arithEq3, Rom.hashK, Rom.hashKLen, Rom.hashKDigest, Rom.hashP, Rom.hashPLen, Rom.hashPDigest,
+    Rom.bin, Rom.binOpcode,Rom.assert,Rom.memAlign, Rom.memAlignWR, Rom.memAlignWR8,*/
+    Rom.line};
 
     pol commit sKeyI[4];
     pol commit sKey[4];
