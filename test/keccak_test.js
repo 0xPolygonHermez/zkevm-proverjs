@@ -1,4 +1,4 @@
-const keccak = require("../src/keccak").keccak;
+const keccak = require("../src/sm/sm_padding_kkbit/keccak").keccak;
 const { ethers } = require("ethers");
 const assert = require('assert');
 
@@ -16,4 +16,3 @@ describe("keccak", async function () {
         assert(res == expectedRes);
     });
 });
- 

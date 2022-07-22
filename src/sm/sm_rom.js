@@ -2,14 +2,13 @@
 
 const {Scalar, F1Field}  = require("ffjavascript");
 
-const codes = require("../opcodes.js");
-const { scalar2fea } = require("@polygon-hermez/zkevm-commonjs").smtUtils;
+const { scalar2fea } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
-module.exports.buildConstants = async function buildConstants(pols, polsDef, rom) {
+module.exports.buildConstants = async function buildConstants(pols, rom) {
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
-    const N = Number(polsDef.inA.polDeg);
+    const N = pols.inA.length;
 
     const twoTo31 = Scalar.e(0x80000000);
     const maxInt = 2147483647;

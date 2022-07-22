@@ -38,8 +38,8 @@ const CONST_F = {
     FACTORV: (index, i) => (CONST_F.V_BYTE(i) >> 2) == index ? [1, 0x100, 0x10000, 0x1000000][CONST_F.V_BYTE(i) % 4] : 0,
 }
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Object.entries(polsDef)[0][1]['polDeg'] || Object.entries(polsDef)[0][1][0]['polDeg'];
+module.exports.buildConstants = async function (pols) {
+    const N = pols.STEP.length;
     Object.entries(CONST_F).forEach(([name, func]) => {
         if (typeof pols[name] === 'undefined') return;
 
@@ -56,27 +56,27 @@ module.exports.buildConstants = async function (pols, polsDef) {
 }
 
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = Object.entries(polsDef)[0][1]['polDeg'] || Object.entries(polsDef)[0][1][0]['polDeg'];
+    const N = pols.offset.length;
 
     // Initialization
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < 8; j++) {
-            pols.m0[j].push(0n);
-            pols.m1[j].push(0n);
-            pols.w0[j].push(0n);
-            pols.w1[j].push(0n);
-            pols.v[j].push(0n);
-            pols.factorV[j].push(0n);
+            pols.m0[j][i] = 0n;
+            pols.m1[j][i] = 0n;
+            pols.w0[j][i] = 0n;
+            pols.w1[j][i] = 0n;
+            pols.v[j][i] = 0n;
+            pols.factorV[j][i] = 0n;
         }
-        pols.inV.push(0n);
-        pols.inM[0].push(0n);
-        pols.inM[1].push(0n);
-        pols.wr8.push(0n);
-        pols.wr256.push(0n);
-        pols.offset.push(0n);
-        pols.selM1.push(0n);
+        pols.inV[i]= 0n;
+        pols.inM[0][i]= 0n;
+        pols.inM[1][i]= 0n;
+        pols.wr8[i]= 0n;
+        pols.wr256[i]= 0n;
+        pols.offset[i]= 0n;
+        pols.selM1[i]= 0n;
     }
     const factors = [ 1, 2 ** 8, 2 ** 16, 2 ** 24];
     for (let i = 0; i < input.length; i++) {

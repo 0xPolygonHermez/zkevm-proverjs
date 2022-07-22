@@ -1,5 +1,5 @@
 
-const buildPoseidon = require("@polygon-hermez/zkevm-commonjs").getPoseidon;
+const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const Scalar = require("ffjavascript");
 const { existsSync } = require("fs");
 const { exit } = require("process");
@@ -10,20 +10,20 @@ function logger (m) {
     if (LOG_STORAGE_EXECUTOR) console.log(m);
 }
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const degree = polsDef.ISNOTLAST.polDeg;
+module.exports.buildConstants = async function (pols) {
+    const degree = pols.ISNOTLAST.length;
 
     for (let i=0; i<degree; i++) {
-        pols.INCS.push(BigInt(i+1)); //1,2,3,...,N
+        pols.INCS[i] = BigInt(i+1); //1,2,3,...,N
     }
 
     for (let i=0; i<degree; i++) {
-        pols.ISNOTLAST.push((i==degree-1) ? 0n : 1n); //1,1,1,...,0
+        pols.ISNOTLAST[i] = (i==degree-1) ? 0n : 1n; //1,1,1,...,0
     }
 }
 
 
-module.exports.execute = async function (pols, polsDef, access) {
+module.exports.execute = async function (pols, access) {
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
 
@@ -43,7 +43,7 @@ module.exports.execute = async function (pols, polsDef, access) {
         }
     });
 
-    const degree = polsDef.addr.polDeg;
+    const degree = pols.addr.length;
 
     for (let i=0; i<degree; i++) {
         if (a<access.length) {

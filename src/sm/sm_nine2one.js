@@ -1,8 +1,8 @@
 const SlotSize = 158418;
 
 
-module.exports.buildConstants = async function (pols, polsDef) {
-    const N = Number(polsDef.Field9latch.polDeg);
+module.exports.buildConstants = async function (pols) {
+    const N = pols.Field9latch.length;
 
     const nSlots9 = Math.floor((N-1)/SlotSize);
 
@@ -37,13 +37,13 @@ module.exports.buildConstants = async function (pols, polsDef) {
 
 }
 
-module.exports.execute = async function (pols, polsDef, input) {
+module.exports.execute = async function (pols, input) {
 
     const required = {
         KeccakF: []
     };
 
-    const N = Number(polsDef.bit.polDeg);
+    const N = pols.bit.length;
 
     const nSlots9 = Math.floor((N-1)/SlotSize);
 
@@ -62,7 +62,7 @@ module.exports.execute = async function (pols, polsDef, input) {
             for (k=0; k<9; k++) {
                 pols.bit[p] = getBit(i*9+k, false, j);
                 pols.field9[p] = accField9;
-                accField9 = k==0 ? pols.bit[p] : 
+                accField9 = k==0 ? pols.bit[p] :
                     accField9 +  (pols.bit[p] << (7n * BigInt(k)));
                 p += 1;
             }
@@ -72,7 +72,7 @@ module.exports.execute = async function (pols, polsDef, input) {
             for (k=0; k<9; k++) {
                 pols.bit[p] = getBit(i*9+k, true, j);
                 pols.field9[p] = accField9;
-                accField9 = k==0 ? pols.bit[p] : 
+                accField9 = k==0 ? pols.bit[p] :
                     accField9 +  (pols.bit[p] << (7n * BigInt(k)));
                 p += 1;
             }
@@ -82,7 +82,7 @@ module.exports.execute = async function (pols, polsDef, input) {
         pols.field9[p] = accField9;
         accField9 = 0n;
         p += 1;
-    
+
         for (j=3200*9+1; j<SlotSize; j++) {
             pols.bit[p] = 0n;
             pols.field9[p] = 0n;

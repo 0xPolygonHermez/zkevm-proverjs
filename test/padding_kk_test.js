@@ -4,7 +4,7 @@ const F1Field = require("ffjavascript").F1Field;
 
 const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
-const smPaddingKKBit = require("../src/sm/sm_padding_kkbit.js");
+const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smNine2one = require("../src/sm/sm_nine2one.js");
 const smKeccakF = require("../src/sm/sm_keccakf.js");
 const smNormGate9 = require("../src/sm/sm_norm_gate9.js");
