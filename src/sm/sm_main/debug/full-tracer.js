@@ -429,7 +429,7 @@ class FullTracer {
         if (length) {
             value = value.slice(0, 2 + length * 2);
         }
-        return value.length > 2 ? value : "0x0";
+        return value;
     }
     // Get the value of a reg (A, B, C, D, E...)
     getRegFromCtx(ctx, reg) {
@@ -464,7 +464,7 @@ class FullTracer {
             nonce: this.toHexStringRlp(ethers.utils.hexlify(nonce)),
             gasLimit: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(gasLimit))),
             gasPrice: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(gasPrice))),
-            data: this.toHexStringRlp(data),
+            data: this.toHexStringRlpData(data),
             chainId: chainId,
             to: this.toHexStringRlp(to)
         }
@@ -486,6 +486,13 @@ class FullTracer {
         let numHex = Scalar.toString(Scalar.e(num), 16);
         numHex = (numHex.length % 2 === 1) ? (`0x0${numHex}`) : (`0x${numHex}`);
         if (numHex === "0x00") numHex = "0x"
+        return numHex;
+    }
+
+    toHexStringRlpData(num) {
+        if (num === "0x") return num
+        let numHex = Scalar.toString(Scalar.e(num), 16);
+        numHex = (numHex.length % 2 === 1) ? (`0x0${numHex}`) : (`0x${numHex}`);
         return numHex;
     }
 
