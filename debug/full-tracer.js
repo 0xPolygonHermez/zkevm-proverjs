@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const codes = require("./opcodes");
+const codes = require("../src/opcodes");
 const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const { ethers } = require("ethers");
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
@@ -29,10 +29,10 @@ class FullTracer {
         // Final output json to log
         this.finalTrace = {};
 
-        this.depth = 0;
+        this.depth = 1;
         this.initGas = 0;
         this.txCount = 0;
-        this.deltaStorage = { 0: {} };
+        this.deltaStorage = { 1: {} };
         this.txTime = 0;
         this.txGAS = {};
         this.accBatchGas = 0;
@@ -63,11 +63,7 @@ class FullTracer {
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
         this.info[this.info.length - 1].error = errorName;
-        // Dont decrease depth if the error is from processing a RETURN opcode
-        const lastOpcode = this.info[this.info.length - 1]        
-        if (!opDecContext.includes(lastOpcode.opcode)) {
-            this.depth--
-        }
+        this.depth--
         // Revert logs
         this.logs[ctx.CTX] = null
     }
@@ -143,8 +139,8 @@ class FullTracer {
         this.finalTrace.responses.push(response);
         this.txTime = Date.now();
         //Reset values
-        this.depth = 0;
-        this.deltaStorage = { 0: {} };
+        this.depth = 1;
+        this.deltaStorage = { 1: {} };
         this.txGAS[this.depth] = context.gas;
     }
 
@@ -262,10 +258,14 @@ class FullTracer {
         let codeId;
 
         if (params.op === "number") {
-            codeId = Scalar.e(params.num)
+            codeId = Scalar.e(params.num);
         } else {
-            codeId = ctx[params.regName]
+            codeId = ctx[params.regName];
         }
+        if(typeof codes[codeId] === "undefined") {
+            codeId = 0xfe;
+        }
+        
         const opcode = codes[codeId].slice(2);
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
@@ -429,7 +429,7 @@ class FullTracer {
         if (length) {
             value = value.slice(0, 2 + length * 2);
         }
-        return value;
+        return value.length > 2 ? value : "0x0";
     }
     // Get the value of a reg (A, B, C, D, E...)
     getRegFromCtx(ctx, reg) {
@@ -464,7 +464,7 @@ class FullTracer {
             nonce: this.toHexStringRlp(ethers.utils.hexlify(nonce)),
             gasLimit: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(gasLimit))),
             gasPrice: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(gasPrice))),
-            data: this.toHexStringRlpData(data),
+            data: this.toHexStringRlp(data),
             chainId: chainId,
             to: this.toHexStringRlp(to)
         }
@@ -472,7 +472,7 @@ class FullTracer {
         const s = {
             r: this.toHexStringRlp(ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txR"))),
             s: this.toHexStringRlp(ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txS"))),
-            v: this.toHexStringRlp(ethers.utils.hexlify(v - 27 + txu.chainId * 2 + 35))
+            v: this.toHexStringRlp(ethers.utils.hexlify(v - 27 + txu.chainId*2 + 35))
         }
 
         const fields = [txu.nonce, txu.gasPrice, txu.gasLimit, txu.to, txu.value, txu.data, s.v, s.r, s.s];
@@ -486,13 +486,6 @@ class FullTracer {
         let numHex = Scalar.toString(Scalar.e(num), 16);
         numHex = (numHex.length % 2 === 1) ? (`0x0${numHex}`) : (`0x${numHex}`);
         if (numHex === "0x00") numHex = "0x"
-        return numHex;
-    }
-
-    toHexStringRlpData(num) {
-        if (num === "0x") return num
-        let numHex = Scalar.toString(Scalar.e(num), 16);
-        numHex = (numHex.length % 2 === 1) ? (`0x0${numHex}`) : (`0x${numHex}`);
         return numHex;
     }
 
