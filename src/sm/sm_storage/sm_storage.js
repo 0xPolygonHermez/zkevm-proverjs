@@ -19,22 +19,24 @@ module.exports.buildConstants = async function (pols) {
     rom.load(j);
 
     const polSize = pols.rLine.length;
-    const romlength = rom.line.length;
 
     for (let i=0; i<polSize; i++) {
-        let l = (i<romlength) ? rom.line[i] : null;
-        pols.rHash[i] = (i<romlength) ? BigInt(l.iHash) : 0n;
-        pols.rHashType[i] = (i<romlength) ? BigInt(l.iHashType) : 0n;
-        pols.rLatchGet[i] = (i<romlength) ? BigInt(l.iLatchGet) : 0n;
-        pols.rLatchSet[i] = (i<romlength) ? BigInt(l.iLatchSet) : 0n;
-        pols.rClimbRkey[i] = (i<romlength) ? BigInt(l.iClimbRkey) : 0n;
-        pols.rClimbSiblingRkey[i] = (i<romlength) ? BigInt(l.iClimbSiblingRkey) : 0n;
-        pols.rClimbSiblingRkeyN[i] = (i<romlength) ? BigInt(l.iClimbSiblingRkeyN) : 0n;
-        pols.rRotateLevel[i] = (i<romlength) ? BigInt(l.iRotateLevel) : 0n;
-        pols.rJmpz[i] = (i<romlength) ? BigInt(l.iJmpz) : 0n;
-        pols.rJmp[i] = (i<romlength) ? BigInt(l.iJmp) : 0n;
+        // TODO: REVIEW Jordi
+        const romLine = i % rom.line.length;
+        const l = rom.line[romLine];
+
+        pols.rHash[i] = l.iHash ? BigInt(l.iHash) : 0n;
+        pols.rHashType[i] = l.iHashType ? BigInt(l.iHashType) : 0n;
+        pols.rLatchGet[i] = l.iHashType ? BigInt(l.iHashType) : 0n;
+        pols.rLatchSet[i] = l.iLatchSet ? BigInt(l.iLatchSet) : 0n;
+        pols.rClimbRkey[i] = l.iClimbRkey ? BigInt(l.iClimbRkey) : 0n;
+        pols.rClimbSiblingRkey[i] = l.iClimbSiblingRkey ? BigInt(l.iClimbSiblingRkey) : 0n;
+        pols.rClimbSiblingRkeyN[i] = l.iClimbSiblingRkeyN ? BigInt(l.iClimbSiblingRkeyN) : 0n;
+        pols.rRotateLevel[i] = l.iRotateLevel ? BigInt(l.iRotateLevel) : 0n;
+        pols.rJmpz[i] = l.iJmpz ? BigInt(l.iJmpz) : 0n;
+        pols.rJmp[i] = l.iJmp ? BigInt(l.iJmp) : 0n;
         let consFea4;
-        if ((i<romlength) && (l.CONST)) {
+        if (l.CONST) {
             consFea4 = scalar2fea4(fr,BigInt(l.CONST));
         } else {
             consFea4 = [fr.zero, fr.zero, fr.zero, fr.zero];
@@ -44,8 +46,38 @@ module.exports.buildConstants = async function (pols) {
         pols.rConst2[i] = consFea4[2];
         pols.rConst3[i] = consFea4[3];
 
-        pols.rAddress[i] = (i<romlength) ? BigInt(l.address) : 0n;
-        pols.rLine[i] = BigInt(i);
+        pols.rAddress[i] = l.address ? BigInt(l.address) : 0n;
+        pols.rLine[i] = BigInt(romLine);
+
+        pols.rInFree[i] = l.inFREE ? BigInt(l.inFREE) : 0n;
+        pols.rInNewRoot[i] = l.inNEW_ROOT ? BigInt(l.inNEW_ROOT):0n;
+        pols.rInOldRoot[i] = l.inOLD_ROOT ? BigInt(l.inOLD_ROOT):0n;
+        pols.rInRkey[i] = l.inRKEY ? BigInt(l.inRKEY):0n;
+        pols.rInRkeyBit[i] = l.inRKEY_BIT ? BigInt(l.inRKEY_BIT):0n;
+        pols.rInSiblingRkey[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
+        pols.rInSiblingValueHash[i] = l.inSIBLING_VALUE_HASH ? BigInt(l.inSIBLING_VALUE_HASH):0n;
+
+        pols.rSetHashLeft[i] = l.setHASH_LEFT ? BigInt(l.setHASH_LEFT):0n;
+        pols.rSetHashRight[i] = l.setHASH_RIGHT ? BigInt(l.setHASH_RIGHT):0n;
+        pols.rSetLevel[i] = l.setLEVEL ? BigInt(l.setLEVEL):0n;
+        pols.rSetNewRoot[i] = l.setNEW_ROOT ? BigInt(l.setNEW_ROOT):0n;
+        pols.rSetOldRoot[i] = l.setOLD_ROOT ? BigInt(l.setOLD_ROOT):0n;
+        pols.rSetRkey[i] = l.setRKEY ? BigInt(l.setRKEY):0n;
+        pols.rSetRkeyBit[i] = l.setRKEY_BIT ? BigInt(l.setRKEY_BIT):0n;
+        pols.rSetSiblingRkey[i] = l.setSIBLING_RKEY ? BigInt(l.setSIBLING_RKEY):0n;
+        pols.rSetSiblingValueHash[i] = l.setSIBLING_VALUE_HASH ? BigInt(l.setSIBLING_VALUE_HASH):0n;
+        pols.rSetValueHigh[i] = l.setVALUE_HIGH ? BigInt(l.setVALUE_HIGH):0n;
+        pols.rSetValueLow[i] = l.setVALUE_LOW ? BigInt(l.setVALUE_LOW):0n;
+
+        if (i < 10) {
+            const values = [
+                pols.rHash[i], pols.rHashType[i], pols.rLatchGet[i], pols.rLatchSet[i], pols.rClimbRkey[i], pols.rClimbSiblingRkey[i], pols.rClimbSiblingRkeyN[i],
+                pols.rRotateLevel[i], pols.rJmpz[i], pols.rJmp[i], pols.rConst0[i], pols.rConst1[i], pols.rConst2[i], pols.rConst3[i], pols.rAddress[i], pols.rLine[i],
+                pols.rInFree[i], pols.rInNewRoot[i], pols.rInOldRoot[i], pols.rInRkey[i], pols.rInRkeyBit[i], pols.rInSiblingRkey[i], pols.rInSiblingValueHash[i],
+                pols.rSetHashLeft[i], pols.rSetHashRight[i], pols.rSetLevel[i], pols.rSetNewRoot[i], pols.rSetOldRoot[i], pols.rSetRkey[i],
+                pols.rSetRkeyBit[i], pols.rSetSiblingRkey[i], pols.rSetSiblingValueHash[i], pols.rSetValueHigh[i], pols.rSetValueLow[i]];
+            console.log('#'+i+' '+values.join(','));
+        }
     }
 }
 
@@ -1197,6 +1229,7 @@ function initPols (pols, polSize) {
         pols.selRkeyBit[i] = 0n;
         pols.selSiblingRkey[i] = 0n;
         pols.selFree[i] = 0n;
+        pols.selRotlVh[i] = 0n;
 
         pols.setHashLeft[i] = 0n;
         pols.setHashRight[i] = 0n;
