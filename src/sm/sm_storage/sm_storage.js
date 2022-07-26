@@ -27,7 +27,7 @@ module.exports.buildConstants = async function (pols) {
 
         pols.rHash[i] = l.iHash ? BigInt(l.iHash) : 0n;
         pols.rHashType[i] = l.iHashType ? BigInt(l.iHashType) : 0n;
-        pols.rLatchGet[i] = l.iHashType ? BigInt(l.iHashType) : 0n;
+        pols.rLatchGet[i] = l.iLatchGet ? BigInt(l.iLatchGet) : 0n;
         pols.rLatchSet[i] = l.iLatchSet ? BigInt(l.iLatchSet) : 0n;
         pols.rClimbRkey[i] = l.iClimbRkey ? BigInt(l.iClimbRkey) : 0n;
         pols.rClimbSiblingRkey[i] = l.iClimbSiblingRkey ? BigInt(l.iClimbSiblingRkey) : 0n;
@@ -69,7 +69,7 @@ module.exports.buildConstants = async function (pols) {
         pols.rSetValueHigh[i] = l.setVALUE_HIGH ? BigInt(l.setVALUE_HIGH):0n;
         pols.rSetValueLow[i] = l.setVALUE_LOW ? BigInt(l.setVALUE_LOW):0n;
 
-        if (i < 10) {
+        if (i === romLine) {
             const values = [
                 pols.rHash[i], pols.rHashType[i], pols.rLatchGet[i], pols.rLatchSet[i], pols.rClimbRkey[i], pols.rClimbSiblingRkey[i], pols.rClimbSiblingRkeyN[i],
                 pols.rRotateLevel[i], pols.rJmpz[i], pols.rJmp[i], pols.rConst0[i], pols.rConst1[i], pols.rConst2[i], pols.rConst3[i], pols.rAddress[i], pols.rLine[i],
@@ -254,36 +254,25 @@ module.exports.execute = async function (pols, action) {
                 }
 
                 // Get the remaining key, i.e. the key after removing the bits used in the tree node navigation
-                else if (rom.line[l].funcName=="GetRKey")
+                else if (rom.line[l].funcName=="GetRkey")
                 {
                     op[0] = ctx.rkey[0];
                     op[1] = ctx.rkey[1];
                     op[2] = ctx.rkey[2];
                     op[3] = ctx.rkey[3];
 
-                    logger("StorageExecutor GetRKey returns " + fea42String(fr, op));
+                    logger("StorageExecutor GetRkey returns " + fea42String(fr, op));
                 }
 
                 // Get the sibling remaining key, i.e. the part that is not common to the value key
-                else if (rom.line[l].funcName=="GetSiblingRKey")
+                else if (rom.line[l].funcName=="GetSiblingRkey")
                 {
                     op[0] = ctx.siblingRkey[0];
                     op[1] = ctx.siblingRkey[1];
                     op[2] = ctx.siblingRkey[2];
                     op[3] = ctx.siblingRkey[3];
 
-                    logger("StorageExecutor GetSiblingRKey returns " + fea42String(fr, op));
-                }
-
-                // Get the insKey, i.e. the part that is not common to the value key
-                else if (rom.line[l].funcName=="GetInsRKey")
-                {
-                    op[0] = ctx.insRKey[0];
-                    op[1] = ctx.insRKey[1];
-                    op[2] = ctx.insRKey[2];
-                    op[3] = ctx.insRKey[3];
-
-                    logger("StorageExecutor GetInsRKey returns " + fea42String(fr, op));
+                    logger("StorageExecutor GetSiblingRkey returns " + fea42String(fr, op));
                 }
 
                 // Get the sibling hash, obtained from the siblings array of the current level,
@@ -489,7 +478,8 @@ module.exports.execute = async function (pols, action) {
                 else
                 {
                     logger("Error: StorageExecutor() unknown funcName:" + rom.line[l].funcName);
-                    exit(-1);
+                    console.log(rom.line[l].funcName);
+                    process.exit(-1);
                 }
             }
 
@@ -510,7 +500,7 @@ module.exports.execute = async function (pols, action) {
             if (!fr.isZero(op[3])) pols.free3[i] = op[3];
 
             // Mark the inFREE register as 1
-            pols.selFree[i] = 1n;
+            pols.inFree[i] = 1n;
         }
 
         // If a constant is provided, set op to the constant
@@ -533,7 +523,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.oldRoot1[i];
             op[2] = pols.oldRoot2[i];
             op[3] = pols.oldRoot3[i];
-            pols.selOldRoot[i] = 1n;
+            pols.inOldRoot[i] = 1n;
         }
 
         // If inNEW_ROOT then op=NEW_ROOT
@@ -543,7 +533,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.newRoot1[i];
             op[2] = pols.newRoot2[i];
             op[3] = pols.newRoot3[i];
-            pols.selNewRoot[i] = 1n;
+            pols.inNewRoot[i] = 1n;
         }
 
         // If inRKEY_BIT then op=RKEY_BIT
@@ -553,7 +543,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = fr.zero;
             op[2] = fr.zero;
             op[3] = fr.zero;
-            pols.selRkeyBit[i] = 1n;
+            pols.inRkeyBit[i] = 1n;
         }
 
         // If inVALUE_LOW then op=VALUE_LOW
@@ -563,7 +553,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.valueLow1[i];
             op[2] = pols.valueLow2[i];
             op[3] = pols.valueLow3[i];
-            pols.selValueLow[i] = 1n;
+            pols.inValueLow[i] = 1n;
         }
 
         // If inVALUE_HIGH then op=VALUE_HIGH
@@ -573,7 +563,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.valueHigh1[i];
             op[2] = pols.valueHigh2[i];
             op[3] = pols.valueHigh3[i];
-            pols.selValueHigh[i] = 1n;
+            pols.inValueHigh[i] = 1n;
         }
 
         // If inRKEY then op=RKEY
@@ -583,7 +573,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.rkey1[i];
             op[2] = pols.rkey2[i];
             op[3] = pols.rkey3[i];
-            pols.selRkey[i] = 1n;
+            pols.inRkey[i] = 1n;
         }
 
         // If inSIBLING_RKEY then op=SIBLING_RKEY
@@ -593,7 +583,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.siblingRkey1[i];
             op[2] = pols.siblingRkey2[i];
             op[3] = pols.siblingRkey3[i];
-            pols.selSiblingRkey[i] = 1n;
+            pols.inSiblingRkey[i] = 1n;
         }
 
         // If inSIBLING_VALUE_HASH then op=SIBLING_VALUE_HASH
@@ -603,7 +593,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.siblingValueHash1[i];
             op[2] = pols.siblingValueHash2[i];
             op[3] = pols.siblingValueHash3[i];
-            pols.selSiblingValueHash[i] = 1n;
+            pols.inSiblingValueHash[i] = 1n;
         }
 
         // If inROTL_VH then op=rotate_left(VALUE_HIGH)
@@ -613,7 +603,7 @@ module.exports.execute = async function (pols, action) {
             op[1] = pols.valueHigh0[i];
             op[2] = pols.valueHigh1[i];
             op[3] = pols.valueHigh2[i];
-            pols.selRotlVh[i] = 1n;
+            pols.inRotlVh[i] = 1n;
         }
 
         /****************/
@@ -1220,16 +1210,16 @@ function initPols (pols, polSize) {
 
         pols.pc[i] = 0n;
 
-        pols.selOldRoot[i] = 0n;
-        pols.selNewRoot[i] = 0n;
-        pols.selValueLow[i] = 0n;
-        pols.selValueHigh[i] = 0n;
-        pols.selSiblingValueHash[i] = 0n;
-        pols.selRkey[i] = 0n;
-        pols.selRkeyBit[i] = 0n;
-        pols.selSiblingRkey[i] = 0n;
-        pols.selFree[i] = 0n;
-        pols.selRotlVh[i] = 0n;
+        pols.inOldRoot[i] = 0n;
+        pols.inNewRoot[i] = 0n;
+        pols.inValueLow[i] = 0n;
+        pols.inValueHigh[i] = 0n;
+        pols.inSiblingValueHash[i] = 0n;
+        pols.inRkey[i] = 0n;
+        pols.inRkeyBit[i] = 0n;
+        pols.inSiblingRkey[i] = 0n;
+        pols.inFree[i] = 0n;
+        pols.inRotlVh[i] = 0n;
 
         pols.setHashLeft[i] = 0n;
         pols.setHashRight[i] = 0n;

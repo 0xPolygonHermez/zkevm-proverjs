@@ -18,16 +18,16 @@ namespace Storage(%N);
     pol commit level0, level1, level2, level3;
     pol commit pc;
 
-    pol commit selOldRoot;
-    pol commit selNewRoot;
-    pol commit selValueLow;
-    pol commit selValueHigh;
-    pol commit selSiblingValueHash;
-    pol commit selRkey;
-    pol commit selRkeyBit;
-    pol commit selSiblingRkey;
-    pol commit selFree;
-    pol commit selRotlVh;
+    pol commit inOldRoot;
+    pol commit inNewRoot;
+    pol commit inValueLow;
+    pol commit inValueHigh;
+    pol commit inSiblingValueHash;
+    pol commit inRkey;
+    pol commit inRkeyBit;
+    pol commit inSiblingRkey;
+    pol commit inFree;
+    pol commit inRotlVh;
 
     pol commit setHashLeft;
     pol commit setHashRight;
@@ -63,52 +63,52 @@ namespace Storage(%N);
     // Selectors
 
     pol op0 =
-        selOldRoot*oldRoot0 +
-        selNewRoot*newRoot0 +
-        selValueLow*valueLow0 +
-        selValueHigh*valueHigh0 +
-        selSiblingValueHash*siblingValueHash0 +
-        selSiblingRkey*siblingRkey0 +
-        selRkey*rkey0 +
-        selFree*free0 +
-        selRkeyBit*rkeyBit +
-        selRotlVh*valueHigh3 +
+        inOldRoot*oldRoot0 +
+        inNewRoot*newRoot0 +
+        inValueLow*valueLow0 +
+        inValueHigh*valueHigh0 +
+        inSiblingValueHash*siblingValueHash0 +
+        inSiblingRkey*siblingRkey0 +
+        inRkey*rkey0 +
+        inFree*free0 +
+        inRkeyBit*rkeyBit +
+        inRotlVh*valueHigh3 +
         iConst0;
 
     pol op1 =
-        selOldRoot*oldRoot1 +
-        selNewRoot*newRoot1 +
-        selValueLow*valueLow1 +
-        selValueHigh*valueHigh1 +
-        selSiblingValueHash*siblingValueHash1 +
-        selSiblingRkey*siblingRkey1 +
-        selRkey*rkey1 +
-        selFree*free1 +
-        selRotlVh*valueHigh0 +
+        inOldRoot*oldRoot1 +
+        inNewRoot*newRoot1 +
+        inValueLow*valueLow1 +
+        inValueHigh*valueHigh1 +
+        inSiblingValueHash*siblingValueHash1 +
+        inSiblingRkey*siblingRkey1 +
+        inRkey*rkey1 +
+        inFree*free1 +
+        inRotlVh*valueHigh0 +
         iConst1;
 
     pol op2 =
-        selOldRoot*oldRoot2 +
-        selNewRoot*newRoot2 +
-        selValueLow*valueLow2 +
-        selValueHigh*valueHigh2 +
-        selSiblingValueHash*siblingValueHash2 +
-        selSiblingRkey*siblingRkey2 +
-        selRkey*rkey2 +
-        selFree*free2 +
-        selRotlVh*valueHigh1 +
+        inOldRoot*oldRoot2 +
+        inNewRoot*newRoot2 +
+        inValueLow*valueLow2 +
+        inValueHigh*valueHigh2 +
+        inSiblingValueHash*siblingValueHash2 +
+        inSiblingRkey*siblingRkey2 +
+        inRkey*rkey2 +
+        inFree*free2 +
+        inRotlVh*valueHigh1 +
         iConst2;
 
     pol op3 =
-        selOldRoot*oldRoot3 +
-        selNewRoot*newRoot3 +
-        selValueLow*valueLow3 +
-        selValueHigh*valueHigh3 +
-        selSiblingValueHash*siblingValueHash3 +
-        selSiblingRkey*siblingRkey3 +
-        selRkey*rkey3 +
-        selFree*free3 +
-        selRotlVh*valueHigh2 +
+        inOldRoot*oldRoot3 +
+        inNewRoot*newRoot3 +
+        inValueLow*valueLow3 +
+        inValueHigh*valueHigh3 +
+        inSiblingValueHash*siblingValueHash3 +
+        inSiblingRkey*siblingRkey3 +
+        inRkey*rkey3 +
+        inFree*free3 +
+        inRotlVh*valueHigh2 +
         iConst3;
 
     // Setters
@@ -254,7 +254,7 @@ namespace Storage(%N);
     {
         iHash, iHashType, iLatchGet, iLatchSet, iClimbRkey, iClimbSiblingRkey, iClimbSiblingRkeyN,
         iRotateLevel, iJmpz, iJmp, iConst0, iConst1, iConst2, iConst3, iAddress, pc,
-        selFree, selNewRoot, selOldRoot, selRkey, selRkeyBit, selSiblingRkey, selSiblingValueHash,
+        inFree, inNewRoot, inOldRoot, inRkey, inRkeyBit, inSiblingRkey, inSiblingValueHash,
         setHashLeft, setHashRight, setLevel, setNewRoot, setOldRoot, setRkey,
         setRkeyBit, setSiblingRkey, setSiblingValueHash, setValueHigh, setValueLow
     }
