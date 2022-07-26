@@ -68,16 +68,6 @@ module.exports.buildConstants = async function (pols) {
         pols.rSetSiblingValueHash[i] = l.setSIBLING_VALUE_HASH ? BigInt(l.setSIBLING_VALUE_HASH):0n;
         pols.rSetValueHigh[i] = l.setVALUE_HIGH ? BigInt(l.setVALUE_HIGH):0n;
         pols.rSetValueLow[i] = l.setVALUE_LOW ? BigInt(l.setVALUE_LOW):0n;
-
-        if (i === romLine) {
-            const values = [
-                pols.rHash[i], pols.rHashType[i], pols.rLatchGet[i], pols.rLatchSet[i], pols.rClimbRkey[i], pols.rClimbSiblingRkey[i], pols.rClimbSiblingRkeyN[i],
-                pols.rRotateLevel[i], pols.rJmpz[i], pols.rJmp[i], pols.rConst0[i], pols.rConst1[i], pols.rConst2[i], pols.rConst3[i], pols.rAddress[i], pols.rLine[i],
-                pols.rInFree[i], pols.rInNewRoot[i], pols.rInOldRoot[i], pols.rInRkey[i], pols.rInRkeyBit[i], pols.rInSiblingRkey[i], pols.rInSiblingValueHash[i],
-                pols.rSetHashLeft[i], pols.rSetHashRight[i], pols.rSetLevel[i], pols.rSetNewRoot[i], pols.rSetOldRoot[i], pols.rSetRkey[i],
-                pols.rSetRkeyBit[i], pols.rSetSiblingRkey[i], pols.rSetSiblingValueHash[i], pols.rSetValueHigh[i], pols.rSetValueLow[i]];
-            console.log('#'+i+' '+values.join(','));
-        }
     }
 }
 
@@ -119,21 +109,6 @@ module.exports.execute = async function (pols, action) {
 
         // Set the next evaluation index, which will be 0 when we reach the last evaluation
         let nexti = (i+1)%polSize;
-
-        /*
-        const lineId = rom.line[l].fileName + ':' + rom.line[l].line;
-        if (prevlineId !== lineId) {
-            prevlineId = lineId;
-
-            if (rom.line[l].fileName) {
-                console.log(`### w:${i} a:${a} ${rom.line[l].fileName}:${rom.line[l].line} `+
-                    `[${pols.valueLow0[i]}, ${pols.valueLow1[i]}, ${pols.valueLow2[i]}, ${pols.valueLow3[i]}]`+
-                    `[${pols.valueHigh0[i]}, ${pols.valueHigh1[i]}, ${pols.valueHigh2[i]}, ${pols.valueHigh3[i]}]`);
-            }
-            else {
-                console.log(`### w:${i} a:${a} `+l);
-            }
-        }*/
 
         if (isLogging) {
             if (rom.line[l].funcName!="isAlmostEndPolynomial") {
