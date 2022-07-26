@@ -2,10 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const version = require("../package").version;
 
-const exportPols = require("pilcom").exportPolynomials;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { newCommitPolsArray, compile  } = require("pilcom");
-
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
@@ -22,19 +20,17 @@ const smPaddingPG = require("./sm/sm_padding_pg.js");
 const smPoseidonG = require("./sm/sm_poseidong.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
 
-
 const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number>")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
     .alias("l", "logs")
     .alias("s", "skip")
     .alias("d", "debug")
-    .alias("n", "N")
     .argv;
 
 async function run() {
@@ -69,12 +65,26 @@ async function run() {
             throw new Error("Cache pil file does not exist");
         }
     } else {
-        pil = await compile(F, "pil/main.pil");
+        // in debug mode only main.pil is compiled
+        if (argv.debug === true) {
+            const pilConfig = {
+                defines: 2 ** 23,
+                excludeSelF: ['memAlign', 'memAlignWr', "arith", "bin", 'sRD', 'sWR', 'hashP', 'hashPLen', 'hashPDigest', 'hashK', 'hashKLen', 'hashKDigest', "mOp"],
+                excludeModules: ["mem_align.pil", "arith.pil", "binary.pil", "poseidong.pil", "padding_pg.pil", "storage.pil", "padding_kk.pil", "mem.pil"]
+            };
+
+            pil = await compile(F, "pil/main.pil", null, pilConfig);
+        } else {
+            pil = await compile(F, "pil/main.pil");
+        }
+
         await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
     const test = testFile ? JSON.parse(await fs.promises.readFile(testFile, "utf8")) : false;
+
     const cmPols = newCommitPolsArray(pil);
+
     const config = {
         test: test,
         debug: (argv.debug === true),
@@ -82,13 +92,11 @@ async function run() {
             inputName: path.basename(inputFile, ".json")
         }
     }
-    if (argv.n) {
-        config.debugInfo["N"] = Number(argv.n);
-    }
 
     const N = cmPols.Main.PC.length;
 
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, config);
+
     if (typeof outputFile !== "undefined") {
         console.log("Storage...");
         const requiredStorage = await smStorage.execute(cmPols.Storage, requiredMain.Storage);

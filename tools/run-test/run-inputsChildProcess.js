@@ -4,25 +4,20 @@ const chalk = require("chalk");
 
 const helpers = require("./helpers");
 const { performance } = require("perf_hooks");
-const smMain = require("../../src/sm/sm_main");
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { compile, createCommitedPols } = require("pilcom");
-const fileCachePil = path.join(__dirname, "../../cache-main-pil.json");
 const { execFile } = require("child_process");
 
 const argv = require("yargs")
-    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -p <pil.json> -o <information output> -n numberChildProcess")
+    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> -n numberChildProcess")
     .help('h')
     .alias("i", "input")
     .alias("f", "folder")
     .alias("r", "rom")
-    .alias("p", "pil")
     .alias("o", "output")
-    .alias("e", "exit")
     .alias("n", "childProcess")
     .argv;
 
-// example: node run-inputsChildProcess.js -f ../../../test-vectors/inputs-executor/calldata -r ../../../zkrom/build/rom.json -p ../zkvmpil/build/zkevm.pil.json -n 10
+// example: node run-inputsChildProcess.js -f ../../../test-vectors/inputs-executor/calldata -r ../../../zkrom/build/rom.json -n 10
 
 async function main(){
 
@@ -71,36 +66,29 @@ async function main(){
     helpers.checkParam(argv.rom, "Rom file");
     romFile = argv.rom.trim();
 
-    helpers.checkParam(argv.pil, "Pil file");
-    pilFile = argv.pil.trim();
-
     let successInfo = "";
     let errorInfo = "";
 
     let finishChilds = 0;
-    console.log(inputs.length);
+    console.log("Total inputs to run:", inputs.length);
     const initTime = performance.now();
+
     for(let i = 0; i < inputs.length; i++) {
         const fileName = inputs[i];
         let info = "";
-
-        const input = JSON.parse(await fs.promises.readFile(fileName, "utf8"));
 
         info += "Input: " + fileName + "\n";
         info += "Start executor JS...\n";
         const startTime = performance.now();
 
-        while( i - finishChilds > numberChilds) {
-            //console.log("wait until some child process ends!")
+        while(i - finishChilds > numberChilds) {
             await new Promise(resolve => setTimeout(resolve, 10000));
-            console.log(finishChilds, i)
+            console.log(finishChilds, i);
         }
-        const params = ['../../src/main_executor.js', fileName, "-r", romFile, "-p", pilFile, "--debug", "--skip"]
-        if(fileName.includes("stack-errors")){
-            params.push("-n");
-            params.push("524288");
-        }
-        //node src/main_executor.js ../test-vectors/inputs-executor/calldata/op-call-revert_0.json -r ../zkrom/build/rom.json -p ../zkvmpil/build/zkevm.pil.json --debug --skip
+
+        // node src/main_executor.js ../test-vectors/inputs-executor/calldata/op-call-revert_0.json -r ../zkrom/build/rom.json --debug --skip
+        const params = ['../../src/main_executor.js', fileName, "-r", romFile, "--debug", "--skip"]
+
         const child = execFile('node', params, (error, stdout, stderr) => {
             const stopTime = performance.now();
             info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime)/1000} s\n`)}`;
@@ -116,6 +104,7 @@ async function main(){
             }
         });
     }
+
     while(inputs.length > finishChilds) {
         console.log("wait to finish")
         await new Promise(resolve => setTimeout(resolve, 1000));
