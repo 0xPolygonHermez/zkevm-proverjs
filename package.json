@@ -29,7 +29,7 @@
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
-    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git",
+    "pilcom": "git+ssh://git@github.com/0xpolygonhermez/pilcom.git#2e5d189ba7288f45d7d01482881cc281baf0307e",
     "solc": "^0.8.10",
     "source-map-loader": "^3.0.0",
     "ts-loader": "^9.2.6",
