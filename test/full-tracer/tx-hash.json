@@ -18,7 +18,7 @@
     "gasPrice": "0x59682f07",
     "gasLimit": "0x5208",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x",
+    "value": "0x0",
     "data": "0x",
     "chainId": "0x05",
     "v": "0x2e",

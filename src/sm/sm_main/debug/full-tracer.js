@@ -8,7 +8,7 @@ const opDecContext = ['SELFDESTRUCT', 'STOP', 'RETURN'];
 const { Scalar } = require("ffjavascript");
 const generate_call_trace = true;
 const generate_execute_trace = true;
-
+const { getTransactionHash, getFormatedTo, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
 // Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
 // for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
 // from the zkprover
@@ -25,7 +25,6 @@ class FullTracer {
         // Logs path
         this.folderLogs = path.join(__dirname, "../logs-full-trace");
         this.pathLogFile = path.join(this.folderLogs, `${logFileName}__full_trace`);
-        this.labels = {};
         // Final output json to log
         this.finalTrace = {};
 
@@ -73,9 +72,9 @@ class FullTracer {
     }
 
     onStoreLog(ctx, tag) {
-        const indexLog = this.getRegFromCtx(ctx, tag.params[0].regName);
+        const indexLog = getRegFromCtx(ctx, tag.params[0].regName);
         const isTopic = Scalar.e(tag.params[1].num);
-        const data = this.getRegFromCtx(ctx, tag.params[2].regName);
+        const data = getRegFromCtx(ctx, tag.params[2].regName);
 
         if (!this.logs[ctx.CTX]) {
             this.logs[ctx.CTX] = {}
@@ -93,7 +92,7 @@ class FullTracer {
             this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(32, "0"));
         }
         //Add log info
-        this.logs[ctx.CTX][indexLog].address = ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txDestAddr"));
+        this.logs[ctx.CTX][indexLog].address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
         this.logs[ctx.CTX][indexLog].batch_number = this.finalTrace.numBatch;
         this.logs[ctx.CTX][indexLog].tx_hash = this.finalTrace.responses[this.txCount].tx_hash;
         this.logs[ctx.CTX][indexLog].tx_index = this.txCount;
@@ -106,24 +105,30 @@ class FullTracer {
 
         //Fill context object
         const context = {};
-        context.from = ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txSrcAddr"));
-        context.to = this.getFormatedTo(ctx);
+        context.from = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
+        context.to = getFormatedTo(getVarFromCtx(ctx, false, "txDestAddr"));
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
-        context.data = this.getCalldataFromStack(ctx, 0, this.getVarFromCtx(ctx, false, "txCalldataLen").toString());
-        context.gas = this.getVarFromCtx(ctx, false, "txGasLimit").toString();
-        context.value = this.getVarFromCtx(ctx, false, "txValue").toString();
+        context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
+        context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
+        context.value = getVarFromCtx(ctx, false, "txValue").toString();
         context.batch = this.finalTrace.globalHash;
         context.output = ""
         context.gas_used = "";
         context.execution_time = ""
         context.old_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
-        context.nonce = Number(this.getVarFromCtx(ctx, false, "txNonce"));
-        context.gasPrice = this.getVarFromCtx(ctx, false, "txGasPrice").toString();
-        context.chainId = Number(this.getVarFromCtx(ctx, false, "txChainId"));
+        context.nonce = Number(getVarFromCtx(ctx, false, "txNonce"));
+        context.gasPrice = getVarFromCtx(ctx, false, "txGasPrice").toString();
+        context.chainId = Number(getVarFromCtx(ctx, false, "txChainId"));
 
         //Fill response object
         const response = {};
-        response.tx_hash = this.getTransactionHash(context.to, context.value, context.nonce, context.gas, context.gasPrice, context.data, context.chainId, ctx);
+        const r = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txR"));
+        const s = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txS"));
+        const v = Number(getVarFromCtx(ctx, false, "txV"));
+        // Apply EIP-155 to v value
+        const vn = ethers.utils.hexlify(v - 27 + context.chainId * 2 + 35)
+
+        response.tx_hash = getTransactionHash(context.to, Number(context.value), Number(context.nonce), context.gas, context.gasPrice, context.data, r, s, vn);
         response.type = 0;
         response.return_value = "";
         response.gas_left = context.gas;
@@ -151,9 +156,9 @@ class FullTracer {
     // Triggered when storage is updated in opcode processing
     onUpdateStorage(ctx) {
         // The storage key is stored in C
-        const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(this.getRegFromCtx(ctx, "C")), 32).slice(2);
+        const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "C")), 32).slice(2);
         // The storage value is stored in D
-        const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(this.getRegFromCtx(ctx, "D")), 32).slice(2);
+        const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "D")), 32).slice(2);
         this.deltaStorage[this.depth][key] = value;
     }
 
@@ -168,15 +173,15 @@ class FullTracer {
 
         // Set return data, in case of deploy, get return buffer from stack
         if (response.call_trace.context.to === '0x0') {
-            response.return_value = this.getCalldataFromStack(ctx, this.getVarFromCtx(ctx, false, "retDataOffset").toString(), this.getVarFromCtx(ctx, false, "retDataLength").toString());
+            response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString());
         } else {
-            response.return_value = this.getFromMemory(this.getVarFromCtx(ctx, false, "retDataOffset").toString(), this.getVarFromCtx(ctx, false, "retDataLength").toString(), ctx);
+            response.return_value = getFromMemory(getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString(), ctx);
         }
         response.call_trace.context.return_value = response.return_value;
 
         //Set create address in case of deploy
         if (response.call_trace.context.to === '0x0') {
-            response.create_address = ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txDestAddr"));
+            response.create_address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
         }
         //Set gas left
         response.gas_left = String(Number(response.gas_left) - Number(response.gas_used))
@@ -235,12 +240,12 @@ class FullTracer {
         if (Object.keys(this.finalTrace).length > 0) {
             return;
         }
-        this.finalTrace.batchHash = ethers.utils.hexlify(this.getRegFromCtx(ctx, tag.params[1].regName));
-        this.finalTrace.old_state_root = ethers.utils.hexlify(this.getVarFromCtx(ctx, true, "oldStateRoot"));
-        this.finalTrace.globalHash = ethers.utils.hexlify(this.getVarFromCtx(ctx, true, "globalHash"));
-        this.finalTrace.numBatch = Number(this.getVarFromCtx(ctx, true, "numBatch"));
-        this.finalTrace.timestamp = Number(this.getVarFromCtx(ctx, true, "timestamp"));
-        this.finalTrace.sequencerAddr = ethers.utils.hexlify(this.getVarFromCtx(ctx, true, "sequencerAddr"));
+        this.finalTrace.batchHash = ethers.utils.hexlify(getRegFromCtx(ctx, tag.params[1].regName));
+        this.finalTrace.old_state_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "oldStateRoot"));
+        this.finalTrace.globalHash = ethers.utils.hexlify(getVarFromCtx(ctx, true, "globalHash"));
+        this.finalTrace.numBatch = Number(getVarFromCtx(ctx, true, "numBatch"));
+        this.finalTrace.timestamp = Number(getVarFromCtx(ctx, true, "timestamp"));
+        this.finalTrace.sequencerAddr = ethers.utils.hexlify(getVarFromCtx(ctx, true, "sequencerAddr"));
         this.finalTrace.responses = [];
     }
 
@@ -249,7 +254,7 @@ class FullTracer {
         this.finalTrace.cumulative_gas_used = String(this.accBatchGas);
         // TODO: fix nsr
         this.finalTrace.new_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
-        this.finalTrace.new_local_exit_root = ethers.utils.hexlify(this.getVarFromCtx(ctx, true, "newLocalExitRoot"));
+        this.finalTrace.new_local_exit_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newLocalExitRoot"));
         // Create ouput files and dirs
         this.exportTrace();
     }
@@ -266,6 +271,9 @@ class FullTracer {
         } else {
             codeId = ctx[params.regName]
         }
+        if(typeof codes[codeId] === "undefined") {
+            codeId = 0xfe;
+        }
         const opcode = codes[codeId].slice(2);
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
@@ -274,7 +282,7 @@ class FullTracer {
         addrMem += 0x30000;
 
         const finalMemory = [];
-        const lengthMemOffset = this._findOffsetLabel(ctx.rom.program, "memLength");
+        const lengthMemOffset = findOffsetLabel(ctx.rom.program, "memLength");
         const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
         const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Number(fea2scalar(ctx.Fr, lenMemValue));
 
@@ -323,21 +331,21 @@ class FullTracer {
         }
 
         singleInfo.opcode = opcode;
-        singleInfo.gas_refund = this.getVarFromCtx(ctx, false, "gasRefund").toString();
+        singleInfo.gas_refund = getVarFromCtx(ctx, false, "gasRefund").toString();
         singleInfo.op = ethers.utils.hexlify(codeId);
         singleInfo.error = "";
         singleInfo.state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
 
         //Add contract info
         singleInfo.contract = {};
-        singleInfo.contract.address = ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txDestAddr"));
-        singleInfo.contract.caller = ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txSrcAddr"));
-        singleInfo.contract.value = this.getVarFromCtx(ctx, false, "txValue").toString();
-        singleInfo.contract.data = this.getCalldataFromStack(ctx);
+        singleInfo.contract.address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
+        singleInfo.contract.caller = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
+        singleInfo.contract.value = getVarFromCtx(ctx, false, "txValue").toString();
+        singleInfo.contract.data = getCalldataFromStack(ctx);
         singleInfo.contract.gas = this.txGAS[this.depth];
         singleInfo.storage = JSON.parse(JSON.stringify(this.deltaStorage[this.depth]));
         // Round up to next multiple of 32
-        singleInfo.memory_size = String(Math.ceil(Number(this.getVarFromCtx(ctx, false, "memLength")) / 32) * 32);
+        singleInfo.memory_size = String(Math.ceil(Number(getVarFromCtx(ctx, false, "memLength")) / 32) * 32);
 
         this.info.push(singleInfo);
         this.fullStack.push(finalStack);
@@ -365,7 +373,7 @@ class FullTracer {
         const prevStep = this.info[this.info.length - 2];
         if (prevStep && opIncContext.includes(prevStep.opcode)) {
             //Set gasCall when depth has changed
-            this.txGAS[this.depth] = this.getVarFromCtx(ctx, true, "gasCall").toString();
+            this.txGAS[this.depth] = getVarFromCtx(ctx, true, "gasCall").toString();
             if (generate_call_trace) {
                 singleInfo.contract.gas = this.txGAS[this.depth];
             }
@@ -382,124 +390,13 @@ class FullTracer {
 
 
     }
-
-    //////////
-    // UTILS
-    //////////
-    //Get range from memory
-    getFromMemory(offset, length, ctx) {
-        const offsetCtx = Number(ctx.CTX) * 0x40000;
-        let addrMem = 0;
-        addrMem += offsetCtx;
-        addrMem += 0x30000;
-
-        const finalMemory = [];
-        const init = addrMem + Number(offset) / 32
-        const end = init + Number(length) / 32
-        for (let i = init; i < end; i++) {
-            let memValue = ctx.mem[i];
-            if (typeof memValue === "undefined")
-                memValue = scalar2fea(ctx.Fr, 0);;
-            let memScalar = fea2scalar(ctx.Fr, memValue);
-            let hexString = memScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalMemory.push(hexString.padStart(64, "0"));
-        }
-        return finalMemory
-    }
-    // Get a global or context variable
-    getVarFromCtx(ctx, global, varLabel) {
-        const offsetCtx = global ? 0 : Number(ctx.CTX) * 0x40000;
-        const offsetRelative = this._findOffsetLabel(ctx.rom.program, varLabel);
-        const addressMem = offsetCtx + offsetRelative;
-        const value = ctx.mem[addressMem];
-        const finalValue = typeof value === "undefined" ? 0 : value;
-        if (!finalValue) return 0n;
-        return fea2scalar(ctx.Fr, finalValue);
-    }
-    //Get the stored calldata in the stack
-    getCalldataFromStack(ctx, offset = 0, length) {
-        const addr = 0x20000 + 1024 + Number(ctx.CTX) * 0x40000;
-        let value = "0x";
-        for (let i = addr + Number(offset); i < 0x30000 + Number(ctx.CTX) * 0x40000; i++) {
-            const memVal = ctx.mem[i];
-            if (!memVal) break;
-            value += ethers.utils.hexlify(fea2scalar(ctx.Fr, memVal)).slice(2);
-        }
-        if (length) {
-            value = value.slice(0, 2 + length * 2);
-        }
-        return value;
-    }
-    // Get the value of a reg (A, B, C, D, E...)
-    getRegFromCtx(ctx, reg) {
-        return fea2scalar(ctx.Fr, ctx[reg]);
-    }
+   
     //Export the current trace to a file
     exportTrace() {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }
         fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(this.finalTrace, null, 2));
-    }
-
-    _findOffsetLabel(program, label) {
-        if (typeof this.labels[label] !== "undefined") {
-            return this.labels[label];
-        }
-
-        for (let i = 0; i < program.length; i++) {
-            if (program[i].offsetLabel === label) {
-                this.labels[label] = program[i].offset;
-                return program[i].offset;
-            }
-        }
-
-        return null;
-    }
-    // Returns a transaction hash from transaction params
-    getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, chainId, ctx) {
-        const txu = {
-            value: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(value))),
-            nonce: this.toHexStringRlp(ethers.utils.hexlify(nonce)),
-            gasLimit: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(gasLimit))),
-            gasPrice: this.toHexStringRlp(ethers.utils.hexlify(ethers.BigNumber.from(gasPrice))),
-            data: this.toHexStringRlpData(data),
-            chainId: chainId,
-            to: this.toHexStringRlp(to)
-        }
-        const v = Number(this.getVarFromCtx(ctx, false, "txV"));
-        const s = {
-            r: this.toHexStringRlp(ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txR"))),
-            s: this.toHexStringRlp(ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txS"))),
-            v: this.toHexStringRlp(ethers.utils.hexlify(v - 27 + txu.chainId * 2 + 35))
-        }
-
-        const fields = [txu.nonce, txu.gasPrice, txu.gasLimit, txu.to, txu.value, txu.data, s.v, s.r, s.s];
-        const rlp = ethers.utils.RLP.encode(fields);
-        const kecc = ethers.utils.keccak256(rlp);
-        return kecc
-    }
-
-    toHexStringRlp(num) {
-        if (num === "0x") num = "0x0"
-        let numHex = Scalar.toString(Scalar.e(num), 16);
-        numHex = (numHex.length % 2 === 1) ? (`0x0${numHex}`) : (`0x${numHex}`);
-        if (numHex === "0x00") numHex = "0x"
-        return numHex;
-    }
-
-    toHexStringRlpData(num) {
-        if (num === "0x") return num
-        let numHex = Scalar.toString(Scalar.e(num), 16);
-        numHex = (numHex.length % 2 === 1) ? (`0x0${numHex}`) : (`0x${numHex}`);
-        return numHex;
-    }
-
-    // Returns a correclt formated to value, for case it gets 0x00 from the rom
-    getFormatedTo(ctx) {
-        const to = ethers.utils.hexlify(this.getVarFromCtx(ctx, false, "txDestAddr"));
-        return to.length < 5 ? '0x0' : to
     }
 }
 
