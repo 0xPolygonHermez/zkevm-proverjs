@@ -3,7 +3,7 @@ zkEVM proof generator reference written in Javascript
 
 ## General info
 
-## setup
+## Setup
 ```sh
 $ npm install
 $ npm run build
@@ -16,7 +16,7 @@ $ node src/main_executor <input.json> -r <rom.json> -o <proof.json>
 ```
 Example:
 ```sh
-$ node src/main_executor testvectors/input_executor.json -r ../zkrom/build/rom.json -o tmp/commit.bin
+$ node src/main_executor testvectors/input_executor.json -r ../zkevm-rom/build/rom.json -o tmp/commit.bin
 ``` 
 Additional parameters:
 
@@ -25,6 +25,8 @@ Additional parameters:
 - `-s`: skip              
 - `-d`: debug
 - `-n <number>`: N
+
+*Note: May require `--max-old-space-size=16384` to increase JavaScript heap size.*
 
 
 ## License
