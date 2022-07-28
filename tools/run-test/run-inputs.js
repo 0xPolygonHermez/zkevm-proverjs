@@ -82,7 +82,8 @@ async function main(){
         await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
-    const cmPols = newCommitPolsArray(pil);
+    const commitConfig = {includeStateMachines: ["Main"]};
+    const cmPols = newCommitPolsArray(pil, commitConfig);
 
     let first = "";
     let second = "";

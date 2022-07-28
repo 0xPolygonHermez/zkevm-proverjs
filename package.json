@@ -49,7 +49,7 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "pil-stark": "^0.0.6",
-    "pilcom": "^0.0.9",
+    "pilcom": "github:0xPolygonHermez/pilcom#feature/skipStateMachines ",  
     "yargs": "^17.4.0"
   },
   "devDependencies": {
