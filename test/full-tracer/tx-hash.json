@@ -1,9 +1,9 @@
 [{
-    "nonce": "0x0a",
+    "nonce": 10,
     "gasPrice": "0x59682f08",
     "gasLimit": "0x5208",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x5af3107a4000",
+    "value": 100000000000000,
     "data": "0x",
     "chainId": 5,
     "v": "0x2e",
@@ -14,11 +14,11 @@
     "link": "https://goerli.etherscan.io/tx/0x033d835f6d526e8ab7d353816143881dfd43d26066ac3e62fa177c4d2e168f15"
 },
 {
-    "nonce": "0x13",
+    "nonce": 19,
     "gasPrice": "0x59682f07",
     "gasLimit": "0x5208",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x0",
+    "value": 0,
     "data": "0x",
     "chainId": "0x05",
     "v": "0x2e",
@@ -28,11 +28,11 @@
     "link": "https://goerli.etherscan.io/tx/0x5c7a55d6bd475e278d39023b596859e4d4fc2028a9d0f0c4164eac7b99dfa216"
 },
 {
-    "nonce": "0x14",
+    "nonce": 20,
     "gasPrice": "0x59682f07",
     "gasLimit": "0x5208",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x7d0e36a818000",
+    "value": 2200000000000000,
     "data": "0x",
     "chainId": "0x05",
     "v": "0x2e",
@@ -42,11 +42,11 @@
     "link": "https://goerli.etherscan.io/tx/0x47aea133ba8bc12cac6188afdbbfa833d60d019d0703984f16e083774a60cb0d"
 },
 {
-    "nonce": "0x15",
+    "nonce": 21,
     "gasPrice": "0x59682f08",
     "gasLimit": "0x5208",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x96b89fab8f3b40",
+    "value": 42424242424200000,
     "data": "0x",
     "chainId": "0x05",
     "v": "0x2d",
@@ -56,11 +56,11 @@
     "link": "https://goerli.etherscan.io/tx/0x3b25a869b5689cdba6a4f8797b1bc8d37809471552756f1a23a3273df59d153a"
 },
 {
-    "nonce": "0x17",
+    "nonce": 23,
     "gasPrice": "0x59682f08",
     "gasLimit": "0x520c",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x96b89fab8f3b40",
+    "value": 42424242424200000,
     "data": "0x00",
     "chainId": "0x05",
     "v": "0x2d",
@@ -70,11 +70,11 @@
     "link": "https://goerli.etherscan.io/tx/0xca85fac75b3a43e02b201a54f2b8a45c1186c9f36a5405615f7469709962baaa"
 },
 {
-    "nonce": "0x18",
+    "nonce": 24,
     "gasPrice": "0x59682f07",
     "gasLimit": "0x5208",
     "to": "0xD8Af0C5c6dEE7dCe32E59577675C026e1aDe4De5",
-    "value": "0x0",
+    "value": 0,
     "data": "0x",
     "chainId": "0x05",
     "v": "0x2d",

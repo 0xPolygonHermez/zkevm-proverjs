@@ -8,12 +8,19 @@ const opDecContext = ['SELFDESTRUCT', 'STOP', 'RETURN'];
 const { Scalar } = require("ffjavascript");
 const generate_call_trace = true;
 const generate_execute_trace = true;
-const { getTransactionHash, getFormatedTo, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
-// Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
-// for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
-// from the zkprover
+const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
+
+/**
+ * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
+ * for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
+ * from the zkprover
+ */
 class FullTracer {
 
+    /**
+     * Constructor, instantation of global vars
+     * @param {String} logFileName Name of the output file
+     */
     constructor(logFileName) {
         // Opcode step traces of the all the processed tx
         this.info = [];
@@ -24,7 +31,7 @@ class FullTracer {
         this.execution_trace = [];
         // Logs path
         this.folderLogs = path.join(__dirname, "../logs-full-trace");
-        this.pathLogFile = path.join(this.folderLogs, `${logFileName}__full_trace`);
+        this.pathLogFile = `${this.folderLogs}/${logFileName.split('.')[0]}__full_trace`;
         // Final output json to log
         this.finalTrace = {};
 
@@ -38,7 +45,11 @@ class FullTracer {
         this.logs = [];
     }
 
-    // Handle zkrom emitted events by name
+    /**
+     * Handle zkrom emitted events by name
+     * @param {Object} ctx Current context object
+     * @param {Object} tag to identify the event
+     */
     async handleEvent(ctx, tag) {
         try {
             const func = this[tag.params[0].varName];
@@ -59,11 +70,16 @@ class FullTracer {
     // EVENT HANDLERS
     //////////
 
+    /**
+     * Handles triggered error events at the zk-rom
+     * @param {Object} ctx Current context object
+     * @param {Object} tag to identify the error type
+     */
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
         this.info[this.info.length - 1].error = errorName;
         // Dont decrease depth if the error is from processing a RETURN opcode
-        const lastOpcode = this.info[this.info.length - 1]        
+        const lastOpcode = this.info[this.info.length - 1]
         if (!opDecContext.includes(lastOpcode.opcode)) {
             this.depth--
         }
@@ -71,6 +87,11 @@ class FullTracer {
         this.logs[ctx.CTX] = null
     }
 
+    /**
+    * Handles triggered log events at the zk-rom
+    * @param {Object} ctx Current context object
+    * @param {Object} tag to identify the log values
+    */
     onStoreLog(ctx, tag) {
         const indexLog = getRegFromCtx(ctx, tag.params[0].regName);
         const isTopic = Scalar.e(tag.params[1].num);
@@ -100,13 +121,16 @@ class FullTracer {
         this.logs[ctx.CTX][indexLog].index = Number(indexLog);
     }
 
-    // Triggered at the very beginning of transaction process
-    onProcessTx(ctx, tag) {
+    /**
+    * Triggered at the very beginning of transaction process
+    * @param {Object} ctx Current context object
+    */
+    onProcessTx(ctx) {
 
         //Fill context object
         const context = {};
         context.from = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
-        context.to = getFormatedTo(getVarFromCtx(ctx, false, "txDestAddr"));
+        context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
@@ -153,7 +177,10 @@ class FullTracer {
         this.txGAS[this.depth] = context.gas;
     }
 
-    // Triggered when storage is updated in opcode processing
+    /**
+    * Triggered when storage is updated in opcode processing
+    * @param {Object} ctx Current context object
+    */
     onUpdateStorage(ctx) {
         // The storage key is stored in C
         const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "C")), 32).slice(2);
@@ -162,7 +189,10 @@ class FullTracer {
         this.deltaStorage[this.depth][key] = value;
     }
 
-    // Triggered after processing a transaction
+    /**
+     * Triggered after processing a transaction
+     * @param {Object} ctx Current context object
+     */
     onFinishTx(ctx) {
         const response = this.finalTrace.responses[this.txCount];
 
@@ -235,7 +265,11 @@ class FullTracer {
         this.txCount++;
     }
 
-    // Trigered at the very beginning of a batch process
+     /**
+     * Trigered at the very beginning of a batch process
+     * @param {Object} ctx Current context object
+     * @param {Object} tag to identify the log values
+     */
     onStartBatch(ctx, tag) {
         if (Object.keys(this.finalTrace).length > 0) {
             return;
@@ -249,8 +283,12 @@ class FullTracer {
         this.finalTrace.responses = [];
     }
 
-    // Triggered after processing a batch
-    onFinishBatch(ctx, tag) {
+     /**
+     * Triggered after processing a batch
+     * @param {Object} ctx Current context object
+     * @param {Object} tag to identify the log values
+     */
+    onFinishBatch(ctx) {
         this.finalTrace.cumulative_gas_used = String(this.accBatchGas);
         // TODO: fix nsr
         this.finalTrace.new_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
@@ -259,7 +297,11 @@ class FullTracer {
         this.exportTrace();
     }
 
-    // Triggered just before processing an opcode
+    /**
+     * Triggered just before processing an opcode
+     * @param {Object} ctx Current context object
+     * @param {Object} params to identify opcode values
+     */
     onOpcode(ctx, params) {
         const singleInfo = {};
 
@@ -271,7 +313,7 @@ class FullTracer {
         } else {
             codeId = ctx[params.regName]
         }
-        if(typeof codes[codeId] === "undefined") {
+        if (typeof codes[codeId] === "undefined") {
             codeId = 0xfe;
         }
         const opcode = codes[codeId].slice(2);
@@ -390,8 +432,10 @@ class FullTracer {
 
 
     }
-   
-    //Export the current trace to a file
+
+    /**
+     * Export the current trace to a file
+     */
     exportTrace() {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);

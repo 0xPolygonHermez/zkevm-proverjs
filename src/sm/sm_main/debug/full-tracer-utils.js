@@ -3,7 +3,7 @@ const { toHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorU
 const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 /**
- * Convert a number type to a hex string starting with 0x and with a integer number of bytes
+ * Compute transaction hash from a transaction RLP enconding and hashing with keccak
  * @param {String} to - hex string
  * @param {Number} value - int number
  * @param {Number} nonce - int number
@@ -15,7 +15,6 @@ const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").sm
  * @param {String} v - hex string of v signature with EIP-155 applied (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md)
  * @returns {String} - Hex string with the transaction hash
  */
-
 function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v) {
     const txu = {
         value: toHexStringRlp(value),
@@ -36,16 +35,6 @@ function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v)
     const rlp = ethers.utils.RLP.encode(fields);
     const kecc = ethers.utils.keccak256(rlp);
     return kecc
-}
-
-/**
- * Formats to value
- * @param {String} to hex string
- * @returns {String} a correctly formated to value, for case it gets 0x00 from the rom
- */
-function getFormatedTo(toVal) {
-    const to = ethers.utils.hexlify(toVal);
-    return to.length < 5 ? '0x0' : to
 }
 
 /**
@@ -141,7 +130,6 @@ function getFromMemory(offset, length, ctx) {
 
 module.exports = {
     getTransactionHash,
-    getFormatedTo,
     findOffsetLabel,
     getVarFromCtx,
     getCalldataFromStack,

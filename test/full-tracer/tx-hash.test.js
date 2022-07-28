@@ -10,7 +10,7 @@ describe("tx hash tests", async function () {
     it("Should test al tx hash", async () => {
 
         for (let test of txs) {
-            const txHash = getTransactionHash(test.to, Number(test.value), Number(test.nonce), test.gasLimit, test.gasPrice, test.data, test.r, test.s, test.v)
+            const txHash = getTransactionHash(test.to, test.value, test.nonce, test.gasLimit, test.gasPrice, test.data, test.r, test.s, test.v)
             expect(txHash).to.equal(test.hash)
         }
 
