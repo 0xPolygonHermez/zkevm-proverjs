@@ -20,27 +20,27 @@ class StorageRomLine
 
         // Selectors
         this.inFREE = false;
-        this.nOLD_ROOT = false;
-        this.nNEW_ROOT = false;
-        this.nRKEY_BIT = false;
-        this.nVALUE_LOW = false;
-        this.nVALUE_HIGH = false;
-        this.nRKEY = false;
-        this.nSIBLING_RKEY = false;
-        this.nSIBLING_VALUE_HASH = false;
+        this.inOLD_ROOT = false;
+        this.inNEW_ROOT = false;
+        this.inRKEY_BIT = false;
+        this.inVALUE_LOW = false;
+        this.inVALUE_HIGH = false;
+        this.inRKEY = false;
+        this.inSIBLING_RKEY = false;
+        this.inSIBLING_VALUE_HASH = false;
 
         // Setters
-        this.etRKEY = false;
-        this.etRKEY_BIT = false;
-        this.etVALUE_LOW = false;
-        this.etVALUE_HIGH = false;
-        this.etLEVEL = false;
-        this.etOLD_ROOT = false;
-        this.etNEW_ROOT = false;
-        this.etHASH_LEFT = false;
-        this.etHASH_RIGHT = false;
-        this.etSIBLING_RKEY = false;
-        this.etSIBLING_VALUE_HASH = false;
+        this.setRKEY = false;
+        this.setRKEY_BIT = false;
+        this.setVALUE_LOW = false;
+        this.setVALUE_HIGH = false;
+        this.setLEVEL = false;
+        this.setOLD_ROOT = false;
+        this.setNEW_ROOT = false;
+        this.setHASH_LEFT = false;
+        this.setHASH_RIGHT = false;
+        this.setSIBLING_RKEY = false;
+        this.setSIBLING_VALUE_HASH = false;
 
         // Jump parameters
         this.addressLabel = "";
