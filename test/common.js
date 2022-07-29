@@ -126,10 +126,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
 
     const constPols =  newConstantPolsArray(pil);
     const cmPols =  newCommitPolsArray(pil);
-    console.log(cmPols.$$defArray[107]);
-    console.log(cmPols.$$defArray[141]);
-    console.log(cmPols.$$defArray[150]);
-    console.log(cmPols.$$defArray[122]);
 
     const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
     const rom = await zkasm.compile(path.join(__dirname, "zkasm", zkasmFile));
@@ -209,13 +205,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
     if (includePaddingKK) {
         console.log("Exec PaddingKK...");
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
-/*
-        let cp = constPols.PaddingKK; let p = cmPols.PaddingKK;
-        const P = 0xFFFFFFFF00000001n;
-        for (let i=0; i<5000; ++i)
-            if ((cp.lastBlockLatch[i] * (p.spare[i] + (1n - p.rem[i] * p.remInv[i]))) %P) console.log([i, cp.lastBlockLatch[i], p.spare[i], p.rem[i], p.remInv[i], p.incCounter[i]]);
-
-        EXIT_HERE;*/
         console.log("Exec PaddingKKbit...");
         const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
         console.log("Exec Nine2One...");
@@ -276,12 +265,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
     } else if (verifyPilFlag && requiredMain.Binary.length) {
         throw new Error(`Binary was excluded, but zkasm has ${requiredMain.Binary.length} Binary operations`);
     }
-
-/*    for (let i = 0; i < cmPols.Storage.oldRoot0.length; ++i) {
-        if ((i && i % 100000 == 0) || typeof(cmPols.Storage.oldRoot0[i]) !== 'bigint' || typeof(cmPols.Storage.selOldRoot0[i]) !== 'bigint') {
-            console.log([i, cmPols.Storage.oldRoot0[i], cmPols.Storage.selOldRoot0[i]]);
-        }
-    }*/
 
     const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols) : [];
 
