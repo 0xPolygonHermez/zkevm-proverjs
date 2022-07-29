@@ -16,7 +16,7 @@ $ node src/main_executor <input.json> -r <rom.json> -o <proof.json>
 ```
 Example:
 ```sh
-$ node src/main_executor testvectors/input_executor.json -r ../zkevm-rom/build/rom.json -o tmp/commit.bin
+$ node src/main_executor testvectors/input.json -r ../zkevm-rom/build/rom.json -o tmp/commit.bin
 ``` 
 Additional parameters:
 
