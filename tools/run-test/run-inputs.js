@@ -25,6 +25,8 @@ async function main(){
     console.time("Init time");
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
+    let countErrors = 0;
+    let countOK = 0;
 
     if (typeof argv.input === "undefined" && typeof argv.folder === "undefined"){
         console.error(`option "input" or "folder" not set`);
@@ -109,23 +111,35 @@ async function main(){
             const stopTime = performance.now();
             info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime)/1000} s\n`)}`;
             first += info;
+            countOK += 1;
         } catch(err) {
+            countErrors += 1;
             info += `${chalk.red('Error')}\n`
             info += `${chalk.yellow(`${err}\n`)}`;
             second += info;
             if(argv.exit)
                 break;
         }
-        console.log(info)
+        console.log(info);
     }
 
     console.log(`Tests finished in ${((Date.now() - initTime)/1000/60).toFixed(2)} minutes`)
     const lastInformation = first + second;
     console.log(lastInformation);
-    let fileOutput = "output.txt"
+
+    let fileOutput = "output.txt";
     if(argv.output)
         fileOutput = argv.output.trim();
     await fs.writeFileSync(path.join(__dirname, fileOutput), lastInformation);
+
+    if (argv.info) {
+        const fileInfo = argv.info.trim();
+        let infoOK = '';
+        infoOK += `inputs: ${inputs.length}\n`;
+        infoOK += `ok: ${countOK}\n`;
+        infoOK += `errors: ${countErrors}\n`;
+        await fs.writeFileSync(path.join(__dirname, fileInfo), infoOK);
+    }
 }
 
 main().then(()=> {
