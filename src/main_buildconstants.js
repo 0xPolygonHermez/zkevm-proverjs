@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const version = require("../package").version;
-const { newConstantPolsArray, compile } = require("pilcom");
+const { newConstantPolsArray, compile, newCommitPolsArray } = require("pilcom");
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
@@ -25,9 +25,10 @@ const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")
     .version(version)
-    .usage("zkprover -r <rom.json> -o <constant.bin|json>")
+    .usage("zkprover -r <rom.json> -o <constant.bin|json> [-p <main.pil>]")
     .alias("r", "rom")
     .alias("o", "output")
+    .alias("p", "pil")
     .argv;
 
 async function run() {
@@ -42,51 +43,90 @@ async function run() {
     }
     const outputFile = argv.output.trim();
 
+    let pilFile = __dirname + "/../pil/main.pil";
+    if (argv.pil) {
+        if (typeof(argv.pil) !== "string") {
+            throw new Error("Pil file needs to be specified with pil option")
+        }
+        pilFile = argv.pil.trim();
+    }
+
     Fr = new F1Field("0xFFFFFFFF00000001");
 
     const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
-    const pil = await compile(Fr, path.join(__dirname, "..", "pil", "main.pil"));
-
-
+    const pil = await compile(Fr, pilFile);
 
     const constPols = newConstantPolsArray(pil);
 
     // BREAK HERE TO DETECT N
 
     const N = constPols.Main.STEP.length;
+    console.log(`N = ${N}`);
 
-    console.log("Arith...");
-    await smArith.buildConstants(constPols.Arith);
-    console.log("Binary...");
-    await smBinary.buildConstants(constPols.Binary);
-    console.log("Byte4...");
-    await smByte4.buildConstants(constPols.Byte4);
-    console.log("Global...");
-    await smGlobal.buildConstants(constPols.Global);
-    console.log("KeccakF...");
-    await smKeccakF.buildConstants(constPols.KeccakF);
-    console.log("Main...");
-    await smMain.buildConstants(constPols.Main);
-    console.log("MemAlign...");
-    await smMemAlign.buildConstants(constPols.MemAlign);
-    console.log("Mem...");
-    await smMem.buildConstants(constPols.Mem);
-    console.log("Nine2One...");
-    await smNine2One.buildConstants(constPols.Nine2One);
-    console.log("NormGate9...");
-    await smNormGate9.buildConstants(constPols.NormGate9);
-    console.log("PaddingKK...");
-    await smPaddingKK.buildConstants(constPols.PaddingKK);
-    console.log("PaddingKKBits...");
-    await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
-    console.log("PaddingPG...");
-    await smPaddingPG.buildConstants(constPols.PaddingPG);
-    console.log("PoseidonG...");
-    await smPoseidonG.buildConstants(constPols.PoseidonG);
-    console.log("Rom...");
-    await smRom.buildConstants(constPols.Rom, rom);
-    console.log("Storage...");
-    await smStorage.buildConstants(constPols.Storage);
+    if (constPols.Arith) {
+        console.log("Arith...");
+        await smArith.buildConstants(constPols.Arith);
+    }
+    if (constPols.Binary) {
+        console.log("Binary...");
+        await smBinary.buildConstants(constPols.Binary);
+    }
+    if (constPols.Byte4) {
+        console.log("Byte4...");
+        await smByte4.buildConstants(constPols.Byte4);
+    }
+    if (constPols.Global) {
+        console.log("Global...");
+        await smGlobal.buildConstants(constPols.Global);
+    }
+    if (constPols.KeccakF) {
+        console.log("KeccakF...");
+        await smKeccakF.buildConstants(constPols.KeccakF);
+    }
+    if (constPols.Main) {
+        console.log("Main...");
+        await smMain.buildConstants(constPols.Main);
+    }
+    if (constPols.MemAlign) {
+        console.log("MemAlign...");
+        await smMemAlign.buildConstants(constPols.MemAlign);
+    }
+    if (constPols.Mem) {
+        console.log("Mem...");
+        await smMem.buildConstants(constPols.Mem);
+    }
+    if (constPols.Nine2One) {
+        console.log("Nine2One...");
+        await smNine2One.buildConstants(constPols.Nine2One);
+    }
+    if (constPols.NormGate9) {
+        console.log("NormGate9...");
+        await smNormGate9.buildConstants(constPols.NormGate9);
+    }
+    if (constPols.PaddingKK) {
+        console.log("PaddingKK...");
+        await smPaddingKK.buildConstants(constPols.PaddingKK);
+    }
+    if (constPols.PaddingKKBit) {
+        console.log("PaddingKKBits...");
+        await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
+    }
+    if (constPols.PaddingPG) {
+        console.log("PaddingPG...");
+        await smPaddingPG.buildConstants(constPols.PaddingPG);
+    }
+    if (constPols.PoseidonG) {
+        console.log("PoseidonG...");
+        await smPoseidonG.buildConstants(constPols.PoseidonG);
+    }
+    if (constPols.Rom) {
+        console.log("Rom...");
+        await smRom.buildConstants(constPols.Rom, rom);
+    }
+    if (constPols.Storage) {
+        console.log("Storage...");
+        await smStorage.buildConstants(constPols.Storage);
+    }
 
     for (let i=0; i<constPols.$$array.length; i++) {
         for (let j=0; j<N; j++) {
