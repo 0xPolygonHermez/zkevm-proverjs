@@ -205,13 +205,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, ex
     if (includePaddingKK) {
         console.log("Exec PaddingKK...");
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
-/*
-        let cp = constPols.PaddingKK; let p = cmPols.PaddingKK;
-        const P = 0xFFFFFFFF00000001n;
-        for (let i=0; i<5000; ++i)
-            if ((cp.lastBlockLatch[i] * (p.spare[i] + (1n - p.rem[i] * p.remInv[i]))) %P) console.log([i, cp.lastBlockLatch[i], p.spare[i], p.rem[i], p.remInv[i], p.incCounter[i]]);
-
-        EXIT_HERE;*/
         console.log("Exec PaddingKKbit...");
         const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
         console.log("Exec Nine2One...");

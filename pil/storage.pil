@@ -18,15 +18,16 @@ namespace Storage(%N);
     pol commit level0, level1, level2, level3;
     pol commit pc;
 
-    pol commit selOldRoot;
-    pol commit selNewRoot;
-    pol commit selValueLow;
-    pol commit selValueHigh;
-    pol commit selSiblingValueHash;
-    pol commit selRkey;
-    pol commit selRkeyBit;
-    pol commit selSiblingRkey;
-    pol commit selFree;
+    pol commit inOldRoot;
+    pol commit inNewRoot;
+    pol commit inValueLow;
+    pol commit inValueHigh;
+    pol commit inSiblingValueHash;
+    pol commit inRkey;
+    pol commit inRkeyBit;
+    pol commit inSiblingRkey;
+    pol commit inFree;
+    pol commit inRotlVh;
 
     pol commit setHashLeft;
     pol commit setHashRight;
@@ -55,71 +56,60 @@ namespace Storage(%N);
 
     pol commit incCounter;
     incCounter' = incCounter*(1 - iLatchSet - iLatchGet - Global.L1) + iHash;
+
     // We assume hash and latch never goes together
     // We assume first instruction is not a latch nor a hash.
 
     // Selectors
 
     pol op0 =
-        selOldRoot*oldRoot0 +
-        selNewRoot*newRoot0 +
-        selValueLow*valueLow0 +
-        selValueHigh*valueHigh0 +
-        selSiblingValueHash*siblingValueHash0 +
-        selSiblingRkey*siblingRkey0 +
-        selRkey*rkey0 +
-        selFree*free0 +
-        selRkeyBit*rkeyBit +
+        inOldRoot*oldRoot0 +
+        inNewRoot*newRoot0 +
+        inValueLow*valueLow0 +
+        inValueHigh*valueHigh0 +
+        inSiblingValueHash*siblingValueHash0 +
+        inSiblingRkey*siblingRkey0 +
+        inRkey*rkey0 +
+        inFree*free0 +
+        inRkeyBit*rkeyBit +
+        inRotlVh*valueHigh3 +
         iConst0;
-        //iClimbRkey*climbedKey0 +
-        //iClimbSiblingRkey*climbedSiblingKey0 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN0 +
-        //iRotateLevel*rotatedLevel0;
 
     pol op1 =
-        selOldRoot*oldRoot1 +
-        selNewRoot*newRoot1 +
-        selValueLow*valueLow1 +
-        selValueHigh*valueHigh1 +
-        selSiblingValueHash*siblingValueHash1 +
-        selSiblingRkey*siblingRkey1 +
-        selRkey*rkey1 +
-        selFree*free1 +
+        inOldRoot*oldRoot1 +
+        inNewRoot*newRoot1 +
+        inValueLow*valueLow1 +
+        inValueHigh*valueHigh1 +
+        inSiblingValueHash*siblingValueHash1 +
+        inSiblingRkey*siblingRkey1 +
+        inRkey*rkey1 +
+        inFree*free1 +
+        inRotlVh*valueHigh0 +
         iConst1;
-        //iClimbRkey*climbedKey1 +
-        //iClimbSiblingRkey*climbedSiblingKey1 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN1 +
-        //iRotateLevel*rotatedLevel1;
 
     pol op2 =
-        selOldRoot*oldRoot2 +
-        selNewRoot*newRoot2 +
-        selValueLow*valueLow2 +
-        selValueHigh*valueHigh2 +
-        selSiblingValueHash*siblingValueHash2 +
-        selSiblingRkey*siblingRkey2 +
-        selRkey*rkey2 +
-        selFree*free2 +
+        inOldRoot*oldRoot2 +
+        inNewRoot*newRoot2 +
+        inValueLow*valueLow2 +
+        inValueHigh*valueHigh2 +
+        inSiblingValueHash*siblingValueHash2 +
+        inSiblingRkey*siblingRkey2 +
+        inRkey*rkey2 +
+        inFree*free2 +
+        inRotlVh*valueHigh1 +
         iConst2;
-        //iClimbRkey*climbedKey2 +
-        //iClimbSiblingRkey*climbedSiblingKey2 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN2 +
-        //iRotateLevel*rotatedLevel2;
 
     pol op3 =
-        selOldRoot*oldRoot3 +
-        selNewRoot*newRoot3 +
-        selValueLow*valueLow3 +
-        selValueHigh*valueHigh3 +
-        selSiblingValueHash*siblingValueHash3 +
-        selSiblingRkey*siblingRkey3 +
-        selRkey*rkey3 +
-        selFree*free3 +
+        inOldRoot*oldRoot3 +
+        inNewRoot*newRoot3 +
+        inValueLow*valueLow3 +
+        inValueHigh*valueHigh3 +
+        inSiblingValueHash*siblingValueHash3 +
+        inSiblingRkey*siblingRkey3 +
+        inRkey*rkey3 +
+        inFree*free3 +
+        inRotlVh*valueHigh2 +
         iConst3;
-        //iClimbRkey*climbedKey3 +
-        //iClimbSiblingRkey*climbedSiblingKey3 +
-        //iClimbSiblingRkeyN*climbedSiblingKeyN3 +
-        //iRotateLevel*rotatedLevel3;
 
     // Setters
 
@@ -163,11 +153,6 @@ namespace Storage(%N);
     rkey2' = setRkey*(op2-rkey2) + iClimbRkey*(climbedKey2-rkey2) + rkey2;
     rkey3' = setRkey*(op3-rkey3) + iClimbRkey*(climbedKey3-rkey3) + rkey3;
 
-    /*siblingRkey0' = setSiblingRkey*(op0-siblingRkey0) + siblingRkey0;
-    siblingRkey1' = setSiblingRkey*(op1-siblingRkey1) + siblingRkey1;
-    siblingRkey2' = setSiblingRkey*(op2-siblingRkey2) + siblingRkey2;
-    siblingRkey3' = setSiblingRkey*(op3-siblingRkey3) + siblingRkey3;*/
-
     siblingRkey0' = setSiblingRkey*(op0-siblingRkey0) + iClimbSiblingRkey*(climbedSiblingKey0-siblingRkey0) + iClimbSiblingRkeyN*(climbedSiblingKeyN0-siblingRkey0) + siblingRkey0;
     siblingRkey1' = setSiblingRkey*(op1-siblingRkey1) + iClimbSiblingRkey*(climbedSiblingKey1-siblingRkey1) + iClimbSiblingRkeyN*(climbedSiblingKeyN1-siblingRkey1) + siblingRkey1;
     siblingRkey2' = setSiblingRkey*(op2-siblingRkey2) + iClimbSiblingRkey*(climbedSiblingKey2-siblingRkey2) + iClimbSiblingRkeyN*(climbedSiblingKeyN2-siblingRkey2) + siblingRkey2;
@@ -179,18 +164,6 @@ namespace Storage(%N);
     level1' = setLevel*(op1-level1) + iRotateLevel*(rotatedLevel1-level1) + level1;
     level2' = setLevel*(op2-level2) + iRotateLevel*(rotatedLevel2-level2) + level2;
     level3' = setLevel*(op3-level3) + iRotateLevel*(rotatedLevel3-level3) + level3;
-
-
-    /*pol commit op0Inv;
-    pol op0_isZero = 1 - op0*op0Inv;
-    (1-op0_isZero) * op0 = 0;
-
-
-    pol doJMP = iJmpz*op0_isZero + iJmp;
-
-    pc' = doJMP       *   (iAddress - (pc+1)) +  (pc+1)   ;*/
-
-
 
     // Instruction that guarantees that op = hash(hl, hr); the poseidon SM will do the work; the result will be feeded by free
     iHash {hashLeft0, hashLeft1, hashLeft2, hashLeft3, hashRight0, hashRight1, hashRight2, hashRight3, iHashType, 0, 0, 0, op0, op1, op2, op3} in
@@ -259,7 +232,38 @@ namespace Storage(%N);
     pol constant rConst3;
     pol constant rAddress;
     pol constant rLine; // 0, 1, 2, ...
+    pol constant rInFree;
+    pol constant rInNewRoot;
+    pol constant rInOldRoot;
+    pol constant rInRkey;
+    pol constant rInRkeyBit;
+    pol constant rInSiblingRkey;
+    pol constant rInSiblingValueHash;
+    pol constant rSetHashLeft;
+    pol constant rSetHashRight;
+    pol constant rSetLevel;
+    pol constant rSetNewRoot;
+    pol constant rSetOldRoot;
+    pol constant rSetRkey;
+    pol constant rSetRkeyBit;
+    pol constant rSetSiblingRkey;
+    pol constant rSetSiblingValueHash;
+    pol constant rSetValueHigh;
+    pol constant rSetValueLow;
 
-    {iHash, iHashType, iLatchSet, iLatchGet, iClimbRkey, iClimbSiblingRkey, iClimbSiblingRkeyN, iRotateLevel, iJmpz, iJmp, iConst0, iConst1, iConst2, iConst3, iAddress, pc} in
-    {rHash, rHashType, rLatchSet, rLatchGet, rClimbRkey, rClimbSiblingRkey, rClimbSiblingRkeyN, rRotateLevel, rJmpz, rJmp, rConst0, rConst1, rConst2, rConst3, rAddress, rLine};
+    {
+        iHash, iHashType, iLatchGet, iLatchSet, iClimbRkey, iClimbSiblingRkey, iClimbSiblingRkeyN,
+        iRotateLevel, iJmpz, iJmp, iConst0, iConst1, iConst2, iConst3, iAddress, pc,
+        inFree, inNewRoot, inOldRoot, inRkey, inRkeyBit, inSiblingRkey, inSiblingValueHash,
+        setHashLeft, setHashRight, setLevel, setNewRoot, setOldRoot, setRkey,
+        setRkeyBit, setSiblingRkey, setSiblingValueHash, setValueHigh, setValueLow
+    }
+    in
+    {
+        rHash, rHashType, rLatchGet, rLatchSet, rClimbRkey, rClimbSiblingRkey, rClimbSiblingRkeyN,
+        rRotateLevel, rJmpz, rJmp, rConst0, rConst1, rConst2, rConst3, rAddress, rLine,
+        rInFree, rInNewRoot, rInOldRoot, rInRkey, rInRkeyBit, rInSiblingRkey, rInSiblingValueHash,
+        rSetHashLeft, rSetHashRight, rSetLevel, rSetNewRoot, rSetOldRoot, rSetRkey,
+        rSetRkeyBit, rSetSiblingRkey, rSetSiblingValueHash, rSetValueHigh, rSetValueLow
+    }
 
