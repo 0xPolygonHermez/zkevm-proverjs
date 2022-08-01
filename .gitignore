@@ -1,7 +1,6 @@
 node_modules
 .vscode
-build/proof
-build/tmp
+build
 dist
 proof.json
 logs.json
