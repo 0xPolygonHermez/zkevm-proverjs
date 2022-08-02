@@ -72,7 +72,7 @@ module.exports.execute = async function (pols, input) {
     prepareInput(input);
 
     const required = {
-        paddingKKBits: []
+        paddingKKBit: []
     };
 
     const N = pols.freeIn.length;
@@ -136,7 +136,7 @@ module.exports.execute = async function (pols, input) {
             lastOffset = pols.crOffset[p];
 
             if (j % BYTESPERBLOCK == (BYTESPERBLOCK -1) ) {
-                required.paddingKKBits.push({
+                required.paddingKKBit.push({
                     r: input[i].dataBytes.slice(j - BYTESPERBLOCK +1, j+1),
                     connected: (j<BYTESPERBLOCK) ? false : true
                 });
@@ -213,7 +213,7 @@ module.exports.execute = async function (pols, input) {
             }
 
             if (j % BYTESPERBLOCK == (BYTESPERBLOCK -1) ) {
-                    required.paddingKKBits.push({
+                    required.paddingKKBit.push({
                         r: bytes0,
                         connected: false
                     });

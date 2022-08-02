@@ -109,47 +109,47 @@ async function run() {
 
         if (cmPols.Byte4) {
             console.log("Byte4...");
-            await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
+            await smByte4.execute(cmPols.Byte4, requiredMain.Byte4 || []);
         }
         if (cmPols.Arith) {
             console.log("Arith...");
-            await smArith.execute(cmPols.Arith, requiredMain.Arith);
+            await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
         }
         if (cmPols.Binary) {
             console.log("Binary...");
-            await smBinary.execute(cmPols.Binary, requiredMain.Binary);
+            await smBinary.execute(cmPols.Binary, requiredMain.Binary || []);
         }
         if (cmPols.MemAlign) {
             console.log("MemAlign...");
-            await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
+            await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign || []);
         }
         if (cmPols.Mem) {
             console.log("Mem...");
-            await smMem.execute(cmPols.Mem, requiredMain.Mem);
+            await smMem.execute(cmPols.Mem, requiredMain.Mem || []);
         }
         if (cmPols.PaddingKK) console.log("PaddingKK...");
-        const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
+        const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK || []) : false;
 
-        if (cmPols.PaddingKKbit) console.log("PaddingKKbit...");
-        const requiredKKbit = cmPols.PaddingKKbit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits): false;
+        if (cmPols.PaddingKKBit) console.log("PaddingKKbit...");
+        const requiredKKBit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit || []): false;
 
         if (cmPols.Nine2One) console.log("Nine2One...");
-        const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One) : [];
+        const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKBit.Nine2One || []) : false;
 
         if (cmPols.KeccakF) console.log("KeccakF...");
-        const requiredKeccakF = cmPols.PaddingKKbit ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : [];
+        const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF || []) : false;
 
         if (cmPols.NormGate9) {
             console.log("NormGate9...");
-            await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
+            await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9 || []);
         }
 
         if (cmPols.PaddingPG) console.log("PaddingPG...");
-        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG) : [];
+        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG || []) : false;
 
-        if (cmPols.Poseidon) {
+        if (cmPols.PoseidonG) {
             console.log("PoseidonG...");
-            const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
+            const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
             await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         }
 
