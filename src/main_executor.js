@@ -40,6 +40,8 @@ const argv = require("yargs")
     .alias("v", "verbose")
     .alias("u", "unsigned")
     .alias("e", "execute")
+    .alias("P", "pilconfig")
+    .alias("v", "verbose")
     .alias("n", "N")
     .argv;
 
