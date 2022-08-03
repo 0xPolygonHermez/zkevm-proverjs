@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const tty = require('tty');
 const version = require("../package").version;
 
 const exportPols = require("pilcom").exportPolynomials;
@@ -27,7 +28,7 @@ const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number> [-p <main.pil>]")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number> [-p <main.pil>] [-P <pilconfig.json>]")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
@@ -35,6 +36,8 @@ const argv = require("yargs")
     .alias("s", "skip")
     .alias("d", "debug")
     .alias("p", "pil")
+    .alias("P", "pilconfig")
+    .alias("v", "verbose")
     .alias("n", "N")
     .argv;
 
@@ -71,7 +74,6 @@ async function run() {
         }
     } else {
         let pilFile = __dirname + "/../pil/main.pil";
-        console.log(argv.pil);
         if (argv.pil) {
             if (typeof(argv.pil) !== "string") {
                 throw new Error("Pil file needs to be specified with pil option")
@@ -79,7 +81,17 @@ async function run() {
             pilFile = argv.pil.trim();
         }
         console.log('compile PIL '+pilFile);
-        pil = await compile(F, pilFile);
+
+        const pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : {};
+
+        if (argv.verbose) {
+            pilConfig.verbose = true;
+            if (typeof pilConfig.color === 'undefined') {
+                pilConfig.color = tty.isatty(process.stdout.fd);
+            }
+        }
+
+        pil = await compile(F, pilFile, null, pilConfig);
         await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
