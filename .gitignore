@@ -11,3 +11,4 @@ cache-main-pil.json
 testvectors/commit.bin
 testvectors/constants.bin
 tmp
+build/rom.json

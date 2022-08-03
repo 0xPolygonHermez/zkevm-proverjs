@@ -54,6 +54,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         N = pols.zkPC.length;
     }
 
+    if (config && config.unsigned){
+        if (typeof input.from === 'undefined'){
+            throw new Error('Unsigned flag requires a `from` in the input');
+        }
+    }
+
+    const skipAsserts = config.unsigned || config.execute;
+
     const poseidon = await buildPoseidon();
     const Fr = poseidon.F;
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
@@ -124,6 +132,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.fileName = l.fileName;
         ctx.line = l.line;
 
+        // breaks the loop in debug mode in order to test and debug faster
+        if (Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+            break;
+        }
+
         let incHashPos = 0;
         let incCounter = 0;
 
@@ -141,7 +154,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 evalCommand(ctx, l.cmdBefore[j]);
             }
         }
-
 
 //////////
 // LOAD INPUTS
@@ -731,7 +743,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 //////////
 
         if (l.assert) {
-            if (
+            if ((Number(ctx.zkPC) === rom.labels.assertNewStateRoot) && skipAsserts){
+                console.log("Skip assert newStateRoot");
+            } else if ((Number(ctx.zkPC) === rom.labels.assertNewLocalExitRoot) && skipAsserts){
+                console.log("Skip assert newLocalExitRoot");
+            } else if (
                     (!Fr.eq(ctx.A[0], op0)) ||
                     (!Fr.eq(ctx.A[1], op1)) ||
                     (!Fr.eq(ctx.A[2], op2)) ||
@@ -1350,6 +1366,20 @@ module.exports = async function execute(pols, input, rom, config = {}) {
              pols.A6[i],
              pols.A7[i]
             ];
+
+            // Set A register with input.from to process unsigned transactions
+            if ((Number(ctx.zkPC) === rom.labels.checkAndSaveFrom) && config.unsigned){
+                const feaFrom = scalar2fea(Fr, input.from);
+                [pols.A0[nexti],
+                 pols.A1[nexti],
+                 pols.A2[nexti],
+                 pols.A3[nexti],
+                 pols.A4[nexti],
+                 pols.A5[nexti],
+                 pols.A6[nexti],
+                 pols.A7[nexti]
+                ] = [feaFrom[0], feaFrom[1], feaFrom[2], feaFrom[3], feaFrom[4], feaFrom[5], feaFrom[6], feaFrom[7]];
+            }
         }
 
         if (l.setB == 1) {
@@ -2603,7 +2633,7 @@ function preprocessTxs(ctx) {
         newStateRoot,
         globalExitRoot,
         timestamp,
-    } = ctx.input
+    } = ctx.input;
 
     ctx.input.batchHashData = calculateBatchHashData(
         ctx.input.batchL2Data,
