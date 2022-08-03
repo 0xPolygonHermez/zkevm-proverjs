@@ -6,7 +6,7 @@
   "scripts": {
     "buildgenesis": "",
     "buildinput": "",
-    "buildrom": "",
+    "buildrom": "cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build && cp ./build/rom.json ../../../build/rom.json",
     "buildconstants": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_buildconstants -r ../zkevm-rom/build/rom.json -o build/proof/zkevm.const",
     "exec": "mkdir -p build/proof && node --max-old-space-size=524288 src/main_executor tools/build-genesis/input_executor.json -p pil/main.pil -r ../zkevm-rom/build/rom.json -o build/proof/zkevm.commit && cp build/rom.json tools/build-genesis/input_executor.json build/proof",
     "pilverify": "node --max-old-space-size=524288 node_modules/pilcom/src/main_pilverifier.js build/proof/zkevm.commit -c build/proof/zkevm.const -p pil/main.pil",
@@ -65,8 +65,8 @@
     "fs": "^0.0.1-security",
     "pil-stark": "^0.0.10",
     "pilcom": "^0.0.11",
-    "yargs": "^17.4.0",
-    "snarkjs": "^0.4.24"
+    "snarkjs": "^0.4.24",
+    "yargs": "^17.4.0"
   },
   "devDependencies": {
     "chai": "^4.3.4",

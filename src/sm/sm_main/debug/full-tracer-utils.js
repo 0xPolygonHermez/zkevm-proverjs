@@ -57,7 +57,7 @@ function findOffsetLabel(program, label) {
  * @param {Object} ctx current context object
  * @param {Boolean} global true if label is global, false if is ctx label
  * @param {String} varLabel name of the label
- * @returns {Scalar} value of the label 
+ * @returns {Scalar} value of the label
  */
 function getVarFromCtx(ctx, global, varLabel) {
     const offsetCtx = global ? 0 : Number(ctx.CTX) * 0x40000;

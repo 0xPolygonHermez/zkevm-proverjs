@@ -28,7 +28,7 @@ const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number> [-p <main.pil>] [-P <pilconfig.json>]")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number> [-p <main.pil>] [-P <pilconfig.json>] -u -e")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
@@ -38,6 +38,8 @@ const argv = require("yargs")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("v", "verbose")
+    .alias("u", "unsigned")
+    .alias("e", "execute")
     .alias("n", "N")
     .argv;
 
@@ -102,7 +104,9 @@ async function run() {
         debug: (argv.debug === true),
         debugInfo: {
             inputName: path.basename(inputFile, ".json")
-        }
+        },
+        unsigned: (argv.unsigned === true),
+        execute: (argv.execute === true)
     }
     if (argv.n) {
         config.debugInfo["N"] = Number(argv.n);
