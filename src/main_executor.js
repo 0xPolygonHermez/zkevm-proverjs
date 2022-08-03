@@ -27,13 +27,14 @@ const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number>")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d -n <number> [-p <main.pil>]")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
     .alias("l", "logs")
     .alias("s", "skip")
     .alias("d", "debug")
+    .alias("p", "pil")
     .alias("n", "N")
     .argv;
 
@@ -69,7 +70,16 @@ async function run() {
             throw new Error("Cache pil file does not exist");
         }
     } else {
-        pil = await compile(F, "pil/main.pil");
+        let pilFile = __dirname + "/../pil/main.pil";
+        console.log(argv.pil);
+        if (argv.pil) {
+            if (typeof(argv.pil) !== "string") {
+                throw new Error("Pil file needs to be specified with pil option")
+            }
+            pilFile = argv.pil.trim();
+        }
+        console.log('compile PIL '+pilFile);
+        pil = await compile(F, pilFile);
         await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
@@ -88,39 +98,60 @@ async function run() {
 
     const N = cmPols.Main.PC.length;
 
+    console.log(`N = ${N}`);
+    console.log("Main ...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, config);
     if (typeof outputFile !== "undefined") {
-        console.log("Storage...");
-        const requiredStorage = await smStorage.execute(cmPols.Storage, requiredMain.Storage);
-        console.log("Byte4...");
-        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
-        console.log("Arith...");
-        await smArith.execute(cmPols.Arith, requiredMain.Arith);
-        console.log("Binary...");
-        await smBinary.execute(cmPols.Binary, requiredMain.Binary);
-        console.log("MemAlign...");
-        await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
-        console.log("Mem...");
-        await smMem.execute(cmPols.Mem, requiredMain.Mem);
+        if (cmPols.Storage) {
+            console.log("Storage...");
+        }
+        const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage) : false;
 
-        console.log("PaddingKK...");
-        const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
-        console.log("PaddingKKbit...");
-        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
-        console.log("Nine2One...");
-        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
-        console.log("KeccakF...");
-        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
-        console.log("NormGate9...");
-        await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
+        if (cmPols.Byte4) {
+            console.log("Byte4...");
+            await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
+        }
+        if (cmPols.Arith) {
+            console.log("Arith...");
+            await smArith.execute(cmPols.Arith, requiredMain.Arith);
+        }
+        if (cmPols.Binary) {
+            console.log("Binary...");
+            await smBinary.execute(cmPols.Binary, requiredMain.Binary);
+        }
+        if (cmPols.MemAlign) {
+            console.log("MemAlign...");
+            await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
+        }
+        if (cmPols.Mem) {
+            console.log("Mem...");
+            await smMem.execute(cmPols.Mem, requiredMain.Mem);
+        }
+        if (cmPols.PaddingKK) console.log("PaddingKK...");
+        const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
 
-        console.log("PaddingPG...");
-        const requiredPaddingPG = await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG);
+        if (cmPols.PaddingKKbit) console.log("PaddingKKbit...");
+        const requiredKKbit = cmPols.PaddingKKbit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits): false;
 
+        if (cmPols.Nine2One) console.log("Nine2One...");
+        const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One) : [];
 
-        console.log("PoseidonG...");
-        const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
-        await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
+        if (cmPols.KeccakF) console.log("KeccakF...");
+        const requiredKeccakF = cmPols.PaddingKKbit ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : [];
+
+        if (cmPols.NormGate9) {
+            console.log("NormGate9...");
+            await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
+        }
+
+        if (cmPols.PaddingPG) console.log("PaddingPG...");
+        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG) : [];
+
+        if (cmPols.Poseidon) {
+            console.log("PoseidonG...");
+            const allPoseidonG = [ ...requiredMain.PoseidonG, ...requiredPaddingPG.PoseidonG, ...requiredStorage.PoseidonG ];
+            await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
+        }
 
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
