@@ -34,7 +34,10 @@ function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v)
     const fields = [txu.nonce, txu.gasPrice, txu.gasLimit, txu.to, txu.value, txu.data, sig.v, sig.r, sig.s];
     const rlp = ethers.utils.RLP.encode(fields);
     const kecc = ethers.utils.keccak256(rlp);
-    return kecc
+    return {
+        tx_hash: kecc,
+        rlp_tx: rlp
+    }
 }
 
 /**
