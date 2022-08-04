@@ -6,7 +6,7 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 const smPaddingKK = require("../../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smNine2one = require("../../src/sm/sm_nine2one.js");
-const smKeccakF = require("../src/sm/sm_keccakf.js");
+const smKeccakF = require("../../src/sm/sm_keccakf/sm_keccakf.js");
 const smNormGate9 = require("../../src/sm/sm_norm_gate9.js");
 const smGlobal = require("../../src/sm/sm_global.js");
 
@@ -53,7 +53,7 @@ describe("test padding keccak", async function () {
         await smGlobal.buildConstants(constPols.Global);
 
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, input);
-        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
+        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit);
         const requiredNine2One = await smNine2one.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
         const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
         await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);

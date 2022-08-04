@@ -47,7 +47,7 @@ describe("test main sm", async function () {
 
         console.log("Const PaddingKK...");
         await smPaddingKK.buildConstants(constPols.PaddingKK);
-        console.log("Const PaddingKKBits...");
+        console.log("Const PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
         console.log("Const Nine2One...");
         await smNine2One.buildConstants(constPols.Nine2One);

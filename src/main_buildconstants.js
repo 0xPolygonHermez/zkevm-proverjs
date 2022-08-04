@@ -122,7 +122,7 @@ async function run() {
         await smPaddingKK.buildConstants(constPols.PaddingKK);
     }
     if (constPols.PaddingKKBit) {
-        console.log("PaddingKKBits...");
+        console.log("PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     }
     if (constPols.PaddingPG) {

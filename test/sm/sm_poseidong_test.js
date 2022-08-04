@@ -4,7 +4,7 @@ const fs = require("fs");
 const F1Field = require("ffjavascript").F1Field;
 
 const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
-const smPoseidonG = require("../src/sm/sm_poseidong.js");
+const smPoseidonG = require("../../src/sm/sm_poseidong.js");
 
 
 describe("test poseidon goldilocks state machine", async function () {
@@ -13,7 +13,7 @@ describe("test poseidon goldilocks state machine", async function () {
     it("It should check standard l", async () => {
         const F = new F1Field("0xFFFFFFFF00000001");
 
-        const pil = await compile(F, "pil/poseidong_test.pil");
+        const pil = await compile(F, "pil/poseidong.pil", null, { defines: { N: 2 ** 21}});
         const constPols = newConstantPolsArray(pil);
         const cmPols = newCommitPolsArray(pil);
 

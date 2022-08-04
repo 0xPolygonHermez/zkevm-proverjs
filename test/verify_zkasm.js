@@ -71,7 +71,7 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         await smPaddingKK.buildConstants(constPols.PaddingKK);
     }
     if (constPols.PaddingKKBit) {
-        console.log("Const PaddingKKBits...");
+        console.log("Const PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     }
     if (constPols.Nine2One) {
@@ -124,10 +124,10 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
     const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
-    
+
     if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
     const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
-    
+
     if (cmPols.Nine2One) console.log("Exec Nine2One...");
     const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One) : false;
 
