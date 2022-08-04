@@ -413,16 +413,16 @@ describe("test plookup operations", async function () {
 
     let constPols, cmPols;
     before(async function () {
-        pil = await compile(Fr, "pil/binary.pil");
+        pil = await compile(Fr, "pil/binary.pil", null, {defines: { N: 2 ** 21 }});
 
         constPols = newConstantPolsArray(pil);
-        await smBinary.buildConstants(constPols);
+        await smBinary.buildConstants(constPols.Binary);
     });
 
     it("It should verify the binary operations pil", async () => {
         cmPols = newCommitPolsArray(pil);
 
-        await smBinary.execute(cmPols, input);
+        await smBinary.execute(cmPols.Binary, input);
 
         // Verify
         const res = await verifyPil(Fr, pil, cmPols, constPols);
@@ -440,7 +440,7 @@ describe("test plookup operations", async function () {
     it("It should fail tests", async () => {
         cmPols = newCommitPolsArray(pil);
 
-        await smBinary.execute(cmPols, error_input);
+        await smBinary.execute(cmPols.Binary, error_input);
 
         let res = await verifyPil(Fr, pil, cmPols, constPols, { continueOnError: true })
         for (let i = 0; i < res.length; i++) {
@@ -449,7 +449,7 @@ describe("test plookup operations", async function () {
         expect(res.length).to.not.eq(0);
 
         const plookupLine = pil.plookupIdentities[0].line;
-        const prefix = 'pil/binary.pil:'+plookupLine+'  plookup not found ';
+        const prefix = 'binary.pil:'+plookupLine+':  plookup not found ';
 
         expect(res[0]).to.equal(prefix + 'w=31 values: 1,0,15,15,1,0,15,0');
         expect(res[1]).to.equal(prefix + 'w=32 values: 0,1,255,255,0,0,1,0');

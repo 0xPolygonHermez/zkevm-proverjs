@@ -3,12 +3,17 @@ const assert = chai.assert;
 const fs = require("fs");
 const path = require("path");
 
-const verifyZkasm = require("../common").verifyZkasm;
+const {verifyZkasm} = require("../verify_zkasm");
 
-describe("test main sm", async function () {
+describe("Test Storage Counters", async function () {
     this.timeout(10000000);
 
-    it("It should create the pols main", async () => {
-        await verifyZkasm("../zkasm/counters/storage.zkasm", true, ['mem', 'mem_align', 'arith', 'padding_kk']);
+    it("Verify Storage Zkasm Test", async () => {
+        await verifyZkasm("../zkasm/counters/storage.zkasm", true,
+            { defines: {N: 2 ** 21},
+              namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'Storage', 'PoseidonG'],
+              verbose: true,
+              color: true,
+              disableUnusedError: true});
     });
 });

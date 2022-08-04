@@ -1,5 +1,3 @@
-include "config.pil";
-
 namespace Rom(%N);
 
     pol constant CONST0;

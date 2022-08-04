@@ -1,7 +1,9 @@
 
 const fs = require("fs");
 const path = require("path");
+const tty = require('tty');
 const version = require("../package").version;
+
 const { newConstantPolsArray, compile, newCommitPolsArray } = require("pilcom");
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
@@ -25,10 +27,12 @@ const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")
     .version(version)
-    .usage("zkprover -r <rom.json> -o <constant.bin|json> [-p <main.pil>]")
+    .usage("main_buildconstants -r <rom.json> -o <constant.bin|json> [-p <main.pil>] [-P <pilconfig.json>] [-v]")
     .alias("r", "rom")
     .alias("o", "output")
     .alias("p", "pil")
+    .alias("P", "pilconfig")
+    .alias("v", "verbose")
     .argv;
 
 async function run() {
@@ -50,11 +54,21 @@ async function run() {
         }
         pilFile = argv.pil.trim();
     }
+    console.log('compile PIL '+pilFile);
+
+    const pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : {};
+
+    if (argv.verbose) {
+        pilConfig.verbose = true;
+        if (typeof pilConfig.color === 'undefined') {
+            pilConfig.color = tty.isatty(process.stdout.fd);
+        }
+    }
 
     Fr = new F1Field("0xFFFFFFFF00000001");
 
     const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
-    const pil = await compile(Fr, pilFile);
+    const pil = await compile(Fr, pilFile, null, pilConfig);
 
     const constPols = newConstantPolsArray(pil);
 
@@ -108,7 +122,7 @@ async function run() {
         await smPaddingKK.buildConstants(constPols.PaddingKK);
     }
     if (constPols.PaddingKKBit) {
-        console.log("PaddingKKBits...");
+        console.log("PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     }
     if (constPols.PaddingPG) {

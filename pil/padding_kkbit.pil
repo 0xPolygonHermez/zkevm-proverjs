@@ -70,7 +70,6 @@
 
 */
 
-include "config.pil";
 include "nine2one.pil";
 
 namespace PaddingKKBit(%N);

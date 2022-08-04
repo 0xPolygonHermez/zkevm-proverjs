@@ -39,17 +39,20 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         Storage: []
     };
 
-    if ((config)&&(config.test)) {
+    if (config && config.test) {
         testTools.setup(config.test, evalCommand);
     }
 
     let N;
 
-    if ((config)&&(config.debug)) {
-        if((config.debugInfo)&&(config.debugInfo.N))
-            N = Number(2**config.debugInfo.N)
-        else
+    const debug = config && config.debug;
+
+    if (debug) {
+        if (config.debugInfo && config.debugInfo.N) {
+            N = Number(2**config.debugInfo.N);
+        } else {
             N = Number(2**17);
+        }
     } else {
         N = pols.zkPC.length;
     }
@@ -73,8 +76,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
 
-    let ln;
-
     const ctx = {
         mem: [],
         hashK: [],
@@ -93,7 +94,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     preprocessTxs(ctx);
 
-    if (config && config.debug) {
+    if (debug) {
         iTracer = new Tracer("process_tx.zkasm", config.debugInfo.inputName);
         fullTracer = new FullTracer(config.debugInfo.inputName)
     } else {
@@ -101,8 +102,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
     const iPrint = new Prints(ctx, smt);
 
-    // only for debugging
-    let __incCounterPos = 0;
     for (i=0; i<N; i++) {
         ctx.ln = Fr.toObject(pols.zkPC[i]);
         ctx.step=i;
@@ -133,7 +132,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.line = l.line;
 
         // breaks the loop in debug mode in order to test and debug faster
-        if (Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+        if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
             break;
         }
 
