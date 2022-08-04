@@ -45,7 +45,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     let N;
 
-    if ((config)&&(config.debug)) {
+    if (debug) {
         if((config.debugInfo)&&(config.debugInfo.N))
             N = Number(2**config.debugInfo.N)
         else
@@ -93,7 +93,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     preprocessTxs(ctx);
 
-    if (config && config.debug) {
+    const debug = config && config.debug;
+    if (debug) {
         iTracer = new Tracer("process_tx.zkasm", config.debugInfo.inputName);
         fullTracer = new FullTracer(config.debugInfo.inputName)
     } else {
@@ -133,7 +134,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.line = l.line;
 
         // breaks the loop in debug mode in order to test and debug faster
-        if (Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+        if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
             break;
         }
 
