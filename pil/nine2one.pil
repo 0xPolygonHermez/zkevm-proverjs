@@ -1,4 +1,3 @@
-include "config.pil";
 include "keccakf.pil";
 
 namespace Nine2One(%N);
@@ -11,4 +10,4 @@ namespace Nine2One(%N);
     field9' = (1-Field9latch)*field9 + bit*Factor;
     bit *(1-bit) = 0;
 
-    Field9latch*(field9 - KeccakF.a) = 0;  
+    Field9latch*(field9 - KeccakF.a) = 0;

@@ -1,5 +1,3 @@
-include "config.pil";
-
 include "global.pil";
 include "poseidong.pil";
 
@@ -16,7 +14,7 @@ namespace PaddingPG(%N);
     pol constant lastBlock;
 
     // rem: It can be different only the first byte of a new Hash.
-    pol commit rem; 
+    pol commit rem;
 
     rem' * (1-lastHash) = (rem-1)*(1-lastHash);
 
@@ -53,31 +51,31 @@ namespace PaddingPG(%N);
     acc[7]' = acc7C*(1-lastBlock);
 
     lastBlock {
-        acc0C, 
-        acc1C, 
-        acc2C, 
-        acc3C, 
+        acc0C,
+        acc1C,
+        acc2C,
+        acc3C,
         acc4C,
         acc5C,
         acc6C,
         acc7C,
-        prevHash0, 
-        prevHash1, 
-        prevHash2, 
-        prevHash3, 
+        prevHash0,
+        prevHash1,
+        prevHash2,
+        prevHash3,
         curHash0,
         curHash1,
         curHash2,
         curHash3
      } in PoseidonG.LATCH {
-        PoseidonG.in0, 
-        PoseidonG.in1, 
-        PoseidonG.in2, 
-        PoseidonG.in3, 
-        PoseidonG.in4, 
-        PoseidonG.in5, 
-        PoseidonG.in6, 
-        PoseidonG.in7, 
+        PoseidonG.in0,
+        PoseidonG.in1,
+        PoseidonG.in2,
+        PoseidonG.in3,
+        PoseidonG.in4,
+        PoseidonG.in5,
+        PoseidonG.in6,
+        PoseidonG.in7,
         PoseidonG.hashType,
         PoseidonG.cap1,
         PoseidonG.cap2,
@@ -86,7 +84,7 @@ namespace PaddingPG(%N);
         PoseidonG.hash1,
         PoseidonG.hash2,
         PoseidonG.hash3
-     }; 
+     };
 
     pol commit curHash0, curHash1, curHash2, curHash3;
     curHash0' * (1-lastBlock) = curHash0*(1-lastBlock);
@@ -114,7 +112,7 @@ namespace PaddingPG(%N);
 
     (addr' -addr) * (1-lastHash) = 0;
 
-    pol doInc = lastHash * (1-Global.L1'); 
+    pol doInc = lastHash * (1-Global.L1');
     (addr' - 1 -addr) * doInc = 0;
 
     // chunkReader generator
@@ -131,9 +129,9 @@ namespace PaddingPG(%N);
     crLatch * crOffset' = crLatch * (crLen' -1);
 
     pol commit crF0, crF1, crF2, crF3, crF4, crF5, crF6, crF7;
-    pol constant k_crOffset, k_crF0, k_crF1, k_crF2, k_crF3, k_crF4, k_crF5, k_crF6, k_crF7; 
+    pol constant k_crOffset, k_crF0, k_crF1, k_crF2, k_crF3, k_crF4, k_crF5, k_crF6, k_crF7;
 
-    {crOffset, crF0, crF1, crF2, crF3, crF4, crF5, crF6, crF7} in 
+    {crOffset, crF0, crF1, crF2, crF3, crF4, crF5, crF6, crF7} in
        {k_crOffset, k_crF0, k_crF1, k_crF2, k_crF3, k_crF4, k_crF5, k_crF6, k_crF7};
 
 
@@ -160,11 +158,11 @@ namespace PaddingPG(%N);
     (1-crLatch) * lastHash = 0;  // Ensure qhen a hash ends it resets the address.
 
 
-    /* Read Data output 
+    /* Read Data output
         crLatch [hash0, hash1, hash2, hash3, hash4, hash5, hash6, hash7, crOffset - crLen -1, crLen, crV0C, crV1C, crV2C, crV3C, crV4C, crV5C, crV6C, crV7C]
     */
 
-    /* Read Len output 
+    /* Read Len output
         lastHash [hash0, hash1, hash2, hash3, hash4, hash5, hash6, hash7, len]
     */
 

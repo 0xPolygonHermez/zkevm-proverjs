@@ -122,22 +122,18 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
     }
 
-    if (cmPols.PaddingKK) {
-        console.log("Exec PaddingKK...");
-        const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
-    }
-    if (cmPols.PaddingKKBit) {
-        console.log("Exec PaddingKKbit...");
-        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit);
-    }
-    if (cmPols.Nine2One) {
-        console.log("Exec Nine2One...");
-        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
-    }
-    if (cmPols.KeccakF) {
-        console.log("Exec KeccakF...");
-        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
-    }
+    if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
+    const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
+    
+    if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
+    const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
+    
+    if (cmPols.Nine2One) console.log("Exec Nine2One...");
+    const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One) : false;
+
+    if (cmPols.KeccakF) console.log("Exec KeccakF...");
+    const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : false;
+
     if (cmPols.NormGate9) {
         console.log("Exec NormGate9...");
         await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);

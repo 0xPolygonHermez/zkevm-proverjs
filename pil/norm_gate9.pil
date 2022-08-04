@@ -1,5 +1,3 @@
-include "config.pil";
-
 namespace NormGate9(%N);
 
     pol constant Value3, Value3Norm;   // Normalization table

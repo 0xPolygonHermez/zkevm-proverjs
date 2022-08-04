@@ -15,7 +15,6 @@ w^7     0       0       0          0
 
 */
 
-include "config.pil";
 include "global.pil";
 
 namespace Byte4(%N);

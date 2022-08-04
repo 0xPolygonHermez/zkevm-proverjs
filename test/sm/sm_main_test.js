@@ -87,7 +87,7 @@ describe("test main sm", async function () {
         console.log("Exec PaddingKK...");
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
         console.log("Exec PaddingKKbit...");
-        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBits);
+        const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit);
         console.log("Exec Nine2One...");
         const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
         console.log("Exec KeccakF...");

@@ -1,4 +1,3 @@
-include "config.pil";
 include "global.pil";
 include "norm_gate9.pil";
 

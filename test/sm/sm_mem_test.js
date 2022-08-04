@@ -2,8 +2,8 @@ const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 
-const { createCommitedPols, createConstantPols, compile, verifyPil } = require("pilcom");
-const sm_memory = require("../src/sm/sm_mem.js");
+const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
+const sm_memory = require("../../src/sm/sm_mem.js");
 
 function log (m) {console.log(m);}
 
@@ -112,18 +112,19 @@ let access = [
 describe("test memory operations", async function () {
     this.timeout(10000000);
 
-    it("It should create the pols, excute test and verify the pil", async () => {
+    it("It should create the pols, execute test and verify the pil", async () => {
 
         const Fr = new F1Field("0xFFFFFFFF00000001");
-        const pil = await compile(Fr, "pil/mem.pil");
-        const [constPols, constPolsArray, constPolsDef] = createConstantPols(pil);
-        const [cmPols, cmPolsArray, cmPolsDef] = createCommitedPols(pil);
+        const pil = await compile(Fr, "pil/mem.pil", null, {defines: { N: 2 ** 16 }});
 
-        await sm_memory.buildConstants(constPols.Mem, constPolsDef.Mem);
-        await sm_memory.execute(cmPols.Mem, cmPolsDef.Mem, access);
+        const constPols = newConstantPolsArray(pil);
+        const cmPols = newCommitPolsArray(pil);
+
+        await sm_memory.buildConstants(constPols.Mem);
+        await sm_memory.execute(cmPols.Mem, access);
 
         // Verify
-        const res = await verifyPil(Fr, pil, cmPolsArray, constPolsArray);
+        const res = await verifyPil(Fr, pil, cmPols, constPols);
 
         if (res.length != 0) {
             console.log("Pil does not pass");

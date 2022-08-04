@@ -10,7 +10,6 @@
     EQ4: s * x1 - s * x3 - y1 - y3 + (q2 * p)   y3
 
 */
-include "config.pil";
 include "global.pil";
 
 namespace Arith(%N);
