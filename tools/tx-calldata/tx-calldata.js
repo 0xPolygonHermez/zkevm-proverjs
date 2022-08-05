@@ -1,5 +1,5 @@
 const ethers = require("ethers")
-const { utils } = require("@0xpolygonhermez/zkevm-commonjs");
+const { utils } = require("./utils");
 const fs = require("fs")
 
 const argv = require("yargs")
