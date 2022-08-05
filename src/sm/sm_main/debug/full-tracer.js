@@ -7,7 +7,7 @@ const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE'
 const opDecContext = ['SELFDESTRUCT', 'STOP', 'RETURN'];
 const { Scalar } = require("ffjavascript");
 const generate_call_trace = true;
-const generate_execute_trace = true;
+const generate_execute_trace = false;
 const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
 
 /**
@@ -77,7 +77,16 @@ class FullTracer {
      */
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
+        //Intrinsic error should be set at tx level (not opcode)
+        if (errorName === "intrinsic_invalid") {
+            this.finalTrace.responses[this.txCount].error = errorName;
+            return;
+        }
         this.info[this.info.length - 1].error = errorName;
+        // If error is OOC, must set the same error to the whole batch
+        if (errorName === "OOC") {
+            this.finalTrace.responses.forEach(e => e.error = errorName)
+        }
         // Dont decrease depth if the error is from processing a RETURN opcode
         const lastOpcode = this.info[this.info.length - 1]
         if (!opDecContext.includes(lastOpcode.opcode)) {
@@ -151,7 +160,7 @@ class FullTracer {
         const v = Number(getVarFromCtx(ctx, false, "txV"));
         // Apply EIP-155 to v value
         const vn = ethers.utils.hexlify(v - 27 + context.chainId * 2 + 35)
-        const {tx_hash, rlp_tx} = getTransactionHash(context.to, Number(context.value), Number(context.nonce), context.gas, context.gasPrice, context.data, r, s, vn);
+        const { tx_hash, rlp_tx } = getTransactionHash(context.to, Number(context.value), Number(context.nonce), context.gas, context.gasPrice, context.data, r, s, vn);
         response.tx_hash = tx_hash;
         response.rlp_tx = rlp_tx;
         response.type = 0;
@@ -235,8 +244,9 @@ class FullTracer {
             }
             this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = this.execution_trace;
             this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = this.call_trace;
-            this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcode.error;
-
+            if (this.finalTrace.responses[this.finalTrace.responses.length - 1].error === "") {
+                this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcode.error;
+            }
             // Remove not requested data
             if (!generate_execute_trace) {
                 delete this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace
@@ -266,11 +276,11 @@ class FullTracer {
         this.txCount++;
     }
 
-     /**
-     * Trigered at the very beginning of a batch process
-     * @param {Object} ctx Current context object
-     * @param {Object} tag to identify the log values
-     */
+    /**
+    * Trigered at the very beginning of a batch process
+    * @param {Object} ctx Current context object
+    * @param {Object} tag to identify the log values
+    */
     onStartBatch(ctx, tag) {
         if (Object.keys(this.finalTrace).length > 0) {
             return;
@@ -284,11 +294,11 @@ class FullTracer {
         this.finalTrace.responses = [];
     }
 
-     /**
-     * Triggered after processing a batch
-     * @param {Object} ctx Current context object
-     * @param {Object} tag to identify the log values
-     */
+    /**
+    * Triggered after processing a batch
+    * @param {Object} ctx Current context object
+    * @param {Object} tag to identify the log values
+    */
     onFinishBatch(ctx) {
         this.finalTrace.cumulative_gas_used = String(this.accBatchGas);
         // TODO: fix nsr
