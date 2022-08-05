@@ -84,7 +84,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     preprocessTxs(ctx);
 
     if (debug) {
-        iTracer = new Tracer("process_tx.zkasm", config.debugInfo.inputName);
+        iTracer = new Tracer(config.debugInfo.inputName);
         fullTracer = new FullTracer(config.debugInfo.inputName)
     } else {
         iTracer = null

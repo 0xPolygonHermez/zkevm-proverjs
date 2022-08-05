@@ -5,18 +5,17 @@ const codes = require("./opcodes");
 
 class Tracer {
 
-    constructor (fileName, logFileName){
+    constructor (logFileName){
         this.info = [];
         this.fullStack = [];
         this.trace = [];
-        this.fileName = fileName;
+        this.fileName = "process-tx.zkasm";
         this.folderLogs = path.join(__dirname, "../logs-trace");
         this.pathLogFile = path.join(this.folderLogs, `${logFileName}__trace.json`);
         this.labels = {};
     }
 
     async getTrace(ctx, romStep , print = false){
-
         if (romStep.offsetLabel === "mapping_opcodes" && ctx.fileName.includes(this.fileName)){
             let singleTrace = {};
             const singleInfo = {};
