@@ -43,19 +43,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         testTools.setup(config.test, evalCommand);
     }
 
-    let N;
-
     const debug = config && config.debug;
-
-    if (debug) {
-        if (config.debugInfo && config.debugInfo.N) {
-            N = Number(2**config.debugInfo.N);
-        } else {
-            N = Number(2**17);
-        }
-    } else {
-        N = pols.zkPC.length;
-    }
+    const N = pols.zkPC.length;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){

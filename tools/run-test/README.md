@@ -19,6 +19,7 @@
     - `-f <inputsFolderPath> (optional)`: Folder where the inputs are located. It supports that there is a folder inside it with other inputs.
     The following parameters are all required:
     - `-r <rom.json>`: path to rom json file
+    - `-e`: stops the inputs execution when one fails
 
 ## Example
 ```
