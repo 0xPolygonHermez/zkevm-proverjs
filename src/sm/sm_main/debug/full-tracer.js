@@ -151,8 +151,9 @@ class FullTracer {
         const v = Number(getVarFromCtx(ctx, false, "txV"));
         // Apply EIP-155 to v value
         const vn = ethers.utils.hexlify(v - 27 + context.chainId * 2 + 35)
-
-        response.tx_hash = getTransactionHash(context.to, Number(context.value), Number(context.nonce), context.gas, context.gasPrice, context.data, r, s, vn);
+        const {tx_hash, rlp_tx} = getTransactionHash(context.to, Number(context.value), Number(context.nonce), context.gas, context.gasPrice, context.data, r, s, vn);
+        response.tx_hash = tx_hash;
+        response.rlp_tx = rlp_tx;
         response.type = 0;
         response.return_value = "";
         response.gas_left = context.gas;
@@ -162,7 +163,7 @@ class FullTracer {
         response.create_address = "";
         response.state_root = context.old_state_root;
         response.logs = [];
-        response.unprocessed_transaction = false;
+        response.unprocessed_transaction = 0;
         response.call_trace = {}
         response.call_trace.context = context;
         response.call_trace.steps = []
@@ -429,8 +430,6 @@ class FullTracer {
             this.depth++;
             this.deltaStorage[this.depth] = {};
         }
-
-
     }
 
     /**
