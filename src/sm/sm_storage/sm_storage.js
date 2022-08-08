@@ -588,7 +588,7 @@ module.exports.execute = async function (pols, action) {
         // JMPZ: Jump if OP==0
         if (rom.line[l].iJmpz)
         {
-            if (fr.isZero(op[0]) && fr.isZero(op[1]) && fr.isZero(op[2]) && fr.isZero(op[3]))
+            if (fr.isZero(op[0])
             {
                 pols.pc[nexti] = BigInt(rom.line[l].address);
             }
