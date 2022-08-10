@@ -1,4 +1,4 @@
-constant %N = 2**18;
+constant %N = 2**16;
 include "global.pil";
 
 namespace Main(%N);
