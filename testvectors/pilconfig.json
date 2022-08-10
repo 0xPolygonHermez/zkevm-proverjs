@@ -1,0 +1,9 @@
+{ 
+  "defines": {
+	"N": 65536
+  },
+  "namespaces": ["Main","Global"],
+  "verbose": true,
+  "color": true,
+  "disableUnusedError": true
+}
