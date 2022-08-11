@@ -172,7 +172,6 @@ class FullTracer {
         response.create_address = "";
         response.state_root = context.old_state_root;
         response.logs = [];
-        response.unprocessed_transaction = 0;
         response.call_trace = {}
         response.call_trace.context = context;
         response.call_trace.steps = []
