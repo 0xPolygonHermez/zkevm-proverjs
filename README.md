@@ -66,35 +66,35 @@ npm run buildall --starkstruct=debug
 npm run buildall --build=build/basic_proof
 ```
 ### Build steps
-- **buildrom**: compile ROM written in zkasm.
-- **buildconstants**: generate constant polynomials of ROM and SM.
-- **exec**: execute ROM and generate commited polynomials of ROM an SM.
-- **pilverify**: verify constraints of generated polynomials (constants and commited)
-- **buildstarkinfo**:
-- **buildchelpers**:
-- **buildconstanttree**:
-- **prove**:
-- **verify**:
-- **gencircom**: generate circuit to validate the proof.
-- **compilecircom**: compile generated circuit
-- **c12setup**:
-- **c12buildstarkinfo**:
-- **c12buildchelpers**:
-- **c12exec**:
-- **c12pilverify**:
-- **c12buildconstanttree**:
-- **c12prove**:
-- **c12verify**:
-- **c12gencircom**:
-- **c12compilecircom**:
-- **downloadptaw**:
-- **g16setup**:
-- **g16contribute**:
-- **g16evk**:
-- **g16wc**:
-- **g16prove**:
-- **g16verify**:
-- **g16solidity**:
+- **buildrom**
+- **buildconstants**
+- **exec**
+- **pilverify**
+- **buildstarkinfo**
+- **buildchelpers**
+- **buildconstanttree**
+- **prove**
+- **verify**
+- **gencircom**
+- **compilecircom**
+- **c12setup**
+- **c12buildstarkinfo**
+- **c12buildchelpers**
+- **c12exec**
+- **c12pilverify**
+- **c12buildconstanttree**
+- **c12prove**
+- **c12verify**
+- **c12gencircom**
+- **c12compilecircom**
+- **downloadptaw**
+- **g16setup**
+- **g16contribute**
+- **g16evk**
+- **g16wc**
+- **g16prove**
+- **g16verify**
+- **g16solidity**
 
 ## License
 
