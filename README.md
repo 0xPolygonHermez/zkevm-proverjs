@@ -30,21 +30,72 @@ Additional parameters:
 
 ### Build prove
 ```sh
-npm run buildrom
-npm run buildconstants
-npm run exec
-npm run pilverify
-npm run buildconstanttree
-npm run prove
-npm run verify
+npm run buildall
 ```
 ### Build prove with basic main (without SM, only for debugging)
 ```sh
-npm run basic:buildrom
-npm run basic:buildconstants
-npm run basic:exec
-npm run basic:pilverify
+npm run buildall --pil=pil/basic_main.pil --starkstruct=debug
 ```
+### Build prove with pilconfig (only for debugging)
+```sh
+npm run buildall --pilconfig=testvectors/pilconfig.pil --starkstruct=debug
+```
+### Build options
+**from**: syntax is --from=\<step\> to indicate step where start build/rebuild
+```sh
+npm run buildall --from=c12setup
+```
+**continue**: this option hasn't additional argument. With this option buildall detected last step well done and continues from next step.
+```sh
+npm run buildall --continue
+```
+**pil**: syntax is --pil=\<main.pil\> where main.pil was name of pil to compile. For debugging could use basic_main.pil. See --starkstruct option
+```sh
+npm run buildall --pil=pil/basic_main.pil --starkstruct=debug
+```
+**pilconfig**: syntax is --pilconfig=<pilconfig.json> where pilconfig.json was name of config used in pil compilation. See --starkstruct option
+```sh
+npm run buildall --pilconfig=testvectors/pilconfig.json --starkstruct=debug
+```
+**starkstruct**: syntax is --startstruct=debug to generates automatic starkstruct adapted to pil bits number. Only for debugging. This option shall used with --pil or pilconfig if number of bits change.
+```sh
+npm run buildall --starkstruct=debug
+```
+**build**: with this option could change build directory, by default build directory is build/proof.
+```sh
+npm run buildall --build=build/basic_proof
+```
+### Build steps
+- **buildrom**
+- **buildconstants**
+- **exec**
+- **pilverify**
+- **buildstarkinfo**
+- **buildchelpers**
+- **buildconstanttree**
+- **prove**
+- **verify**
+- **gencircom**
+- **compilecircom**
+- **c12setup**
+- **c12buildstarkinfo**
+- **c12buildchelpers**
+- **c12exec**
+- **c12pilverify**
+- **c12buildconstanttree**
+- **c12prove**
+- **c12verify**
+- **c12gencircom**
+- **c12compilecircom**
+- **downloadptaw**
+- **g16setup**
+- **g16contribute**
+- **g16evk**
+- **g16wc**
+- **g16prove**
+- **g16verify**
+- **g16solidity**
+
 ## License
 
 ### Copyright
