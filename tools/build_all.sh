@@ -1,6 +1,7 @@
 . $PWD/pre.sh
 SKIP=0
-echo "####### START $(date +'%Y-%m-%d %H:%M:%S') ########" >> $BDIR/steps.log
+START_OPTIONS=`env|grep -wE '(npm_config_pil|npm_config_pil|npm_config_continue|npm_config_from|npm_config_build|npm_config_starkstruct)'|sed 's/npm_config_//g'|xargs`
+echo "####### START $(date +'%Y-%m-%d %H:%M:%S') $START_OPTIONS ########" >> $BDIR/steps.log
 LAST_STEP_FILE=$BDIR/last_step.txt
 [ ! -z $npm_config_from ] && SKIP=1
 [ $npm_config_continue ] && [ -f $LAST_STEP_FILE ] && LAST_STEP=`cat $LAST_STEP_FILE` && echo "last step done: $LAST_STEP" && SKIP=1
