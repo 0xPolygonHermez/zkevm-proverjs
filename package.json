@@ -50,7 +50,7 @@
     "test:counters:padding_pg": "mocha test/counters/padding_pg.js",
     "test:counters:poseidon": "mocha test/counters/poseidon.js",
     "test:counters:storage": "mocha test/counters/storage.js",
-    "test:all-inputs": "mocha --timeout 0 --max-old-space-size=4096 tools/run-test/run-inputs-mocha.test.js"
+    "test:all-inputs": "mocha --timeout 0 --max-old-space-size=8000 tools/run-test/run-inputs-mocha.test.js"
   },
   "author": "Jordi Baylina",
   "license": "UNLICENSED",

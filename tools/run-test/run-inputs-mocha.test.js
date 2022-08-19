@@ -73,6 +73,8 @@ describe("Run executor inputs from config file", () => {
                     throw err;
                 }
                 console.log(info);
+                const used = process.memoryUsage().heapUsed / 1024 / 1024;
+                console.log(`Current memory heap: ${Math.round(used * 100) / 100} MB out of ${process.memoryUsage().heapTotal}`);
             }
             expect(true).to.be.true
         } catch (e) {
