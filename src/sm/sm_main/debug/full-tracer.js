@@ -78,7 +78,7 @@ class FullTracer {
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
         //Intrinsic error should be set at tx level (not opcode)
-        if (errorName === "intrinsic_invalid") {
+        if (this.info.length === 0) {
             this.finalTrace.responses[this.txCount].error = errorName;
             return;
         }
