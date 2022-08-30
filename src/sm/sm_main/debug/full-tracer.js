@@ -83,10 +83,6 @@ class FullTracer {
             return;
         }
         this.info[this.info.length - 1].error = errorName;
-        // If error is OOC, must set the same error to the whole batch
-        if (errorName === "OOC") {
-            this.finalTrace.responses.forEach(e => e.error = errorName)
-        }
         // Dont decrease depth if the error is from processing a RETURN opcode
         const lastOpcode = this.info[this.info.length - 1]
         if (!opDecContext.includes(lastOpcode.opcode)) {
@@ -150,7 +146,7 @@ class FullTracer {
         context.execution_time = ""
         context.old_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
         context.nonce = Number(getVarFromCtx(ctx, false, "txNonce"));
-        context.gasPrice = getVarFromCtx(ctx, false, "txGasPrice").toString();
+        context.gasPrice = getVarFromCtx(ctx, false, "txGasPriceRLP").toString();
         context.chainId = Number(getVarFromCtx(ctx, false, "txChainId"));
 
         //Fill response object
