@@ -1,7 +1,7 @@
 include "config.pil";
 include "global.pil";
 include "rom.pil";
-// include "byte4.pil";
+include "byte4.pil";
 include "mem_align.pil";
 include "arith.pil";
 include "binary.pil";
