@@ -30,7 +30,7 @@ namespace PaddingKK(%N);
     firstHash' = lastHash;
 
     pol aFreeIn = (1 - (remIsZero + spare))*freeIn + remIsZero + lastHash*0x80;
-    r8valid {aFreeIn, r8Id, connected} in { PaddingKKBit.r8, PaddingKKBit.r8Id, PaddingKKBit.connected };
+    r8valid {aFreeIn, r8Id, connected} is { PaddingKKBit.r8, PaddingKKBit.r8Id, PaddingKKBit.connected };
 
     connected' * ( 1-lastBlock) = connected * (1-lastBlock);
     connected'*lastBlock = (1 - lastHash)*lastBlock;
@@ -47,7 +47,7 @@ namespace PaddingKK(%N);
         hash6,
         hash7,
         sOutId
-     } in {
+     } is {
         PaddingKKBit.sOut0,
         PaddingKKBit.sOut1,
         PaddingKKBit.sOut2,
