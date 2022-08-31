@@ -5,6 +5,7 @@ const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").sm
 const { ethers } = require("ethers");
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const opDecContext = ['SELFDESTRUCT', 'STOP', 'RETURN'];
+const responseErrors = ['OOC', 'intrinsic_invalid']
 const { Scalar } = require("ffjavascript");
 const generate_call_trace = true;
 const generate_execute_trace = false;
@@ -78,7 +79,7 @@ class FullTracer {
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
         //Intrinsic error should be set at tx level (not opcode)
-        if (this.info.length === 0) {
+        if (responseErrors.includes(errorName)) {
             this.finalTrace.responses[this.txCount].error = errorName;
             return;
         }
