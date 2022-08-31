@@ -1,7 +1,7 @@
 include "config.pil";
 include "global.pil";
 include "rom.pil";
-include "byte4.pil";
+// include "byte4.pil";
 include "mem_align.pil";
 include "arith.pil";
 include "binary.pil";
@@ -212,7 +212,7 @@ namespace Main(%N);
 
     /////// isNeg
 
-    {JMPN*(isNeg*2**32 + op0)} is Byte4.SET {Byte4.out};
+    JMPN*(isNeg*2**32 + op0) in Byte4.out;
 
     /////// MAXMEM intermediary vals New State
 
@@ -327,12 +327,12 @@ namespace Main(%N);
     Global.L1 * (FREE7 - :globalHash7) = 0;
 
     // Check that the calculated hash is well formed
-/*    sWR + hashPDigest {
+    sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7
     } in
     Binary.RESET {
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
-    };*/
+    };
 
 /////////
 // ROM Plookpups
@@ -449,24 +449,13 @@ namespace Main(%N);
 // Binary Plookpups
 /////////
 
-    // [bin == 0] binOpcode * bin = 0 (ADD)
-    //            A * bin + op * (1 - bin) = op
-    //            B * bin = 0
-    //            carry * bin = 0
-    //            op + 0 = op  && carry = 0
-    //
-    // [bin == 1] binOpcode * bin = binOpcode
-    //            A * bin + op * (1 - bin) = A
-    //            B * bin = B
-    //            carry * bin = carry
-
-    bin + sWR + hashPDigest {
-        binOpcode * bin,
-        A0*bin+op0*(1-bin), A1*bin+op1*(1-bin), A2*bin+op2*(1-bin), A3*bin+op3*(1-bin), A4*bin+op4*(1-bin), A5*bin+op5*(1-bin), A6*bin+op6*(1-bin), A7*bin+op7*(1-bin),
-        B0*bin, B1 * bin, B2 * bin, B3 * bin, B4 * bin, B5 * bin, B6 * bin , B7 * bin,
+    bin {
+        binOpcode,
+        A0, A1, A2, A3, A4, A5, A6, A7,
+        B0, B1, B2, B3, B4, B5, B6, B7,
         op0, op1, op2, op3, op4, op5, op6, op7,
-        carry * bin
-    } is
+        carry
+    } in
     Binary.RESET {
         Binary.lOpcode,
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
@@ -476,8 +465,6 @@ namespace Main(%N);
     };
 
     cntBinary' = cntBinary*(1-Global.L1) + bin;
-
-
 
 /////////
 // HASHK Plookpups
