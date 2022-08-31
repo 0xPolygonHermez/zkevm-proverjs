@@ -1068,7 +1068,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.hashPDigest || l.sWR) {
             const op = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 0});
+            required.Binary.push({a: op, b: 0n, c: op, opcode: 1});
         }
 
         if (l.arith) {
