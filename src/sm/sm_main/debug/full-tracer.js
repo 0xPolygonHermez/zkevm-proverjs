@@ -137,6 +137,7 @@ class FullTracer {
         const context = {};
         context.from = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
         context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
+        context.to = (context.to === "0x0") ? "0x" : context.to
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
@@ -330,6 +331,8 @@ class FullTracer {
             cnt_poseidon_g: Number(ctx.cntPoseidonG),
             cont_steps: Number(ctx.step),
         }
+        //If some counter exceed, notify
+        //if(this.finalTrace.counters.cnt_arith > )
         // TODO: fix nsr
         this.finalTrace.new_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
         this.finalTrace.new_local_exit_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newLocalExitRoot"));
