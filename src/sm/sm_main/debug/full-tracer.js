@@ -137,6 +137,7 @@ class FullTracer {
         const context = {};
         context.from = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
         context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
+        context.to = (context.to === "0x0") ? "0x" : context.to
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
@@ -174,6 +175,15 @@ class FullTracer {
         response.call_trace.steps = []
         response.execution_trace = []
 
+        response.txCounters = {
+            cnt_arith: Number(ctx.cntArith),
+            cnt_binary: Number(ctx.cntBinary),
+            cnt_mem_align: Number(ctx.cntMemAlign),
+            cnt_keccak_f: Number(ctx.cntKeccakF),
+            cnt_padding_pg: Number(ctx.cntPaddingPG),
+            cnt_poseidon_g: Number(ctx.cntPoseidonG),
+            cont_steps: Number(ctx.step),
+        };
         // Create current tx object
         this.finalTrace.responses.push(response);
         this.txTime = Date.now();
@@ -202,6 +212,17 @@ class FullTracer {
     onFinishTx(ctx) {
         const response = this.finalTrace.responses[this.txCount];
 
+        // Update spent counters
+        response.txCounters = {
+            cnt_arith: Number(ctx.cntArith) - response.txCounters.cnt_arith,
+            cnt_binary: Number(ctx.cntBinary) - response.txCounters.cnt_binary,
+            cnt_mem_align: Number(ctx.cntMemAlign) - response.txCounters.cnt_mem_align,
+            cnt_keccak_f: Number(ctx.cntKeccakF) - response.txCounters.cnt_keccak_f,
+            cnt_padding_pg: Number(ctx.cntPaddingPG) - response.txCounters.cnt_padding_pg,
+            cnt_poseidon_g: Number(ctx.cntPoseidonG) - response.txCounters.cnt_poseidon_g,
+            cont_steps: Number(ctx.step) - response.txCounters.cont_steps,
+        };
+
         //Set consumed tx gas
         response.gas_used = String(Number(response.gas_left) - Number(ctx.GAS));
         response.call_trace.context.gas_used = response.gas_used;
@@ -226,6 +247,10 @@ class FullTracer {
         //If processed opcodes
         if (this.info.length) {
             const lastOpcode = this.info[this.info.length - 1];
+            // Set counters of last opcode to zero
+            Object.keys(lastOpcode.counters).forEach(key => {
+                lastOpcode.counters[key] = 0;
+            });
             const beforeLastOpcode = this.info[this.info.length - 2];
             //  Set gas price of last opcode
             if (beforeLastOpcode) {
@@ -297,6 +322,17 @@ class FullTracer {
     */
     onFinishBatch(ctx) {
         this.finalTrace.cumulative_gas_used = String(this.accBatchGas);
+        this.finalTrace.counters = {
+            cnt_arith: Number(ctx.cntArith),
+            cnt_binary: Number(ctx.cntBinary),
+            cnt_mem_align: Number(ctx.cntMemAlign),
+            cnt_keccak_f: Number(ctx.cntKeccakF),
+            cnt_padding_pg: Number(ctx.cntPaddingPG),
+            cnt_poseidon_g: Number(ctx.cntPoseidonG),
+            cont_steps: Number(ctx.step),
+        }
+        //If some counter exceed, notify
+        //if(this.finalTrace.counters.cnt_arith > )
         // TODO: fix nsr
         this.finalTrace.new_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
         this.finalTrace.new_local_exit_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newLocalExitRoot"));
@@ -372,6 +408,16 @@ class FullTracer {
             // The gas cost of the opcode is gas before - gas after processing the opcode
             const gasCost = Number(prevTrace.remaining_gas) - Number(ctx.GAS);
             prevTrace.gas_cost = String(gasCost);
+            // Update counters spent in prev opcode
+            prevTrace.counters = {
+                cnt_arith: Number(ctx.cntArith) - prevTrace.counters.cnt_arith,
+                cnt_binary: Number(ctx.cntBinary) - prevTrace.counters.cnt_binary,
+                cnt_mem_align: Number(ctx.cntMemAlign) - prevTrace.counters.cnt_mem_align,
+                cnt_keccak_f: Number(ctx.cntKeccakF) - prevTrace.counters.cnt_keccak_f,
+                cnt_padding_pg: Number(ctx.cntPaddingPG) - prevTrace.counters.cnt_padding_pg,
+                cnt_poseidon_g: Number(ctx.cntPoseidonG) - prevTrace.counters.cnt_poseidon_g,
+                cont_steps: Number(ctx.step) - prevTrace.counters.cont_steps,
+            }
             // If negative gasCost means gas has been added from a deeper context, we should recalculate
             if (prevTrace.gas_cost < 0) {
                 const beforePrevTrace = this.info[this.info.length - 2];
@@ -395,7 +441,15 @@ class FullTracer {
         singleInfo.storage = JSON.parse(JSON.stringify(this.deltaStorage[this.depth]));
         // Round up to next multiple of 32
         singleInfo.memory_size = String(Math.ceil(Number(getVarFromCtx(ctx, false, "memLength")) / 32) * 32);
-
+        singleInfo.counters = {
+            cnt_arith: Number(ctx.cntArith),
+            cnt_binary: Number(ctx.cntBinary),
+            cnt_mem_align: Number(ctx.cntMemAlign),
+            cnt_keccak_f: Number(ctx.cntKeccakF),
+            cnt_padding_pg: Number(ctx.cntPaddingPG),
+            cnt_poseidon_g: Number(ctx.cntPoseidonG),
+            cont_steps: Number(ctx.step),
+        }
         this.info.push(singleInfo);
         this.fullStack.push(finalStack);
 
