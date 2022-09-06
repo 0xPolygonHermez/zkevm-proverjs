@@ -39,7 +39,6 @@
     "preg16setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
     "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t BN128 -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json; else cp src/zkevm.c12.starkstruct.json $BDIR; fi",
-
     "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
