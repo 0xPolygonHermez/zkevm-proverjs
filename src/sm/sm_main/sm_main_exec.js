@@ -2162,28 +2162,32 @@ function eval_functionCall(ctx, tag) {
         return eval_getBytecode(ctx, tag);
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
-    } else if (tag.funcName == "touchedAddress") {
-        return eval_touchedAddress(ctx, tag)
-    } else if (tag.funcName == "touchedStorageSlots") {
-        return eval_touchedStorageSlots(ctx, tag)
-    } else if (tag.funcName.includes("bitwise")){
+    } else if (tag.funcName == "isWarmedAddress") {
+        return eval_isWarmedAddress(ctx, tag)
+    } else if (tag.funcName == "checkpoint") {
+        return eval_checkpoint(ctx, tag)
+    } else if (tag.funcName == "revert") {
+        return eval_revert(ctx, tag)
+    } else if (tag.funcName == "commit") {
+        return eval_commit(ctx, tag)
+    } else if (tag.funcName == "clearWarmedStorage") {
+        return eval_clearWarmedStorage(ctx, tag)
+    } else if (tag.funcName == "isWarmedStorage") {
+        return eval_isWarmedStorage(ctx, tag)
+    } else if (tag.funcName.includes("bitwise")) {
         return eval_bitwise(ctx, tag);
-    } else if (tag.funcName.includes("comp") && tag.funcName.split('_')[0] === "comp"){
+    } else if (tag.funcName.includes("comp") && tag.funcName.split('_')[0] === "comp") {
         return eval_comp(ctx, tag);
     } else if (tag.funcName == "loadScalar") {
         return eval_loadScalar(ctx, tag);
     } else if (tag.funcName == "log") {
         return eval_log(ctx, tag);
-    } else if (tag.funcName == "resetTouchedAddress"){
-        return eval_resetTouchedAddress(ctx,tag)
-    } else if (tag.funcName == "resetStorageSlots"){
-        return eval_resetStorageSlots(ctx,tag)
-    } else if (tag.funcName == "exp"){
-        return eval_exp(ctx,tag)
+    } else if (tag.funcName == "exp") {
+        return eval_exp(ctx, tag)
     } else if (tag.funcName == "storeLog") {
-        return eval_storeLog(ctx,tag)
+        return eval_storeLog(ctx, tag)
     } else if (tag.funcName.includes("precompiled") && tag.funcName.split('_')[0] === "precompiled") {
-        return eval_precompiled(ctx,tag);
+        return eval_precompiled(ctx, tag);
     } else if (tag.funcName == "break") {
         return eval_breakPoint(ctx, tag);
     } else if (tag.funcName == "memAlignWR_W0") {
@@ -2282,102 +2286,152 @@ function eval_cond(ctx, tag) {
 
 function eval_getBytecode(ctx, tag) {
     if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let hashcontract = evalCommand(ctx,tag.params[0]);
+    let hashcontract = evalCommand(ctx, tag.params[0]);
     hashcontract = "0x" + hashcontract.toString(16).padStart(64, '0');
     const bytecode = ctx.input.contractsBytecode[hashcontract];
-    const offset = Number(evalCommand(ctx,tag.params[1]));
+    const offset = Number(evalCommand(ctx, tag.params[1]));
     let len;
-    if(tag.params[2])
-        len = Number(evalCommand(ctx,tag.params[2]));
+    if (tag.params[2])
+        len = Number(evalCommand(ctx, tag.params[2]));
     else
         len = 1;
     if (bytecode === undefined) return scalar2fea(ctx.Fr, Scalar.e(0));
-    let d = "0x" + bytecode.slice(2+offset*2, 2+offset*2 + len*2);
-    if (d.length == 2) d = d+'0';
+    let d = "0x" + bytecode.slice(2 + offset * 2, 2 + offset * 2 + len * 2);
+    if (d.length == 2) d = d + '0';
     const ret = scalar2fea(ctx.Fr, Scalar.e(d));
     return scalar2fea(ctx.Fr, Scalar.e(d));
 }
+/**
+ * Creates new storage checkpoint for warm slots and addresses
+ */
+function eval_checkpoint(ctx) {
+    ctx.input.acessedStorage.push(new Map())
+    return scalar2fea(ctx.Fr, Scalar.e(0));
+}
 
-function eval_touchedAddress(ctx, tag) {
+/**
+ * Consolidates checkpoint, merge last access storage with beforeLast access storage
+ * @param {Object} ctx current rom context object
+ */
+function eval_commit(ctx) {
+    const storageMap = ctx.input.acessedStorage.pop()
+    if (storageMap) {
+        const mapTarget = ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1]
+        if (mapTarget) {
+            storageMap?.forEach((slotSet, addressString) => {
+                const addressExists = mapTarget.get(addressString)
+                if (!addressExists) {
+                    mapTarget.set(addressString, new Set())
+                }
+                const storageSet = mapTarget.get(addressString)
+                slotSet.forEach((value) => {
+                    storageSet.add(value)
+                })
+            })
+        }
+    }
+    return scalar2fea(ctx.Fr, Scalar.e(0));
+}
+
+/**
+ * Revert accessedStorage to last checkpoint
+ * @param {Object} ctx current rom context object
+ */
+function eval_revert(ctx) {
+    ctx.input.acessedStorage.pop()
+    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
+/**
+ * Checks if the address is warm or cold. In case of cold, the address is added as warm
+ * @param {Object} ctx current rom context object
+ * @param {Object} tag tag inputs in rom function
+ * @returns {FEA} returns 0 if address is warm, 1 if cold
+ */
+function eval_isWarmedAddress(ctx, tag) {
     if (tag.params.length != 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let addr = evalCommand(ctx,tag.params[0]);
-
+    const address = evalCommand(ctx, tag.params[0]);
+    const addr = address.toString(16)
     // if address is precompiled smart contract considered warm access
-    if (Scalar.gt(addr, 0) && Scalar.lt(addr, 10)){
+    if (Scalar.gt(address, 0) && Scalar.lt(address, 10)) {
         return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
-    // if address in touchedAddress return 0
-
-    if(ctx.input.touchedAddress && ctx.input.touchedAddress.filter(x => x == addr).length > 0) {
-        return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-    } else {
-    //if address not in touchedAddress, return 1
-        if(ctx.input.touchedAddress) {
-            ctx.input.touchedAddress.push(addr);
-        } else {
-            ctx.input.touchedAddress = [addr];
+    // if address is warm return 0
+    for (let i = ctx.input.acessedStorage.length - 1; i >= 0; i--) {
+        const currentMap = ctx.input.acessedStorage[i]
+        if (currentMap.has(addr)) {
+            return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
         }
-        return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
+    //if address is not warm, return 1 and add it as warm. We add an emtpy set because is a warmed address (not warmed slot)
+    const storageSet = ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].get(addr)
+    if (!storageSet) {
+        const emptyStorage = new Set()
+        ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].set(addr, emptyStorage)
+    }
+    return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_resetTouchedAddress(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-     ctx.input.touchedAddress = [];
-     return scalar2fea(ctx.Fr, Scalar.e(0));
-}
-
-function eval_touchedStorageSlots(ctx, tag) {
+/**
+ * Checks if the storage slot of the account is warm or cold. In case of cold, the slot is added as warm
+ * @param {Object} ctx current rom context object
+ * @param {Object} tag tag inputs in rom function
+ * @returns {FEA} returns 0 if storage solt is warm, 1 if cold
+ */
+function eval_isWarmedStorage(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let addr = evalCommand(ctx,tag.params[0]);
-    let key = evalCommand(ctx,tag.params[1])
-
+    let addr = evalCommand(ctx, tag.params[0]).toString(16);
+    let key = evalCommand(ctx, tag.params[1])
     // if address in touchedStorageSlots return 0
-    if(ctx.input.touchedStorageSlots && ctx.input.touchedStorageSlots.filter(x => (x.addr == addr && x.key == key)).length > 0) {
-        return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-    } else {
-    //if addres not in touchedStorageSlots, return 1
-        if(ctx.input.touchedStorageSlots) {
-            ctx.input.touchedStorageSlots.push({addr, key});
-        } else {
-            ctx.input.touchedStorageSlots = [{addr, key}];
+    for (let i = ctx.input.acessedStorage.length - 1; i >= 0; i--) {
+        const currentMap = ctx.input.acessedStorage[i]
+        if (currentMap.has(addr) && currentMap.get(addr).has(key)) {
+            return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
         }
-        return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
+    // if address in touchedStorageSlots return 1 and add it as warm
+    let storageSet = ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].get(addr)
+    if (!storageSet) {
+        storageSet = new Set()
+        ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].set(addr, storageSet)
+    }
+    storageSet.add(key)
+    return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_resetStorageSlots(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-     ctx.input.touchedStorageSlots = [];
-     return scalar2fea(ctx.Fr, Scalar.e(0));
+/**
+ * Clears wamred storage array, ready to process a new tx
+ */
+function eval_clearWarmedStorage(ctx) {
+    ctx.input.acessedStorage = [new Map()]
+    return scalar2fea(ctx.Fr, Scalar.e(0));
 }
-
 
 function eval_exp(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
-    const a = evalCommand(ctx,tag.params[0]);
-    const b = evalCommand(ctx,tag.params[1])
-    return scalar2fea(ctx.Fr, Scalar.exp(a,b));;
+    const a = evalCommand(ctx, tag.params[0]);
+    const b = evalCommand(ctx, tag.params[1])
+    return scalar2fea(ctx.Fr, Scalar.exp(a, b));;
 }
 
-function eval_bitwise(ctx, tag){
+function eval_bitwise(ctx, tag) {
     const func = tag.funcName.split('_')[1];
-    const a = evalCommand(ctx,tag.params[0]);
+    const a = evalCommand(ctx, tag.params[0]);
     let b;
 
-    switch (func){
+    switch (func) {
         case 'and':
             checkParams(ctx, tag, 2);
-            b = evalCommand(ctx,tag.params[1]);
+            b = evalCommand(ctx, tag.params[1]);
             return Scalar.band(a, b);
         case 'or':
             checkParams(ctx, tag, 2);
-            b = evalCommand(ctx,tag.params[1]);
+            b = evalCommand(ctx, tag.params[1]);
             return Scalar.bor(a, b);
         case 'xor':
             checkParams(ctx, tag, 2);
-            b = evalCommand(ctx,tag.params[1]);
+            b = evalCommand(ctx, tag.params[1]);
             return Scalar.bxor(a, b);
         case 'not':
             checkParams(ctx, tag, 1);

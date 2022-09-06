@@ -19,7 +19,7 @@ const argv = require("yargs")
     .alias("e", "exit")
     .argv;
 
-// example: node run-inputs.js -f ../../../test-vectors/inputs-executor/calldata -r ../../../zkrom/build/rom.json
+// example: node run-inputs.js -f ../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/stMemoryTest -r ../../../zkevm-rom/build/rom.json
 
 async function main(){
     console.time("Init time");
