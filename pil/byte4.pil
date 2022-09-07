@@ -24,8 +24,11 @@ namespace Byte4(%N);
     /////// State Polynomials
     pol commit freeIN;
     pol commit out;
+    pol commit resultReady;
 
     freeIN in Global.BYTE2;  // 0, 1, 2,       , 65535
+
+    SET * resultReady = 0;
 
     out' = SET*freeIN +
            (1-SET)*(out * 2**16 + freeIN);

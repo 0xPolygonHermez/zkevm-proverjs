@@ -89,6 +89,7 @@ module.exports.execute = async function (pols, input) {
             if (j < pols.carryH.length) pols.carryH[j][i] = 0n;
             if (j < pols.selEq.length) pols.selEq[j][i] = 0n;
         }
+        pols.resultReady[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
@@ -187,6 +188,7 @@ module.exports.execute = async function (pols, input) {
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
         }
+        pols.resultReady[offset + 31] = 1n;
     }
 }
 

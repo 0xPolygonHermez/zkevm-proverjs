@@ -15,9 +15,11 @@ module.exports.execute = async function (pols, input) {
         const num = Number(n);
         pols.freeIN[p] = BigInt(num >>> 16);
         pols.out[p] = BigInt(last);
+        pols.resultReady[p] = 0n;
         p++;
         pols.freeIN[p] = BigInt(num & 0xFFFF);
         pols.out[p] = BigInt(num >>> 16);
+        pols.resultReady[p] = 1n;
         p++;
         last = num;
     });

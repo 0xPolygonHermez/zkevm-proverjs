@@ -516,9 +516,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     ];
 
                     const keyI = poseidon(Kin0);
-                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI]);
+                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI,1]);
                     const key = poseidon(Kin1, keyI);
-                    required.PoseidonG.push([...Kin1, ...keyI,  ...key]);
+                    required.PoseidonG.push([...Kin1, ...keyI,  ...key,2]);
 
                     // commented since readings are done directly in the smt
                     // const keyS = Fr.toString(key, 16).padStart(64, "0");
@@ -556,9 +556,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     ];
 
                     const keyI = poseidon(Kin0);
-                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI]);
+                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, 1]);
                     const key = poseidon(Kin1, keyI);
-                    required.PoseidonG.push([...Kin1, ...keyI,  ...key]);
+                    required.PoseidonG.push([...Kin1, ...keyI,  ...key, 2]);
 
                     ctx.lastSWrite.keyI = keyI;
                     ctx.lastSWrite.key = key;
@@ -1068,7 +1068,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.hashPDigest || l.sWR) {
             const op = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 1});
+            required.Binary.push({a: op, b: 0n, c: op, opcode: 1, latchBinOp: 0n, latchValidRange: 1n});
         }
 
         if (l.arith) {
@@ -1167,7 +1167,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 0n;
                 pols.carry[i] = (((a + b) >> 256n) > 0n) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 0});
+                required.Binary.push({a: a, b: b, c: c, opcode: 0, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 1) { // SUB
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1178,7 +1178,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 1n;
                 pols.carry[i] = ((a - b) < 0n) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 1});
+                required.Binary.push({a: a, b: b, c: c, opcode: 1, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 2) { // LT
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1189,7 +1189,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 2n;
                 pols.carry[i] = (a < b) ? 1n: 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 2});
+                required.Binary.push({a: a, b: b, c: c, opcode: 2, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 3) { // SLT
                 let a = Scalar.e(fea2scalar(Fr, ctx.A));
                 if (Scalar.geq(a, twoTo255)) a = Scalar.sub(a, twoTo256);
@@ -1202,7 +1202,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 3n;
                 pols.carry[i] = (a < b) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 3});
+                required.Binary.push({a: a, b: b, c: c, opcode: 3, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 4) { // EQ
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1213,7 +1213,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 4n;
                 pols.carry[i] = (a ==  b) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 4});
+                required.Binary.push({a: a, b: b, c: c, opcode: 4, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 5) { // AND
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1224,7 +1224,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 5n;
                 pols.carry[i] = 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 5});
+                required.Binary.push({a: a, b: b, c: c, opcode: 5, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 6) { // OR
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1235,7 +1235,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 6n;
                 pols.carry[i] = 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 6});
+                required.Binary.push({a: a, b: b, c: c, opcode: 6, latchBinOp: 1n, latchValidRange: 0n});
             } else if (l.binOpcode == 7) { // XOR
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1246,7 +1246,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 7n;
                 pols.carry[i] = 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 7});
+                required.Binary.push({a: a, b: b, c: c, opcode: 7, latchBinOp: 1n, latchValidRange: 0n});
             } else {
                 throw new Error("Invalid bin opcode");
             }

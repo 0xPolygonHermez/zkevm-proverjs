@@ -52,31 +52,34 @@ namespace MemAlign(%N);
     pol constant BYTE_C3072;
 
     // FACTOR was same for all combinations of offset, wr8, wr256 is a f(step)
-    // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x60)
-    // FACTOR[6] = 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x56)
-    // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x52)
+    // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x28)
+    // FACTOR[6] = 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x24)
+    // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x20)
     // :
-    // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1, 0 (x32)
+    // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1
     pol constant FACTOR[8];
 
     // FACTOR change according the combinations of offset, wr8, wr256 and step.
     pol constant FACTORV[8];
 
-    // STEP = 0,1,2,...,62,63,0,1,2,...
+    // STEP = 0,1,2,...,30,31,0,1,2,...
     pol constant STEP;
 
-    // STEP
     //    0 - 1023  WR256 = 0 WR8 = 0
     // 1024 - 2047  WR256 = 1 WR8 = 0
     // 2048 - 3071  WR256 = 0 WR8 = 1
     pol constant WR256;
     pol constant WR8;
 
-    // OFFSET = 0 (x64), 1 (x64), ... , 31 (x64), 32 (x64), 0 (x64), 1 (x64), ...
+    // OFFSET = 0 (x32), 1 (x32), ... , 31 (x32), 32 (x32), 0 (x32), 1 (x32), ...
     pol constant OFFSET; // 0 - 31
 
-    // RESET = 1, 0 (x63), 1, 0 (x63)
+    // RESET = 1, 0 (x32), 1, 0 (x32)
     pol constant RESET;
+
+    pol commit resultReady;
+
+    (1 - RESET) * resultReady' = 0;
 
     pol constant SELM1;
 

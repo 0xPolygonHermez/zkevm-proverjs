@@ -212,7 +212,7 @@ namespace Main(%N);
 
     /////// isNeg
 
-    JMPN*(isNeg*2**32 + op0) in Byte4.out;
+    JMPN {isNeg*2**32 + op0} in Byte4.resultReady {Byte4.out};
 
     /////// MAXMEM intermediary vals New State
 
@@ -330,7 +330,7 @@ namespace Main(%N);
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7
     } in
-    Binary.RESET {
+    Binary.latchValidRange' {
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
     };
 
@@ -385,7 +385,7 @@ namespace Main(%N);
 
         arithEq3 * E0, arithEq3 * E1, arithEq3 * E2, arithEq3 * E3, arithEq3 * E4, arithEq3 * E5, arithEq3 * E6, arithEq3 * E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
-    {
+    Arith.resultReady {
         Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
 
         Arith.x1[0] + Arith.x1[1]*2**16,
@@ -455,8 +455,8 @@ namespace Main(%N);
         B0, B1, B2, B3, B4, B5, B6, B7,
         op0, op1, op2, op3, op4, op5, op6, op7,
         carry
-    } in
-    Binary.RESET {
+    } is
+    Binary.latchBinOp' {
         Binary.lOpcode,
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
         Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
@@ -583,7 +583,7 @@ namespace Main(%N);
         0, 0, 0, 0,
         sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3]
     } is
-    PoseidonG.LATCH {
+    PoseidonG.latchMain1 {
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
@@ -602,12 +602,12 @@ namespace Main(%N);
         PoseidonG.hash3
     };
 
-    sRD + sWR {
+    (sRD + sWR) {
         A0, A1, A2, A3, A4, A5, B0, B1,
         sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3],
         sKey[0], sKey[1], sKey[2], sKey[3]
     } is
-    PoseidonG.LATCH {
+    PoseidonG.latchMain2 {
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
@@ -679,7 +679,7 @@ namespace Main(%N);
         memAlignWR * E0, memAlignWR*E1, memAlignWR*E2, memAlignWR*E3,
         memAlignWR * E4, memAlignWR*E5, memAlignWR*E6, memAlignWR*E7
     } is
-    MemAlign.RESET {
+    MemAlign.resultReady {
         MemAlign.wr256,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],

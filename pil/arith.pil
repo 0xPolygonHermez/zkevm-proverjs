@@ -33,6 +33,9 @@ namespace Arith(%N);
     pol commit q0[16];
     pol commit q1[16];
     pol commit q2[16];
+    pol commit resultReady;
+
+    (1 - CLK[31]) * resultReady = 0;
 
     /****
     *

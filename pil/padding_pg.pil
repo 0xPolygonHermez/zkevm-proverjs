@@ -67,7 +67,7 @@ namespace PaddingPG(%N);
         curHash1,
         curHash2,
         curHash3
-     } in PoseidonG.LATCH {
+     } is PoseidonG.latchPaddingPg {
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
