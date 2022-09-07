@@ -1,0 +1,159 @@
+
+/*
+    Equations:
+
+    EQ0: A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
+
+    EQ1: s * x2 - s * x1 - y2 + y1 + (q0 * p)   lambda - ADD
+    EQ2: 2 * s * y1 - 3 * x1 * x1 + (q0 * p)    lambda - DBL
+    EQ3: s * s - x1 - x2 - x3 + (q1 * p)        x3
+    EQ4: s * x1 - s * x3 - y1 - y3 + (q2 * p)   y3
+
+*/
+include "config.pil";
+include "global.pil";
+
+namespace Arith(%N);
+
+    pol constant BYTE2_BIT19;
+    pol constant SEL_BYTE2_BIT19;
+    pol constant GL_SIGNED_4BITS_C0;
+    pol constant GL_SIGNED_4BITS_C1;
+    pol constant GL_SIGNED_4BITS_C2;
+    pol constant GL_SIGNED_18BITS;
+    pol constant CLK[32];      // 1 if CLK==0 and 0 if CLK!=0
+
+    pol commit x1[16];
+    pol commit y1[16];
+    pol commit x2[16];
+    pol commit y2[16];
+    pol commit x3[16];
+    pol commit y3[16];
+
+    pol commit s[16];
+    pol commit q0[16];
+    pol commit q1[16];
+    pol commit q2[16];
+
+    /****
+    *
+    * LATCH POLS: x1,y1,x2,y2,x3,y3,s,q0,q1,q2
+    *
+    *****/
+
+    <%- latch('x1[0..15]','CLK[31]') %>
+
+    <%- latch('y1[0..15]','CLK[31]') %>
+
+    <%- latch('x2[0..15]','CLK[31]') %>
+
+    <%- latch('y2[0..15]','CLK[31]') %>
+
+    <%- latch('x3[0..15]','CLK[31]') %>
+
+    <%- latch('y3[0..15]','CLK[31]') %>
+
+    <%- latch('s[0..15]','CLK[31]') %>
+
+    <%- latch('q0[0..15]','CLK[31]') %>
+
+    <%- latch('q1[0..15]','CLK[31]') %>
+
+    <%- latch('q2[0..15]','CLK[31]') %>
+
+    /****
+    *
+    * RANGE CHECK x1,y1,x2,y2,s,q0,q1,q2
+    *
+    *****/
+
+    <%- clksel(['x1[0..15]','y1[0..15]']) %> in Global.BYTE2;
+
+    <%- clksel(['x2[0..15]','y2[0..15]']) %> in Global.BYTE2;
+
+    <%- clksel(['x3[0..15]','y3[0..15]']) %> in Global.BYTE2;
+
+    <%- clksel(['s[0..15]','q0[0..14]','q1[0]']) %> in Global.BYTE2;
+
+    {CLK[29] + CLK[30] + CLK[31], <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]']) %>} in {SEL_BYTE2_BIT19, BYTE2_BIT19};
+
+    /*******
+    *
+    * EQ0: A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
+    *
+    *******/
+
+    <%- equation('pol eq0_## =', 'x1*y1-p2_256*y2+x2-y3', {p2_256: 0x10000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ1: s * x2 - s * x1 - y2 + y1 + (q0 * p)
+    *
+    *******/
+
+    <%- equation('pol eq1_## =', 's*x2-s*x1-y2+y1+p*q0-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
+                                                                   offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ2:  2 * s * y1 - 3 * x1 * x1 + (q0 * p)
+    *
+    *******/
+
+    <%- equation('pol eq2_## =', 's*y1+s*y1-x1*x1-x1*x1-x1*x1+p*q0-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
+                                                                               offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ3:  s * s - x1 - x2 - x3 + (q1 * p)
+    *
+    *******/
+
+    <%- equation('pol eq3_## =', 's*s-x1-x2-x3+p*q1-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
+                                                                offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ4:  s * x1 - s * x3 - y1 - y3 + (q2 * p)
+    *
+    *******/
+
+    <%- equation('pol eq4_## =', 's*x1-s*x3-y1-y3+p*q2-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
+                                                                   offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    pol eq0 = <%- clksel(['eq0_[0..31]']) %>;
+    pol eq1 = <%- clksel(['eq1_[0..31]']) %>;
+    pol eq2 = <%- clksel(['eq2_[0..31]']) %>;
+    pol eq3 = <%- clksel(['eq3_[0..31]']) %>;
+    pol eq4 = <%- clksel(['eq4_[0..31]']) %>;
+
+    pol commit selEq[4];
+
+    <%- latch(['selEq[0..3]'],'CLK[31]') %>
+    <%- binary(['selEq[0..3]']) %>
+
+    pol commit carryL[3];
+    pol commit carryH[3];
+
+    carryL[0] * CLK[0] = 0;
+    carryL[1] * CLK[0] = 0;
+    carryL[2] * CLK[0] = 0;
+    carryH[0] * CLK[0] = 0;
+    carryH[1] * CLK[0] = 0;
+    carryH[2] * CLK[0] = 0;
+
+    carryL[0] in GL_SIGNED_18BITS;
+    carryL[1] in GL_SIGNED_18BITS;
+    carryL[2] in GL_SIGNED_18BITS;
+
+    {carryH[0], carryH[1], carryH[2]} in {GL_SIGNED_4BITS_C0, GL_SIGNED_4BITS_C1, GL_SIGNED_4BITS_C2}; // 3 * (4+1) = 15 bits
+
+    // eq + carry = carry' * 2**16
+    // carry = cl + ch * 2**18
+    // eq + cl + ch * 2**18 = cl 2**16 + ch * 2**34
+
+    selEq[0] * (eq0 + carryL[0] + 2**18 * carryH[0]) = selEq[0] * (carryL[0]' * 2**16 + carryH[0]' * 2**34);
+    selEq[1] * (eq1 + carryL[0] + 2**18 * carryH[0]) = selEq[1] * (carryL[0]' * 2**16 + carryH[0]' * 2**34);
+    selEq[2] * (eq2 + carryL[0] + 2**18 * carryH[0]) = selEq[2] * (carryL[0]' * 2**16 + carryH[0]' * 2**34);
+    selEq[3] * (eq3 + carryL[1] + 2**18 * carryH[1]) = selEq[3] * (carryL[1]' * 2**16 + carryH[1]' * 2**34);
+    selEq[3] * (eq4 + carryL[2] + 2**18 * carryH[2]) = selEq[3] * (carryL[2]' * 2**16 + carryH[2]' * 2**34);
