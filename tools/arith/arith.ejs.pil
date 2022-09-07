@@ -75,6 +75,7 @@ namespace Arith(%N);
 
     <%- clksel(['s[0..15]','q0[0..14]','q1[0]']) %> in Global.BYTE2;
 
+    // 
     {CLK[29] + CLK[30] + CLK[31], <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]']) %>} in {SEL_BYTE2_BIT19, BYTE2_BIT19};
 
     /*******
