@@ -1,6 +1,6 @@
 {
   "name": "@0xpolygonhermez/zkevm-proverjs",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
     "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -z $BDIR/zkevm.zkin.proof.json -b $BDIR/zkevm.public.json",
     "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -b $BDIR/zkevm.public.json -v $BDIR/zkevm.verkey.json",
     "gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js $PIL -s $BDIR/zkevm.starkstruct.json -v $BDIR/zkevm.verkey.json -o $BDIR/zkevm.verifier.circom",
-    "compilecircom": ". ./pre.sh && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.gl"
+    "compilecircom": ". ./pre.sh && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
     "c12setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.verifier.r1cs  -p $BDIR/zkevm.c12.pil -c $BDIR/zkevm.c12.const -e $BDIR/zkevm.c12.exec",
     "c12buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -i $BDIR/zkevm.c12.starkinfo.json",
     "c12buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -c $BDIR/zkevm.c12.chelpers.cpp",
@@ -29,7 +29,7 @@
     "c12prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.c12.commit -c $BDIR/zkevm.c12.const -t $BDIR/zkevm.c12.consttree -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -o $BDIR/zkevm.c12.proof.json -z $BDIR/zkevm.c12.zkin.proof.json -b $BDIR/zkevm.c12.public.json --proverAddr=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "c12verify": ". ./pre.sh && $PILSTARK/main_verifier.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -o $BDIR/zkevm.c12.proof.json -b $BDIR/zkevm.c12.public.json -v $BDIR/zkevm.c12.verkey.json",
     "c12gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -v $BDIR/zkevm.c12.verkey.json -o $BDIR/zkevm.c12.verifier.circom",
-    "c12compilecircom": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/zkevm.c12.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits -l node_modules/pil-stark/circuits.gl"
+    "c12compilecircom": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/zkevm.c12.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits -l node_modules/pil-stark/circuits.gl",
     "downloadptaw": "wget -P build https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final.ptau",
     "g16setup": ". ./pre.sh && $SNARKJS g16s $BDIR/zkevm.c12.verifier.r1cs build/powersOfTau28_hez_final.ptau $BDIR/zkevm.g16.0000.zkey",
     "g16contribute": ". ./pre.sh && $SNARKJS zkc  $BDIR/zkevm.g16.0000.zkey $BDIR/zkevm.g16.0001.zkey -e=\"$(dd if=/dev/random bs=64 count=1 | base64 -w0)\"",
@@ -56,9 +56,9 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#orange",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#orange",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#orange",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#mandarin",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#mandarin",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#mandarin",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "0.1.1",
@@ -66,7 +66,7 @@
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
-    "pil-stark": "^0.0.20",
+    "pil-stark": "^0.0.21",
     "pilcom": "^0.0.17",
     "snarkjs": "^0.4.24",
     "yargs": "^17.4.0"
@@ -77,3 +77,4 @@
     "mocha": "^9.1.3"
   }
 }
+
