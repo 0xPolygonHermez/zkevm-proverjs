@@ -1,10 +1,11 @@
-const ejs = require('ejs');
 const fs = require('fs');
 const pilTools = require(__dirname+'/pilTools');
 const yargs = require("yargs")
     .usage('parse <filename.ejs.pil> -o <outputfile>')
     .option('o', { alias: 'output', requiresArg: true });
 const argv = yargs.argv;
+
+
 
 async function run() {
 
@@ -20,12 +21,7 @@ async function run() {
     const pilprogram = fs.readFileSync(input, {encoding:'utf8', flag:'r'});
 
     console.log(`generating PIL ${output} ...`);
-    fs.writeFileSync(output, ejs.render(pilprogram, {
-        equation: pilTools.equation,
-        latch: pilTools.latch,
-        clksel: pilTools.clksel,
-        binary: pilTools.binary
-      }), {encoding:'utf8'});
+    fs.writeFileSync(output, pilTools.generatePilFromTemplate(pilprogram), {encoding:'utf8'});
 }
 
 run().then(()=> {

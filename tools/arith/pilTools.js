@@ -1,3 +1,6 @@
+const ejs = require('ejs');
+const fs = require('fs');
+
 function expandTerms(values)
 {
     let result = [];
@@ -8,6 +11,11 @@ function expandTerms(values)
         result = result.concat(expandArrayRange(value));
     });
     return result;
+}
+
+function join(values, glue)
+{
+    return expandTerms(values).join(glue);
 }
 
 function clksel(values, clkname)
@@ -60,7 +68,7 @@ function resolveArrayIndex(value, index, constValues, config = {})
     if (typeof(constValues) !== 'undefined') {
         const constValue = constValues[value];
         if (typeof(constValue) !== 'undefined') {
-            chunkValue = ((BigInt(constValue) >> BigInt(chunkSize * index)) & ((1n << BigInt(chunkSize)) - 1n));
+            chunkValue = ((BigInt(constValue) >> BigInt(16 * index)) & ((1n << 16n) - 1n));
             return {value: chunkValue, constant: true};
         }
     }
@@ -69,6 +77,7 @@ function resolveArrayIndex(value, index, constValues, config = {})
     }
     return {value: nameToIndex(value, index, config), constant: false};
 }
+
 function valueToString(value, config = {})
 {
     if (typeof value === 'bigint') {
@@ -170,9 +179,7 @@ function equationPols(name, products, sums, constValues, config = {})
         if (_sums.length) {
             defbody += lntab+tab+_sums;
         }
-        if (defbody.length) {
-            s += def + defbody + endEq;
-        }
+        s += def + (defbody.length ? defbody : (lntab + tab + valueToString(0n, config))) + endEq;
     }
     return s;
 }
@@ -294,9 +301,130 @@ function expandArrayRange (value) {
     return [value];
 }
 
+function generatePilFromTemplate(pilTemplate) {
+    return ejs.render(pilTemplate, {
+        equation: equation,
+        latch: latch,
+        clksel: clksel,
+        binary: binary,
+        join: join,
+        expandTerms: expandTerms
+      });
+}
+
+
+function generatePilHelpers(input, output, lang)
+{
+    if (input.includes('.ejs.pil')) {
+        if (!lang) {
+            lang = (output.endsWith('.cpp') || output.endsWith('.c')||output.endsWith('.cc')||output.endsWith('.hpp')||output.endsWith('.h')) ? 'cpp':'js';
+        }
+        const equations = extractPilEquations(input);
+        if (equations === false) {
+            console.log(`ERROR processing pil template ${input}`)
+            process.exit(-1);
+        }
+        equations.forEach((item) => {
+            let code = generateCode(item.equation, item.constants, item.name, item.config, lang);
+            const codeFilename = output.replace('##', item.name);
+            console.log(`generating file ${codeFilename} ...`);
+            fs.writeFileSync(codeFilename, code);
+        });
+    }
+}
+
+
+function extractPilEquations(pil)
+{
+    const pilprogram = fs.readFileSync(pil, {encoding:'utf8', flag:'r'});
+
+    let equations = [];
+    const equationNameRegExp = /(?<name>\w*[a-zA-Z0-9])_##/;
+    ejs.render(pilprogram, {
+        equation: (prefix, equation, constants, config) => {
+            let data = {prefix, equation, constants, config};
+            const m = equationNameRegExp.exec(prefix);
+            if (m && m.groups && m.groups.name) {
+                data.name = m.groups.name;
+            }
+            equations.push(data);
+        },
+        latch: () => {},
+        clksel: () => {},
+        binary: () => {}
+    });
+
+    return equations;
+}
+
+function generateCode(equation, constants, name, config, lang) {
+
+    let info = 'code generated with arith_eq_gen.js\nequation: '+equation+'\n';
+    Object.keys(constants).forEach((key) => {
+        info += '\n'+key+'=0x'+constants[key].toString(16);
+    });
+
+    switch (lang) {
+        case 'js':
+            return generateJavaScript(equation, constants, info, config);
+            break;
+
+        case 'cpp':
+            return generateCpp(equation, constants, info, config, name);
+            break;
+    }
+    return false;
+}
+
+function generateJavaScript(eq, constants, info, config) {
+    let jsConfig = {...config,
+        prefix: 'p.',
+        suffix: '[_o]',
+        endEq: ');\n',
+        constPrefix: '0x',
+        constSuffix: 'n',
+        constBase: 16,
+        constPad: 8,
+        pad: 12
+    };
+    let startEq = 'case ##: return (';
+
+    code = '/*\n* '+info.split('\n').join('\n* ')+'\n*/\n\n';
+    code += 'module.exports.calculate = function (p, step, _o)\n{\n\tswitch(step) {\n\t';
+    code += equation(startEq, eq, constants, jsConfig);
+    code += '\t}\n\treturn 0n;\n}\n';
+    return code;
+}
+
+function generateCpp(eq, constants, info, config, name) {
+    let cppConfig = {...config,
+        prefix: 'p.',
+        suffix: '[_o]',
+        endEq: ');\n',
+        constPrefix: '0x',
+        constBase: 16,
+        constPad: 8,
+        pad: 12
+    };
+    let startEq = 'case ##: \n\t\treturn (';
+    code = '/* '+info.split('\n').join('\n* ')+'\n*/\n\n';
+    code += '#include <stdint.h>\n\n';
+    // code += 'typedef struct { uint64_t *x1[16]; uint64_t *y1[16]; uint64_t *x2[16]; uint64_t *y2[16]; uint64_t *x3[16]; uint64_t *y3[16]; uint64_t *s[16]; uint64_t *q0[16]; uint64_t *q1[16]; uint64_t *q2[16]; } ArithPols;\n';
+    name = name || 'arithEqStep';
+
+    code += `uint64_t ${name} (ArithPols &p, uint64_t step, uint64_t _o)\n{\n\tswitch(step) {\n\t`;
+    code += equation(startEq, eq, constants, cppConfig);
+    code += '\t}\n\treturn 0;\n}\n';
+    return code;
+}
+
 module.exports = {
     equation: equation,
     latch: latch,
     clksel: clksel,
-    binary: binary
+    binary: binary,
+    join: join,
+    expandTerms: expandTerms,
+    generatePilFromTemplate: generatePilFromTemplate,
+    generatePilHelpers: generatePilHelpers
   };
