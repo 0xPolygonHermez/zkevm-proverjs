@@ -116,17 +116,45 @@ function getFromMemory(offset, length, ctx) {
     addrMem += offsetCtx;
     addrMem += 0x30000;
 
-    const finalMemory = [];
-    const init = addrMem + Number(offset) / 32
-    const end = init + Number(length) / 32
-    for (let i = init; i < end; i++) {
+    let finalMemory = "";
+    
+    const init = addrMem + (Number(offset) / 32);
+    const end = addrMem + ((Number(offset) + Number(length)) / 32);
+    const initCeil = Math.ceil(init);
+    const endFloor = Math.floor(end);
+
+    if (init != initCeil) {
+        let memValueStart = ctx.mem[Math.floor(init)];
+        if (typeof memValueStart === "undefined")
+            memValueStart = scalar2fea(ctx.Fr, 0);;
+        let memScalarStart = fea2scalar(ctx.Fr, memValueStart);
+        let hexStringStart = memScalarStart.toString(16);
+        hexStringStart = hexStringStart.padStart(64, "0");
+        const bytesToRetrieve = (init - Math.floor(init)) * 32; 
+        hexStringStart = hexStringStart.slice(bytesToRetrieve * 2);
+        finalMemory = finalMemory.concat(hexStringStart);
+    }
+
+    for (let i = initCeil; i < endFloor; i++) {
         let memValue = ctx.mem[i];
         if (typeof memValue === "undefined")
             memValue = scalar2fea(ctx.Fr, 0);;
         let memScalar = fea2scalar(ctx.Fr, memValue);
         let hexString = memScalar.toString(16);
-        hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-        finalMemory.push(hexString.padStart(64, "0"));
+        hexString = hexString.padStart(64, "0");
+        finalMemory = finalMemory.concat(hexString);
+    }
+
+    if (end != endFloor) {
+        memValueEnd = ctx.mem[endFloor];
+        if (typeof memValueEnd === "undefined")
+            memValueEnd = scalar2fea(ctx.Fr, 0);;
+        memScalarEnd = fea2scalar(ctx.Fr, memValueEnd);
+        hexStringEnd = memScalarEnd.toString(16);
+        hexStringEnd = hexStringEnd.padStart(64, "0");
+        const bytesToKeep = (end - endFloor) * 32; 
+        hexStringEnd = hexStringEnd.slice(0, bytesToKeep * 2);
+        finalMemory = finalMemory.concat(hexStringEnd);
     }
     return finalMemory
 }
