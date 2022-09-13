@@ -2439,8 +2439,7 @@ function eval_log(ctx, tag) {
     } else {
         let scalarLog;
         let hexLog;
-
-        if (tag.params[0].regName !== "HASHPOS"){
+        if (tag.params[0].regName !== "HASHPOS" && tag.params[0].regName !== "GAS"){
             scalarLog = fea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;
         } else {
