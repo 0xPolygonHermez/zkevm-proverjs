@@ -135,7 +135,6 @@ class FullTracer {
 
         //Fill context object
         const context = {};
-        context.from = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
         context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
         context.to = (context.to === "0x0") ? "0x" : context.to;
@@ -211,7 +210,7 @@ class FullTracer {
      */
     onFinishTx(ctx) {
         const response = this.finalTrace.responses[this.txCount];
-
+        response.call_trace.context.from = ethers.utils.hexlify(getVarFromCtx(ctx, true, "txSrcOriginAddr"));
         // Update spent counters
         response.txCounters = {
             cnt_arith: Number(ctx.cntArith) - response.txCounters.cnt_arith,
