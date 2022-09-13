@@ -229,7 +229,7 @@ class FullTracer {
         this.accBatchGas += Number(response.gas_used);
 
         // Set return data, in case of deploy, get return buffer from stack
-        if (response.call_trace.context.to === '0x0') {
+        if (response.call_trace.context.to === '0x') {
             response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString());
         } else {
             response.return_value = getFromMemory(getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString(), ctx);
@@ -237,7 +237,7 @@ class FullTracer {
         response.call_trace.context.return_value = response.return_value;
 
         //Set create address in case of deploy
-        if (response.call_trace.context.to === '0x0') {
+        if (response.call_trace.context.to === '0x') {
             response.create_address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
         }
         //Set gas left
