@@ -6,8 +6,10 @@ const {
 } = require('@0xpolygonhermez/zkevm-commonjs');
 
 // paths files
-const pathInput = path.join(__dirname, "../testvectors/input_gen.json");
-const pathOutput = path.join(__dirname, "../tools/build-genesis/input_executor.json");
+const pathInput = path.join(__dirname, "./input_gen.json");
+const pathOutput = path.join(__dirname, "./input_executor.json");
+
+const NUM_TX = 200;
 
 async function main(){
     // build poseidon
@@ -29,20 +31,6 @@ async function main(){
         walletMap[address] = newWallet;
     }
 
-    // build tx
-    const tx = {
-        to: generateData.tx.to,
-        nonce: generateData.tx.nonce,
-        value: ethers.utils.parseUnits(generateData.tx.value, 'wei'),
-        gasLimit: generateData.tx.gasLimit,
-        gasPrice: ethers.utils.parseUnits(generateData.tx.gasPrice, 'wei'),
-        chainId: generateData.tx.chainId,
-        data: generateData.tx.data || '0x',
-    };
-
-    const rawTxEthers = await walletMap[generateData.tx.from].signTransaction(tx);
-    const customRawTx = processorUtils.rawTxToCustomRawTx(rawTxEthers);
-
     // create a zkEVMDB and build a batch
     const db = new MemDB(F);
 
@@ -58,11 +46,28 @@ async function main(){
     const batch = await zkEVMDB.buildBatch(
         generateData.timestamp,
         generateData.sequencerAddr,
-        smtUtils.stringToH4(generateData.globalExitRoot)
+        smtUtils.stringToH4(generateData.globalExitRoot),
+        200
     );
 
-    // add tx to batch
-    batch.addRawTx(customRawTx);
+    // build txs
+    for (let i = 0; i < NUM_TX; i++){
+        const tx = {
+            to: generateData.tx.to,
+            nonce: generateData.tx.nonce + i,
+            value: ethers.utils.parseUnits(generateData.tx.value, 'wei'),
+            gasLimit: generateData.tx.gasLimit,
+            gasPrice: ethers.utils.parseUnits(generateData.tx.gasPrice, 'wei'),
+            chainId: generateData.tx.chainId,
+            data: generateData.tx.data || '0x',
+        };
+
+        const rawTxEthers = await walletMap[generateData.tx.from].signTransaction(tx);
+        const customRawTx = processorUtils.rawTxToCustomRawTx(rawTxEthers);
+
+        // add tx to batch
+        batch.addRawTx(customRawTx);
+    }
 
     // build batch
     await batch.executeTxs();
