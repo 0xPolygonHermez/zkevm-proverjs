@@ -35,7 +35,7 @@
     "c12b_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.c12a.verifier.r1cs  -p $BDIR/zkevm.c12b.pil -c $BDIR/zkevm.c12b.const -e $BDIR/zkevm.c12b.exec",
     "c12b_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -i $BDIR/zkevm.c12b.starkinfo.json",
     "c12b_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -c $BDIR/zkevm.c12b.chelpers.cpp",
-    "c12b_exec": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_exec.js -i $BDIR/zkevm.zkin.proof.json -w $BDIR/zkevm.verifier_js/zkevm.verifier.wasm -p $BDIR/zkevm.c12b.pil -e $BDIR/zkevm.c12b.exec -m $BDIR/zkevm.c12b.commit",
+    "c12b_exec": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_exec.js -i $BDIR/zkevm.c12a.zkin.proof.json -w $BDIR/zkevm.c12a.verifier_js/zkevm.c12a.verifier.wasm -p $BDIR/zkevm.c12b.pil -e $BDIR/zkevm.c12b.exec -m $BDIR/zkevm.c12b.commit",
     "c12b_pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.c12b.commit -c $BDIR/zkevm.c12b.const -p $BDIR/zkevm.c12b.pil",
     "c12b_buildconstanttree": ". ./pre.sh && $PILSTARK/main_buildconsttree.js  -c $BDIR/zkevm.c12b.const -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -t $BDIR/zkevm.c12b.consttree -v $BDIR/zkevm.c12b.verkey.json",
     "c12b_prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.c12b.commit -c $BDIR/zkevm.c12b.const -t $BDIR/zkevm.c12b.consttree -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -o $BDIR/zkevm.c12b.proof.json -z $BDIR/zkevm.c12b.zkin.proof.json -b $BDIR/zkevm.c12b.public.json --proverAddr=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
