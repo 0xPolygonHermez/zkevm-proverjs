@@ -11,7 +11,7 @@
     "buildproof": "tools/build_all.sh exec pilverify prove verify c12a_exec c12a_pilverify c12a_prove c12a_verify c12b_exec c12b_pilverify c12b_prove c12b_verify g16wc g16prove g16verify",
     "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build -- -s 23) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
-    "exec": ". ./pre.sh && node $NODE src/main_executor tools/build-genesis/input_executor.json $PIL -r $BDIR/rom.json -o $BDIR/zkevm.commit && cp tools/build-genesis/input_executor.json $BDIR",
+    "exec": ". ./pre.sh && node $NODE src/main_executor INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.commit -c $BDIR/zkevm.const $PIL",
     "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
     "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js $PIL -s $BDIR/zkevm.starkstruct.json -c $BDIR/zkevm.chelpers.cpp",
