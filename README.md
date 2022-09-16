@@ -65,6 +65,10 @@ npm run buildall --starkstruct=debug
 ```sh
 npm run buildall --build=build/basic_proof
 ```
+**input**: with this option indicates input file to use.
+```sh
+npm run buildall --input=test/myinputfile.json
+```
 ### Build steps
 - **buildrom**
 - **buildconstants**

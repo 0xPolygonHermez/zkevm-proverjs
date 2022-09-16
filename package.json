@@ -1,15 +1,17 @@
 {
   "name": "@0xpolygonhermez/zkevm-proverjs",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "scripts": {
     "buildgenesis": "",
     "buildinput": "",
     "buildall": "tools/build_all.sh buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom c12setup c12buildstarkinfo c12buildchelpers c12exec c12pilverify c12buildconstanttree c12prove c12verify c12gencircom c12compilecircom g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity",
+    "buildsetup": "tools/build_all.sh buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom c12setup c12buildstarkinfo c12buildchelpers c12buildconstanttree c12gencircom c12compilecircom g16setup g16contribute g16evk g16solidity",
+    "buildproof": "tools/build_all.sh exec pilverify prove verify c12exec c12pilverify c12prove c12verify g16wc g16prove g16verify",
     "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
-    "exec": ". ./pre.sh && node $NODE src/main_executor tools/build-genesis/input_executor.json $PIL -r $BDIR/rom.json -o $BDIR/zkevm.commit && cp tools/build-genesis/input_executor.json $BDIR",
+    "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.commit -c $BDIR/zkevm.const $PIL",
     "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
     "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js $PIL -s $BDIR/zkevm.starkstruct.json -c $BDIR/zkevm.chelpers.cpp",
@@ -17,7 +19,7 @@
     "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -z $BDIR/zkevm.zkin.proof.json -b $BDIR/zkevm.public.json",
     "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -b $BDIR/zkevm.public.json -v $BDIR/zkevm.verkey.json",
     "gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js $PIL -s $BDIR/zkevm.starkstruct.json -v $BDIR/zkevm.verkey.json -o $BDIR/zkevm.verifier.circom",
-    "compilecircom": ". ./pre.sh && cp -a node_modules/pil-stark/circuits.gl build && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR",
+    "compilecircom": ". ./pre.sh && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
     "c12setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.verifier.r1cs  -p $BDIR/zkevm.c12.pil -c $BDIR/zkevm.c12.const -e $BDIR/zkevm.c12.exec",
     "c12buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -i $BDIR/zkevm.c12.starkinfo.json",
     "c12buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -c $BDIR/zkevm.c12.chelpers.cpp",
@@ -27,7 +29,7 @@
     "c12prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.c12.commit -c $BDIR/zkevm.c12.const -t $BDIR/zkevm.c12.consttree -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -o $BDIR/zkevm.c12.proof.json -z $BDIR/zkevm.c12.zkin.proof.json -b $BDIR/zkevm.c12.public.json --proverAddr=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "c12verify": ". ./pre.sh && $PILSTARK/main_verifier.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -o $BDIR/zkevm.c12.proof.json -b $BDIR/zkevm.c12.public.json -v $BDIR/zkevm.c12.verkey.json",
     "c12gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json -v $BDIR/zkevm.c12.verkey.json -o $BDIR/zkevm.c12.verifier.circom",
-    "c12compilecircom": ". ./pre.sh && cp -a node_modules/pil-stark/circuits.bn128 build && mkdir -p build/node_modules && cp -a node_modules/circomlib build/node_modules && circom --r1cs --sym --wasm --c --verbose $BDIR/zkevm.c12.verifier.circom -o $BDIR",
+    "c12compilecircom": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/zkevm.c12.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits -l node_modules/pil-stark/circuits.gl",
     "downloadptaw": "wget -P build https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final.ptau",
     "g16setup": ". ./pre.sh && $SNARKJS g16s $BDIR/zkevm.c12.verifier.r1cs build/powersOfTau28_hez_final.ptau $BDIR/zkevm.g16.0000.zkey",
     "g16contribute": ". ./pre.sh && $SNARKJS zkc  $BDIR/zkevm.g16.0000.zkey $BDIR/zkevm.g16.0001.zkey -e=\"$(dd if=/dev/random bs=64 count=1 | base64 -w0)\"",
@@ -39,7 +41,6 @@
     "preg16setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
     "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t BN128 -p $BDIR/zkevm.c12.pil -s $BDIR/zkevm.c12.starkstruct.json; else cp src/zkevm.c12.starkstruct.json $BDIR; fi",
-
     "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
@@ -55,9 +56,9 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#orange",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#orange",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#orange",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#mandarin",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#mandarin",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#mandarin",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "0.1.1",
@@ -65,7 +66,7 @@
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
-    "pil-stark": "^0.0.13",
+    "pil-stark": "^0.0.21",
     "pilcom": "^0.0.17",
     "snarkjs": "^0.4.24",
     "yargs": "^17.4.0"
@@ -76,3 +77,4 @@
     "mocha": "^9.1.3"
   }
 }
+

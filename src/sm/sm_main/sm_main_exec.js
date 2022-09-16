@@ -948,7 +948,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashK[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let i=0; i<size; i++) {
@@ -957,9 +957,15 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 if (typeof bh === "undefined") {
                     ctx.hashK[addr].data[pos + i] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashK do not match ${addr}:${pos+i} is ${bm} and should be ${bh}`)
+                    throw new Error(`HashK do not match ${addr}:${pos+i} is ${bm} and should be ${bh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
                 }
             }
+
+            const paddingA = Scalar.shr(a, size * 8);
+            if (!Scalar.isZero(paddingA)) {
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${i}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+
             if ((typeof ctx.hashK[addr].reads[pos] !== "undefined") &&
                 (ctx.hashK[addr].reads[pos] != size))
             {
@@ -1021,6 +1027,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     throw new Error(`HashP do not match ${addr}:${pos+i} is ${bm} and should be ${bh}`)
                 }
             }
+            const paddingA = Scalar.shr(a, size * 8);
+            if (!Scalar.isZero(paddingA)) {
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashP (w=${i}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+
             if ((typeof ctx.hashP[addr].reads[pos] !== "undefined") &&
                 (ctx.hashP[addr].reads[pos] != size))
             {
@@ -2439,8 +2450,7 @@ function eval_log(ctx, tag) {
     } else {
         let scalarLog;
         let hexLog;
-
-        if (tag.params[0].regName !== "HASHPOS"){
+        if (tag.params[0].regName !== "HASHPOS" && tag.params[0].regName !== "GAS"){
             scalarLog = fea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;
         } else {
