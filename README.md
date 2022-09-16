@@ -16,17 +16,20 @@ $ node src/main_executor <input.json> -r <rom.json> -o <proof.json>
 ```
 Example:
 ```sh
-$ node src/main_executor testvectors/input_executor.json -r ../zkrom/build/rom.json -o tmp/commit.bin
+$ node src/main_executor tools/build-genesis/input_executor.json -r ../zkevm-rom/build/rom.json -o tmp/commit.bin
 ```
 Additional parameters:
 
 - `-t <test.json>`: test
 - `-l <logs.json>`: logs
-- `-s`: skip
-- `-d`: debug
-- `-p`: pilprogram.pil
-- `-P`: pilConfig.json
-- `-n <number>`: N
+- `-s`: skip compile pil
+- `-d`: debug mode
+- `-p`: select pilprogram.pil
+- `-P`: load pilConfig.json file
+- `-u`: unsigned transactions mode
+- `-u`: unsigned transactions mode
+- `-e`: skip asserts `newStateRoot` and `newLocalExitRoot`
+- `-v`: verbode mode
 
 ### Build prove
 ```sh
