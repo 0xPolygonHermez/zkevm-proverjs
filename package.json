@@ -1,6 +1,6 @@
 {
   "name": "@0xpolygonhermez/zkevm-proverjs",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "scripts": {
@@ -80,7 +80,7 @@
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
-    "pil-stark": "^0.0.21",
+    "pil-stark": "^0.0.25",
     "pilcom": "^0.0.17",
     "snarkjs": "^0.4.24",
     "yargs": "^17.4.0"
