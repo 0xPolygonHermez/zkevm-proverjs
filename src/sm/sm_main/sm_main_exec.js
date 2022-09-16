@@ -963,7 +963,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
             const paddingA = Scalar.shr(a, size * 8);
             if (!Scalar.isZero(paddingA)) {
-//                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${i}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${i}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
 
             if ((typeof ctx.hashK[addr].reads[pos] !== "undefined") &&
