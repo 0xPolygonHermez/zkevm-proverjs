@@ -14,7 +14,7 @@
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.commit -c $BDIR/zkevm.const $PIL",
     "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
-    "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js $PIL -s $BDIR/zkevm.starkstruct.json -c $BDIR/zkevm.chelpers.cpp",
+    "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m $PIL -s $BDIR/zkevm.starkstruct.json -c $BDIR/zkevm.chelpers/zkevm.chelpers.cpp",
     "buildconstanttree": ". ./pre.sh && $PILSTARK/main_buildconsttree.js -c $BDIR/zkevm.const $PIL -s $BDIR/zkevm.starkstruct.json -t $BDIR/zkevm.consttree -v $BDIR/zkevm.verkey.json",
     "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -z $BDIR/zkevm.zkin.proof.json -b $BDIR/zkevm.public.json",
     "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -b $BDIR/zkevm.public.json -v $BDIR/zkevm.verkey.json",
@@ -23,7 +23,7 @@
 
     "c12a_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.verifier.r1cs  -p $BDIR/zkevm.c12a.pil -c $BDIR/zkevm.c12a.const -e $BDIR/zkevm.c12a.exec",
     "c12a_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -i $BDIR/zkevm.c12a.starkinfo.json",
-    "c12a_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -c $BDIR/zkevm.c12a.chelpers.cpp",
+    "c12a_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -c $BDIR/zkevm.c12a.chelpers/zkevm.c12a.chelpers.cpp",
     "c12a_exec": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_exec.js -i $BDIR/zkevm.zkin.proof.json -w $BDIR/zkevm.verifier_js/zkevm.verifier.wasm -p $BDIR/zkevm.c12a.pil -e $BDIR/zkevm.c12a.exec -m $BDIR/zkevm.c12a.commit",
     "c12a_pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.c12a.commit -c $BDIR/zkevm.c12a.const -p $BDIR/zkevm.c12a.pil",
     "c12a_buildconstanttree": ". ./pre.sh && $PILSTARK/main_buildconsttree.js  -c $BDIR/zkevm.c12a.const -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -t $BDIR/zkevm.c12a.consttree -v $BDIR/zkevm.c12a.verkey.json",
@@ -34,7 +34,7 @@
 
     "c12b_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.c12a.verifier.r1cs  -p $BDIR/zkevm.c12b.pil -c $BDIR/zkevm.c12b.const -e $BDIR/zkevm.c12b.exec",
     "c12b_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -i $BDIR/zkevm.c12b.starkinfo.json",
-    "c12b_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -c $BDIR/zkevm.c12b.chelpers.cpp",
+    "c12b_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -c $BDIR/zkevm.c12b.chelpers/zkevm.c12b.chelpers.cpp",
     "c12b_exec": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_exec.js -i $BDIR/zkevm.c12a.zkin.proof.json -w $BDIR/zkevm.c12a.verifier_js/zkevm.c12a.verifier.wasm -p $BDIR/zkevm.c12b.pil -e $BDIR/zkevm.c12b.exec -m $BDIR/zkevm.c12b.commit",
     "c12b_pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.c12b.commit -c $BDIR/zkevm.c12b.const -p $BDIR/zkevm.c12b.pil",
     "c12b_buildconstanttree": ". ./pre.sh && $PILSTARK/main_buildconsttree.js  -c $BDIR/zkevm.c12b.const -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json -t $BDIR/zkevm.c12b.consttree -v $BDIR/zkevm.c12b.verkey.json",
@@ -55,6 +55,11 @@
     "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR; fi",
     "prec12b_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t BN128 -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json; else cp src/zkevm.c12b.starkstruct.json $BDIR; fi",
+
+    "buildsetup:basic": "npm run buildsetup --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
+    "buildall:basic": "npm run buildall --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
+    "buildproof:basic": "npm run buildproof --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
+
     "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
@@ -70,9 +75,9 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#mandarin",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v0.3.0.0",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v0.3.0.0",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#v0.3.0.0-rc.1",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "0.1.1",
