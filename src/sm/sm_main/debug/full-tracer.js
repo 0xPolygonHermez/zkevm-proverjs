@@ -84,11 +84,7 @@ class FullTracer {
             return;
         }
         this.info[this.info.length - 1].error = errorName;
-        // Dont decrease depth if the error is from processing a RETURN opcode
-        const lastOpcode = this.info[this.info.length - 1]
-        if (!opDecContext.includes(lastOpcode.opcode)) {
-            this.depth--
-        }
+
         // Revert logs
         this.logs[ctx.CTX] = null
     }
@@ -399,6 +395,7 @@ class FullTracer {
         }
 
         // add info opcodes
+        this.depth = Number(getVarFromCtx(ctx, true, "depth"));
         singleInfo.depth = this.depth;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.remaining_gas = ctx.GAS.toString();
@@ -438,6 +435,7 @@ class FullTracer {
         singleInfo.contract.data = getCalldataFromStack(ctx);
         singleInfo.contract.gas = this.txGAS[this.depth];
         singleInfo.storage = JSON.parse(JSON.stringify(this.deltaStorage[this.depth]));
+
         // Round up to next multiple of 32
         singleInfo.memory_size = String(Math.ceil(Number(getVarFromCtx(ctx, false, "memLength")) / 32) * 32);
         singleInfo.counters = {
@@ -481,13 +479,8 @@ class FullTracer {
             }
         }
 
-        //Check opcodes that alter depth
-        if (opDecContext.includes(singleInfo.opcode)) {
-            this.depth--;
-        }
         if (opIncContext.includes(singleInfo.opcode)) {
-            this.depth++;
-            this.deltaStorage[this.depth] = {};
+            this.deltaStorage[this.depth + 1] = {};
         }
     }
 
