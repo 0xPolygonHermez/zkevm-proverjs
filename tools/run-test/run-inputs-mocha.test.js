@@ -42,6 +42,9 @@ describe("Run executor inputs from config file", () => {
             namespaces: ['Main', 'Global']
         };
 
+        console.log("CONFIG PIL:");
+        console.log(pilConfig);
+
         const pil = await compile(F, "pil/main.pil", null, pilConfig);
         fs.writeFileSync(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
 
@@ -69,6 +72,7 @@ describe("Run executor inputs from config file", () => {
                         },
                         stepsN: 8388608
                     }
+                    console.log("Running test: ", inputPath);
                     await smMain.execute(cmPols.Main, input, rom, config);
                     const stopTime = performance.now();
                     info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime) / 1000} s\n`)}`;
