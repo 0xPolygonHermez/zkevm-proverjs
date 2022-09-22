@@ -75,7 +75,7 @@ async function main(){
         pil = JSON.parse(await fs.promises.readFile(fileCachePil, "utf8"));
     } else {
         const pilConfig = {
-            defines: {N: 2 ** 21},
+            defines: {N: 2 ** 22},
             namespaces: ['Main', 'Global']
         };
 
