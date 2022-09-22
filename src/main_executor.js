@@ -28,7 +28,7 @@ const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] -u -e -v")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] -u -e -v -t")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
@@ -41,6 +41,7 @@ const argv = require("yargs")
     .alias("e", "execute")
     .alias("P", "pilconfig")
     .alias("v", "verbose")
+    .alias("t", "tracer")
     .argv;
 
 async function run() {
@@ -106,7 +107,8 @@ async function run() {
             inputName: path.basename(inputFile, ".json")
         },
         unsigned: (argv.unsigned === true),
-        execute: (argv.execute === true)
+        execute: (argv.execute === true),
+        tracer: (argv.tracer === true)
     }
 
     const N = cmPols.Main.PC.length;

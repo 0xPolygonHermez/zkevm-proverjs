@@ -14,6 +14,7 @@ const chalk = require("chalk");
 describe("Run executor inputs from config file", () => {
     let cmPols;
     const inputs = [];
+    let pilConfig;
 
     before(async () => {
         const poseidon = await buildPoseidon();
@@ -36,19 +37,20 @@ describe("Run executor inputs from config file", () => {
             });
         }
 
-        const pilConfig = {
+        pilConfig = {
             defines: { N: 2 ** 22 },
             namespaces: ['Main', 'Global']
         };
-
-        console.log("CONFIG PIL:");
-        console.log(pilConfig);
 
         const pil = await compile(F, "pil/main.pil", null, pilConfig);
         fs.writeFileSync(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
 
         cmPols = newCommitPolsArray(pil);
+    });
 
+    it("Print info", async () => {
+        console.log("CONFIG PIL:");
+        console.log(pilConfig);
     });
 
     it('Should run all the inputs', async () => {

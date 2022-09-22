@@ -12,7 +12,6 @@ const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils
 
 const testTools = require("./test_tools");
 
-const Tracer = require("./debug/tracer");
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 
@@ -22,7 +21,6 @@ const twoTo256 = Scalar.shl(Scalar.one, 256);
 const Mask256 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
 const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8n));
 
-let iTracer;
 let fullTracer;
 
 module.exports = async function execute(pols, input, rom, config = {}) {
@@ -44,6 +42,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     const debug = config && config.debug;
+    const flagTracer = config && config.tracer;
     const N = pols.zkPC.length;
 
     if (config && config.unsigned){
@@ -83,12 +82,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     preprocessTxs(ctx);
 
-    if (debug) {
-        iTracer = new Tracer(config.debugInfo.inputName);
+    if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
-    } else {
-        iTracer = null
     }
+
     const iPrint = new Prints(ctx, smt);
 
     for (i=0; i<N; i++) {
@@ -133,9 +130,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (i==330) {
              // console.log("### > "+l.fileName + ':' + l.line);
         }
-
-        if (iTracer)
-            await iTracer.getTrace(ctx, l, false);
 
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
@@ -745,7 +739,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                if (iTracer) iTracer.exportTrace();
                 throw new Error(`Assert does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
@@ -1709,9 +1702,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     checkFinalState(Fr, pols);
-
-    if (iTracer)
-        iTracer.exportTrace();
 
     for (let i=0; i<ctx.hashK.length; i++) {
         const h = {
