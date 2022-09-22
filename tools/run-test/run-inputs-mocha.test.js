@@ -42,9 +42,6 @@ describe("Run executor inputs from config file", () => {
             namespaces: ['Main', 'Global']
         };
 
-        console.log("CONFIG PIL:");
-        console.log(pilConfig);
-
         const pil = await compile(F, "pil/main.pil", null, pilConfig);
         fs.writeFileSync(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
 
