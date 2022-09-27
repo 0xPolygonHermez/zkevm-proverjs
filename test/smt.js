@@ -1,5 +1,5 @@
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
-const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
+const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
 const buildPoseidon = require("circomlibjs").buildPoseidon;
 const Scalar = require("ffjavascript").Scalar;
 const chai = require("chai");
@@ -16,7 +16,7 @@ describe("smt", async function () {
     })
 
     it("It should add and remove an element", async () => {
-        const db = new MemDB(F);
+        const db = new Database(F);
         const smt = new SMT(db, 4, poseidon, poseidon.F);
 
         const r1 = await smt.set(F.zero, F.e(1), Scalar.e(2));
@@ -28,7 +28,7 @@ describe("smt", async function () {
     });
 
     it("It should update an element", async () => {
-        const db = new MemDB(F);
+        const db = new Database(F);
         const smt = new SMT(db, 4, poseidon, poseidon.F);
 
         const r1 = await smt.set(F.zero, F.e(1), Scalar.e(2));
@@ -42,7 +42,7 @@ describe("smt", async function () {
 
     it("Add 128 elements", async () => {
         const N = 128;
-        const db = new MemDB(F);
+        const db = new Database(F);
         const smt = new SMT(db, 4, poseidon, poseidon.F);
 
         let r = {
@@ -68,7 +68,7 @@ describe("smt", async function () {
 
     it("Should read random", async () => {
         const N = 64;
-        const db = new MemDB(F);
+        const db = new Database(F);
         const smt = new SMT(db, 4, poseidon, poseidon.F);
 
         const vals = {};
@@ -95,7 +95,7 @@ describe("smt", async function () {
     });
 
     it("It should add elements with similar keys", async () => {
-        const db = new MemDB(F);
+        const db = new Database(F);
         const smt = new SMT(db, 4, poseidon, poseidon.F);
 
         const expectedRoot = F.e("1599843265442829753605252683384602873429861264461222121698908135665379759788");

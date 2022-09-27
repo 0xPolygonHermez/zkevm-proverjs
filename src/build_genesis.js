@@ -1,4 +1,4 @@
-const { SMT, MemDB }  = require("@0xpolygonhermez/zkevm-commonjs");
+const { SMT, Database }  = require("@0xpolygonhermez/zkevm-commonjs");
 const { stringToH4 } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
 const { keyEthAddrBalance, h4toString } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
@@ -38,7 +38,7 @@ async function run() {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
 
-    const db = new MemDB(F);
+    const db = new Database(F);
     const smt = new SMT(db, poseidon, F);
 
     let r = {

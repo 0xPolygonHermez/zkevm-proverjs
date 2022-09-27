@@ -12,7 +12,7 @@ const {
     hashContractBytecode
 } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
-const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
+const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { byteArray2HexString, hexString2byteArray } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 const { encodedStringToArray, decodeCustomRawTxProverMethod} = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
@@ -77,6 +77,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     // load database
     const db = new MemDB(Fr, input.db);
+    await db.connect(config.databaseURL,config.dbTable);
 
     // load programs into DB
     for (const [key, value] of Object.entries(input.contractsBytecode)){
