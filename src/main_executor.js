@@ -28,7 +28,7 @@ const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] -u -e -v")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] [-D <databaseurl>] [-T <dbtable>] -u -e -v")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
@@ -39,8 +39,9 @@ const argv = require("yargs")
     .alias("P", "pilconfig")
     .alias("u", "unsigned")
     .alias("e", "execute")
-    .alias("P", "pilconfig")
     .alias("v", "verbose")
+    .alias("D", "databaseurl")
+    .alias("T", "dbtable")
     .argv;
 
 async function run() {
@@ -62,7 +63,7 @@ async function run() {
     const romFile = typeof(argv.rom) === "string" ?  argv.rom.trim() : "rom.json";
     const outputFile = typeof(argv.output) === "string" ?  argv.output.trim() : undefined;
     const testFile = typeof(argv.test) === "string" ?  argv.test.trim() : false;
-    const logsFile = typeof(argv.logs) === "string" ?  argv.output.trim() : undefined;
+    const logsFile = typeof(argv.logs) === "string" ?  argv.logs.trim() : undefined;
 
     const input = JSON.parse(await fs.promises.readFile(inputFile, "utf8"));
     const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
@@ -106,7 +107,9 @@ async function run() {
             inputName: path.basename(inputFile, ".json")
         },
         unsigned: (argv.unsigned === true),
-        execute: (argv.execute === true)
+        execute: (argv.execute === true),
+        databaseURL: typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local",
+        dbTable: typeof(argv.dbtable) === "string" ?  argv.dbtable.trim() : "state.merkletree"
     }
 
     const N = cmPols.Main.PC.length;

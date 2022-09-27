@@ -6,7 +6,7 @@ const { calculateStarkInput, calculateBatchHashData } = require("@0xpolygonherme
 const { scalar2fea, fea2scalar, fe2n, scalar2h4, h4toString,
     stringToH4, nodeIsEq, hashContractBytecode, fea2String } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
-const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
+const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
@@ -59,7 +59,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
-    const db = new MemDB(Fr, input.db);
+    const db = new Database(Fr, input.db);
+    await db.connect(config.databaseURL,config.dbTable);
     const smt = new SMT(db, poseidon, Fr);
     initState(Fr, pols);
 
