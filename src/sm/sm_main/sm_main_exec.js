@@ -92,6 +92,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         iTracer = null
     }
     const iPrint = new Prints(ctx, smt);
+    let fastDebugExit = false;
 
     for (step=0; step < stepsN; step++) {
         const i = step % N;
@@ -125,6 +126,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         // breaks the loop in debug mode in order to test and debug faster
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+            fastDebugExit = true;
             break;
         }
 
@@ -1711,7 +1713,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
     }
 
-    if (!debug || !config.stepsN) {
+    if (!debug || !config.stepsN || !fastDebugExit) {
         checkFinalState(Fr, pols);
     }
 
