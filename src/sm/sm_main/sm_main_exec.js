@@ -1711,7 +1711,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
     }
 
-    checkFinalState(Fr, pols);
+    if (!debug || !config.stepsN) {
+        checkFinalState(Fr, pols);
+    }
 
     if (iTracer)
         iTracer.exportTrace();
