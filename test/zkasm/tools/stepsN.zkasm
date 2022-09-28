@@ -1,0 +1,23 @@
+start:
+
+CONST %UPTO = 40000
+
+        STEP => A
+        0 :ASSERT
+
+        0 => A
+counterLoop:
+        A + 1 => A
+        A - %UPTO :JMPN(counterLoop)
+
+counterEnds:
+        %UPTO     :ASSERT
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

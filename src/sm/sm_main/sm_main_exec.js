@@ -45,6 +45,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     const debug = config && config.debug;
     const N = pols.zkPC.length;
+    const stepsN = (debug && config.stepsN) ? config.stepsN : N;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
@@ -78,22 +79,25 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         sto: input.keys,
         rom: rom,
         outLogs: {},
-        N: N
+        N,
+        stepsN
     }
 
     preprocessTxs(ctx);
 
-    if (debug) {
+    if (debug && config.debugInfo) {
         iTracer = new Tracer(config.debugInfo.inputName);
         fullTracer = new FullTracer(config.debugInfo.inputName)
     } else {
         iTracer = null
     }
     const iPrint = new Prints(ctx, smt);
+    let fastDebugExit = false;
 
-    for (i=0; i<N; i++) {
+    for (step=0; step < stepsN; step++) {
+        const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
-        ctx.step=i;
+        ctx.step = step;
         ctx.A = [pols.A0[i], pols.A1[i], pols.A2[i], pols.A3[i], pols.A4[i], pols.A5[i], pols.A6[i], pols.A7[i]];
         ctx.B = [pols.B0[i], pols.B1[i], pols.B2[i], pols.B3[i], pols.B4[i], pols.B5[i], pols.B6[i], pols.B7[i]];
         ctx.C = [pols.C0[i], pols.C1[i], pols.C2[i], pols.C3[i], pols.C4[i], pols.C5[i], pols.C6[i], pols.C7[i]];
@@ -122,15 +126,16 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         // breaks the loop in debug mode in order to test and debug faster
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+            fastDebugExit = true;
             break;
         }
 
         let incHashPos = 0;
         let incCounter = 0;
 
-        // if (i%1000==0) console.log(`Step: ${i}`);
+        // if (step%1000==0) console.log(`Step: ${step}`);
 
-        if (i==330) {
+        if (step==330) {
              // console.log("### > "+l.fileName + ':' + l.line);
         }
 
@@ -572,7 +577,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
                     ctx.lastSWrite.newRoot = res.newRoot;
                     ctx.lastSWrite.res = res;
-                    ctx.lastSWrite.step=i;
+                    ctx.lastSWrite.step = step;
 
                     fi = sr4to8(ctx.Fr, ctx.lastSWrite.newRoot);
                     nHits++;
@@ -585,9 +590,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK out of bounds ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     let s = Scalar.zero;
-                    for (let i=0; i<size; i++) {
-                        if (typeof ctx.hashK[addr].data[pos + i] === "undefined") throw new Error(`Accessing hashK not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[addr].data[pos + i]));
+                    for (let k=0; k<size; k++) {
+                        if (typeof ctx.hashK[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashK not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[addr].data[pos + k]));
                     }
                     fi = scalar2fea(Fr, s);
                     nHits++;
@@ -610,9 +615,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     if (pos+size > ctx.hashP[addr].data.length) throw new Error(`Accessing hashP out of bounds ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     let s = Scalar.zero;
-                    for (let i=0; i<size; i++) {
-                        if (typeof ctx.hashP[addr].data[pos + i] === "undefined") throw new Error(`Accessing hashP not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[addr].data[pos + i]));
+                    for (let k=0; k<size; k++) {
+                        if (typeof ctx.hashP[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashP not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[addr].data[pos + k]));
                     }
                     fi = scalar2fea(Fr, s);
                     nHits++;
@@ -763,7 +768,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 required.Mem.push({
                     bIsWrite: true,
                     address: addr,
-                    pc: i,
+                    pc: step,
                     fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
                 });
             } else {
@@ -771,7 +776,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 required.Mem.push({
                     bIsWrite: false,
                     address: addr,
-                    pc: i,
+                    pc: step,
                     fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
                 });
                 if (ctx.mem[addr]) {
@@ -866,7 +871,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (l.sWR) {
             pols.sWR[i] = 1n;
 
-            if ((!ctx.lastSWrite)||(ctx.lastSWrite.step != i)) {
+            if ((!ctx.lastSWrite)||(ctx.lastSWrite.step != step)) {
                 ctx.lastSWrite = {};
 
                 const Kin0 = [
@@ -903,7 +908,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
                 ctx.lastSWrite.res = res;
                 ctx.lastSWrite.newRoot = res.newRoot;
-                ctx.lastSWrite.step=i;
+                ctx.lastSWrite.step = step;
             }
 
             required.Storage.push({
@@ -951,19 +956,19 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
-            for (let i=0; i<size; i++) {
-                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-i -1)*8 ) , maskByte));
-                const bh = ctx.hashK[addr].data[pos + i];
+            for (let k=0; k<size; k++) {
+                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
+                const bh = ctx.hashK[addr].data[pos + k];
                 if (typeof bh === "undefined") {
-                    ctx.hashK[addr].data[pos + i] = bm;
+                    ctx.hashK[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashK do not match ${addr}:${pos+i} is ${bm} and should be ${bh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
+                    throw new Error(`HashK do not match ${addr}:${pos+k} is ${bm} and should be ${bh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
                 }
             }
 
             const paddingA = Scalar.shr(a, size * 8);
             if (!Scalar.isZero(paddingA)) {
-                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${i}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${step}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
 
             if ((typeof ctx.hashK[addr].reads[pos] !== "undefined") &&
@@ -1018,18 +1023,18 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
-            for (let i=0; i<size; i++) {
-                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-i -1)*8 ) , maskByte));
-                const bh = ctx.hashP[addr].data[pos + i];
+            for (let k=0; k<size; k++) {
+                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
+                const bh = ctx.hashP[addr].data[pos + k];
                 if (typeof bh === "undefined") {
-                    ctx.hashP[addr].data[pos + i] = bm;
+                    ctx.hashP[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashP do not match ${addr}:${pos+i} is ${bm} and should be ${bh}`)
+                    throw new Error(`HashP do not match ${addr}:${pos+k} is ${bm} and should be ${bh}`)
                 }
             }
             const paddingA = Scalar.shr(a, size * 8);
             if (!Scalar.isZero(paddingA)) {
-                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashP (w=${i}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashP (w=${step}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
 
             if ((typeof ctx.hashP[addr].reads[pos] !== "undefined") &&
@@ -1332,7 +1337,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     // SET NEXT REGISTERS
     //////////
 
-        const nexti = (i+1)%N;
+        const nexti = (i+1) % N;
 
         if (l.setA == 1) {
             pols.setA[i]=1n;
@@ -1708,7 +1713,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
     }
 
-    checkFinalState(Fr, pols);
+    if (!debug || !config.stepsN || !fastDebugExit) {
+        checkFinalState(Fr, pols);
+    }
 
     if (iTracer)
         iTracer.exportTrace();
@@ -1729,7 +1736,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
         }
         if (p!= ctx.hashK[i].data.length) {
-            throw new Error(`Reading hashK out of limits: ${i}`);
+            throw new Error(`Reading hashK out of limits: ${step}`);
         }
         required.PaddingKK.push(h);
     }
@@ -1750,7 +1757,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
         }
         if (p!= ctx.hashP[i].data.length) {
-            throw new Error(`Reading hashP out of limits: ${i}`);
+            throw new Error(`Reading hashP out of limits: ${step}`);
         }
         required.PaddingPG.push(h);
     }
@@ -2442,7 +2449,7 @@ function eval_bitwise(ctx, tag) {
 }
 
 function eval_beforeLast(ctx) {
-    if (ctx.step >= ctx.N-2) {
+    if (ctx.step >= ctx.stepsN-2) {
         return [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
     } else {
         return [ctx.Fr.negone, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
