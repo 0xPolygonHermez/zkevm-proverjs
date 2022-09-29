@@ -27,7 +27,8 @@ it('Should run one input', async () => {
                 debug: true,
                 debugInfo: {
                     inputName: path.basename(inputPath)
-                }
+                },
+                stepsN: 8388608
             }
             console.log("Running test: ", inputPath);
             await smMain.execute(cmPols.Main, input, rom, config);
