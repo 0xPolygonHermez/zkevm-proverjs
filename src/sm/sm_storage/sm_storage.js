@@ -163,15 +163,6 @@ module.exports.execute = async function (pols, action) {
                         logger("StorageExecutor isInsertNotFound returns " + fea42String(fr, op));
                     }
                 }
-                else if (rom.line[l].funcName == "isSetReplacingZero")
-                {
-                    if (!actionListEmpty && action[a].bIsSet &&
-                        action[a].setResult.mode == "insertNotFound")
-                    {
-                        op[0] = fr.one;
-                        logger("StorageExecutor isSetReplacingZero returns " + fea42String(fr, op));
-                    }
-                }
                 else if (rom.line[l].funcName == "isSetDeleteLast")
                 {
                     if (!actionListEmpty && action[a].bIsSet &&
