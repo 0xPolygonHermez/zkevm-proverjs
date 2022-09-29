@@ -34,7 +34,7 @@ async function main() {
     }
 
     const pilConfig = {
-        defines: { N: 2 ** 21 },
+        defines: { N: 4096 },
         namespaces: ['Main', 'Global']
     };
 
