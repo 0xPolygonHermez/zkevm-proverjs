@@ -15,6 +15,7 @@ const testTools = require("./test_tools");
 const Tracer = require("./debug/tracer");
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
+const { link } = require("fs");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -46,6 +47,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const debug = config && config.debug;
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
+    const reg32control = config.reg32control ?? true;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
@@ -1338,6 +1340,15 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     //////////
 
         const nexti = (i+1) % N;
+
+        if (reg32control && (l.setA || l.setB || l.setC || l.setD || l.setE ||
+                             l.arith || l.bin || l.memAlign || l.sRD || l.sWR || l.hashKDigest || l.hashPDigest)
+                         && ((op0|op1|op2|op3|op4|op5|op6|op7) & 0xFFFFFFFF)) {
+
+            const opvalues = ([op0,op1,op2,op3,op4,op5,op6,op7].map((x) => '0x'+x.toString(16).padStart(8, '0'))).join(',');
+            throw new Error(`Value out of 32 bits in op0,op1,... [${opvalues}] in ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        }
+
 
         if (l.setA == 1) {
             pols.setA[i]=1n;
