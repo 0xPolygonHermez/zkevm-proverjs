@@ -12,7 +12,6 @@ const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils
 
 const testTools = require("./test_tools");
 
-const Tracer = require("./debug/tracer");
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 
@@ -22,7 +21,6 @@ const twoTo256 = Scalar.shl(Scalar.one, 256);
 const Mask256 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
 const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8n));
 
-let iTracer;
 let fullTracer;
 
 module.exports = async function execute(pols, input, rom, config = {}) {
@@ -44,6 +42,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     const debug = config && config.debug;
+    const flagTracer = config && config.tracer;
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
 
@@ -85,12 +84,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     preprocessTxs(ctx);
 
-    if (debug && config.debugInfo) {
-        iTracer = new Tracer(config.debugInfo.inputName);
+    if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
-    } else {
-        iTracer = null
     }
+
     const iPrint = new Prints(ctx, smt);
     let fastDebugExit = false;
 
@@ -138,9 +135,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (step==330) {
              // console.log("### > "+l.fileName + ':' + l.line);
         }
-
-        if (iTracer)
-            await iTracer.getTrace(ctx, l, false);
 
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
@@ -750,7 +744,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                if (iTracer) iTracer.exportTrace();
                 throw new Error(`Assert does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
@@ -1717,9 +1710,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         checkFinalState(Fr, pols);
     }
 
-    if (iTracer)
-        iTracer.exportTrace();
-
     for (let i=0; i<ctx.hashK.length; i++) {
         const h = {
             data: ctx.hashK[i].data,
@@ -2295,7 +2285,7 @@ function eval_getBytecode(ctx, tag) {
     if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
     let hashcontract = evalCommand(ctx, tag.params[0]);
     hashcontract = "0x" + hashcontract.toString(16).padStart(64, '0');
-    const bytecode = ctx.input.contractsBytecode[hashcontract];
+    const bytecode = ctx.input.contractsBytecode[hashcontract] || ctx.input.contractsBytecode[hashcontract.slice(2)];
     const offset = Number(evalCommand(ctx, tag.params[1]));
     let len;
     if (tag.params[2])
@@ -2303,7 +2293,9 @@ function eval_getBytecode(ctx, tag) {
     else
         len = 1;
     if (bytecode === undefined) return scalar2fea(ctx.Fr, Scalar.e(0));
-    let d = "0x" + bytecode.slice(2 + offset * 2, 2 + offset * 2 + len * 2);
+    // TODO: handle "0x"
+    const offset0x = bytecode.startsWith('0x') ? 2 : 0;
+    let d = "0x" + bytecode.slice(offset0x + offset * 2, offset0x + offset * 2 + len * 2);
     if (d.length == 2) d = d + '0';
     const ret = scalar2fea(ctx.Fr, Scalar.e(d));
     return scalar2fea(ctx.Fr, Scalar.e(d));

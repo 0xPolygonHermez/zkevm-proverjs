@@ -75,7 +75,7 @@ async function main(){
         pil = JSON.parse(await fs.promises.readFile(fileCachePil, "utf8"));
     } else {
         const pilConfig = {
-            defines: {N: 2 ** 21},
+            defines: { N: 4096 },
             namespaces: ['Main', 'Global']
         };
 
@@ -103,7 +103,8 @@ async function main(){
                 debug: true,
                 debugInfo: {
                     inputName: path.basename(fileName)
-                }
+                },
+                stepsN: 8388608
             }
             await smMain.execute(cmPols.Main, input, rom, config);
             const stopTime = performance.now();
