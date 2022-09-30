@@ -2312,7 +2312,7 @@ function eval_getBytecode(ctx, tag) {
  * Creates new storage checkpoint for warm slots and addresses
  */
 function eval_checkpoint(ctx) {
-    ctx.input.acessedStorage.push(new Map())
+    ctx.input.accessedStorage.push(new Map())
     return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
@@ -2321,9 +2321,9 @@ function eval_checkpoint(ctx) {
  * @param {Object} ctx current rom context object
  */
 function eval_commit(ctx) {
-    const storageMap = ctx.input.acessedStorage.pop()
+    const storageMap = ctx.input.accessedStorage.pop()
     if (storageMap) {
-        const mapTarget = ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1]
+        const mapTarget = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1]
         if (mapTarget) {
             storageMap?.forEach((slotSet, addressString) => {
                 const addressExists = mapTarget.get(addressString)
@@ -2345,7 +2345,7 @@ function eval_commit(ctx) {
  * @param {Object} ctx current rom context object
  */
 function eval_revert(ctx) {
-    ctx.input.acessedStorage.pop()
+    ctx.input.accessedStorage.pop()
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
@@ -2365,17 +2365,17 @@ function eval_isWarmedAddress(ctx, tag) {
     }
 
     // if address is warm return 0
-    for (let i = ctx.input.acessedStorage.length - 1; i >= 0; i--) {
-        const currentMap = ctx.input.acessedStorage[i]
+    for (let i = ctx.input.accessedStorage.length - 1; i >= 0; i--) {
+        const currentMap = ctx.input.accessedStorage[i]
         if (currentMap.has(addr)) {
             return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
         }
     }
     //if address is not warm, return 1 and add it as warm. We add an emtpy set because is a warmed address (not warmed slot)
-    const storageSet = ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].get(addr)
+    const storageSet = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].get(addr)
     if (!storageSet) {
         const emptyStorage = new Set()
-        ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].set(addr, emptyStorage)
+        ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].set(addr, emptyStorage)
     }
     return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
@@ -2390,18 +2390,18 @@ function eval_isWarmedStorage(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
     let addr = evalCommand(ctx, tag.params[0]).toString(16);
     let key = evalCommand(ctx, tag.params[1])
-    // if address in touchedStorageSlots return 0
-    for (let i = ctx.input.acessedStorage.length - 1; i >= 0; i--) {
-        const currentMap = ctx.input.acessedStorage[i]
+    // if address in acessStorage return 0
+    for (let i = ctx.input.accessedStorage.length - 1; i >= 0; i--) {
+        const currentMap = ctx.input.accessedStorage[i]
         if (currentMap.has(addr) && currentMap.get(addr).has(key)) {
             return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
         }
     }
-    // if address in touchedStorageSlots return 1 and add it as warm
-    let storageSet = ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].get(addr)
+    // if address in acessStorage return 1 and add it as warm
+    let storageSet = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].get(addr)
     if (!storageSet) {
         storageSet = new Set()
-        ctx.input.acessedStorage[ctx.input.acessedStorage.length - 1].set(addr, storageSet)
+        ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].set(addr, storageSet)
     }
     storageSet.add(key)
     return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
@@ -2411,7 +2411,7 @@ function eval_isWarmedStorage(ctx, tag) {
  * Clears wamred storage array, ready to process a new tx
  */
 function eval_clearWarmedStorage(ctx) {
-    ctx.input.acessedStorage = [new Map()]
+    ctx.input.accessedStorage = [new Map()]
     return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
@@ -2710,8 +2710,7 @@ function preprocessTxs(ctx) {
             timestamp
     );
 
-    ctx.input.touchedAddress = [];
-    ctx.input.touchedStorageSlots = [];
+    ctx.input.accessedStorage = [new Map()]
 }
 
 function printRegs(Fr, ctx) {
