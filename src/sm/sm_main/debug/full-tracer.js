@@ -219,7 +219,12 @@ class FullTracer {
         };
 
         //Set consumed tx gas
-        response.gas_used = String(Number(response.gas_left) - Number(ctx.GAS));
+        if(Number(ctx.GAS) > Number(response.gas_left)) {
+            response.gas_used = String(Number(response.gas_left));
+        } else {
+            response.gas_used = String(Number(response.gas_left) - Number(ctx.GAS));
+        }
+        
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
