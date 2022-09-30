@@ -6,8 +6,8 @@ const {
 } = require('@0xpolygonhermez/zkevm-commonjs');
 
 // paths files
-const pathInput = path.join(__dirname, "../testvectors/input_gen.json");
-const pathOutput = path.join(__dirname, "../tools/build-genesis/input_executor.json");
+const pathInput = path.join(__dirname, "./input_gen.json");
+const pathOutput = path.join(__dirname, "./input_executor.json");
 
 async function main(){
     // build poseidon
@@ -52,6 +52,9 @@ async function main(){
         [F.zero, F.zero, F.zero, F.zero], // empty smt
         smtUtils.stringToH4(generateData.oldLocalExitRoot),
         generateData.genesis,
+        null,
+        null,
+        generateData.chainID
     );
 
     // start batch
