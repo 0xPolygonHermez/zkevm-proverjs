@@ -2118,6 +2118,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getNumBatch(ctx, tag);
     } else if (tag.funcName == "getTimestamp") {
         return eval_getTimestamp(ctx, tag);
+    } else if (tag.funcName == "getChainId") {
+        return eval_getChainId(ctx, tag);
     } else if (tag.funcName == "getBatchHashData") {
         return eval_getBatchHashData(ctx, tag);
     } else if (tag.funcName == "getGlobalExitRoot") {
@@ -2264,6 +2266,11 @@ function eval_getNumBatch(ctx, tag) {
 function eval_getTimestamp(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
     return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
+function eval_getChainId(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    return [ctx.Fr.e(ctx.input.chainID), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_eventLog(ctx, tag) {
@@ -2684,6 +2691,7 @@ function preprocessTxs(ctx) {
         newStateRoot,
         globalExitRoot,
         timestamp,
+        chainID
     } = ctx.input;
 
     ctx.input.batchHashData = calculateBatchHashData(
@@ -2699,7 +2707,8 @@ function preprocessTxs(ctx) {
             newLocalExitRoot,
             ctx.input.batchHashData,
             numBatch,
-            timestamp
+            timestamp,
+            chainID
     );
 
     ctx.input.accessedStorage = [new Map()]
