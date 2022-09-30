@@ -1343,7 +1343,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (reg32control && (l.setA || l.setB || l.setC || l.setD || l.setE ||
                              l.arith || l.bin || l.memAlign || l.sRD || l.sWR || l.hashKDigest || l.hashPDigest)
-                         && ((op0|op1|op2|op3|op4|op5|op6|op7) & 0xFFFFFFFF)) {
+                         && ((op0|op1|op2|op3|op4|op5|op6|op7) & 0xFFFFFFFFn)) {
 
             const opvalues = ([op0,op1,op2,op3,op4,op5,op6,op7].map((x) => '0x'+x.toString(16).padStart(8, '0'))).join(',');
             throw new Error(`Value out of 32 bits in op0,op1,... [${opvalues}] in ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
@@ -2859,13 +2859,13 @@ async function poseidonLinear(inp) {
     return h4toString(st);
 }
 
+function check32bitsValues(values) {
+   return !values.find(value => (Bigint(value) & 0xFFFFFFFFn));
+}
 
-function safeFea2scalar(Fr, arr) {
-    for (let i = 0; i < 8; i++) {
-        const currentScalar = Fr.toObject(arr[i]);
-        if (Scalar.geq(currentScalar, Scalar.shl(1, 32))){
-            throw new Error('Field has more than 32 bit value in position ', i);
-        }
+function safeFea2scalar(Fr, values) {
+    if (!check32bitsValues(values)) {
+        throw new Error('Field has more than 32 bit values:' + (values.map((x) => '0x'+x.toString(16).padStart(8, '0'))).join(','));
     }
     return fea2scalar(Fr, arr);
 }
