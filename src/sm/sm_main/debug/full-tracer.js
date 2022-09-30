@@ -364,13 +364,14 @@ class FullTracer {
         const finalMemory = [];
         const lengthMemOffset = findOffsetLabel(ctx.rom.program, "memLength");
         const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
-        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Number(fea2scalar(ctx.Fr, lenMemValue));
-
+        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue))/32);
 
         for (let i = 0; i < lenMemValueFinal; i++) {
             const memValue = ctx.mem[addrMem + i];
-            if (typeof memValue === "undefined")
+            if (typeof memValue === "undefined") {
+                finalMemory.push("0".padStart(64, "0"))
                 continue;
+            }
             let memScalar = fea2scalar(ctx.Fr, memValue);
             let hexString = memScalar.toString(16);
             hexString = hexString.length % 2 ? `0${hexString}` : hexString;
