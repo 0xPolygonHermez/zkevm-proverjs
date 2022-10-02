@@ -10,4 +10,5 @@ PIL="-p ${npm_config_pil:=pil/main.pil}`[ ! -z $npm_config_pilconfig ] && echo \
 PILSTARK="node $NODE node_modules/pil-stark/src"
 PILCOM="node $NODE node_modules/pilcom/src"
 SNARKJS="node $NODE node_modules/snarkjs/cli.js"
+BCTREE="${npm_config_bctree:=$PILSTARK/main_buildconsttree.js}"
 true
