@@ -1,6 +1,6 @@
 { 
   "defines": {
-	"N": 65536
+	"N": 4096
   },
   "namespaces": ["Main","Global"],
   "verbose": true,
