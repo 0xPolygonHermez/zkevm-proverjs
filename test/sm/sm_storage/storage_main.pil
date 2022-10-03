@@ -4,20 +4,41 @@ include "../../../pil/storage.pil";
 
 namespace Main(%N);
 
-pol commit sRD;
+pol commit sRD, sWR;
 pol commit SR0, SR1, SR2, SR3, SR4, SR5, SR6, SR7;
+pol commit D0, D1, D2, D3, D4, D5, D6, D7;
 pol commit sKey[4];
 pol commit op0, op1, op2, op3, op4, op5, op6, op7;
+pol commit incCounter;
 
 sRD {
     SR0 + 2**32*SR1, SR2 + 2**32*SR3, SR4 + 2**32*SR5, SR6 + 2**32*SR7,
     sKey[0], sKey[1], sKey[2], sKey[3],
     op0, op1, op2, op3,
-    op4, op5, op6, op7
+    op4, op5, op6, op7,
+    incCounter
 } in
 Storage.iLatchGet {
     Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
     Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
     Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
-    Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3
+    Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
+    incCounter
+};
+
+sWR {
+    SR0 + 2**32*SR1, SR2 + 2**32*SR3, SR4 + 2**32*SR5, SR6 + 2**32*SR7,
+    sKey[0], sKey[1], sKey[2], sKey[3],
+    D0, D1, D2, D3,
+    D4, D5, D6, D7,
+    op0 + 2**32*op1, op2 + 2**32*op3, op4 + 2**32*op5, op6 + 2**32*op7,
+    incCounter
+} in
+Storage.iLatchSet {
+    Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
+    Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
+    Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
+    Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
+    Storage.newRoot0, Storage.newRoot1, Storage.newRoot2, Storage.newRoot3,
+    Storage.incCounter
 };
