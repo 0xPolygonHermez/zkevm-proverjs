@@ -73,7 +73,7 @@
     "test:counters:storage": "mocha test/counters/storage.js",
     "test:all-inputs": "mocha --timeout 0 --max-old-space-size=8000 tools/run-test/run-inputs-mocha.test.js",
     "test:gen-parallel": "node tools/run-test/gen-parallel-tests.js",
-    "test:run-parallel": "mocha --timeout 0 --max-old-space-size=8000 --parallel tools/run-test/parallel-tests/*.test.js"
+    "test:run-parallel": "mocha --jobs 2 --timeout 0 --max-old-space-size=8000 --parallel tools/run-test/parallel-tests/*.test.js"
   },
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
