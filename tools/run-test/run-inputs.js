@@ -68,7 +68,7 @@ async function main(){
     let romFile;
     helpers.checkParam(argv.rom, "Rom file");
     romFile = argv.rom.trim();
-    const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
+    const rom = JSON.parse(fs.readFileSync(path.join(__dirname, romFile), "utf8"));
 
     let pil;
     if (fs.existsSync(fileCachePil)) {
@@ -104,7 +104,8 @@ async function main(){
                 debugInfo: {
                     inputName: path.basename(fileName)
                 },
-                stepsN: 8388608
+                stepsN: 8388608,
+                tracer: true
             }
             await smMain.execute(cmPols.Main, input, rom, config);
             const stopTime = performance.now();

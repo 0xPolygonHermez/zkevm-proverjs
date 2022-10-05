@@ -49,7 +49,7 @@ async function genTestsFiles() {
     if (!fs.existsSync(testsFolder)){
         fs.mkdirSync(testsFolder);
     }
-    for (const inputPath of inputs) { 
+    for (const inputPath of inputs) {
         const name = inputPath.split("/").slice(-1)[0].replace('json','test.js');
         const sample = fs.readFileSync(sampleDir, "utf-8");
         const test = sample.replace("\"%%INPUT_PATH%%\"", `"${inputPath}"`);
