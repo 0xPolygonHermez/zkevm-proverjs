@@ -19,7 +19,7 @@ const argv = require("yargs")
     .alias("e", "exit")
     .argv;
 
-// example: node run-inputs.js -f ../../../test-vectors/inputs-executor/calldata -r ../../../zkrom/build/rom.json
+// example: node run-inputs.js -f ../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/stMemoryTest -r ../../../zkevm-rom/build/rom.json
 
 async function main(){
     console.time("Init time");
@@ -68,14 +68,14 @@ async function main(){
     let romFile;
     helpers.checkParam(argv.rom, "Rom file");
     romFile = argv.rom.trim();
-    const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
+    const rom = JSON.parse(fs.readFileSync(path.join(__dirname, romFile), "utf8"));
 
     let pil;
     if (fs.existsSync(fileCachePil)) {
         pil = JSON.parse(await fs.promises.readFile(fileCachePil, "utf8"));
     } else {
         const pilConfig = {
-            defines: {N: 2 ** 21},
+            defines: { N: 4096 },
             namespaces: ['Main', 'Global']
         };
 
@@ -103,7 +103,9 @@ async function main(){
                 debug: true,
                 debugInfo: {
                     inputName: path.basename(fileName)
-                }
+                },
+                stepsN: 8388608,
+                tracer: true
             }
             await smMain.execute(cmPols.Main, input, rom, config);
             const stopTime = performance.now();

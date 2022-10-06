@@ -25,8 +25,9 @@ const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
 const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 const { index } = require("../src/sm/sm_main/test_tools.js");
+const { config } = require("yargs");
 
-module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pilConfig = {}) {
+module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pilConfig = {}, mainConfig = {}) {
 
     const Fr = new F1Field("0xFFFFFFFF00000001");
     const brief = false;
@@ -115,7 +116,7 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         await smBinary.buildConstants(constPols.Binary);
     }
 
-    const requiredMain = await smMain.execute(cmPols.Main, input, rom);
+    const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
 
     if (cmPols.Byte4) {
         console.log("Exec Byte4...");

@@ -14,6 +14,7 @@ const chalk = require("chalk");
 describe("Run executor inputs from config file", () => {
     let cmPols;
     const inputs = [];
+    let pilConfig;
 
     before(async () => {
         const poseidon = await buildPoseidon();
@@ -35,9 +36,9 @@ describe("Run executor inputs from config file", () => {
                 }
             });
         }
-       
-        const pilConfig = {
-            defines: { N: 2 ** 21 },
+
+        pilConfig = {
+            defines: { N: 4096 },
             namespaces: ['Main', 'Global']
         };
 
@@ -45,7 +46,11 @@ describe("Run executor inputs from config file", () => {
         fs.writeFileSync(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
 
         cmPols = newCommitPolsArray(pil);
+    });
 
+    it("Print info", async () => {
+        console.log("CONFIG PIL:");
+        console.log(pilConfig);
     });
 
     it('Should run all the inputs', async () => {
@@ -61,8 +66,10 @@ describe("Run executor inputs from config file", () => {
                         debug: true,
                         debugInfo: {
                             inputName: path.basename(inputPath)
-                        }
+                        },
+                        stepsN: 8388608
                     }
+                    console.log("Running test: ", inputPath);
                     await smMain.execute(cmPols.Main, input, rom, config);
                     const stopTime = performance.now();
                     info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime) / 1000} s\n`)}`;

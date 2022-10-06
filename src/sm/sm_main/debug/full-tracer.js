@@ -84,11 +84,7 @@ class FullTracer {
             return;
         }
         this.info[this.info.length - 1].error = errorName;
-        // Dont decrease depth if the error is from processing a RETURN opcode
-        const lastOpcode = this.info[this.info.length - 1]
-        if (!opDecContext.includes(lastOpcode.opcode)) {
-            this.depth--
-        }
+
         // Revert logs
         this.logs[ctx.CTX] = null
     }
@@ -223,7 +219,12 @@ class FullTracer {
         };
 
         //Set consumed tx gas
-        response.gas_used = String(Number(response.gas_left) - Number(ctx.GAS));
+        if(Number(ctx.GAS) > Number(response.gas_left)) {
+            response.gas_used = String(Number(response.gas_left));
+        } else {
+            response.gas_used = String(Number(response.gas_left) - Number(ctx.GAS));
+        }
+        
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
@@ -368,13 +369,14 @@ class FullTracer {
         const finalMemory = [];
         const lengthMemOffset = findOffsetLabel(ctx.rom.program, "memLength");
         const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
-        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Number(fea2scalar(ctx.Fr, lenMemValue));
-
+        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue))/32);
 
         for (let i = 0; i < lenMemValueFinal; i++) {
             const memValue = ctx.mem[addrMem + i];
-            if (typeof memValue === "undefined")
+            if (typeof memValue === "undefined") {
+                finalMemory.push("0".padStart(64, "0"))
                 continue;
+            }
             let memScalar = fea2scalar(ctx.Fr, memValue);
             let hexString = memScalar.toString(16);
             hexString = hexString.length % 2 ? `0${hexString}` : hexString;
@@ -399,6 +401,7 @@ class FullTracer {
         }
 
         // add info opcodes
+        this.depth = Number(getVarFromCtx(ctx, true, "depth"));
         singleInfo.depth = this.depth;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.remaining_gas = ctx.GAS.toString();
@@ -438,6 +441,7 @@ class FullTracer {
         singleInfo.contract.data = getCalldataFromStack(ctx);
         singleInfo.contract.gas = this.txGAS[this.depth];
         singleInfo.storage = JSON.parse(JSON.stringify(this.deltaStorage[this.depth]));
+
         // Round up to next multiple of 32
         singleInfo.memory_size = String(Math.ceil(Number(getVarFromCtx(ctx, false, "memLength")) / 32) * 32);
         singleInfo.counters = {
@@ -481,13 +485,8 @@ class FullTracer {
             }
         }
 
-        //Check opcodes that alter depth
-        if (opDecContext.includes(singleInfo.opcode)) {
-            this.depth--;
-        }
         if (opIncContext.includes(singleInfo.opcode)) {
-            this.depth++;
-            this.deltaStorage[this.depth] = {};
+            this.deltaStorage[this.depth + 1] = {};
         }
     }
 
