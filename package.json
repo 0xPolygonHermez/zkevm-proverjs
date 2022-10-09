@@ -1,6 +1,6 @@
 {
   "name": "@0xpolygonhermez/zkevm-proverjs",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "scripts": {

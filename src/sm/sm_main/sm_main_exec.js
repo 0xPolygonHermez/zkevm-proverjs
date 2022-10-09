@@ -1200,17 +1200,19 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.carry[i] = (a < b) ? 1n: 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 2});
             } else if (l.binOpcode == 3) { // SLT
-                let a = Scalar.e(fea2scalar(Fr, ctx.A));
-                if (Scalar.geq(a, twoTo255)) a = Scalar.sub(a, twoTo256);
-                let b = Scalar.e(fea2scalar(Fr, ctx.B));
-                if (Scalar.geq(b, twoTo255)) b = Scalar.sub(b, twoTo256);
+                const a = Scalar.e(fea2scalar(Fr, ctx.A));
+                const b = Scalar.e(fea2scalar(Fr, ctx.B));
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                const expectedC = Scalar.lt(a, b);
+
+                const signedA = Scalar.geq(a, twoTo255) ? Scalar.sub(a, twoTo256): a;
+                const signedB = Scalar.geq(b, twoTo255) ? Scalar.sub(b, twoTo256): b;
+                const expectedC = Scalar.lt(signedA, signedB);
+
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error("SLT does not match");
                 }
                 pols.binOpcode[i] = 3n;
-                pols.carry[i] = (a < b) ? 1n : 0n;
+                pols.carry[i] = (signedA < signedB) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 3});
             } else if (l.binOpcode == 4) { // EQ
                 const a = fea2scalar(Fr, ctx.A);
