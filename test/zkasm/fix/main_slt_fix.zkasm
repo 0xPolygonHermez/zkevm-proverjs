@@ -1,0 +1,25 @@
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn => A
+        0 => B
+
+        $ :SLT,JMPC(ok_case)
+fail_case:
+        1 => A
+        :JMP(check_assert)
+ok_case:
+        2 => A
+check_assert:
+        2 :ASSERT
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
