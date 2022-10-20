@@ -10,7 +10,7 @@ module.exports.buildConstants = async function (pols) {
     buidBYTE(pols.BYTE, F, N);
     buidBYTE2(pols.BYTE2, F, N);
     buildL1(pols.L1, F, N);
-
+    buildLLAST(pols.L1, F, N);
 };
 
 function buidBYTE2(pol, F, N) {
@@ -49,4 +49,9 @@ function buildZh(pol, F, N) {
 function buildL1(pol, F, N) {
     pol[0] = 1n;
     for ( let i=1; i<N; i++) pol[i] = 0n;
+}
+
+function buildLLAST(pol, F, N) {
+    for ( let i=0; i<N-1; i++) pol[i] = 0n;
+    pol[N-1] = 1n;
 }
