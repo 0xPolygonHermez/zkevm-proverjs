@@ -61,7 +61,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     const db = new MemDB(Fr, input.db);
     const smt = new SMT(db, poseidon, Fr);
-    initState(Fr, pols);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
 
@@ -83,6 +82,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     preprocessTxs(ctx);
+
+    initState(Fr, pols, ctx);
+
 
     if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
@@ -1827,24 +1829,33 @@ function checkFinalState(Fr, pols) {
 }
 
 
-function initState(Fr, pols) {
+function initState(Fr, pols, ctx) {
     // Register value initial parameters
-    pols.A0[0] = Fr.zero;
-    pols.A1[0] = Fr.zero;
-    pols.A2[0] = Fr.zero;
-    pols.A3[0] = Fr.zero;
-    pols.A4[0] = Fr.zero;
-    pols.A5[0] = Fr.zero;
-    pols.A6[0] = Fr.zero;
-    pols.A7[0] = Fr.zero;
-    pols.B0[0] = Fr.zero;
-    pols.B1[0] = Fr.zero;
-    pols.B2[0] = Fr.zero;
-    pols.B3[0] = Fr.zero;
-    pols.B4[0] = Fr.zero;
-    pols.B5[0] = Fr.zero;
-    pols.B6[0] = Fr.zero;
-    pols.B7[0] = Fr.zero;
+    [
+        pols.B0[0],
+        pols.B1[0],
+        pols.B2[0],
+        pols.B3[0],
+        pols.B4[0],
+        pols.B5[0],
+        pols.B6[0],
+        pols.B7[0]
+    ] = eval_getOldStateRoot(ctx, []);
+
+    [
+        pols.C0[0],
+        pols.C1[0],
+        pols.C2[0],
+        pols.C3[0],
+        pols.C4[0],
+        pols.C5[0],
+        pols.C6[0],
+        pols.C7[0]
+    ] = eval_getOldAccInputHash(ctx, []);
+
+    pols.SP[0] = eval_getNumBatch(ctx, []);
+    pols.GAS[0] = eval_getChainId(ctx, []);
+
     pols.C0[0] = Fr.zero;
     pols.C1[0] = Fr.zero;
     pols.C2[0] = Fr.zero;
@@ -1878,11 +1889,9 @@ function initState(Fr, pols) {
     pols.SR6[0] = Fr.zero;
     pols.SR7[0] = Fr.zero;
     pols.CTX[0] = 0n;
-    pols.SP[0] = 0n;
     pols.PC[0] = 0n;
     pols.MAXMEM[0] = 0n;
     pols.HASHPOS[0] = 0n;
-    pols.GAS[0] = 0n;
     pols.RR[0] = 0n;
     pols.zkPC[0] = 0n;
     pols.cntArith[0] = 0n;
@@ -2108,6 +2117,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getGlobalHash(ctx, tag);
     } else if (tag.funcName == "getOldStateRoot") {
         return eval_getOldStateRoot(ctx, tag);
+    } else if (tag.funcName == "getOldAccInputHash") {
+        return eval_getOldAccInputHash(ctx, tag);
     } else if (tag.funcName == "getNewStateRoot") {
         return eval_getNewStateRoot(ctx, tag);
     } else if (tag.funcName == "getSequencerAddr") {
@@ -2223,6 +2234,11 @@ function eval_getBatchHashData(ctx, tag) {
 function eval_getOldStateRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
     return  scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+}
+
+function eval_getOldAccInputHash(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    return  scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
 }
 
 function eval_getNewStateRoot(ctx, tag) {
