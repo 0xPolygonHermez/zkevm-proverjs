@@ -7,12 +7,12 @@ include "iszero.circom";
 
 template Main() {
 
-    var rootCSingle[4] = [
-        12885716577329533339,
-        12144671148528253208,
-        5848481335118629881,
-        9751258462784897436
-    ];
+    var rootCSingle[4];
+    rootCSingle[0] = <%- constRoot[0] %>;
+    rootCSingle[1] = <%- constRoot[1] %>;
+    rootCSingle[2] = <%- constRoot[2] %>;
+    rootCSingle[3] = <%- constRoot[3] %>;
+
     signal input publics[43];
     signal input rootC[4];
 
@@ -122,7 +122,7 @@ template Main() {
     a_muxRootC.s <== isOneBatchA.out;
     vA.rootC <== a_muxRootC.out;
 
-/*
+
     component vB = StarkVerifier();
 
     vB.publics <== b_publics;
@@ -213,7 +213,7 @@ template Main() {
 
     // newBatchNum
     publics[18+24] === b_publics[18+24];
-*/
+
 }
 
 component main {public [publics, rootC]}= Main();
