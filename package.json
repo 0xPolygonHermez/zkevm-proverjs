@@ -82,7 +82,7 @@
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
-    "pil-stark": "0.0.25",
+    "pil-stark": "0.0.27",
     "pilcom": "0.0.18",
     "snarkjs": "0.4.27",
     "yargs": "^17.4.0"
