@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "verifier.circom";
+include "recursive_verifier.circom";
 include "mux1.circom";
 include "iszero.circom";
 
