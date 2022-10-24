@@ -1974,14 +1974,14 @@ function initState(Fr, pols, ctx) {
     // Set chainID to GAS register
     pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
 
-    pols.C0[0] = Fr.zero;
-    pols.C1[0] = Fr.zero;
-    pols.C2[0] = Fr.zero;
-    pols.C3[0] = Fr.zero;
-    pols.C4[0] = Fr.zero;
-    pols.C5[0] = Fr.zero;
-    pols.C6[0] = Fr.zero;
-    pols.C7[0] = Fr.zero;
+    pols.A0[0] = Fr.zero;
+    pols.A1[0] = Fr.zero;
+    pols.A2[0] = Fr.zero;
+    pols.A3[0] = Fr.zero;
+    pols.A4[0] = Fr.zero;
+    pols.A5[0] = Fr.zero;
+    pols.A6[0] = Fr.zero;
+    pols.A7[0] = Fr.zero;
     pols.D0[0] = Fr.zero;
     pols.D1[0] = Fr.zero;
     pols.D2[0] = Fr.zero;

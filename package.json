@@ -4,8 +4,8 @@
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "scripts": {
-    "buildgenesis": "",
-    "buildinput": "",
+    "build:input:single": "node tools/build-genesis/build_genesis.js",
+    "build:input:recursive": "node tools/build-genesis-recursive/build_genesis_recursive.js",
     "buildall": "tools/build_all.sh buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_exec c12b_pilverify c12b_buildconstanttree c12b_prove c12b_verify c12b_gencircom c12b_compilecircom g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity",
     "buildsetup": "tools/build_all.sh buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom c12a_compilecircom c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_buildconstanttree c12b_gencircom c12b_compilecircom g16setup g16contribute g16evk g16solidity",
     "buildproof": "tools/build_all.sh exec pilverify prove verify c12a_exec c12a_pilverify c12a_prove c12a_verify c12b_exec c12b_pilverify c12b_prove c12b_verify g16wc g16prove g16verify",
