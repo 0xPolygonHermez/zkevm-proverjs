@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "recursive_verifier.circom";
+include "recursive1.verifier.circom";
 include "mux1.circom";
 include "iszero.circom";
 
@@ -28,10 +28,10 @@ template Main() {
     signal input a_s0_vals3[64][3];
     signal input a_s0_vals4[64][79];
     signal input a_s0_valsC[64][23];
-    signal input a_s0_siblings1[64][24][4];
-    signal input a_s0_siblings3[64][24][4];
-    signal input a_s0_siblings4[64][24][4];
-    signal input a_s0_siblingsC[64][24][4];
+    signal input a_s0_siblings1[64][25][4];
+    signal input a_s0_siblings3[64][25][4];
+    signal input a_s0_siblings4[64][25][4];
+    signal input a_s0_siblingsC[64][25][4];
 
     signal input a_s1_root[4];
     signal input a_s2_root[4];
@@ -39,8 +39,8 @@ template Main() {
     signal input a_s4_root[4];
 
     signal input a_s1_vals[64][48];
-    signal input a_s1_siblings[64][20][4];
-    signal input a_s2_vals[64][48];
+    signal input a_s1_siblings[64][21][4];
+    signal input a_s2_vals[64][96];
     signal input a_s2_siblings[64][16][4];
     signal input a_s3_vals[64][96];
     signal input a_s3_siblings[64][11][4];
@@ -63,10 +63,10 @@ template Main() {
     signal input b_s0_vals3[64][3];
     signal input b_s0_vals4[64][79];
     signal input b_s0_valsC[64][23];
-    signal input b_s0_siblings1[64][24][4];
-    signal input b_s0_siblings3[64][24][4];
-    signal input b_s0_siblings4[64][24][4];
-    signal input b_s0_siblingsC[64][24][4];
+    signal input b_s0_siblings1[64][25][4];
+    signal input b_s0_siblings3[64][25][4];
+    signal input b_s0_siblings4[64][25][4];
+    signal input b_s0_siblingsC[64][25][4];
 
     signal input b_s1_root[4];
     signal input b_s2_root[4];
@@ -74,8 +74,8 @@ template Main() {
     signal input b_s4_root[4];
 
     signal input b_s1_vals[64][48];
-    signal input b_s1_siblings[64][20][4];
-    signal input b_s2_vals[64][48];
+    signal input b_s1_siblings[64][21][4];
+    signal input b_s2_vals[64][96];
     signal input b_s2_siblings[64][16][4];
     signal input b_s3_vals[64][96];
     signal input b_s3_siblings[64][11][4];
@@ -86,7 +86,9 @@ template Main() {
 
     component vA = StarkVerifier();
 
-    vA.publics <== a_publics;
+    for (var i=0; i<43; i++) {
+        vA.publics[i] <== a_publics[i];
+    }
     vA.root1 <== a_root1;
     vA.root2 <== a_root2;
     vA.root3 <== a_root3;
@@ -120,12 +122,17 @@ template Main() {
     a_muxRootC.c[0] <== rootCSingle;
     a_muxRootC.c[1] <== rootC;
     a_muxRootC.s <== isOneBatchA.out;
-    vA.rootC <== a_muxRootC.out;
+
+    for (var i=0; i<4; i++) {
+        vA.publics[43+i] <== a_muxRootC.out[i];
+    }
 
 
     component vB = StarkVerifier();
 
-    vB.publics <== b_publics;
+    for (var i=0; i<43; i++) {
+        vB.publics[i] <== b_publics[i];
+    }
     vB.root1 <== b_root1;
     vB.root2 <== b_root2;
     vB.root3 <== b_root3;
@@ -161,7 +168,9 @@ template Main() {
     b_muxRootC.c[1] <== rootC;
     b_muxRootC.s <== isOneBatchB.out;
 
-    vB.rootC <== b_muxRootC.out;
+    for (var i=0; i<4; i++) {
+        vB.publics[43+i] <== b_muxRootC.out[i];
+    }
 
     // oldStateRoot
     for (var i=0; i<8; i++) {

@@ -19,7 +19,7 @@ async function run() {
     const verKey = JSONbig.parse(await fs.promises.readFile(verKeyFile, "utf8"));
     const constRoot = verKey.constRoot;
 
-    const template = await fs.promises.readFile(path.join(__dirname, "..", "recursive", "recursive.circom.ejs"), "utf8");
+    const template = await fs.promises.readFile(path.join(__dirname, "..", "recursive", "recursive2.circom.ejs"), "utf8");
 
     const obj = {
         constRoot: constRoot,
