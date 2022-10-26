@@ -401,7 +401,7 @@ class FullTracer {
 
         // add info opcodes
         this.depth = Number(getVarFromCtx(ctx, true, "depth"));
-        singleInfo.depth = this.depth;
+        singleInfo.depth = this.depth + 1;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.remaining_gas = ctx.GAS.toString();
         if (this.info.length) {
