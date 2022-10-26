@@ -3,24 +3,47 @@
   "version": "0.4.1",
   "description": "JS version of the zkProver.",
   "main": "index.js",
+  "config": {
+    "steps": [
+        "buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
+        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom",
+        "c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_exec c12b_pilverify c12b_buildconstanttree c12b_prove c12b_verify c12b_gencircom c12b_compilecircom",
+        "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity" ],
+    "_steps_setup": [
+        "buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom c12a_compilecircom",
+        "c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_buildconstanttree c12b_gencircom c12b_compilecircom",
+        "g16setup g16contribute g16evk g16solidity"],
+    "steps_setup": [
+        "buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom c12a_compilecircom",
+        "c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_buildconstanttree c12b_gencircom c12b_compilecircom",
+        "g16setup g16contribute g16evk g16solidity"],
+    "steps_proof": [
+        "exec pilverify prove verify",
+        "c12a_exec c12a_pilverify c12a_prove c12a_verify",
+        "c12b_exec c12b_pilverify c12b_prove c12b_verify",
+        "g16wc g16prove g16verify" ]
+  },
   "scripts": {
     "buildgenesis": "",
     "buildinput": "",
-    "buildall": "tools/build_all.sh buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_exec c12b_pilverify c12b_buildconstanttree c12b_prove c12b_verify c12b_gencircom c12b_compilecircom g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity",
-    "_buildsetup": "tools/build_all.sh buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom c12a_compilecircom c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_buildconstanttree c12b_gencircom c12b_compilecircom g16setup g16contribute g16evk g16solidity",
-    "buildsetup": "tools/build_all.sh buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom c12a_compilecircom c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_buildconstanttree recursive_gencircom_verifier1 recursive_gencircom_main recursive_compilecircom recursive_setup recursive_pil_check recursive_buildstarkinfo recursive_buildchelpers recursive_buildconstanttree recursive_gencircom_verifier2 recursive_verifier_check final_setup final_buildstarkinfo final_buildchelpers final_buildconstanttree final_gencircom final_compilecircom g16setup g16contribute g16evk g16solidity",
-    "buildproof": "tools/build_all.sh exec pilverify prove verify c12a_exec c12a_pilverify c12a_prove c12a_verify c12b_exec c12b_pilverify c12b_prove c12b_verify g16wc g16prove g16verify",
+    "buildall": "tools/build_all.sh ${npm_package_config_steps}",
+    "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
+    "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
+
     "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build -- -s 23) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
-    "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm.commit && cp $INPUT $BDIR/input_executor.json",
-    "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm.commit -c $BDIR/zkevm.const $PIL",
+    "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
+    "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const $PIL",
     "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
     "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m $PIL -s $BDIR/zkevm.starkstruct.json -c $BDIR/zkevm.chelpers/zkevm.chelpers.cpp",
     "buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/zkevm.const $PIL -s $BDIR/zkevm.starkstruct.json -t $BDIR/zkevm.consttree -v $BDIR/zkevm.verkey.json",
-    "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -z $BDIR/zkevm.zkin.proof.json -b $BDIR/zkevm.public.json",
-    "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm.proof.json -b $BDIR/zkevm.public.json -v $BDIR/zkevm.verkey.json",
+    "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm$NTH.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm$NTH.proof.json -z $BDIR/zkevm$NTH.zkin.proof.json -b $BDIR/zkevm$NTH.public.json",
+    "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm$NTH.proof.json -b $BDIR/zkevm$NTH.public.json -v $BDIR/zkevm.verkey.json",
     "gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js $PIL -s $BDIR/zkevm.starkstruct.json -v $BDIR/zkevm.verkey.json -o $BDIR/zkevm.verifier.circom",
     "compilecircom": ". ./pre.sh && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
+
     "c12a_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.verifier.r1cs  -p $BDIR/zkevm.c12a.pil -c $BDIR/zkevm.c12a.const -e $BDIR/zkevm.c12a.exec",
     "c12a_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -i $BDIR/zkevm.c12a.starkinfo.json",
     "c12a_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -c $BDIR/zkevm.c12a.chelpers/zkevm.c12a.chelpers.cpp",
@@ -30,6 +53,8 @@
     "c12a_prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.c12a.commit -c $BDIR/zkevm.c12a.const -t $BDIR/zkevm.c12a.consttree -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -o $BDIR/zkevm.c12a.proof.json -z $BDIR/zkevm.c12a.zkin.proof.json -b $BDIR/zkevm.c12a.public.json",
     "c12a_verify": ". ./pre.sh && $PILSTARK/main_verifier.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -o $BDIR/zkevm.c12a.proof.json -b $BDIR/zkevm.c12a.public.json -v $BDIR/zkevm.c12a.verkey.json",
     "c12a_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -v $BDIR/zkevm.c12a.verkey.json -o $BDIR/zkevm.c12a.verifier.circom",
+
+    "sandbox": ". ./pre.sh &&  echo \"$BDIR\" && diff /tmp/A1 /tmp/A2 || (echo \"FAIL\"; exit 1)",
 
     "recursive1_gencircom": ". ./pre.sh && cp recursive/recursive1.circom $BDIR",
     "recursive1_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursive1.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
@@ -45,9 +70,9 @@
     "recursive2_verifier_gencircom_gl": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -v $BDIR/recursive2.verkey.json -o $BDIR/recursive2.verifier.circom",
     "recursive2_verifier_gencircom_bn128": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive2.pil -s $BDIR/final.starkstruct.json -v $BDIR/recursive2.verkey.json -o $BDIR/recursive2.verifier.bn128.circom",
 
-    "recursive_pil_check": ". ./pre.sh && diff $BDIR/recursive1.pil $BDIR/recursive2.pil || echo \"ERROR different $BDIR/recursive1.pil $BDIR/recursive2.pil\"; exit 1",
-    "recursive_verifier_check_gl": ". ./pre.sh && diff $BDIR/recursive1.verifier.gl.circom $BDIR/recursive2.verifier.gl.circom || echo \"ERROR different $BDIR/recursive1.verifier.gl.circom $BDIR/recursive2.verifier.gl.circom; exit 1",
-    "recursive_verifier_check_bn128": ". ./pre.sh && diff $BDIR/recursive1.verifier.bn128.circom $BDIR/recursive2.verifier.bn128.circom || echo \"ERROR different $BDIR/recursive1.verifier.bn128.circom $BDIR/recursive2.verifier.bn128.circom; exit 1",
+    "recursive_pil_check": ". ./pre.sh && F1=$BDIR/recursive1.pil && F2=$BDIR/recursive2.pil && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
+    "recursive_verifier_check_gl": ". ./pre.sh && F1=$BDIR/recursive1.verifier.gl.circom && F2=$BDIR/recursive2.verifier.gl.circom && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
+    "recursive_verifier_check_bn128": ". ./pre.sh && F1=$BDIR/recursive1.verifier.bn128.circom && F2=$BDIR/recursive2.verifier.bn128.circom && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
 
     "final_gencircom": ". ./pre.sh && node $NODE src/main_genfinal.js -v $BDIR/recursive2.verkey.json -o $BDIR/final.verifier.circom",
     "final_compilecircom": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/final.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits",
