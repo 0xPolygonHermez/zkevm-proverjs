@@ -82,9 +82,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         stepsN
     }
 
-    // preprocessTxs(ctx);
-
     initState(Fr, pols, ctx);
+    ctx.input.accessedStorage = [new Map()]
 
     if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
@@ -2751,37 +2750,6 @@ function eval_AddPointEc(ctx, tag, dbl)
     const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
 
     return [x3, y3];
-}
-
-// TODO: remove and add final check if assert is added as a flag
-function preprocessTxs(ctx) {
-
-    const {
-        numBatch,
-        oldLocalExitRoot,
-        newLocalExitRoot,
-        oldStateRoot,
-        newStateRoot,
-        timestamp,
-        chainID
-    } = ctx.input;
-
-    ctx.input.batchHashData = calculateBatchHashData(
-        ctx.input.batchL2Data,
-    );
-
-    ctx.globalHash = calculateStarkInput(
-            oldStateRoot,
-            oldLocalExitRoot,
-            newStateRoot,
-            newLocalExitRoot,
-            ctx.input.batchHashData,
-            numBatch,
-            timestamp,
-            chainID
-    );
-
-    ctx.input.accessedStorage = [new Map()]
 }
 
 function printRegs(Fr, ctx) {
