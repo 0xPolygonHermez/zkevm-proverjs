@@ -53,7 +53,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     const skipAsserts = config.unsigned || config.execute;
-    const skipCounters = config.nocounters;
+    const skipCounters = config.counters;
 
     const poseidon = await buildPoseidon();
     const Fr = poseidon.F;
@@ -291,7 +291,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.inSTEP) {
             if (skipCounters) {
-                op0 = 1n;
+                op0 = Fr.one;
                 pols.inSTEP[i] = Fr.e(l.inSTEP);
             } else {
                 op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
