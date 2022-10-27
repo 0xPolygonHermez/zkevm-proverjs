@@ -23,12 +23,11 @@
         "g16wc g16prove g16verify" ]
   },
   "scripts": {
-    "buildgenesis": "",
-    "buildinput": "",
+    "build:input": "node tools/build-genesis/build_genesis.js",
+    "build:input-recursive": "node tools/build-genesis-recursive/build_genesis_recursive.js",
     "buildall": "tools/build_all.sh ${npm_package_config_steps}",
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
-
     "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build -- -s 23) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
@@ -40,7 +39,6 @@
     "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkstruct.json -o $BDIR/zkevm$NTH.proof.json -b $BDIR/zkevm$NTH.public.json -v $BDIR/zkevm.verkey.json",
     "gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js $PIL -s $BDIR/zkevm.starkstruct.json -v $BDIR/zkevm.verkey.json -o $BDIR/zkevm.verifier.circom",
     "compilecircom": ". ./pre.sh && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
-
     "c12a_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.verifier.r1cs  -p $BDIR/zkevm.c12a.pil -c $BDIR/zkevm.c12a.const -e $BDIR/zkevm.c12a.exec",
     "c12a_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -i $BDIR/zkevm.c12a.starkinfo.json",
     "c12a_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -c $BDIR/zkevm.c12a.chelpers/zkevm.c12a.chelpers.cpp",
