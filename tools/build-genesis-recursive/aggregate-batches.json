@@ -822,5 +822,5 @@
   "newNumBatch": 4,
   "chainID": 1000,
   "aggregatorAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-  "inputSnark": "0x143bc831f26783875714e72667db1e892849d3425c2361b8e8c592c1ac08385b"
+  "inputSnark": "0x0784b892d8678420e2423d3cb05800cbdc35664620e38b5790361a7070fee2dd"
 }
