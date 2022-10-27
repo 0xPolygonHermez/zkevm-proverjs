@@ -3,10 +3,37 @@ checkMandatoryOptArg() {
     [ "$2" = "true" ] && echo "ERROR: --$1 without mandatory argument. usage: --$1=<${argname:=value}>" && exit 1
 }
 
-checkMandatoryOptArg build $npm_config_build buildpath
-checkMandatoryOptArg pil $npm_config_pil file.pil
-checkMandatoryOptArg pilconfig $npm_config_pilconfig pilconfig.json
-checkMandatoryOptArg nth $npm_config_nth
+checkAllMandatoryOptArgs() {
+    checkMandatoryOptArg build $npm_config_build buildpath
+    checkMandatoryOptArg pil $npm_config_pil file.pil
+    checkMandatoryOptArg pilconfig $npm_config_pilconfig pilconfig.json
+    checkMandatoryOptArg bctree $npm_config_bctree constanttreebuilder
+    checkMandatoryOptArg nth $npm_config_nth
+    checkMandatoryOptArg starkstruct $npm_config_starkstruct debug
+    checkMandatoryOptArg input $npm_config_input input
+    checkMandatoryOptArg from $npm_config_from step
+    checkMandatoryOptArg to $npm_config_to step
+    checkMandatoryOptArg step $npm_config_step step
+}
+
+usage() {
+    echo "options:"
+    echo " --build=<buildpath>               folder were outputs was stored."
+    echo " --pil=<file.pil>"
+    echo " --pilconfig=<pilconfig.json>"
+    echo " --bctree=<builder>                alternative binary to generate constanttree (ex: ../zkevm-prover/build/bctree)"
+    echo " --nth=<sufix>                     suffix used on commited files and derivated (ex: _0)"
+    echo " --starkstruct=debug               auto-generate starkstruct, used in non-stardard pil as basic."
+    echo " --input=<input.json>              input used in execution/proof."
+    echo " --from=<step>                     where start the process (ex: buildconstanttree)"
+    echo " --to=<step>                       where fiuish the process (ex: pilverify)"
+    echo " --step=<step>                     execute only one step of proccess (ex: exec)"
+    echo " --continue                        restart process from last step wellprocessed"
+}
+
+checkAllMandatoryOptArgs
+
+[ ! -z $npm_config_help ] && usage && exit 1
 
 BDIR="${npm_config_build:=build/proof}"
 mkdir -p $BDIR
