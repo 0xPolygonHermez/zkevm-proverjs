@@ -1,4 +1,6 @@
 . $PWD/pre.sh
+[ ! -z $npm_config_steps ] && while [ $# -gt 0 ]; do echo $1; shift; done && exit 1;
+
 SKIP=0
 START_OPTIONS=`env|grep -wE 'npm_config_(pil|pilconfig|continue|from|build|starkstruct)'|sed 's/npm_config_//g'|xargs`
 echo "####### START $(date +'%Y-%m-%d %H:%M:%S') $START_OPTIONS ########" >> $BDIR/steps.log
