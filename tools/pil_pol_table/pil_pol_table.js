@@ -83,6 +83,10 @@ async function main(){
         codeBase +`
         {l1, l2, l3} in {L1, L1, L1};
     `)});
+    table.push({title: 'BASE + 1 plookup (1 column + leftsel)', ...await pilInfo(
+        codeBase +`
+        l1 {l1} in {L1};
+    `)});
     table.push({title: 'BASE + 1 plookup (2 columns + leftsel)', ...await pilInfo(
         codeBase +`
         l1 {l1, l2} in {L1, L1};
@@ -95,9 +99,17 @@ async function main(){
         codeBase +`
         l3 * L1 {l1 * l2, l2} in {L1, L1};
     `)});
+    table.push({title: 'BASE + 1 plookup (1 column + rightsel)', ...await pilInfo(
+        codeBase +`
+        {l1} in l3 {L1};
+    `)});
     table.push({title: 'BASE + 1 plookup (2 columns + rightsel)', ...await pilInfo(
         codeBase +`
         {l1, l2} in l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 1 plookup (1 columns + leftsel + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1} in l2 {L1};
     `)});
     table.push({title: 'BASE + 1 plookup (2 columns + leftsel + rightsel)', ...await pilInfo(
         codeBase +`
@@ -136,6 +148,19 @@ async function main(){
     table.push({title: 'BASE + 1 permutation check (2 columns + rightsel)', ...await pilInfo(
         codeBase +`
         {l1, l2} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 1 permutation check (1 columns + leftprod + rightprod)', ...await pilInfo(
+        codeBase +`
+        pol l4=l3*l1;
+        l4*l1 is l2*L1;
+    `)});
+    table.push({title: 'BASE + 1 permutation check (1 columns + leftsel + rightprod)', ...await pilInfo(
+        codeBase +`
+        l3 {l1} is l2*L1;
+    `)});
+    table.push({title: 'BASE + 1 permutation check (1 columns + leftsel + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1} is l2 {L1};
     `)});
     table.push({title: 'BASE + 1 permutation check (2 columns + leftsel + rightsel)', ...await pilInfo(
         codeBase +`
