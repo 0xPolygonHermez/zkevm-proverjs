@@ -16,7 +16,7 @@ class PilOptimize {
 constructor () {
     this.table = [];
     this.codeWidth = 132;
-    this.total = {cm1_2ns: 0, cm2_2ns: 0, cm3_2ns: 0, q_2ns: 0, reference: 'TOTAL'.padStart(this.codeWidth)};
+    this.total = {cm1_2ns: 0, cm2_2ns: 0, cm3_2ns: 0, q_2ns: 0, first: true, last: false, reference: 'TOTAL'.padStart(this.codeWidth)};
 }
 
 async pilInfo(pilBase, pilCode) {
@@ -44,9 +44,9 @@ async optimize(title, codeBase, codeBefore, codeAfter)
 {
     const before = await this.pilInfo(codeBase, codeBefore);
     const after = await this.pilInfo(codeBase, codeAfter);
-    this.table.push({title: title + ' (before)', ...before});
-    this.table.push({title: title + ' (after)', ...after});
-    this.table.push({title: title + ' (diff)', ...{
+    this.table.push({title: title + ' (before)', first: true, last: false, ...before});
+    this.table.push({title: title + ' (after)', first: false, last: false,  ...after});
+    this.table.push({title: title + ' (diff)', first: false, last: true,  ...{
         cm1_2ns: after.cm1_2ns - before.cm1_2ns,
         cm2_2ns: after.cm2_2ns - before.cm2_2ns,
         cm3_2ns: after.cm3_2ns - before.cm3_2ns,
@@ -59,7 +59,7 @@ async optimize(title, codeBase, codeBefore, codeAfter)
     this.total.q_2ns += (after.q_2ns - before.q_2ns);
 }
 
-async optimizeByte4(before, after)
+async optimizeByte4()
 {
     const codeBase = `namespace Global(2**16);
         pol constant L1;
@@ -79,7 +79,7 @@ async optimizeByte4(before, after)
     await this.optimize('Byte4', codeBase, codeBefore, codeAfter);
 }
 
-async optimizeHashPDigest()
+async optimizeStorageHashPDigest()
 {
     const codeBase = `namespace Global(2**16);
         pol constant L1;
@@ -120,7 +120,7 @@ async optimizeHashPDigest()
             Binary_a0, Binary_a1, Binary_a2, Binary_a3, Binary_a4, Binary_a5, Binary_a6, Binary_a7
         };
     `;
-    await this.optimize('HashPDigest', codeBase, codeBefore, codeAfter);
+    await this.optimize('StorageHashPDigest', codeBase, codeBefore, codeAfter);
 }
 
 async optimizeHashP()
@@ -190,7 +190,9 @@ async optimizeHashP()
 }
 
 generateRegistersPols(regs, prefix = 'pol commit ', suffix = ";\n") {
-    return regs.map(x => { res = ""; for(let i=0; i<8;++i) res += prefix+x+i+suffix; return res;} ).join("\n");
+    return regs.map(x => {
+        res = ""; let from = 0; let to = 8; let name = x;
+        if (x.indexOf(':') >= 0) { [name, from, to] = x.split(':'); ++to;}; for(let i=from; i<to;++i) res += prefix+name+i+suffix; return res;} ).join("\n");
 }
 async optimizeArith()
 {
@@ -333,32 +335,6 @@ async optimizeBinary()
     await this.optimize('Binary', codeBase, codeBefore, codeAfter);
 }
 
-
-async optimizeHashKLen()
-{
-    const codeBase = `namespace Global(2**16);
-        pol constant L1;
-        pol commit hashKLen;
-        pol commit addr;
-        pol commit op0;
-        pol commit PaddingKK_lastHashLatch;
-        pol commit PaddingKK_addr;
-        pol commit PaddingKK_len;
-    `;
-    const codeTemplate = `
-        hashKLen {
-            addr,
-            op0
-        } #### {
-            PaddingKK_addr,
-            PaddingKK_len
-        };
-    `;
-    const codeBefore = codeTemplate.split('####').join("in PaddingKK_lastHashLatch");
-    const codeAfter = codeTemplate.split('####').join("is PaddingKK_lastHashLatch");
-    await this.optimize('HashKLen', codeBase, codeBefore, codeAfter);
-}
-
 async optimizeHashK()
 {
     const codeBase = `namespace Global(2**16);
@@ -403,14 +379,417 @@ async optimizeHashK()
     const codeAfter = codeTemplate.split('####').join("is PaddingKK_crLatch * PaddingKK_crValid");
     await this.optimize('HashK', codeBase, codeBefore, codeAfter);
 }
+
+async optimizeHashPLen()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol commit hashPLen;
+        pol commit addr;
+        pol commit op0;
+        pol commit PaddingPG_lastHash;
+        pol commit PaddingPG_addr;
+        pol commit PaddingPG_len;
+    `;
+    const codeTemplate = `
+        hashPLen {
+            addr,
+            op0
+        } #### {
+            PaddingPG_addr,
+            PaddingPG_len
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PaddingPG_lastHash");
+    const codeAfter = codeTemplate.split('####').join("is PaddingPG_lastHash");
+    await this.optimize('HashPLen', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeHashKLen()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol commit hashKLen;
+        pol commit addr;
+        pol commit op0;
+        pol commit PaddingKK_lastHashLatch;
+        pol commit PaddingKK_addr;
+        pol commit PaddingKK_len;
+    `;
+    const codeTemplate = `
+        hashKLen {
+            addr,
+            op0
+        } #### {
+            PaddingKK_addr,
+            PaddingKK_len
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PaddingKK_lastHashLatch");
+    const codeAfter = codeTemplate.split('####').join("is PaddingKK_lastHashLatch");
+    await this.optimize('HashKLen', codeBase, codeBefore, codeAfter);
+}
+
+
+async optimizeHashKDigest()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol commit hashKDigest;
+        pol commit addr;
+        ${this.generateRegistersPols(['op', 'PaddingKK_hash'])}
+        pol commit incCounter;
+        pol commit PaddingKK_lastHashLatch;
+        pol commit PaddingKK_addr;
+        pol commit PaddingKK_incCounter;
+    `;
+    const codeTemplate = `
+        hashKDigest {
+            addr,
+            op0, op1, op2, op3,
+            op4, op5, op6, op7,
+            incCounter
+        } #### {
+            PaddingKK_addr,
+            PaddingKK_hash0, PaddingKK_hash1, PaddingKK_hash2, PaddingKK_hash3,
+            PaddingKK_hash4, PaddingKK_hash5, PaddingKK_hash6, PaddingKK_hash7,
+            PaddingKK_incCounter
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PaddingKK_lastHashLatch");
+    const codeAfter = codeTemplate.split('####').join("is PaddingKK_lastHashLatch");
+    await this.optimize('hashKDigest', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeHashPDigest()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol commit hashPDigest;
+        pol commit addr;
+        ${this.generateRegistersPols(['op', 'PaddingPG_curHash:0:3'])}
+        pol commit incCounter;
+        pol commit PaddingPG_lastHash;
+        pol commit PaddingPG_addr;
+        pol commit PaddingPG_incCounter;
+    `;
+    const codeTemplate = `
+        hashPDigest {
+            addr,
+            op0 + 2**32 * op1,
+            op2 + 2**32 * op3,
+            op4 + 2**32 * op5,
+            op6 + 2**32 * op7,
+            incCounter
+        } #### {
+            PaddingPG_addr,
+            PaddingPG_curHash0,
+            PaddingPG_curHash1,
+            PaddingPG_curHash2,
+            PaddingPG_curHash3,
+            PaddingPG_incCounter
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PaddingPG_lastHash");
+    const codeAfter = codeTemplate.split('####').join("is PaddingPG_lastHash");
+    await this.optimize('hashPDigest', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeStorageKeyFirstPoseidon()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol constant PoseidonG_LATCH;
+        pol commit sRD;
+        pol commit sWR;
+        pol commit sKeyI[4];
+        ${this.generateRegistersPols(['C', 'PoseidonG_in', 'PoseidonG_hash:0:3', 'PoseidonG_cap:1:3'])}
+        pol commit PoseidonG_hashType;
+    `;
+    const codeTemplate = `
+        (sRD + sWR) {
+            C0, C1, C2, C3,
+            C4, C5, C6, C7,
+            0, 0, 0, 0,
+            sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3]
+        } #### {
+            PoseidonG_in0, PoseidonG_in1, PoseidonG_in2, PoseidonG_in3,
+            PoseidonG_in4, PoseidonG_in5, PoseidonG_in6, PoseidonG_in7,
+            PoseidonG_hashType, PoseidonG_cap1, PoseidonG_cap2, PoseidonG_cap3,
+            PoseidonG_hash0, PoseidonG_hash1, PoseidonG_hash2, PoseidonG_hash3
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PoseidonG_LATCH");
+    const codeAfter = "        pol commit PoseidonG1_ready;\n" + codeTemplate.split('####').join("is PoseidonG1_ready");
+    await this.optimize('StorageKeyFirstPoseidon', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeStorageKeySecondPoseidon()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol constant PoseidonG_LATCH;
+        pol commit sRD;
+        pol commit sWR;
+        pol commit sKey[4];
+        pol commit sKeyI[4];
+        ${this.generateRegistersPols(['A:0:5', 'PoseidonG_in', 'PoseidonG_hash:0:3', 'PoseidonG_cap:1:3'])}
+        pol commit PoseidonG_hashType;
+        pol commit B0;
+        pol commit B1;
+    `;
+    const codeTemplate = `
+        (sRD + sWR) {
+            A0, A1, A2, A3,
+            A4, A5, B0, B1,
+            sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3],
+            sKey[0], sKey[1], sKey[2], sKey[3]
+        } #### {
+            PoseidonG_in0, PoseidonG_in1, PoseidonG_in2, PoseidonG_in3,
+            PoseidonG_in4, PoseidonG_in5, PoseidonG_in6, PoseidonG_in7,
+            PoseidonG_hashType, PoseidonG_cap1, PoseidonG_cap2, PoseidonG_cap3,
+            PoseidonG_hash0, PoseidonG_hash1, PoseidonG_hash2, PoseidonG_hash3
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PoseidonG_LATCH");
+    const codeAfter = "        pol commit PoseidonG2_ready;\n" + codeTemplate.split('####').join("is PoseidonG2_ready");
+    await this.optimize('StorageKeySecondPoseidon', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeStorageRead()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol constant Storage_iLatchGet;
+        pol commit sRD;
+        pol commit sKey[4];
+        ${this.generateRegistersPols(['SR', 'op', 'Storage_oldRoot:0:3', 'Storage_rkey:0:3', 'Storage_valueLow:0:3',
+            'Storage_valueHigh:0:3'])}
+        pol commit incCounter;
+        pol commit Storage_incCounter;
+    `;
+    const codeTemplate = `
+        sRD {
+            SR0 + 2**32*SR1, SR2 + 2**32*SR3, SR4 + 2**32*SR5, SR6 + 2**32*SR7,
+            sKey[0], sKey[1], sKey[2], sKey[3],
+            op0, op1, op2, op3,
+            op4, op5, op6, op7,
+            incCounter
+        } #### {
+            Storage_oldRoot0, Storage_oldRoot1, Storage_oldRoot2, Storage_oldRoot3,
+            Storage_rkey0, Storage_rkey1, Storage_rkey2, Storage_rkey3,
+            Storage_valueLow0, Storage_valueLow1, Storage_valueLow2, Storage_valueLow3,
+            Storage_valueHigh0, Storage_valueHigh1, Storage_valueHigh2, Storage_valueHigh3,
+            Storage_incCounter + 2
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in Storage_iLatchGet");
+    const codeAfter = codeTemplate.split('####').join("is Storage_iLatchGet");
+    await this.optimize('StorageRead', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeStorageWrite()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol constant Storage_iLatchSet;
+        pol commit sWR;
+        pol commit sKey[4];
+        ${this.generateRegistersPols(['SR', 'D', 'op', 'Storage_oldRoot:0:3', 'Storage_rkey:0:3', 'Storage_valueLow:0:3',
+            'Storage_valueHigh:0:3', 'Storage_newRoot:0:3'])}
+        pol commit incCounter;
+        pol commit Storage_incCounter;
+    `;
+    const codeTemplate = `
+        sWR {
+            SR0 + 2**32*SR1, SR2 + 2**32*SR3, SR4 + 2**32*SR5, SR6 + 2**32*SR7,
+            sKey[0], sKey[1], sKey[2], sKey[3],
+            D0, D1, D2, D3,
+            D4, D5, D6, D7,
+            op0 + 2**32*op1, op2 + 2**32*op3, op4 + 2**32*op5, op6 + 2**32*op7,
+            incCounter
+        } #### {
+            Storage_oldRoot0, Storage_oldRoot1, Storage_oldRoot2, Storage_oldRoot3,
+            Storage_rkey0, Storage_rkey1, Storage_rkey2, Storage_rkey3,
+            Storage_valueLow0, Storage_valueLow1, Storage_valueLow2, Storage_valueLow3,
+            Storage_valueHigh0, Storage_valueHigh1, Storage_valueHigh2, Storage_valueHigh3,
+            Storage_newRoot0, Storage_newRoot1, Storage_newRoot2, Storage_newRoot3,
+            Storage_incCounter + 2
+        };
+    `;
+
+    const codeBefore = codeTemplate.split('####').join("in Storage_iLatchSet");
+    const codeAfter = codeTemplate.split('####').join("is Storage_iLatchSet");
+    await this.optimize('StorageWrite', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeMemAlign()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol commit memAlign;
+        pol commit memAlignWR;
+        pol commit memAlignWR8;
+        pol commit sKey[4];
+        pol commit C0;
+        ${this.generateRegistersPols(['A', 'B', 'op', 'D', 'E'])}
+        pol constant MemAlign_RESET;
+        pol commit MemAlign_wr256;
+        pol commit MemAlign_wr8;
+        pol commit MemAlign_m0[8];
+        pol commit MemAlign_m1[8];
+        pol commit MemAlign_w0[8];
+        pol commit MemAlign_w1[8];
+        pol commit MemAlign_v[8];
+        pol commit MemAlign_offset;
+        pol commit Storage_incCounter;
+    `;
+    const codeTemplate = `
+        memAlign {
+            memAlignWR,
+            memAlignWR8,
+            A0, A1, A2, A3,
+            A4, A5, A6, A7,
+            (1 - memAlignWR8) * B0, (1 - memAlignWR8) * B1, (1 - memAlignWR8) * B2, (1 - memAlignWR8) * B3,
+            (1 - memAlignWR8) * B4, (1 - memAlignWR8) * B5, (1 - memAlignWR8) * B6, (1 - memAlignWR8) * B7,
+            op0, op1, op2, op3,
+            op4, op5, op6, op7,
+            C0,
+            (memAlignWR + memAlignWR8) * D0, (memAlignWR + memAlignWR8)*D1, (memAlignWR + memAlignWR8)*D2, (memAlignWR + memAlignWR8)*D3,
+            (memAlignWR + memAlignWR8) * D4, (memAlignWR + memAlignWR8)*D5, (memAlignWR + memAlignWR8)*D6, (memAlignWR + memAlignWR8)*D7,
+            memAlignWR * E0, memAlignWR*E1, memAlignWR*E2, memAlignWR*E3,
+            memAlignWR * E4, memAlignWR*E5, memAlignWR*E6, memAlignWR*E7
+        } #### {
+            MemAlign_wr256,
+            MemAlign_wr8,
+            MemAlign_m0[0], MemAlign_m0[1], MemAlign_m0[2], MemAlign_m0[3],
+            MemAlign_m0[4], MemAlign_m0[5], MemAlign_m0[6], MemAlign_m0[7],
+            MemAlign_m1[0], MemAlign_m1[1], MemAlign_m1[2], MemAlign_m1[3],
+            MemAlign_m1[4], MemAlign_m1[5], MemAlign_m1[6], MemAlign_m1[7],
+            MemAlign_v[0], MemAlign_v[1], MemAlign_v[2], MemAlign_v[3],
+            MemAlign_v[4], MemAlign_v[5], MemAlign_v[6], MemAlign_v[7],
+            MemAlign_offset,
+            MemAlign_w0[0], MemAlign_w0[1], MemAlign_w0[2], MemAlign_w0[3],
+            MemAlign_w0[4], MemAlign_w0[5], MemAlign_w0[6], MemAlign_w0[7],
+            MemAlign_w1[0], MemAlign_w1[1], MemAlign_w1[2], MemAlign_w1[3],
+            MemAlign_w1[4], MemAlign_w1[5], MemAlign_w1[6], MemAlign_w1[7]
+        };
+        `;
+
+    const codeBefore = codeTemplate.split('####').join("in MemAlign_RESET");
+    const codeAfter = "        pol commit MemAlign_ready;" + codeTemplate.split('####').join("is MemAlign_ready");
+    await this.optimize('MemAlign', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeStoragePoseidon()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol constant PoseidonG_LATCH;
+        pol commit iHash;
+        pol commit iHashType;
+        ${this.generateRegistersPols(['hashLeft:0:3', 'hashRight:0:3', 'op:0:3','PoseidonG_in','PoseidonG_hash:0:3', 'PoseidonG_cap:1:3'])}
+        pol commit PoseidonG_hashType;
+    `;
+    const codeTemplate = `
+        iHash {
+            hashLeft0, hashLeft1, hashLeft2, hashLeft3,
+            hashRight0, hashRight1, hashRight2, hashRight3,
+            iHashType, 0, 0, 0,
+            op0, op1, op2, op3
+        } #### {
+            PoseidonG_in0, PoseidonG_in1, PoseidonG_in2, PoseidonG_in3,
+            PoseidonG_in4, PoseidonG_in5, PoseidonG_in6, PoseidonG_in7,
+            PoseidonG_hashType, PoseidonG_cap1, PoseidonG_cap2, PoseidonG_cap3,
+            PoseidonG_hash0, PoseidonG_hash1, PoseidonG_hash2, PoseidonG_hash3
+        };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in PoseidonG_LATCH");
+    const codeAfter = "        pol commit PoseidonG3_ready;\n" + codeTemplate.split('####').join("is PoseidonG3_ready");
+    await this.optimize('StoragePoseidon', codeBase, codeBefore, codeAfter);
+}
+
+async optimizeFirstPaddingKKBit()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol constant PoseidonG_LATCH;
+        pol commit iHash;
+        pol commit iHashType;
+        pol commit freeIn;
+        pol constant r8Id;
+        pol commit connected;
+        pol constant r8valid;
+        pol commit rem;
+        pol commit remInv;
+        pol constant lastBlock;
+        pol remIsZero = 1 - rem*remInv;
+        pol commit spare;
+        pol lastHash = lastBlock*(spare + remIsZero);
+        pol aFreeIn = (1 - (remIsZero + spare))*freeIn + remIsZero + lastHash*0x80;
+        pol commit PaddingKKBit_r8;
+        pol constant PaddingKKBit_r8Id;
+        pol commit PaddingKKBit_connected;
+    `;
+    const codeTemplate = `
+        r8valid {aFreeIn, r8Id, connected} #### { PaddingKKBit_r8, PaddingKKBit_r8Id, PaddingKKBit_connected };
+    `;
+    const codeBefore = codeTemplate.split('####').join("in");
+    const codeAfter = "        pol commit PaddingKKBit_ready;\n" + codeTemplate.split('####').join("is PaddingKKBit_ready");
+    await this.optimize('FirstPaddingKKBit', codeBase, codeBefore, codeAfter);
+}
+
+
+async optimizeSecondPaddingKKBit()
+{
+    const codeBase = `namespace Global(2**16);
+        pol constant L1;
+        pol commit rem;
+        pol commit remInv;
+        pol constant lastBlock;
+        pol remIsZero = 1 - rem*remInv;
+        pol commit spare;
+        pol constant lastBlockLatch;
+        pol lastHashLatch = lastBlockLatch * (spare + remIsZero);
+        pol constant sOutId; // <==
+        pol constant PaddingKKBit_sOutId; // <==
+        ${this.generateRegistersPols(['hash', 'PaddingKKBit_sOut'])}
+    `;
+    const codeTemplate = `
+        lastHashLatch {
+            hash0, hash1, hash2, hash3,
+            hash4, hash5, hash6, hash7,
+            sOutId
+        } #### {
+            PaddingKKBit_sOut0, PaddingKKBit_sOut1, PaddingKKBit_sOut2, PaddingKKBit_sOut3,
+            PaddingKKBit_sOut4, PaddingKKBit_sOut5, PaddingKKBit_sOut6, PaddingKKBit_sOut7,
+            PaddingKKBit_sOutId
+        };`;
+    const codeBefore = codeTemplate.split('####').join("in");
+    const codeAfter = "        pol commit PaddingKKBit_ready2;\n" + codeTemplate.split('####').join("is PaddingKKBit_ready2");
+    await this.optimize('SecondPaddingKKBit', codeBase, codeBefore, codeAfter);
+}
+
 async run(){
     await this.optimizeByte4();
-    await this.optimizeHashPDigest();
+    await this.optimizeStorageHashPDigest();
+
     await this.optimizeHashP();
+    await this.optimizeHashPLen();
+    await this.optimizeHashPDigest();
     await this.optimizeArith();
     await this.optimizeBinary();
     await this.optimizeHashK();
     await this.optimizeHashKLen();
+    await this.optimizeHashKDigest();
+    await this.optimizeStorageKeyFirstPoseidon();
+    await this.optimizeStorageKeySecondPoseidon();
+    await this.optimizeStorageRead();
+    await this.optimizeStorageWrite();
+    await this.optimizeMemAlign();
+    await this.optimizeStoragePoseidon();
+    await this.optimizeFirstPaddingKKBit();
+    await this.optimizeSecondPaddingKKBit();
 
     const titleWidth = Math.max(...this.table.map((x) => x.title.length));
     const referenceWidth = Math.max(...this.table.map((x) => x.reference.length));
@@ -419,10 +798,10 @@ async run(){
         'cm3_2ns'.padStart(7), 'q_2ns'.padStart(7),
         'total'.padStart(7)].join('|'));
     this.table.push(this.total);
-    this.table.push({title: 'ORIGINAL main.pil', ... await this.pilInfo('../../pil/main.pil', false)});
+    this.table.push({title: 'ORIGINAL main.pil', ... await this.pilInfo('../../../data/pil/main.pil', false)});
     for (const row of this.table) {
-        console.log(''.padStart(this.codeWidth + 40, '-'));
-        let lines = row.reference.split("\n");
+        console.log(''.padStart(this.codeWidth + 40, row.first ? '=': '-'));
+        let lines = row.reference === false ? ['// original main.pil'] : row.reference.split("\n");
         if (lines.length == 0) continue;
         while (lines.length > 0 && lines[0].trim().length == 0) {
             lines = lines.slice(1);
