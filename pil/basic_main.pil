@@ -197,7 +197,7 @@ namespace Main(%N);
     */
 
     pol addrRel = ind*E0 + indRR*RR + offset;
-    pol addr = useCTX*CTX*2**18 + isStack*2**17 + isCode*2**16 + isMem*(2**17+2**16) + addrRel;
+    pol addr = useCTX*CTX*2**18 + isStack*2**17 + isStack*SP + isCode*2**16 + isMem*(2**17+2**16) + addrRel;
 
     pol maxMemCalculated = isMaxMem*(addrRel - MAXMEM) + MAXMEM;
 

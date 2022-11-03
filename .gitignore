@@ -12,3 +12,4 @@ testvectors/commit.bin
 testvectors/constants.bin
 tmp
 pil-config.json
+parallel-tests

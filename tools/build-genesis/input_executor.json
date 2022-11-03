@@ -1,5 +1,6 @@
 {
   "oldStateRoot": "0x2dc4db4293af236cb329700be43f08ace740a05088f8c7654736871709687e90",
+  "chainId": 1001,
   "db": {
     "0x2dc4db4293af236cb329700be43f08ace740a05088f8c7654736871709687e90": [
       "0000000000000000",
@@ -76,5 +77,6 @@
   "globalExitRoot": "0x090bcaf734c4f06c93954a827b45a6e8c67b8e0fd1e0a35a1c5982d6961828f9",
   "numBatch": 1,
   "timestamp": 1944498031,
+  "chainID": 1000,
   "contractsBytecode": {}
 }

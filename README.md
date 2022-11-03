@@ -16,17 +16,20 @@ $ node src/main_executor <input.json> -r <rom.json> -o <proof.json>
 ```
 Example:
 ```sh
-$ node src/main_executor testvectors/input_executor.json -r ../zkrom/build/rom.json -o tmp/commit.bin
+$ node src/main_executor tools/build-genesis/input_executor.json -r ../zkevm-rom/build/rom.json -o tmp/commit.bin
 ```
 Additional parameters:
 
 - `-t <test.json>`: test
 - `-l <logs.json>`: logs
-- `-s`: skip
-- `-d`: debug
-- `-p`: pilprogram.pil
-- `-P`: pilConfig.json
-- `-n <number>`: N
+- `-s`: skip compile pil
+- `-d`: debug mode
+- `-p`: select pilprogram.pil
+- `-P`: load pilConfig.json file
+- `-u`: unsigned transactions mode
+- `-u`: unsigned transactions mode
+- `-e`: skip asserts `newStateRoot` and `newLocalExitRoot`
+- `-v`: verbode mode
 
 ### Build prove
 ```sh
@@ -65,36 +68,51 @@ npm run buildall --starkstruct=debug
 ```sh
 npm run buildall --build=build/basic_proof
 ```
+**input**: with this option indicates input file to use.
+```sh
+npm run buildall --input=test/myinputfile.json
+```
 ### Build steps
-- **buildrom**
-- **buildconstants**
-- **exec**
-- **pilverify**
-- **buildstarkinfo**
-- **buildchelpers**
-- **buildconstanttree**
-- **prove**
-- **verify**
-- **gencircom**
-- **compilecircom**
-- **c12setup**
-- **c12buildstarkinfo**
-- **c12buildchelpers**
-- **c12exec**
-- **c12pilverify**
-- **c12buildconstanttree**
-- **c12prove**
-- **c12verify**
-- **c12gencircom**
-- **c12compilecircom**
-- **downloadptaw**
-- **g16setup**
-- **g16contribute**
-- **g16evk**
-- **g16wc**
-- **g16prove**
-- **g16verify**
-- **g16solidity**
+| step | inputs | outputs | description|
+|---|---|---|---|
+| buildrom | | | compile main rom of zkevm-rom|
+| buildconstants | | | generate file with all evaluations of constant polynomials|
+| exec | | | execute all state machines to generate file with all evaluations of commited polynomials |
+| pilverify | | | verify constraints |
+| buildstarkinfo | | | |
+| buildchelpers | | | |
+| buildconstanttree | | | |
+| prove | | | |
+| verify | | | |
+| gencircom | | | |
+| compilecircom | | | |
+| c12a_setup | | | |
+| c12a_buildstarkinfo | | | |
+| c12a_buildchelpers | | | |
+| c12a_exec | | | |
+| c12a_pilverify | | | |
+| c12a_buildconstanttree | | | |
+| c12a_prove | | | |
+| c12a_verify | | | |
+| c12a_gencircom | | | |
+| c12a_compilecircom | | | |
+| c12b_setup | | | |
+| c12b_buildstarkinfo | | | |
+| c12b_buildchelpers | | | |
+| c12b_exec | | | |
+| c12b_pilverify | | | |
+| c12b_buildconstanttree | | | |
+| c12b_prove | | | |
+| c12b_verify | | | |
+| c12b_gencircom | | | |
+| c12b_compilecircom | | | |
+| g16setup | | | |
+| g16contribute | | | |
+| g16evk | | | |
+| g16wc | | | |
+| g16prove | | | |
+| g16verify | | | |
+| g16solidity | | | |
 
 ## License
 
