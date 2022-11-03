@@ -63,6 +63,16 @@ describe("Test storage operations", async function () {
             cmPols.Main.op5[index] = 0n;
             cmPols.Main.op6[index] = 0n;
             cmPols.Main.op7[index] = 0n;
+            cmPols.Main.incCounter[index] = 0n;
+            cmPols.Main.sWR[index] = 0n;
+            cmPols.Main.D0[index] = 0n;
+            cmPols.Main.D1[index] = 0n;
+            cmPols.Main.D2[index] = 0n;
+            cmPols.Main.D3[index] = 0n;
+            cmPols.Main.D4[index] = 0n;
+            cmPols.Main.D5[index] = 0n;
+            cmPols.Main.D6[index] = 0n;
+            cmPols.Main.D7[index] = 0n;
         }
 
         db = new MemDB(fr);
@@ -71,6 +81,59 @@ describe("Test storage operations", async function () {
 
     async function smtSet (oldRoot, key, value) {
         const r = await smt.set(oldRoot, key, value);
+        const index = plookUpIndex++;
+        cmPols.Main.sRD[index] = fr.zero;
+        cmPols.Main.sWR[index] = fr.e(1n);
+        cmPols.Main.SR0[index] = fr.e(oldRoot[0] & 0xFFFFFFFFn);
+        cmPols.Main.SR1[index] = fr.e(oldRoot[0] >> 32n);
+        cmPols.Main.SR2[index] = fr.e(oldRoot[1] & 0xFFFFFFFFn);
+        cmPols.Main.SR3[index] = fr.e(oldRoot[1] >> 32n);
+        cmPols.Main.SR4[index] = fr.e(oldRoot[2] & 0xFFFFFFFFn);
+        cmPols.Main.SR5[index] = fr.e(oldRoot[2] >> 32n);
+        cmPols.Main.SR6[index] = fr.e(oldRoot[3] & 0xFFFFFFFFn);
+        cmPols.Main.SR7[index] = fr.e(oldRoot[3] >> 32n);
+        cmPols.Main.D0[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D1[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D2[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D3[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D4[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D5[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D6[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.D7[index] = value & 0xFFFFFFFFn;
+        value = value >> 32n;
+        cmPols.Main.sKey[0][index] = key[0];
+        cmPols.Main.sKey[1][index] = key[1];
+        cmPols.Main.sKey[2][index] = key[2];
+        cmPols.Main.sKey[3][index] = key[3];
+        cmPols.Main.op0[index] = fr.e(r.newRoot[0] & 0xFFFFFFFFn);
+        cmPols.Main.op1[index] = fr.e(r.newRoot[0] >> 32n);
+        cmPols.Main.op2[index] = fr.e(r.newRoot[1] & 0xFFFFFFFFn);
+        cmPols.Main.op3[index] = fr.e(r.newRoot[1] >> 32n);
+        cmPols.Main.op4[index] = fr.e(r.newRoot[2] & 0xFFFFFFFFn);
+        cmPols.Main.op5[index] = fr.e(r.newRoot[2] >> 32n);
+        cmPols.Main.op6[index] = fr.e(r.newRoot[3] & 0xFFFFFFFFn);
+        cmPols.Main.op7[index] = fr.e(r.newRoot[3] >> 32n);
+        cmPols.Main.incCounter = r.proofHashCounter;
+/*        console.log(index+' '+[
+                     fr.e(cmPols.Main.SR0[index] + cmPols.Main.SR1[index] * 2n**32n),
+                     fr.e(cmPols.Main.SR2[index] + cmPols.Main.SR3[index] * 2n**32n),
+                     fr.e(cmPols.Main.SR4[index] + cmPols.Main.SR5[index] * 2n**32n),
+                     fr.e(cmPols.Main.SR6[index] + cmPols.Main.SR7[index] * 2n**32n),
+                     cmPols.Main.sKey[0][index], cmPols.Main.sKey[1][index], cmPols.Main.sKey[2][index], cmPols.Main.sKey[3][index],
+                     cmPols.Main.D0[index], cmPols.Main.D1[index], cmPols.Main.D2[index], cmPols.Main.D3[index],
+                     cmPols.Main.D4[index], cmPols.Main.D5[index], cmPols.Main.D6[index], cmPols.Main.D7[index],
+                     fr.e(cmPols.Main.op0[index] + cmPols.Main.op1[index] * 2n**32n),
+                     fr.e(cmPols.Main.op2[index] + cmPols.Main.op3[index] * 2n**32n),
+                     fr.e(cmPols.Main.op4[index] + cmPols.Main.op5[index] * 2n**32n),
+                     fr.e(cmPols.Main.op6[index] + cmPols.Main.op7[index] * 2n**32n),
+                     cmPols.Main.incCounter].join(','));*/
         required.Storage.push({bIsSet: true,
             setResult: {
                 oldRoot: [...r.oldRoot],
@@ -90,9 +153,9 @@ describe("Test storage operations", async function () {
 
     async function smtGet (root, key) {
         const r = await smt.get(root, key);
-        console.log(['r', r, root, key]);
         const index = plookUpIndex++;
         cmPols.Main.sRD[index] = fr.e(1n);
+        cmPols.Main.sWR[index] = fr.zero;
         cmPols.Main.SR0[index] = fr.e(r.root[0] & 0xFFFFFFFFn);
         cmPols.Main.SR1[index] = fr.e(r.root[0] >> 32n);
         cmPols.Main.SR2[index] = fr.e(r.root[1] & 0xFFFFFFFFn);
@@ -101,6 +164,14 @@ describe("Test storage operations", async function () {
         cmPols.Main.SR5[index] = fr.e(r.root[2] >> 32n);
         cmPols.Main.SR6[index] = fr.e(r.root[3] & 0xFFFFFFFFn);
         cmPols.Main.SR7[index] = fr.e(r.root[3] >> 32n);
+        cmPols.Main.D0[index] = fr.zero;
+        cmPols.Main.D1[index] = fr.zero;
+        cmPols.Main.D2[index] = fr.zero;
+        cmPols.Main.D3[index] = fr.zero;
+        cmPols.Main.D4[index] = fr.zero;
+        cmPols.Main.D5[index] = fr.zero;
+        cmPols.Main.D6[index] = fr.zero;
+        cmPols.Main.D7[index] = fr.zero;
         cmPols.Main.sKey[0][index] = key[0];
         cmPols.Main.sKey[1][index] = key[1];
         cmPols.Main.sKey[2][index] = key[2];
@@ -122,6 +193,7 @@ describe("Test storage operations", async function () {
         rvalue = rvalue >> 32n;
         cmPols.Main.op7[index] = rvalue & 0xFFFFFFFFn;
         rvalue = rvalue >> 32n;
+        cmPols.Main.incCounter = r.proofHashCounter;
         required.Storage.push({bIsSet: false,
             getResult: {
                 root: [...r.root],

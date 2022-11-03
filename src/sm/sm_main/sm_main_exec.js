@@ -12,7 +12,6 @@ const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils
 
 const testTools = require("./test_tools");
 
-const Tracer = require("./debug/tracer");
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 
@@ -22,7 +21,6 @@ const twoTo256 = Scalar.shl(Scalar.one, 256);
 const Mask256 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
 const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8n));
 
-let iTracer;
 let fullTracer;
 
 module.exports = async function execute(pols, input, rom, config = {}) {
@@ -44,7 +42,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     const debug = config && config.debug;
+    const flagTracer = config && config.tracer;
     const N = pols.zkPC.length;
+    const stepsN = (debug && config.stepsN) ? config.stepsN : N;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
@@ -53,6 +53,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     const skipAsserts = config.unsigned || config.execute;
+    const skipCounters = config.counters;
 
     const poseidon = await buildPoseidon();
     const Fr = poseidon.F;
@@ -78,23 +79,24 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         sto: input.keys,
         rom: rom,
         outLogs: {},
-        N: N
+        N,
+        stepsN
     }
 
     preprocessTxs(ctx);
 
-    if (debug) {
-        iTracer = new Tracer("process_tx.zkasm", config.debugInfo.inputName);
+    if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
-    } else {
-        iTracer = null
     }
+
     const iPrint = new Prints(ctx, smt);
+    let fastDebugExit = false;
 
     let pendingCmds = false;
-    for (i=0; i<N; i++) {
+    for (step=0; step < stepsN; step++) {
+        const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
-        ctx.step=i;
+        ctx.step = step;
         ctx.A = [pols.A0[i], pols.A1[i], pols.A2[i], pols.A3[i], pols.A4[i], pols.A5[i], pols.A6[i], pols.A7[i]];
         ctx.B = [pols.B0[i], pols.B1[i], pols.B2[i], pols.B3[i], pols.B4[i], pols.B5[i], pols.B6[i], pols.B7[i]];
         ctx.C = [pols.C0[i], pols.C1[i], pols.C2[i], pols.C3[i], pols.C4[i], pols.C5[i], pols.C6[i], pols.C7[i]];
@@ -129,20 +131,27 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         // breaks the loop in debug mode in order to test and debug faster
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+            fastDebugExit = true;
             break;
         }
 
         let incHashPos = 0;
         let incCounter = 0;
 
-        // if (i%1000==0) console.log(`Step: ${i}`);
+        // if (step % 1000 ==0) {
+        //     console.log(`Step: ${step}`);
+        //     console.log("STEP: ", eval_getReg(ctx, { regName: "STEP" }));
+        //     console.log("CNT_ARITH: ", eval_getReg(ctx, { regName: "CNT_ARITH" }));
+        //     console.log("CNT_BINARY: ", eval_getReg(ctx, { regName: "CNT_BINARY" }));
+        //     console.log("CNT_KECCAK_F: ", eval_getReg(ctx, { regName: "CNT_KECCAK_F" }));
+        //     console.log("CNT_MEM_ALIGN: ", eval_getReg(ctx, { regName: "CNT_MEM_ALIGN" }));
+        //     console.log("CNT_PADDING_PG: ", eval_getReg(ctx, { regName: "CNT_PADDING_PG" }));
+        //     console.log("CNT_POSEIDON_G: ", eval_getReg(ctx, { regName: "CNT_POSEIDON_G" }));
+        // }
 
-        if (i==330) {
+        if (step==330) {
              // console.log("### > "+l.fileName + ':' + l.line);
         }
-
-        if (iTracer)
-            await iTracer.getTrace(ctx, l, false);
 
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
@@ -288,8 +297,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
 
         if (l.inSTEP) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
-            pols.inSTEP[i] = Fr.e(l.inSTEP);
+            if (skipCounters) {
+                op0 = Fr.one;
+                pols.inSTEP[i] = Fr.e(l.inSTEP);
+            } else {
+                op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
+                pols.inSTEP[i] = Fr.e(l.inSTEP);
+            }
         } else {
             pols.inSTEP[i] = Fr.zero;
         }
@@ -579,7 +593,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
                     ctx.lastSWrite.newRoot = res.newRoot;
                     ctx.lastSWrite.res = res;
-                    ctx.lastSWrite.step=i;
+                    ctx.lastSWrite.step = step;
 
                     fi = sr4to8(ctx.Fr, ctx.lastSWrite.newRoot);
                     nHits++;
@@ -592,9 +606,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK out of bounds ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     let s = Scalar.zero;
-                    for (let i=0; i<size; i++) {
-                        if (typeof ctx.hashK[addr].data[pos + i] === "undefined") throw new Error(`Accessing hashK not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[addr].data[pos + i]));
+                    for (let k=0; k<size; k++) {
+                        if (typeof ctx.hashK[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashK not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[addr].data[pos + k]));
                     }
                     fi = scalar2fea(Fr, s);
                     nHits++;
@@ -617,9 +631,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     if (pos+size > ctx.hashP[addr].data.length) throw new Error(`Accessing hashP out of bounds ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     let s = Scalar.zero;
-                    for (let i=0; i<size; i++) {
-                        if (typeof ctx.hashP[addr].data[pos + i] === "undefined") throw new Error(`Accessing hashP not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[addr].data[pos + i]));
+                    for (let k=0; k<size; k++) {
+                        if (typeof ctx.hashP[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashP not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[addr].data[pos + k]));
                     }
                     fi = scalar2fea(Fr, s);
                     nHits++;
@@ -752,7 +766,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                if (iTracer) iTracer.exportTrace();
                 throw new Error(`Assert does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
@@ -770,7 +783,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 required.Mem.push({
                     bIsWrite: true,
                     address: addr,
-                    pc: i,
+                    pc: step,
                     fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
                 });
             } else {
@@ -778,7 +791,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 required.Mem.push({
                     bIsWrite: false,
                     address: addr,
-                    pc: i,
+                    pc: step,
                     fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
                 });
                 if (ctx.mem[addr]) {
@@ -873,7 +886,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (l.sWR) {
             pols.sWR[i] = 1n;
 
-            if ((!ctx.lastSWrite)||(ctx.lastSWrite.step != i)) {
+            if ((!ctx.lastSWrite)||(ctx.lastSWrite.step != step)) {
                 ctx.lastSWrite = {};
 
                 const Kin0 = [
@@ -910,7 +923,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
                 ctx.lastSWrite.res = res;
                 ctx.lastSWrite.newRoot = res.newRoot;
-                ctx.lastSWrite.step=i;
+                ctx.lastSWrite.step = step;
             }
 
             required.Storage.push({
@@ -955,18 +968,24 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashK[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
-            for (let i=0; i<size; i++) {
-                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-i -1)*8 ) , maskByte));
-                const bh = ctx.hashK[addr].data[pos + i];
+            for (let k=0; k<size; k++) {
+                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
+                const bh = ctx.hashK[addr].data[pos + k];
                 if (typeof bh === "undefined") {
-                    ctx.hashK[addr].data[pos + i] = bm;
+                    ctx.hashK[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashK do not match ${addr}:${pos+i} is ${bm} and should be ${bh}`)
+                    throw new Error(`HashK do not match ${addr}:${pos+k} is ${bm} and should be ${bh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
                 }
             }
+
+            const paddingA = Scalar.shr(a, size * 8);
+            if (!Scalar.isZero(paddingA)) {
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${step}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+
             if ((typeof ctx.hashK[addr].reads[pos] !== "undefined") &&
                 (ctx.hashK[addr].reads[pos] != size))
             {
@@ -1019,15 +1038,20 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
-            for (let i=0; i<size; i++) {
-                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-i -1)*8 ) , maskByte));
-                const bh = ctx.hashP[addr].data[pos + i];
+            for (let k=0; k<size; k++) {
+                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
+                const bh = ctx.hashP[addr].data[pos + k];
                 if (typeof bh === "undefined") {
-                    ctx.hashP[addr].data[pos + i] = bm;
+                    ctx.hashP[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashP do not match ${addr}:${pos+i} is ${bm} and should be ${bh}`)
+                    throw new Error(`HashP do not match ${addr}:${pos+k} is ${bm} and should be ${bh}`)
                 }
             }
+            const paddingA = Scalar.shr(a, size * 8);
+            if (!Scalar.isZero(paddingA)) {
+                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashP (w=${step}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+
             if ((typeof ctx.hashP[addr].reads[pos] !== "undefined") &&
                 (ctx.hashP[addr].reads[pos] != size))
             {
@@ -1198,17 +1222,19 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.carry[i] = (a < b) ? 1n: 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 2});
             } else if (l.binOpcode == 3) { // SLT
-                let a = Scalar.e(fea2scalar(Fr, ctx.A));
-                if (Scalar.geq(a, twoTo255)) a = Scalar.sub(a, twoTo256);
-                let b = Scalar.e(fea2scalar(Fr, ctx.B));
-                if (Scalar.geq(b, twoTo255)) b = Scalar.sub(b, twoTo256);
+                const a = Scalar.e(fea2scalar(Fr, ctx.A));
+                const b = Scalar.e(fea2scalar(Fr, ctx.B));
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                const expectedC = Scalar.lt(a, b);
+
+                const signedA = Scalar.geq(a, twoTo255) ? Scalar.sub(a, twoTo256): a;
+                const signedB = Scalar.geq(b, twoTo255) ? Scalar.sub(b, twoTo256): b;
+                const expectedC = Scalar.lt(signedA, signedB);
+
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error("SLT does not match");
                 }
                 pols.binOpcode[i] = 3n;
-                pols.carry[i] = (a < b) ? 1n : 0n;
+                pols.carry[i] = (signedA < signedB) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 3});
             } else if (l.binOpcode == 4) { // EQ
                 const a = fea2scalar(Fr, ctx.A);
@@ -1328,7 +1354,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     // SET NEXT REGISTERS
     //////////
 
-        const nexti = (i+1)%N;
+        const nexti = (i+1) % N;
 
         if (l.setA == 1) {
             pols.setA[i]=1n;
@@ -1576,19 +1602,31 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
 
         if (l.arith == 1) {
-            pols.cntArith[nexti] = pols.cntArith[i] + 1n;
+            if (skipCounters){
+                pols.cntArith[nexti] = pols.cntArith[i];
+            } else {
+                pols.cntArith[nexti] = pols.cntArith[i] + 1n;
+            }
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
         }
 
         if (l.bin == 1) {
-            pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
+            if (skipCounters){
+                pols.cntBinary[nexti] = pols.cntBinary[i];
+            } else {
+                pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
+            }
         } else {
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }
 
         if (l.memAlign == 1) {
-            pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
+            if (skipCounters) {
+                pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
+            } else {
+                pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
+            }
         } else {
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
         }
@@ -1680,19 +1718,31 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
 
         if (l.hashKDigest) {
-            pols.cntKeccakF[nexti] = pols.cntKeccakF[i] + BigInt(incCounter);
+            if (skipCounters) {
+                pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
+            } else {
+                pols.cntKeccakF[nexti] = pols.cntKeccakF[i] + BigInt(incCounter);
+            }
         } else {
             pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
         }
 
         if (l.hashPDigest) {
-            pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i] + BigInt(incCounter);
+            if (skipCounters) {
+                pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i];
+            } else {
+                pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i] + BigInt(incCounter);
+            }
         } else {
             pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i];
         }
 
         if (l.sRD || l.sWR || l.hashPDigest) {
-            pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + BigInt(incCounter);
+            if (skipCounters) {
+                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
+            } else {
+                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + BigInt(incCounter);
+            }
         } else {
             pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
         }
@@ -1702,10 +1752,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
     }
 
-    checkFinalState(Fr, pols);
-
-    if (iTracer)
-        iTracer.exportTrace();
+    if (!debug || !config.stepsN || !fastDebugExit) {
+        checkFinalState(Fr, pols);
+    }
 
     for (let i=0; i<ctx.hashK.length; i++) {
         const h = {
@@ -1723,7 +1772,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
         }
         if (p!= ctx.hashK[i].data.length) {
-            throw new Error(`Reading hashK out of limits: ${i}`);
+            throw new Error(`Reading hashK out of limits: ${step}`);
         }
         required.PaddingKK.push(h);
     }
@@ -1744,7 +1793,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
         }
         if (p!= ctx.hashP[i].data.length) {
-            throw new Error(`Reading hashP out of limits: ${i}`);
+            throw new Error(`Reading hashP out of limits: ${step}`);
         }
         required.PaddingPG.push(h);
     }
@@ -2014,7 +2063,7 @@ function eval_getReg(ctx, tag) {
     } else if (tag.regName == "CNT_POSEIDON_G") {
         return Scalar.e(ctx.cntPoseidonG);
     } else if (tag.regName == "STEP") {
-        return Scalar.e(ctx.STEP);
+        return Scalar.e(ctx.step);
     } else if (tag.regName == "HASHPOS") {
         return Scalar.e(ctx.HASHPOS);
     } else {
@@ -2121,6 +2170,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getNumBatch(ctx, tag);
     } else if (tag.funcName == "getTimestamp") {
         return eval_getTimestamp(ctx, tag);
+    } else if (tag.funcName == "getChainId") {
+        return eval_getChainId(ctx, tag);
     } else if (tag.funcName == "getBatchHashData") {
         return eval_getBatchHashData(ctx, tag);
     } else if (tag.funcName == "getGlobalExitRoot") {
@@ -2162,28 +2213,32 @@ function eval_functionCall(ctx, tag) {
         return eval_getBytecode(ctx, tag);
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
-    } else if (tag.funcName == "touchedAddress") {
-        return eval_touchedAddress(ctx, tag)
-    } else if (tag.funcName == "touchedStorageSlots") {
-        return eval_touchedStorageSlots(ctx, tag)
-    } else if (tag.funcName.includes("bitwise")){
+    } else if (tag.funcName == "isWarmedAddress") {
+        return eval_isWarmedAddress(ctx, tag)
+    } else if (tag.funcName == "checkpoint") {
+        return eval_checkpoint(ctx, tag)
+    } else if (tag.funcName == "revert") {
+        return eval_revert(ctx, tag)
+    } else if (tag.funcName == "commit") {
+        return eval_commit(ctx, tag)
+    } else if (tag.funcName == "clearWarmedStorage") {
+        return eval_clearWarmedStorage(ctx, tag)
+    } else if (tag.funcName == "isWarmedStorage") {
+        return eval_isWarmedStorage(ctx, tag)
+    } else if (tag.funcName.includes("bitwise")) {
         return eval_bitwise(ctx, tag);
-    } else if (tag.funcName.includes("comp") && tag.funcName.split('_')[0] === "comp"){
+    } else if (tag.funcName.includes("comp") && tag.funcName.split('_')[0] === "comp") {
         return eval_comp(ctx, tag);
     } else if (tag.funcName == "loadScalar") {
         return eval_loadScalar(ctx, tag);
     } else if (tag.funcName == "log") {
         return eval_log(ctx, tag);
-    } else if (tag.funcName == "resetTouchedAddress"){
-        return eval_resetTouchedAddress(ctx,tag)
-    } else if (tag.funcName == "resetStorageSlots"){
-        return eval_resetStorageSlots(ctx,tag)
-    } else if (tag.funcName == "exp"){
-        return eval_exp(ctx,tag)
+    } else if (tag.funcName == "exp") {
+        return eval_exp(ctx, tag)
     } else if (tag.funcName == "storeLog") {
-        return eval_storeLog(ctx,tag)
+        return eval_storeLog(ctx, tag)
     } else if (tag.funcName.includes("precompiled") && tag.funcName.split('_')[0] === "precompiled") {
-        return eval_precompiled(ctx,tag);
+        return eval_precompiled(ctx, tag);
     } else if (tag.funcName == "break") {
         return eval_breakPoint(ctx, tag);
     } else if (tag.funcName == "memAlignWR_W0") {
@@ -2265,6 +2320,11 @@ function eval_getTimestamp(ctx, tag) {
     return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
+function eval_getChainId(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    return [ctx.Fr.e(ctx.input.chainID), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
 function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
     if(fullTracer) fullTracer.handleEvent(ctx, tag)
@@ -2282,102 +2342,154 @@ function eval_cond(ctx, tag) {
 
 function eval_getBytecode(ctx, tag) {
     if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let hashcontract = evalCommand(ctx,tag.params[0]);
+    let hashcontract = evalCommand(ctx, tag.params[0]);
     hashcontract = "0x" + hashcontract.toString(16).padStart(64, '0');
-    const bytecode = ctx.input.contractsBytecode[hashcontract];
-    const offset = Number(evalCommand(ctx,tag.params[1]));
+    const bytecode = ctx.input.contractsBytecode[hashcontract] || ctx.input.contractsBytecode[hashcontract.slice(2)];
+    const offset = Number(evalCommand(ctx, tag.params[1]));
     let len;
-    if(tag.params[2])
-        len = Number(evalCommand(ctx,tag.params[2]));
+    if (tag.params[2])
+        len = Number(evalCommand(ctx, tag.params[2]));
     else
         len = 1;
     if (bytecode === undefined) return scalar2fea(ctx.Fr, Scalar.e(0));
-    let d = "0x" + bytecode.slice(2+offset*2, 2+offset*2 + len*2);
-    if (d.length == 2) d = d+'0';
+    // TODO: handle "0x"
+    const offset0x = bytecode.startsWith('0x') ? 2 : 0;
+    let d = "0x" + bytecode.slice(offset0x + offset * 2, offset0x + offset * 2 + len * 2);
+    if (d.length == 2) d = d + '0';
     const ret = scalar2fea(ctx.Fr, Scalar.e(d));
     return scalar2fea(ctx.Fr, Scalar.e(d));
 }
+/**
+ * Creates new storage checkpoint for warm slots and addresses
+ */
+function eval_checkpoint(ctx) {
+    ctx.input.accessedStorage.push(new Map())
+    return scalar2fea(ctx.Fr, Scalar.e(0));
+}
 
-function eval_touchedAddress(ctx, tag) {
+/**
+ * Consolidates checkpoint, merge last access storage with beforeLast access storage
+ * @param {Object} ctx current rom context object
+ */
+function eval_commit(ctx) {
+    const storageMap = ctx.input.accessedStorage.pop()
+    if (storageMap) {
+        const mapTarget = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1]
+        if (mapTarget) {
+            storageMap?.forEach((slotSet, addressString) => {
+                const addressExists = mapTarget.get(addressString)
+                if (!addressExists) {
+                    mapTarget.set(addressString, new Set())
+                }
+                const storageSet = mapTarget.get(addressString)
+                slotSet.forEach((value) => {
+                    storageSet.add(value)
+                })
+            })
+        }
+    }
+    return scalar2fea(ctx.Fr, Scalar.e(0));
+}
+
+/**
+ * Revert accessedStorage to last checkpoint
+ * @param {Object} ctx current rom context object
+ */
+function eval_revert(ctx) {
+    ctx.input.accessedStorage.pop()
+    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
+/**
+ * Checks if the address is warm or cold. In case of cold, the address is added as warm
+ * @param {Object} ctx current rom context object
+ * @param {Object} tag tag inputs in rom function
+ * @returns {FEA} returns 0 if address is warm, 1 if cold
+ */
+function eval_isWarmedAddress(ctx, tag) {
     if (tag.params.length != 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let addr = evalCommand(ctx,tag.params[0]);
-
+    const address = evalCommand(ctx, tag.params[0]);
+    const addr = address.toString(16)
     // if address is precompiled smart contract considered warm access
-    if (Scalar.gt(addr, 0) && Scalar.lt(addr, 10)){
+    if (Scalar.gt(address, 0) && Scalar.lt(address, 10)) {
         return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
-    // if address in touchedAddress return 0
-
-    if(ctx.input.touchedAddress && ctx.input.touchedAddress.filter(x => x == addr).length > 0) {
-        return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-    } else {
-    //if address not in touchedAddress, return 1
-        if(ctx.input.touchedAddress) {
-            ctx.input.touchedAddress.push(addr);
-        } else {
-            ctx.input.touchedAddress = [addr];
+    // if address is warm return 0
+    for (let i = ctx.input.accessedStorage.length - 1; i >= 0; i--) {
+        const currentMap = ctx.input.accessedStorage[i]
+        if (currentMap.has(addr)) {
+            return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
         }
-        return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
+    //if address is not warm, return 1 and add it as warm. We add an emtpy set because is a warmed address (not warmed slot)
+    const storageSet = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].get(addr)
+    if (!storageSet) {
+        const emptyStorage = new Set()
+        ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].set(addr, emptyStorage)
+    }
+    return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_resetTouchedAddress(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-     ctx.input.touchedAddress = [];
-     return scalar2fea(ctx.Fr, Scalar.e(0));
-}
-
-function eval_touchedStorageSlots(ctx, tag) {
+/**
+ * Checks if the storage slot of the account is warm or cold. In case of cold, the slot is added as warm
+ * @param {Object} ctx current rom context object
+ * @param {Object} tag tag inputs in rom function
+ * @returns {FEA} returns 0 if storage solt is warm, 1 if cold
+ */
+function eval_isWarmedStorage(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let addr = evalCommand(ctx,tag.params[0]);
-    let key = evalCommand(ctx,tag.params[1])
-
-    // if address in touchedStorageSlots return 0
-    if(ctx.input.touchedStorageSlots && ctx.input.touchedStorageSlots.filter(x => (x.addr == addr && x.key == key)).length > 0) {
-        return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-    } else {
-    //if addres not in touchedStorageSlots, return 1
-        if(ctx.input.touchedStorageSlots) {
-            ctx.input.touchedStorageSlots.push({addr, key});
-        } else {
-            ctx.input.touchedStorageSlots = [{addr, key}];
+    let addr = evalCommand(ctx, tag.params[0]).toString(16);
+    let key = evalCommand(ctx, tag.params[1])
+    // if address in acessStorage return 0
+    for (let i = ctx.input.accessedStorage.length - 1; i >= 0; i--) {
+        const currentMap = ctx.input.accessedStorage[i]
+        if (currentMap.has(addr) && currentMap.get(addr).has(key)) {
+            return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
         }
-        return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
+    // if address in acessStorage return 1 and add it as warm
+    let storageSet = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].get(addr)
+    if (!storageSet) {
+        storageSet = new Set()
+        ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].set(addr, storageSet)
+    }
+    storageSet.add(key)
+    return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_resetStorageSlots(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-     ctx.input.touchedStorageSlots = [];
-     return scalar2fea(ctx.Fr, Scalar.e(0));
+/**
+ * Clears wamred storage array, ready to process a new tx
+ */
+function eval_clearWarmedStorage(ctx) {
+    ctx.input.accessedStorage = [new Map()]
+    return scalar2fea(ctx.Fr, Scalar.e(0));
 }
-
 
 function eval_exp(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
-    const a = evalCommand(ctx,tag.params[0]);
-    const b = evalCommand(ctx,tag.params[1])
-    return scalar2fea(ctx.Fr, Scalar.exp(a,b));;
+    const a = evalCommand(ctx, tag.params[0]);
+    const b = evalCommand(ctx, tag.params[1])
+    return scalar2fea(ctx.Fr, Scalar.exp(a, b));;
 }
 
-function eval_bitwise(ctx, tag){
+function eval_bitwise(ctx, tag) {
     const func = tag.funcName.split('_')[1];
-    const a = evalCommand(ctx,tag.params[0]);
+    const a = evalCommand(ctx, tag.params[0]);
     let b;
 
-    switch (func){
+    switch (func) {
         case 'and':
             checkParams(ctx, tag, 2);
-            b = evalCommand(ctx,tag.params[1]);
+            b = evalCommand(ctx, tag.params[1]);
             return Scalar.band(a, b);
         case 'or':
             checkParams(ctx, tag, 2);
-            b = evalCommand(ctx,tag.params[1]);
+            b = evalCommand(ctx, tag.params[1]);
             return Scalar.bor(a, b);
         case 'xor':
             checkParams(ctx, tag, 2);
-            b = evalCommand(ctx,tag.params[1]);
+            b = evalCommand(ctx, tag.params[1]);
             return Scalar.bxor(a, b);
         case 'not':
             checkParams(ctx, tag, 1);
@@ -2388,7 +2500,7 @@ function eval_bitwise(ctx, tag){
 }
 
 function eval_beforeLast(ctx) {
-    if (ctx.step >= ctx.N-2) {
+    if (ctx.step >= ctx.stepsN-2) {
         return [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
     } else {
         return [ctx.Fr.negone, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
@@ -2450,8 +2562,7 @@ function eval_log(ctx, tag) {
     } else {
         let scalarLog;
         let hexLog;
-
-        if (tag.params[0].regName !== "HASHPOS"){
+        if (tag.params[0].regName !== "HASHPOS" && tag.params[0].regName !== "GAS"){
             scalarLog = fea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;
         } else {
@@ -2632,6 +2743,7 @@ function preprocessTxs(ctx) {
         newStateRoot,
         globalExitRoot,
         timestamp,
+        chainID
     } = ctx.input;
 
     ctx.input.batchHashData = calculateBatchHashData(
@@ -2647,11 +2759,11 @@ function preprocessTxs(ctx) {
             newLocalExitRoot,
             ctx.input.batchHashData,
             numBatch,
-            timestamp
+            timestamp,
+            chainID
     );
 
-    ctx.input.touchedAddress = [];
-    ctx.input.touchedStorageSlots = [];
+    ctx.input.accessedStorage = [new Map()]
 }
 
 function printRegs(Fr, ctx) {
