@@ -212,7 +212,7 @@ namespace Main(%N);
 
     /////// isNeg
 
-    JMPN {isNeg*2**32 + op0} in Byte4.resultReady {Byte4.out};
+    JMPN {isNeg*2**32 + op0} in Byte4.out;
 
     /////// MAXMEM intermediary vals New State
 

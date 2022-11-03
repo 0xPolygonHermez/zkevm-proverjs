@@ -771,7 +771,11 @@ async optimizeSecondPaddingKKBit()
 }
 
 async run(){
-    await this.optimizeByte4();
+
+    // optimize Byte4 could not be done because if enter in jmp-loop (1 jmp = 2 steps/byte4). Jumping all time in same address,
+    // fill all evaluations with repetead addresses.
+    // Output of short program: Error: Too many byte4 (p:129062 N:65536)
+    // await this.optimizeByte4();
     await this.optimizeStorageHashPDigest();
 
     await this.optimizeHashP();

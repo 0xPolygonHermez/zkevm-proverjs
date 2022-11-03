@@ -4,7 +4,6 @@ module.exports.buildConstants = async function (pols) {
     for ( let i=0; i<N; i++) pols.SET[i] = (i % 2 == 0) ? 1n : 0n;
 }
 
-
 module.exports.execute = async function (pols, input) {
 
     const N = pols.freeIN.length;
@@ -15,11 +14,9 @@ module.exports.execute = async function (pols, input) {
         const num = Number(n);
         pols.freeIN[p] = BigInt(num >>> 16);
         pols.out[p] = BigInt(last);
-        pols.resultReady[p] = 0n;
         p++;
         pols.freeIN[p] = BigInt(num & 0xFFFF);
         pols.out[p] = BigInt(num >>> 16);
-        pols.resultReady[p] = 1n;
         p++;
         last = num;
     });
