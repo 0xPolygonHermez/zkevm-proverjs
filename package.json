@@ -52,6 +52,7 @@
     "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR; fi",
     "prec12b_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t BN128 -p $BDIR/zkevm.c12b.pil -s $BDIR/zkevm.c12b.starkstruct.json; else cp src/zkevm.c12b.starkstruct.json $BDIR; fi",
+    "buildarith": "node tools/arith/parse tools/arith/arith.ejs.pil -o pil/arith.pil && node tools/arith/arith_eq_gen tools/arith/arith.ejs.pil -o src/sm/sm_arith/sm_arith_##.js",
     "buildsetup:basic": "npm run buildsetup --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildall:basic": "npm run buildall --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildproof:basic": "npm run buildproof --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
