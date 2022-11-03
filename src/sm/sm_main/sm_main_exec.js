@@ -1933,6 +1933,8 @@ function assertOutputs(ctx){
     if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
         throw new Error("Assert Error: newNumBatch does not match");
     }
+
+    console.log("Assert outputs run succesfully");
 }
 
 
