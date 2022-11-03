@@ -119,6 +119,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         // evaluate commands "after" before start new line, but when new values of registers are ready.
         if (pendingCmds) {
             evalCommands(ctx, pendingCmds);
+            pendingCmds = false;
         }
 
         const l = rom.program[ ctx.zkPC ];
@@ -1696,11 +1697,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
         }
 
-        pendingCmds = l.cmdAfter;
-    }
-
-    if (pendingCmds) {
-        evalCommands(ctx, pendingCmds);
+        if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
+            pendingCmds = l.cmdAfter;
+        }
     }
 
     checkFinalState(Fr, pols);
