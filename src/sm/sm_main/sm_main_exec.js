@@ -14,6 +14,7 @@ const testTools = require("./test_tools");
 
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
+const { polMulAxi } = require("pil-stark/src/polutils");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -26,7 +27,6 @@ let fullTracer;
 module.exports = async function execute(pols, input, rom, config = {}) {
 
     const required = {
-        Byte4: {},
         Arith: [],
         Binary: [],
         PaddingKK: [],
@@ -1627,40 +1627,52 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.JMPN) {
             const o = fe2n(Fr, op0, ctx);
+            let jmpnCondValue = o;
             if (o<0) {
                 pols.isNeg[i]=1n;
+                jmpnCondValue += 2n**32n;
                 pols.zkPC[nexti] = BigInt(addr);
-                required.Byte4[0x100000000 + o] = true;
             } else {
                 pols.isNeg[i]=0n;
                 pols.zkPC[nexti] = pols.zkPC[i] + 1n;
-                required.Byte4[o] = true;
+            }
+            pols.lJmpnCondValue[i] = jmpnCondValue & 0x7FFFFF;
+            jmpnCondValue = jmpnCondValue >> 23;
+            for (let index = 0; index < 9; ++index) {
+                pols.hJmpnCondValueBit[index] = jmpnCondValue & 0x01n;
+                jmpnCondValue = jmpnCondValue >> 1;
             }
             pols.JMP[i] = 0n;
             pols.JMPN[i] = 1n;
             pols.JMPC[i] = 0n;
-        } else if (l.JMPC) {
-            if (pols.carry[i]) {
-                pols.zkPC[nexti] = BigInt(addr);
-            } else {
-                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
-            }
-            pols.isNeg[i]=0n;
-            pols.JMP[i] = 0n;
-            pols.JMPN[i] = 0n;
-            pols.JMPC[i] = 1n;
-        } else if (l.JMP) {
-            pols.isNeg[i]=0n;
-            pols.zkPC[nexti] = BigInt(addr);
-            pols.JMP[i] = 1n;
-            pols.JMPN[i] = 0n;
-            pols.JMPC[i] = 0n;
         } else {
-            pols.isNeg[i]=0n;
-            pols.zkPC[nexti] = pols.zkPC[i] + 1n;
-            pols.JMP[i] = 0n;
-            pols.JMPN[i] = 0n;
-            pols.JMPC[i] = 0n;
+            pols.lJmpnCondValue[i] = 0n;
+            for (let index = 0; index < 9; ++index) {
+                pols.hJmpnCondValueBit[index] = 0n;
+            }
+            if (l.JMPC) {
+                if (pols.carry[i]) {
+                    pols.zkPC[nexti] = BigInt(addr);
+                } else {
+                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                }
+                pols.isNeg[i]=0n;
+                pols.JMP[i] = 0n;
+                pols.JMPN[i] = 0n;
+                pols.JMPC[i] = 1n;
+            } else if (l.JMP) {
+                pols.isNeg[i]=0n;
+                pols.zkPC[nexti] = BigInt(addr);
+                pols.JMP[i] = 1n;
+                pols.JMPN[i] = 0n;
+                pols.JMPC[i] = 0n;
+            } else {
+                pols.isNeg[i]=0n;
+                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                pols.JMP[i] = 0n;
+                pols.JMPN[i] = 0n;
+                pols.JMPC[i] = 0n;
+            }
         }
 
         let maxMemCalculated;

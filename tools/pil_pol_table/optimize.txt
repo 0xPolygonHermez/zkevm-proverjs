@@ -1,0 +1,3 @@
+Byte4 Before   pol_ids:510  [cm1_2ns:637 cm2_2ns:210 cm3_2ns:138 q_2ns:758 tot:1743]
+Byte4 After    pol_ids:519  [cm1_2ns:645 cm2_2ns:208 cm3_2ns:135 q_2ns:752 tot:1740]
+Byte4 Diff     pol_ids: +9  [cm1_2ns:+ 8 cm2_2ns:- 2 cm3_2ns:- 3 q_2ns:- 6 tot:1740]

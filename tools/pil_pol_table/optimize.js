@@ -59,26 +59,6 @@ async optimize(title, codeBase, codeBefore, codeAfter)
     this.total.q_2ns += (after.q_2ns - before.q_2ns);
 }
 
-async optimizeByte4()
-{
-    const codeBase = `namespace Global(2**16);
-        pol constant L1;
-        pol commit JMPN;
-        pol commit isNeg;
-        pol commit op0;
-        pol commit Byte4_out;
-    `;
-    const codeBefore = `
-        JMPN {isNeg*2**32 + op0} in Byte4_out;`
-
-    const codeAfter = `
-        pol commit Byte4_resultReady;
-        JMPN*(isNeg*2**32 + op0) is Byte4_resultReady * Byte4_out;
-    `;
-
-    await this.optimize('Byte4', codeBase, codeBefore, codeAfter);
-}
-
 async optimizeStorageHashPDigest()
 {
     const codeBase = `namespace Global(2**16);
@@ -772,10 +752,6 @@ async optimizeSecondPaddingKKBit()
 
 async run(){
 
-    // optimize Byte4 could not be done because if enter in jmp-loop (1 jmp = 2 steps/byte4). Jumping all time in same address,
-    // fill all evaluations with repetead addresses.
-    // Output of short program: Error: Too many byte4 (p:129062 N:65536)
-    // await this.optimizeByte4();
     await this.optimizeStorageHashPDigest();
 
     await this.optimizeHashP();

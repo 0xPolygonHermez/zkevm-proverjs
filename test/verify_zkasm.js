@@ -10,7 +10,6 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 
 const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
-const smByte4 = require("../src/sm/sm_byte4.js");
 const smGlobal = require("../src/sm/sm_global.js");
 const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("../src/sm/sm_main/sm_main.js");
@@ -63,10 +62,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         console.log("Const Rom...");
         await smRom.buildConstants(constPols.Rom, rom);
     }
-    if (constPols.Byte4) {
-        console.log("Const Byte4...");
-        await smByte4.buildConstants(constPols.Byte4);
-    }
     if (constPols.PaddingKK) {
         console.log("Const PaddingKK...");
         await smPaddingKK.buildConstants(constPols.PaddingKK);
@@ -117,11 +112,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     }
 
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
-
-    if (cmPols.Byte4) {
-        console.log("Exec Byte4...");
-        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
-    }
 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
     const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
