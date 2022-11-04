@@ -329,8 +329,8 @@ namespace Main(%N);
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7
-    } in
-    Binary.RESET {
+    } is
+    Binary.latchValidRange {
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
     };
 
@@ -455,8 +455,8 @@ namespace Main(%N);
         B0, B1, B2, B3, B4, B5, B6, B7,
         op0, op1, op2, op3, op4, op5, op6, op7,
         carry
-    } in
-    Binary.RESET {
+    } is
+    Binary.latchBinOp {
         Binary.lOpcode,
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
         Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
@@ -464,9 +464,9 @@ namespace Main(%N);
         Binary.lCout
     };
 
-    cntBinary' = cntBinary*(1-Global.L1) + bin;
-
-
+    ////// TODO REVIEW => need increment when store use (ZKASM must check bin + sWR + hashPDigest == [0,1])
+    ////// update executor cntBinary calculation
+    cntBinary' = cntBinary*(1-Global.L1) + bin + sWR + hashPDigest;
 
 /////////
 // HASHK Plookpups
