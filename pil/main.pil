@@ -212,7 +212,7 @@ namespace Main(%N);
 
     /////// isNeg
 
-    JMPN {isNeg*2**32 + op0} in Byte4.out;
+    JMPN*(isNeg*2**32 + op0) in Byte4.out;
 
     /////// MAXMEM intermediary vals New State
 
@@ -330,7 +330,7 @@ namespace Main(%N);
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7
     } in
-    Binary.latchValidRange' {
+    Binary.RESET {
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
     };
 
@@ -384,8 +384,8 @@ namespace Main(%N);
         arithEq0*D7 + arithEq1*D7 + arithEq2*B7,
 
         arithEq3 * E0, arithEq3 * E1, arithEq3 * E2, arithEq3 * E3, arithEq3 * E4, arithEq3 * E5, arithEq3 * E6, arithEq3 * E7,
-        op0, op1, op2, op3, op4, op5, op6, op7 } is
-    Arith.resultReady {
+        op0, op1, op2, op3, op4, op5, op6, op7 } in
+    {
         Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
 
         Arith.x1[0] + Arith.x1[1]*2**16,
@@ -455,8 +455,8 @@ namespace Main(%N);
         B0, B1, B2, B3, B4, B5, B6, B7,
         op0, op1, op2, op3, op4, op5, op6, op7,
         carry
-    } is
-    Binary.latchBinOp' {
+    } in
+    Binary.RESET {
         Binary.lOpcode,
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
         Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
@@ -465,6 +465,8 @@ namespace Main(%N);
     };
 
     cntBinary' = cntBinary*(1-Global.L1) + bin;
+
+
 
 /////////
 // HASHK Plookpups
@@ -475,7 +477,7 @@ namespace Main(%N);
         D0,
         op0, op1, op2, op3,
         op4, op5, op6, op7
-    } is
+    } in
     PaddingKK.crLatch * PaddingKK.crValid {
         PaddingKK.addr,
         PaddingKK.len - PaddingKK.rem - PaddingKK.crLen + 1,
@@ -487,7 +489,7 @@ namespace Main(%N);
     hashKLen {
         addr,
         op0
-    } is
+    } in
     PaddingKK.lastHashLatch {
         PaddingKK.addr,
         PaddingKK.len
@@ -498,7 +500,7 @@ namespace Main(%N);
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         incCounter
-    } is
+    } in
     PaddingKK.lastHashLatch {
         PaddingKK.addr,
         PaddingKK.hash0, PaddingKK.hash1, PaddingKK.hash2, PaddingKK.hash3,
@@ -582,8 +584,8 @@ namespace Main(%N);
         C0, C1, C2, C3, C4, C5, C6, C7,
         0, 0, 0, 0,
         sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3]
-    } is
-    PoseidonG.latchMain1 {
+    } in
+    PoseidonG.LATCH {
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
@@ -602,12 +604,12 @@ namespace Main(%N);
         PoseidonG.hash3
     };
 
-    (sRD + sWR) {
+    sRD + sWR {
         A0, A1, A2, A3, A4, A5, B0, B1,
         sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3],
         sKey[0], sKey[1], sKey[2], sKey[3]
-    } is
-    PoseidonG.latchMain2 {
+    } in
+    PoseidonG.LATCH {
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
@@ -632,7 +634,7 @@ namespace Main(%N);
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         incCounter
-    } is
+    } in
     Storage.iLatchGet {
         Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
         Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
@@ -649,7 +651,7 @@ namespace Main(%N);
         D4, D5, D6, D7,
         op0 + 2**32*op1, op2 + 2**32*op3, op4 + 2**32*op5, op6 + 2**32*op7,
         incCounter
-    } is
+    } in
     Storage.iLatchSet {
         Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
         Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
@@ -678,8 +680,8 @@ namespace Main(%N);
         (memAlignWR + memAlignWR8) * D4, (memAlignWR + memAlignWR8)*D5, (memAlignWR + memAlignWR8)*D6, (memAlignWR + memAlignWR8)*D7,
         memAlignWR * E0, memAlignWR*E1, memAlignWR*E2, memAlignWR*E3,
         memAlignWR * E4, memAlignWR*E5, memAlignWR*E6, memAlignWR*E7
-    } is
-    MemAlign.resultReady {
+    } in
+    MemAlign.RESET {
         MemAlign.wr256,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],

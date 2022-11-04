@@ -11,14 +11,13 @@ let OPCODE_SIZE = 2 ** 2
     ==================
     Build Contants
     ==================
-    FACTOR0_7, P_A, P_B, P_C, P_CIN, P_COUT, P_OPCODE, RESET, LAST
+    FACTOR0_7, P_A, P_B, P_C, P_CIN, P_COUT, P_OPCODE, RESET
 */
 module.exports.buildConstants = async function (pols) {
 
     const N = pols.RESET.length;
     buildFACTORS(pols.FACTOR, N);
     buildRESET(pols.RESET, N);
-    buildLAST(pols.LAST, N);
 
     buildP_A(pols.P_A, REG_SIZE, N);
     buildP_B(pols.P_B, REG_SIZE, N);
@@ -70,21 +69,6 @@ function buildFACTORS(FACTORS, N) {
 function buildRESET(pol, N) {
     for (let i = 0; i < N; i++) {
         pol[i] = BigInt(i % (REGISTERS_NUM * BYTES_PER_REGISTER) == 0);
-    }
-}
-
-/*  =========
-    LAST
-    =========
-   |<-- LATCH SIZE -->||<-- LATCH SIZE -->|
-    0 0 0 ...... 0 0 1  0 0 0 ...... 0 0 1 ....
-    0 0 0 ...... 0 0 1  0 0 0 ...... 0 0 1 ....
-    ...
-    0 0 0 ...... 0 0 1  0 0 0 ...... 0 0 1 ....
-*/
-function buildLAST(pol, N) {
-    for (let i = 0; i < N; i++) {
-        pol[i] = BigInt(i % LATCH_SIZE == (LATCH_SIZE - 1));
     }
 }
 
@@ -332,6 +316,7 @@ module.exports.execute = async function (pols, input) {
             pols[`b${j}`][i] = 0n;
             pols[`c${j}`][i] = 0n;
         }
+        pols.last[i] = 0n;
         pols.opcode[i] = 0n;
         pols.freeInA[i] = 0n;
         pols.freeInB[i] = 0n;
@@ -351,13 +336,16 @@ module.exports.execute = async function (pols, input) {
     for (var i = 0; i < input.length; i++) {
         if (i % 10000 === 0) console.log(`Computing binary pols ${i}/${input.length}`);
         for (var j = 0; j < LATCH_SIZE; j++) {
-            const last = (j == LATCH_SIZE - 1) ? 1n : 0n;
             pols.opcode[i * LATCH_SIZE + j] = BigInt("0x" + input[i].opcode)
             pols.freeInA[i * LATCH_SIZE + j] = BigInt(input[i]["a_bytes"][j])
             pols.freeInB[i * LATCH_SIZE + j] = BigInt(input[i]["b_bytes"][j])
             pols.freeInC[i * LATCH_SIZE + j] = BigInt(input[i]["c_bytes"][j])
-            pols.latchBinOp[i * LATCH_SIZE + j] = last && input[i].latchBinOp;
-            pols.latchRangeCheck[i * LATCH_SIZE + j] = last && input[i].latchRangeCheck;
+
+            if (j == LATCH_SIZE - 1) {
+                pols.last[i * LATCH_SIZE + j] = BigInt(1n)
+            } else {
+                pols.last[i * LATCH_SIZE + j] = BigInt(0n)
+            }
 
             let cout;
             switch (BigInt("0x" + input[i].opcode)) {
@@ -387,7 +375,7 @@ module.exports.execute = async function (pols, input) {
                         cout = 0n;
                     }
                     pols.cOut[i * LATCH_SIZE + j] = cout;
-                    if (pols.last == 1n) {
+                    if (pols.last[i * LATCH_SIZE + j] == 1n) {
                         pols.useCarry[i * LATCH_SIZE + j] = 1n
                         pols.freeInC[i * LATCH_SIZE + j] = BigInt(input[i]["c_bytes"][0])
                     } else {
@@ -396,11 +384,11 @@ module.exports.execute = async function (pols, input) {
                     break;
                 // SLT    (OPCODE = 3)
                 case 3n:
-                    pols.useCarry[i * LATCH_SIZE + j] = last ? 1n : 0n;
+                    pols.last[i * LATCH_SIZE + j] ? pols.useCarry[i * LATCH_SIZE + j] = 1n : pols.useCarry[i * LATCH_SIZE + j] = 0n;
                     if (RESET[i * LATCH_SIZE + j]) {
                         pols.freeInC[i * LATCH_SIZE + j] = BigInt(input[i]["c_bytes"][LATCH_SIZE - 1]);  // Only change the freeInC when reset or Last
                     }
-                    if (last) {
+                    if (pols.last[i * LATCH_SIZE + j]) {
                         let sig_a = input[i]["a_bytes"][j] >> 7n;
                         let sig_b = input[i]["b_bytes"][j] >> 7n;
                         // A Negative ; B Positive
@@ -445,7 +433,7 @@ module.exports.execute = async function (pols, input) {
                     }
                     pols.cOut[i * LATCH_SIZE + j] = cout;
 
-                    if (last == 1n) {
+                    if (pols.last[i * LATCH_SIZE + j] == 1n) {
                         pols.useCarry[i * LATCH_SIZE + j] = 1n
                         pols.freeInC[i * LATCH_SIZE + j] = BigInt(input[i]["c_bytes"][0]) // Only change the freeInC when reset or Last
                     } else {
@@ -477,7 +465,7 @@ module.exports.execute = async function (pols, input) {
             for (let k = 1; k < REGISTERS_NUM; k++) {
                 pols[`a${k}`][(i * LATCH_SIZE + j + 1) % N] = pols[`a${k}`][(i * LATCH_SIZE + j) % N] * (1n - RESET[(i * LATCH_SIZE + j) % N]) + pols.freeInA[(i * LATCH_SIZE + j) % N] * FACTOR[k][(i * LATCH_SIZE + j) % N];
                 pols[`b${k}`][(i * LATCH_SIZE + j + 1) % N] = pols[`b${k}`][(i * LATCH_SIZE + j) % N] * (1n - RESET[(i * LATCH_SIZE + j) % N]) + pols.freeInB[(i * LATCH_SIZE + j) % N] * FACTOR[k][(i * LATCH_SIZE + j) % N];
-                if (last && pols.useCarry[i * LATCH_SIZE + j]) {
+                if (pols.last[i * LATCH_SIZE + j] && pols.useCarry[i * LATCH_SIZE + j]) {
                     pols[`c${k}`][(i * LATCH_SIZE + j + 1) % N] = 0n
                 } else {
                     pols[`c${k}`][(i * LATCH_SIZE + j + 1) % N] = pols[`c${k}`][(i * LATCH_SIZE + j) % N] * (1n - RESET[(i * LATCH_SIZE + j) % N]) + pols.freeInC[(i * LATCH_SIZE + j) % N] * FACTOR[k][(i * LATCH_SIZE + j) % N];

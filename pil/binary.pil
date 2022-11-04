@@ -44,7 +44,6 @@ namespace Binary(%N);
 
     pol constant RESET;
     pol constant FACTOR[8];
-    pol constant LAST;
 
     // ############################################################
     // COMMIT POLINOMIALS
@@ -66,19 +65,15 @@ namespace Binary(%N);
     pol commit opcode;
     pol commit cIn, cOut;
     pol commit lCout,lOpcode;
+    pol commit last;
     pol commit useCarry;
-    pol commit latchBinOp;
-    pol commit latchValidRange;
-
-    (1 - RESET) * latchBinOp' = 0;
-    (1 - RESET) * latchValidRange' = 0;
 
     opcode' * ( 1 - RESET' ) = opcode * ( 1 - RESET' );
     cIn' * ( 1 - RESET' ) = cOut * ( 1 - RESET' );
     lCout' = cOut;
     lOpcode' = opcode;
 
-    {LAST, opcode, freeInA, freeInB , cIn, useCarry ,freeInC, cOut} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    {last, opcode, freeInA, freeInB , cIn, useCarry ,freeInC, cOut} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
 
     a0' = a0 * (1 - RESET) + freeInA * FACTOR[0];
     a1' = a1 * (1 - RESET) + freeInA * FACTOR[1];
