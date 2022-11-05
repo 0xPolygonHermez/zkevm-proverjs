@@ -89,10 +89,8 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.JMPN[i] = rom.program[i].JMPN ? 1n : 0n;
 
         pols.incStack[i] = rom.program[i].incStack ? BigInt(rom.program[i].incStack) : 0n;
-        pols.incCode[i] = rom.program[i].incCode ? BigInt(rom.program[i].incCode) : 0n;
 
         pols.isStack[i] = rom.program[i].isStack ? 1n : 0n;
-        pols.isCode[i] = rom.program[i].isCode ? 1n : 0n;
         pols.isMem[i] = rom.program[i].isMem ? 1n : 0n;
         pols.ind[i] = rom.program[i].ind ? 1n : 0n;
         pols.indRR[i] = rom.program[i].indRR ? 1n : 0n;
@@ -172,10 +170,8 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.JMPN[i] = F.zero;
 
         pols.incStack[i] = F.zero;
-        pols.incCode[i] = F.zero;
 
         pols.isStack[i] = F.zero;
-        pols.isCode[i] = F.zero;
         pols.isMem[i] = F.zero;
         pols.ind[i] = F.zero;
         pols.indRR[i] = F.zero;

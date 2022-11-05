@@ -53,9 +53,7 @@ namespace Main(%N);
     pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, JMP, JMPN, JMPC, setRR, setHASHPOS;
     pol commit offset;
     pol commit incStack;
-    pol commit incCode;
     pol commit isStack;
-    pol commit isCode;
     pol commit isMem;
     pol commit ind, indRR;
     pol commit useCTX;
@@ -196,18 +194,17 @@ namespace Main(%N);
 
     /*
 
-           [CTX]   [1bit isStack]       [1bit isCode]    [32bits position]
+        ctxBase = CTX * 0x040000   ctxSize = 256K addresses * 32 bytes (256 bits) = 8MiB
 
-        isCode  isStack isMem
-        0       0       0    Context specific variables
-        0       1       0    EVM Stack
-        1       0       0    EVM Code
-        0       0       1    EVM Memory
+        Memory Region                    Size   isMem  isStack   Content
+        ctxBase + [0x000000 - 0x00FFFF]   2MiB      0        0   Context specific variables
+        ctxBase + [0x010000 - 0x000000]   2MiB      0        1   EVM Stack
+        ctxBase + [0x020000 - 0x03FFFF]   4MiB      1        0   EVM Memory
 
     */
 
     pol addrRel = ind*E0 + indRR*RR + offset;
-    pol addr = useCTX*CTX*2**18 + isStack*2**17 + isStack*SP + isCode*2**16 + isMem*(2**17+2**16) + addrRel;
+    pol addr = useCTX*CTX*2**18 + isStack*2**16 + isStack*SP + isMem*2**17+ addrRel;
     pol maxMemRel = isMem * addrRel;
 
     /////// isNeg
@@ -283,7 +280,7 @@ namespace Main(%N);
 
     CTX' = setCTX * (op0 - CTX) + CTX;
     SP' = setSP * (op0 - (SP +incStack)) + (SP +incStack);
-    PC' = setPC * (op0 - (PC +incCode)) + (PC +incCode);
+    PC' = setPC * (op0 - PC) + PC;
     RR' = setRR * (op0 - RR) + RR;
     GAS' = setGAS * (op0 - GAS) + GAS;
 
@@ -342,7 +339,7 @@ namespace Main(%N);
     inA, inB, inC, inROTL_C, inD, inE, inSR, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inFREE, inRR, inHASHPOS,
     setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setRR, setHASHPOS,
     JMP, JMPN, JMPC,
-    isStack, isCode, isMem, incStack, incCode, useCTX, ind, indRR,
+    isStack, isMem, incStack, useCTX, ind, indRR,
     mOp, mWR, sWR, sRD, arith, arithEq0, arithEq1, arithEq2, arithEq3, hashK, hashKLen, hashKDigest, hashP, hashPLen, hashPDigest,
     bin, binOpcode, assert, memAlign, memAlignWR, memAlignWR8,
     zkPC} in
@@ -350,7 +347,7 @@ namespace Main(%N);
     Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inSTEP, Rom.inFREE, Rom.inRR, Rom.inHASHPOS,
     Rom.setA, Rom.setB, Rom.setC, Rom.setD, Rom.setE, Rom.setSR, Rom.setCTX, Rom.setSP, Rom.setPC, Rom.setGAS, Rom.setMAXMEM, Rom.setRR, Rom.setHASHPOS,
     Rom.JMP, Rom.JMPN, Rom.JMPC,
-    Rom.isStack, Rom.isCode, Rom.isMem, Rom.incStack, Rom.incCode, Rom.useCTX, Rom.ind, Rom.indRR,
+    Rom.isStack, Rom.isMem, Rom.incStack, Rom.useCTX, Rom.ind, Rom.indRR,
     Rom.mOp, Rom.mWR, Rom.sWR, Rom.sRD, Rom.arith, Rom.arithEq0, Rom.arithEq1, Rom.arithEq2, Rom.arithEq3, Rom.hashK, Rom.hashKLen, Rom.hashKDigest, Rom.hashP, Rom.hashPLen, Rom.hashPDigest,
     Rom.bin, Rom.binOpcode, Rom.assert, Rom.memAlign, Rom.memAlignWR, Rom.memAlignWR8,
     Rom.line};

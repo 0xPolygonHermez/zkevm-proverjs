@@ -45,6 +45,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const flagTracer = config && config.tracer;
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
+    const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
@@ -430,8 +431,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 addrRel += fe2n(Fr, ctx.RR, ctx);
             }
             if (l.offset) addrRel += l.offset;
-            if (addrRel >= 0x10000) throw new Error(`Address too big: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-            if (addrRel <0 ) throw new Error(`Address can not be negative: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            if (!skipAddrRelControl) {
+                if (addrRel >= 0x20000 || (!l.isMem && addrRel >= 0x10000)) throw new Error(`Address too big: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                if (addrRel <0 ) throw new Error(`Address can not be negative: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
             addr = addrRel;
         }
         if (l.useCTX==1) {
@@ -440,29 +443,18 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         } else {
             pols.useCTX[i] = 0n;
         }
-        if (l.isCode==1) {
-            addr += 0x10000;
-            pols.isCode[i] = 1n;
-        } else {
-            pols.isCode[i] = 0n;
-        }
         if (l.isStack==1) {
-            addr += 0x20000;
+            addr += 0x10000;
             addr += Number(ctx.SP);
             pols.isStack[i] = 1n;
         } else {
             pols.isStack[i] = 0n;
         }
         if (l.isMem==1) {
-            addr += 0x30000;
+            addr += 0x20000;
             pols.isMem[i] = 1n;
         } else {
             pols.isMem[i] = 0n;
-        }
-        if (l.incCode) {
-            pols.incCode[i] = BigInt(l.incCode);
-        } else {
-            pols.incCode[i] = 0n;
         }
         if (l.incStack) {
             pols.incStack[i] = BigInt(l.incStack);
@@ -1583,7 +1575,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.PC[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setPC[i]=0n;
-            pols.PC[nexti] = pols.PC[i] + BigInt((l.incCode || 0));
+            pols.PC[nexti] = pols.PC[i];
         }
 
         if (l.setRR == 1) {

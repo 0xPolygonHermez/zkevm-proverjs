@@ -49,7 +49,7 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     console.log('Pil N = 2 ** '+Math.log2(polDeg));
 
     const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
-    const rom = await zkasm.compile(path.join(__dirname, "zkasm", zkasmFile));
+    const rom = await zkasm.compile(zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile));
 
     if (constPols.Global) {
         console.log("Const Global...");
