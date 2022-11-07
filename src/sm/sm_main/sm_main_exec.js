@@ -53,6 +53,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     const skipAsserts = config.unsigned || config.execute;
+    const skipCounters = config.counters;
 
     const poseidon = await buildPoseidon();
     const Fr = poseidon.F;
@@ -81,9 +82,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         stepsN
     }
 
-    // preprocessTxs(ctx);
-
     initState(Fr, pols, ctx);
+    ctx.input.accessedStorage = [new Map()]
 
     if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
@@ -282,8 +282,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
 
         if (l.inSTEP) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
-            pols.inSTEP[i] = Fr.e(l.inSTEP);
+            if (skipCounters) {
+                op0 = Fr.one;
+                pols.inSTEP[i] = Fr.e(l.inSTEP);
+            } else {
+                op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
+                pols.inSTEP[i] = Fr.e(l.inSTEP);
+            }
         } else {
             pols.inSTEP[i] = Fr.zero;
         }
@@ -1582,19 +1587,31 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
 
         if (l.arith == 1) {
-            pols.cntArith[nexti] = pols.cntArith[i] + 1n;
+            if (skipCounters){
+                pols.cntArith[nexti] = pols.cntArith[i];
+            } else {
+                pols.cntArith[nexti] = pols.cntArith[i] + 1n;
+            }
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
         }
 
         if (l.bin == 1) {
-            pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
+            if (skipCounters){
+                pols.cntBinary[nexti] = pols.cntBinary[i];
+            } else {
+                pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
+            }
         } else {
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }
 
         if (l.memAlign == 1) {
-            pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
+            if (skipCounters) {
+                pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
+            } else {
+                pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
+            }
         } else {
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
         }
@@ -1686,19 +1703,31 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
 
         if (l.hashKDigest) {
-            pols.cntKeccakF[nexti] = pols.cntKeccakF[i] + BigInt(incCounter);
+            if (skipCounters) {
+                pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
+            } else {
+                pols.cntKeccakF[nexti] = pols.cntKeccakF[i] + BigInt(incCounter);
+            }
         } else {
             pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
         }
 
         if (l.hashPDigest) {
-            pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i] + BigInt(incCounter);
+            if (skipCounters) {
+                pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i];
+            } else {
+                pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i] + BigInt(incCounter);
+            }
         } else {
             pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i];
         }
 
         if (l.sRD || l.sWR || l.hashPDigest) {
-            pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + BigInt(incCounter);
+            if (skipCounters) {
+                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
+            } else {
+                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + BigInt(incCounter);
+            }
         } else {
             pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
         }
@@ -1904,6 +1933,8 @@ function assertOutputs(ctx){
     if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
         throw new Error("Assert Error: newNumBatch does not match");
     }
+
+    console.log("Assert outputs run succesfully");
 }
 
 
@@ -2110,7 +2141,7 @@ function eval_getReg(ctx, tag) {
     } else if (tag.regName == "CNT_POSEIDON_G") {
         return Scalar.e(ctx.cntPoseidonG);
     } else if (tag.regName == "STEP") {
-        return Scalar.e(ctx.STEP);
+        return Scalar.e(ctx.step);
     } else if (tag.regName == "HASHPOS") {
         return Scalar.e(ctx.HASHPOS);
     } else {
@@ -2721,37 +2752,6 @@ function eval_AddPointEc(ctx, tag, dbl)
     const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
 
     return [x3, y3];
-}
-
-// TODO: remove and add final check if assert is added as a flag
-function preprocessTxs(ctx) {
-
-    const {
-        numBatch,
-        oldLocalExitRoot,
-        newLocalExitRoot,
-        oldStateRoot,
-        newStateRoot,
-        timestamp,
-        chainID
-    } = ctx.input;
-
-    ctx.input.batchHashData = calculateBatchHashData(
-        ctx.input.batchL2Data,
-    );
-
-    ctx.globalHash = calculateStarkInput(
-            oldStateRoot,
-            oldLocalExitRoot,
-            newStateRoot,
-            newLocalExitRoot,
-            ctx.input.batchHashData,
-            numBatch,
-            timestamp,
-            chainID
-    );
-
-    ctx.input.accessedStorage = [new Map()]
 }
 
 function printRegs(Fr, ctx) {
