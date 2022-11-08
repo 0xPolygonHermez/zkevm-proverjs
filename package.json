@@ -56,14 +56,14 @@
     "recursive1_gencircom": ". ./pre.sh && cp recursive/recursive1.circom $BDIR",
     "recursive1_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursive1.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
     "recursive1_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js --forceNBits=23 -r $BDIR/recursive1.r1cs -p $BDIR/recursive1.pil -c $BDIR/recursive1.const -e $BDIR/recursive1.exec",
-    "recursive1_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -c $BDIR/zkevm.recursive1.chelpers/zkevm.recursive1.chelpers.cpp -C StarkRecursive1",
+    "recursive1_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -c $BDIR/recursive1.chelpers/recursive1.chelpers.cpp -C StarkRecursive1",
     "recursive1_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursive1.const -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -t $BDIR/recursive1.consttree -v $BDIR/recursive1.verkey.json",
     "recursive1_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -v $BDIR/recursive1.verkey.json -o $BDIR/recursive1.verifier.circom",
 
     "recursive2_gencircom": ". ./pre.sh && node $NODE src/main_genrecursive.js -v $BDIR/recursive1.verkey.json -o $BDIR/recursive2.circom",
     "recursive2_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursive2.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
     "recursive2_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursive2.r1cs -p $BDIR/recursive2.pil -c $BDIR/recursive2.const -e $BDIR/recursive2.exec",
-    "recursive2_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -c $BDIR/zkevm.recursive2.chelpers/zkevm.recursive2.chelpers.cpp -C StarkRecursive2",
+    "recursive2_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -c $BDIR/recursive2.chelpers/recursive2.chelpers.cpp -C StarkRecursive2",
     "recursive2_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursive2.const -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -t $BDIR/recursive2.consttree -v $BDIR/recursive2.verkey.json",
     "recursive2_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -v $BDIR/recursive2.verkey.json -o $BDIR/recursive2.verifier.circom",
 
@@ -73,7 +73,7 @@
     "recursivef_gencircom": ". ./pre.sh && node $NODE src/main_genrecursivef.js --verkey1 $BDIR/recursive1.verkey.json --verkey2 $BDIR/recursive2.verkey.json -o $BDIR/recursivef.circom",
     "recursivef_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursivef.circom -o $BDIR -l node_modules/pil-stark/circuits.gl -l node_modules/circomlib/circuits",
     "recursivef_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursivef.r1cs -p $BDIR/recursivef.pil -c $BDIR/recursivef.const -e $BDIR/recursivef.exec",
-    "recursivef_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -c $BDIR/zkevm.recursivef.chelpers/zkevm.recursivef.chelpers.cpp -C StarkRecursiveF",
+    "recursivef_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -c $BDIR/recursivef.chelpers/recursivef.chelpers.cpp -C StarkRecursiveF",
     "recursivef_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
     "recursivef_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -v $BDIR/recursivef.verkey.json -o $BDIR/recursivef.verifier.circom",
 
