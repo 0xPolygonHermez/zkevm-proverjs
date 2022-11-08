@@ -11,6 +11,7 @@ const SlotSize = 158418;
 
 module.exports.buildConstants = async function (pols) {
     const N = pols.ConnA.length;
+    const NUsedBits = 9n;
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
@@ -34,7 +35,6 @@ module.exports.buildConstants = async function (pols) {
         w = F.mul(w, F.FFT.w[pow]);
     }
 
-    pols.NormalizedGate[0] = 0n
     pols.GateType[0] = 0n
 
     for (let i=0; i<nSlots; i++) {
@@ -98,13 +98,8 @@ module.exports.buildConstants = async function (pols) {
             r1 = lp.ref;
             if (r1>0) r1 += offset;
             if (lp.op == "xor") {
-                pols.NormalizedGate[r1] = 0n;
-                pols.GateType[r1] = 0n;
-            } else if (lp.op == "xorn") {
-                pols.NormalizedGate[r1] = 1n;
                 pols.GateType[r1] = 0n;
             } else if (lp.op == "andp") {
-                pols.NormalizedGate[r1] = 1n;
                 pols.GateType[r1] = 1n;
             } else {
                 assert(false, "Invalid op");
@@ -113,9 +108,35 @@ module.exports.buildConstants = async function (pols) {
     }
 
     for (let k=1 + nSlots*SlotSize; k<N; k++) {
-        pols.NormalizedGate[k] = 0n;
         pols.GateType[k] = 0n;
     }
+
+    var mask = 2n**NUsedBits-1n;
+    var c = 0;
+    for (let a=0n; a<2n**NUsedBits; a++) {
+        for (let b=0n; b<2n**NUsedBits; b++) {
+            pols.kGateType[c] = 0n;
+            pols.kA[c] = a;
+            pols.kB[c] = b;
+            pols.kC[c] = a^b;
+            c++;
+            pols.kGateType[c] = 1n;
+            pols.kA[c] = a;
+            pols.kB[c] = b;
+            pols.kC[c] = (a^mask)&b;
+            c++;
+        }
+    }
+    while (c<N)
+    {
+        pols.kGateType[c] = 0n;
+        pols.kA[c] = 0n;
+        pols.kB[c] = 0n;
+        pols.kC[c] = 0n;
+        c++;
+    }
+
+    console.log("keccak build constants done");
 
     function connect(p1, i1, p2, i2) {
         [p1[i1], p2[i2]] = [p2[i2], p1[i1]];
@@ -125,14 +146,9 @@ module.exports.buildConstants = async function (pols) {
 module.exports.execute = async function (pols, input) {
     const N = pols.a.length;
 
-    const required = {
-        NormGate9: []
-    };
-
     const script = JSON.parse(await fs.promises.readFile(path.join(__dirname, "keccak_script.json"), "utf8"));
 
     let c_xor=0;
-    let c_xorn=0;
     let c_andp=0;
 
     assert(script.program.length == SlotSize);
@@ -189,13 +205,9 @@ module.exports.execute = async function (pols, input) {
 
             const mask = 0b000000100000010000001000000100000010000001000000100000010000001n;
             if (l.op === "xor") {
-                pols.c[r] = pols.a[r] + pols.b[r];
-            } else if (l.op === "xorn") {
                 pols.c[r] = (pols.a[r] & mask) ^ (pols.b[r] &  mask);
-                required.NormGate9.push(["XORN", pols.a[r], pols.b[r]]);
             } else if (l.op === "andp") {
                 pols.c[r] = ((pols.a[r]  &  mask) ^ mask) & (pols.b[r]  &  mask);
-                required.NormGate9.push(["ANDP", pols.a[r], pols.b[r]]);
             }
 
         }
@@ -208,6 +220,4 @@ module.exports.execute = async function (pols, input) {
         pols.b[i] = 0n;
         pols.c[i] = 0n;
     }
-
-    return required;
 }
