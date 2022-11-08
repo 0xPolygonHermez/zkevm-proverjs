@@ -49,7 +49,7 @@
     "c12a_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/zkevm.c12a.const -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -t $BDIR/zkevm.c12a.consttree -v $BDIR/zkevm.c12a.verkey.json",
     "c12a_prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.c12a.commit -c $BDIR/zkevm.c12a.const -t $BDIR/zkevm.c12a.consttree -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -o $BDIR/zkevm.c12a.proof.json -z $BDIR/zkevm.c12a.zkin.proof.json -b $BDIR/zkevm.c12a.public.json",
     "c12a_verify": ". ./pre.sh && $PILSTARK/main_verifier.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -o $BDIR/zkevm.c12a.proof.json -b $BDIR/zkevm.c12a.public.json -v $BDIR/zkevm.c12a.verkey.json",
-    "c12a_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -v $BDIR/zkevm.c12a.verkey.json -o $BDIR/zkevm.c12a.verifier.circom",
+    "c12a_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -v $BDIR/zkevm.c12a.verkey.json -o $BDIR/zkevm.c12a.verifier.circom",
 
     "sandbox": ". ./pre.sh &&  echo \"$BDIR\" && diff /tmp/A1 /tmp/A2 || (echo \"FAIL\"; exit 1)",
 
