@@ -153,5 +153,5 @@ module.exports = {
     0xfa: "opSTATICCALL",
     0xfd: "opREVERT",
     0xfe: "opINVALID",
-    0xff: "opSELFDESTRUCT"
+    0xff: "opSENDALL"
 };
