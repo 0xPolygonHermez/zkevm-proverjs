@@ -119,8 +119,8 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v0.4.0.0",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#recursive",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#recursive",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#recursive-old",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#recursive-old",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "^0.1.1",
@@ -129,7 +129,7 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
-    "pil-stark": "0.0.32",
+    "pil-stark": "0.0.33",
     "pilcom": "0.0.18",
     "snarkjs": "0.4.27",
     "yargs": "^17.4.0"
