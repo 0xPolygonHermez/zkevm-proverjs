@@ -99,6 +99,17 @@ namespace MemAlign(%N);
     (1 - RESET) * offset' = (1 - RESET) * offset;
     (1 - RESET) * wr8' = (1 - RESET) * wr8;
 
+    pol commit resultRd;
+    pol commit resultWr8;
+    pol commit resultWr256;
+    (1 - RESET) * resultRd = 0;
+    (1 - RESET) * resultWr8 = 0;
+    (1 - RESET) * resultWr256 = 0;
+
+    (1 - wr8) * resultWr8 = 0;
+    (1 - wr256) * resultWr256 = 0;
+    (1 - wr8) * (1 - wr256) = 0;
+
     // RangeCheck
     {inM[1], inM[0]} in {BYTE2A, BYTE2B};
 
