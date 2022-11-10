@@ -3,7 +3,7 @@ const args = require("yargs")
     .option('width',        { alias: 'w', describe: 'column with'})
     .option('lsize',        { alias: 'l', describe: 'line length (number of columns)'})
     .option('prefix',       { alias: 'p', describe: 'prefix before each pol, e.g. rom.program[i].'})
-    .option('bigint',       { alias: 'b', describe: 'use javascript bigint: convert pols to bigint and add suffix n in numbers'})
+    .option('bigint',       { alias: 'B', describe: 'use javascript bigint: convert pols to bigint and add suffix n in numbers'})
     .option('emptycheck',   { alias: 'e', describe: 'check if pol is defined, if not value was 0'})
     .option('binary',       { alias: 'b', describe: 'generate binary constraints, (1-pol)*pol = 0'})
     .help('h');
