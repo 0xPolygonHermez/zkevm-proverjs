@@ -340,89 +340,78 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "inA, inB, inC, inROTL_C, inD, inE, inSR, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inFREE, inRR, inHASHPOS, setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setRR, setHASHPOS, JMP, JMPN, JMPC, isStack, isCode, isMem, useCTX, ind, indRR, mOp, mWR, sWR, sRD, arith, arithEq0, arithEq1, arithEq2, arithEq3, hashK, hashKLen, hashKDigest, hashP, hashPLen, hashPDigest, bin, assert, memAlign, memAlignWR, memAlignWR8" -b
+       node tools/pil_pol_table/bits_compose.js "arith,arithEq0,arithEq1,arithEq2,arithEq3,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isCode,isMem,isStack,JMP,JMPC,JMPN,memAlign,memAlignWR,memAlignWR8,mOp,mWR,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRR,setSP,setSR,sRD,sWR,useCTX" -b
     */
 
     pol operations =
-          2**0  * inA           + 2**1  * inB           + 2**2  * inC           + 2**3  * inROTL_C
-        + 2**4  * inD           + 2**5  * inE           + 2**6  * inSR          + 2**7  * inCTX
-        + 2**8  * inSP          + 2**9  * inPC          + 2**10 * inGAS         + 2**11 * inMAXMEM
-        + 2**12 * inSTEP        + 2**13 * inFREE        + 2**14 * inRR          + 2**15 * inHASHPOS
-        + 2**16 * setA          + 2**17 * setB          + 2**18 * setC          + 2**19 * setD
-        + 2**20 * setE          + 2**21 * setSR         + 2**22 * setCTX        + 2**23 * setSP
-        + 2**24 * setPC         + 2**25 * setGAS        + 2**26 * setMAXMEM     + 2**27 * setRR
-        + 2**28 * setHASHPOS    + 2**29 * JMP           + 2**30 * JMPN          + 2**31 * JMPC
-        + 2**32 * isStack       + 2**33 * isCode        + 2**34 * isMem         + 2**35 * useCTX
-        + 2**36 * ind           + 2**37 * indRR         + 2**38 * mOp           + 2**39 * mWR
-        + 2**40 * sWR           + 2**41 * sRD           + 2**42 * arith         + 2**43 * arithEq0
-        + 2**44 * arithEq1      + 2**45 * arithEq2      + 2**46 * arithEq3      + 2**47 * hashK
-        + 2**48 * hashKLen      + 2**49 * hashKDigest   + 2**50 * hashP         + 2**51 * hashPLen
-        + 2**52 * hashPDigest   + 2**53 * bin           + 2**54 * assert        + 2**55 * memAlign
-        + 2**56 * memAlignWR    + 2**57 * memAlignWR8;
+              2**0  * arith         + 2**1  * arithEq0      + 2**2  * arithEq1      + 2**3  * arithEq2
+            + 2**4  * arithEq3      + 2**5  * assert        + 2**6  * bin           + 2**7  * hashK
+            + 2**8  * hashKDigest   + 2**9  * hashKLen      + 2**10 * hashP         + 2**11 * hashPDigest
+            + 2**12 * hashPLen      + 2**13 * ind           + 2**14 * indRR         + 2**15 * isCode
+            + 2**16 * isMem         + 2**17 * isStack       + 2**18 * JMP           + 2**19 * JMPC
+            + 2**20 * JMPN          + 2**21 * memAlign      + 2**22 * memAlignWR    + 2**23 * memAlignWR8
+            + 2**24 * mOp           + 2**25 * mWR           + 2**26 * setA          + 2**27 * setB
+            + 2**28 * setC          + 2**29 * setCTX        + 2**30 * setD          + 2**31 * setE
+            + 2**32 * setGAS        + 2**33 * setHASHPOS    + 2**34 * setMAXMEM     + 2**35 * setPC
+            + 2**36 * setRR         + 2**37 * setSP         + 2**38 * setSR         + 2**39 * sRD
+            + 2**40 * sWR           + 2**41 * useCTX;
 
-    (1 - inA) * inA = 0;
-    (1 - inB) * inB = 0;
-    (1 - inC) * inC = 0;
-    (1 - inROTL_C) * inROTL_C = 0;
-    (1 - inD) * inD = 0;
-    (1 - inE) * inE = 0;
-    (1 - inSR) * inSR = 0;
-    (1 - inCTX) * inCTX = 0;
-    (1 - inSP) * inSP = 0;
-    (1 - inPC) * inPC = 0;
-    (1 - inGAS) * inGAS = 0;
-    (1 - inMAXMEM) * inMAXMEM = 0;
-    (1 - inSTEP) * inSTEP = 0;
-    (1 - inFREE) * inFREE = 0;
-    (1 - inRR) * inRR = 0;
-    (1 - inHASHPOS) * inHASHPOS = 0;
-    (1 - setA) * setA = 0;
-    (1 - setB) * setB = 0;
-    (1 - setC) * setC = 0;
-    (1 - setD) * setD = 0;
-    (1 - setE) * setE = 0;
-    (1 - setSR) * setSR = 0;
-    (1 - setCTX) * setCTX = 0;
-    (1 - setSP) * setSP = 0;
-    (1 - setPC) * setPC = 0;
-    (1 - setGAS) * setGAS = 0;
-    (1 - setMAXMEM) * setMAXMEM = 0;
-    (1 - setRR) * setRR = 0;
-    (1 - setHASHPOS) * setHASHPOS = 0;
-    (1 - JMP) * JMP = 0;
-    (1 - JMPN) * JMPN = 0;
-    (1 - JMPC) * JMPC = 0;
-    (1 - isStack) * isStack = 0;
-    (1 - isCode) * isCode = 0;
-    (1 - isMem) * isMem = 0;
-    (1 - useCTX) * useCTX = 0;
-    (1 - ind) * ind = 0;
-    (1 - indRR) * indRR = 0;
-    (1 - mOp) * mOp = 0;
-    (1 - mWR) * mWR = 0;
-    (1 - sWR) * sWR = 0;
-    (1 - sRD) * sRD = 0;
     (1 - arith) * arith = 0;
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
     (1 - arithEq2) * arithEq2 = 0;
     (1 - arithEq3) * arithEq3 = 0;
-    (1 - hashK) * hashK = 0;
-    (1 - hashKLen) * hashKLen = 0;
-    (1 - hashKDigest) * hashKDigest = 0;
-    (1 - hashP) * hashP = 0;
-    (1 - hashPLen) * hashPLen = 0;
-    (1 - hashPDigest) * hashPDigest = 0;
-    (1 - bin) * bin = 0;
     (1 - assert) * assert = 0;
+    (1 - bin) * bin = 0;
+    (1 - hashK) * hashK = 0;
+    (1 - hashKDigest) * hashKDigest = 0;
+    (1 - hashKLen) * hashKLen = 0;
+    (1 - hashP) * hashP = 0;
+    (1 - hashPDigest) * hashPDigest = 0;
+    (1 - hashPLen) * hashPLen = 0;
+    (1 - ind) * ind = 0;
+    (1 - indRR) * indRR = 0;
+    (1 - isCode) * isCode = 0;
+    (1 - isMem) * isMem = 0;
+    (1 - isStack) * isStack = 0;
+    (1 - JMP) * JMP = 0;
+    (1 - JMPC) * JMPC = 0;
+    (1 - JMPN) * JMPN = 0;
     (1 - memAlign) * memAlign = 0;
     (1 - memAlignWR) * memAlignWR = 0;
     (1 - memAlignWR8) * memAlignWR8 = 0;
+    (1 - mOp) * mOp = 0;
+    (1 - mWR) * mWR = 0;
+    (1 - setA) * setA = 0;
+    (1 - setB) * setB = 0;
+    (1 - setC) * setC = 0;
+    (1 - setCTX) * setCTX = 0;
+    (1 - setD) * setD = 0;
+    (1 - setE) * setE = 0;
+    (1 - setGAS) * setGAS = 0;
+    (1 - setHASHPOS) * setHASHPOS = 0;
+    (1 - setMAXMEM) * setMAXMEM = 0;
+    (1 - setPC) * setPC = 0;
+    (1 - setRR) * setRR = 0;
+    (1 - setSP) * setSP = 0;
+    (1 - setSR) * setSR = 0;
+    (1 - sRD) * sRD = 0;
+    (1 - sWR) * sWR = 0;
+    (1 - useCTX) * useCTX = 0;
 
-    {CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-     operations, offset, incStack, incCode, binOpcode, zkPC} in
-    {Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-     Rom.operations, Rom.offset, Rom.incStack, Rom.incCode, Rom.binOpcode, Rom.line};
+    {
+        CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
+        inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR,
+        inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
+        operations, offset, incStack, incCode, binOpcode, zkPC
+    } in {
+        Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR,
+        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
+        Rom.operations, Rom.offset, Rom.incStack, Rom.incCode, Rom.binOpcode, Rom.line
+    };
 
     pol commit sKeyI[4];
     pol commit sKey[4];

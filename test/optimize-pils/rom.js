@@ -6,7 +6,7 @@ chai.use(require('chai-as-promised'));
 const fs = require("fs");
 const path = require("path");
 
-const {verifyZkasm} = require("./verify_zkasm");
+const {verifyZkasm} = require("../verify_zkasm");
 
 describe("Optimize Pils (ROM)", async function () {
     this.timeout(10000000);

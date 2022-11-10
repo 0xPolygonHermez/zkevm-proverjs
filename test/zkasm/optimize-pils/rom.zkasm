@@ -1,20 +1,24 @@
 start:
 
-CONST %UPTO = 150
+        10 => A
+        20 => B
+        0x808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9Fn => C
+        30 => D
+        40 => E
 
-        STEP => A
-        0 :ASSERT
+        10  :ASSERT
+        B => A
+        20  :ASSERT
+        C => A
+        0x808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9Fn: ASSERT
+        D => A
+        30: ASSERT
+        E => A
+        40: ASSERT
+        B+2*D+E => A
+        120: ASSERT
 
-        0 => A
-counterLoop:
-        A + 1 => A
-        A - %UPTO :JMPN(counterLoop)
-
-counterEnds:
-        %UPTO     :ASSERT
-
-end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)
