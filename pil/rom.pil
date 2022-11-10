@@ -9,27 +9,30 @@ namespace Rom(%N);
     pol constant CONST6;
     pol constant CONST7;
     pol constant offset;
-    pol constant inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR;
-    pol constant setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setHASHPOS, JMP, JMPN, JMPC, setRR;
+
+    pol constant operations;
+
+    /*
+      operations =    2**0  * inA         + 2**1  * inB         + 2**2  * inC         + 2**3  * inROTL_C
+                    + 2**4  * inD         + 2**5  * inE         + 2**6  * inSR        + 2**7  * inCTX
+                    + 2**8  * inSP        + 2**9  * inPC        + 2**10 * inGAS       + 2**11 * inMAXMEM
+                    + 2**12 * inSTEP      + 2**13 * inFREE      + 2**14 * inRR        + 2**15 * inHASHPOS
+                    + 2**16 * setA        + 2**17 * setB        + 2**18 * setC        + 2**19 * setD
+                    + 2**20 * setE        + 2**21 * setSR       + 2**22 * setCTX      + 2**23 * setSP
+                    + 2**24 * setPC       + 2**25 * setGAS      + 2**26 * setMAXMEM   + 2**27 * setRR
+                    + 2**28 * setHASHPOS  + 2**29 * JMP         + 2**30 * JMPN        + 2**31 * JMPC
+                    + 2**32 * isStack     + 2**33 * isCode      + 2**34 * isMem       + 2**35 * useCTX
+                    + 2**36 * ind         + 2**37 * indRR       + 2**38 * mOp         + 2**39 * mWR
+                    + 2**40 * sWR         + 2**41 * sRD         + 2**42 * arith       + 2**43 * arithEq0
+                    + 2**44 * arithEq1    + 2**45 * arithEq2    + 2**46 * arithEq3    + 2**47 * hashK
+                    + 2**48 * hashKLen    + 2**49 * hashKDigest + 2**50 * hashP       + 2**51 * hashPLen
+                    + 2**52 * hashPDigest + 2**53 * bin         + 2**54 * assert      + 2**55 * memAlign
+                    + 2**56 * memAlignWR  + 2**57 * memAlignWR8
+
+    */
+
     pol constant incStack, incCode;
-    pol constant isStack;
-    pol constant isCode;
-    pol constant isMem;
-    pol constant ind, indRR;
-    pol constant useCTX;
-    pol constant mOp, mWR;
-    pol constant sWR, sRD;
-    pol constant arith;
-    pol constant arithEq0;
-    pol constant arithEq1;
-    pol constant arithEq2;
-    pol constant arithEq3;
-    pol constant memAlign, memAlignWR, memAlignWR8;
-    pol constant hashK, hashKLen, hashKDigest;
-    pol constant hashP, hashPLen, hashPDigest;
-    pol constant bin;
     pol constant binOpcode;
-    pol constant assert;
 
     pol constant line;
 

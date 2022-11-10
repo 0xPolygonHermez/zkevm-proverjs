@@ -8,7 +8,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
-    const N = pols.inA.length;
+    const N = pols.offset.length;
 
     const twoTo31 = Scalar.e(0x80000000);
     const maxInt = 2147483647;
@@ -53,74 +53,75 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         }
         pols.offset[i] = rom.program[i].offset ? BigInt(rom.program[i].offset) : 0n;
 
-        pols.inA[i] = rom.program[i].inA ? F.e(rom.program[i].inA) : F.zero;
-        pols.inB[i] = rom.program[i].inB ? F.e(rom.program[i].inB) : F.zero;
-        pols.inC[i] = rom.program[i].inC ? F.e(rom.program[i].inC) : F.zero;
-        pols.inD[i] = rom.program[i].inD ? F.e(rom.program[i].inD) : F.zero;
-        pols.inE[i] = rom.program[i].inE ? F.e(rom.program[i].inE) : F.zero;
-        pols.inSR[i] = rom.program[i].inSR ? F.e(rom.program[i].inSR) : F.zero;
-        pols.inCTX[i] = rom.program[i].inCTX ? F.e(rom.program[i].inCTX) : F.zero;
-        pols.inSP[i] = rom.program[i].inSP ? F.e(rom.program[i].inSP) : F.zero;
-        pols.inPC[i] = rom.program[i].inPC ? F.e(rom.program[i].inPC) : F.zero;
-        pols.inMAXMEM[i] = rom.program[i].inMAXMEM ? F.e(rom.program[i].inMAXMEM) : F.zero;
-        pols.inSTEP[i] = rom.program[i].inSTEP ? F.e(rom.program[i].inSTEP) : F.zero;
-        pols.inFREE[i] = rom.program[i].inFREE ? F.e(rom.program[i].inFREE) : F.zero;
-        pols.inGAS[i] = rom.program[i].inGAS ? F.e(rom.program[i].inGAS) : F.zero;
-        pols.inRR[i] = rom.program[i].inRR ? F.e(rom.program[i].inRR) : F.zero;
-        pols.inHASHPOS[i] = rom.program[i].inHASHPOS ? F.e(rom.program[i].inHASHPOS) : F.zero;
-        pols.inROTL_C[i] = rom.program[i].inROTL_C ? F.e(rom.program[i].inROTL_C) : F.zero;
+        /*
+            generated with:
+            node tools/pil_pol_table/bits_compose.js "inA, inB, inC, inROTL_C, inD, inE, inSR, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inFREE, inRR, inHASHPOS, setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setRR, setHASHPOS, JMP, JMPN, JMPC, isStack, isCode, isMem, useCTX, ind, indRR, mOp, mWR, sWR, sRD, arith, arithEq0, arithEq1, arithEq2, arithEq3, hashK, hashKLen, hashKDigest, hashP, hashPLen, hashPDigest, bin, assert, memAlign, memAlignWR, memAlignWR8"  -B -e -p "rom.program[i]."
+        */
 
-        pols.setA[i] = rom.program[i].setA ? 1n : 0n;
-        pols.setB[i] = rom.program[i].setB ? 1n : 0n;
-        pols.setC[i] = rom.program[i].setC ? 1n : 0n;
-        pols.setD[i] = rom.program[i].setD ? 1n : 0n;
-        pols.setE[i] = rom.program[i].setE ? 1n : 0n;
-        pols.setSR[i] = rom.program[i].setSR ? 1n : 0n;
-        pols.setCTX[i] = rom.program[i].setCTX ? 1n : 0n;
-        pols.setSP[i] = rom.program[i].setSP ? 1n : 0n;
-        pols.setPC[i] = rom.program[i].setPC ? 1n : 0n;
-        pols.setGAS[i] = rom.program[i].setGAS ? 1n : 0n;
-        pols.setMAXMEM[i] = rom.program[i].setMAXMEM ? 1n : 0n;
-        pols.setRR[i] = rom.program[i].setRR ? 1n : 0n;
-        pols.setHASHPOS[i] = rom.program[i].setHASHPOS ? 1n : 0n;
-
-        pols.JMP[i] = rom.program[i].JMP ? 1n : 0n;
-        pols.JMPC[i] = rom.program[i].JMPC ? 1n : 0n;
-        pols.JMPN[i] = rom.program[i].JMPN ? 1n : 0n;
+        pols.operations[i] =
+              (rom.program[i].inA ? (2n**0n  * BigInt(rom.program[i].inA)) : 0n)
+            + (rom.program[i].inB ? (2n**1n  * BigInt(rom.program[i].inB)) : 0n)
+            + (rom.program[i].inC ? (2n**2n  * BigInt(rom.program[i].inC)) : 0n)
+            + (rom.program[i].inROTL_C ? (2n**3n  * BigInt(rom.program[i].inROTL_C)) : 0n)
+            + (rom.program[i].inD ? (2n**4n  * BigInt(rom.program[i].inD)) : 0n)
+            + (rom.program[i].inE ? (2n**5n  * BigInt(rom.program[i].inE)) : 0n)
+            + (rom.program[i].inSR ? (2n**6n  * BigInt(rom.program[i].inSR)) : 0n)
+            + (rom.program[i].inCTX ? (2n**7n  * BigInt(rom.program[i].inCTX)) : 0n)
+            + (rom.program[i].inSP ? (2n**8n  * BigInt(rom.program[i].inSP)) : 0n)
+            + (rom.program[i].inPC ? (2n**9n  * BigInt(rom.program[i].inPC)) : 0n)
+            + (rom.program[i].inGAS ? (2n**10n * BigInt(rom.program[i].inGAS)) : 0n)
+            + (rom.program[i].inMAXMEM ? (2n**11n * BigInt(rom.program[i].inMAXMEM)) : 0n)
+            + (rom.program[i].inSTEP ? (2n**12n * BigInt(rom.program[i].inSTEP)) : 0n)
+            + (rom.program[i].inFREE ? (2n**13n * BigInt(rom.program[i].inFREE)) : 0n)
+            + (rom.program[i].inRR ? (2n**14n * BigInt(rom.program[i].inRR)) : 0n)
+            + (rom.program[i].inHASHPOS ? (2n**15n * BigInt(rom.program[i].inHASHPOS)) : 0n)
+            + (rom.program[i].setA ? (2n**16n * BigInt(rom.program[i].setA)) : 0n)
+            + (rom.program[i].setB ? (2n**17n * BigInt(rom.program[i].setB)) : 0n)
+            + (rom.program[i].setC ? (2n**18n * BigInt(rom.program[i].setC)) : 0n)
+            + (rom.program[i].setD ? (2n**19n * BigInt(rom.program[i].setD)) : 0n)
+            + (rom.program[i].setE ? (2n**20n * BigInt(rom.program[i].setE)) : 0n)
+            + (rom.program[i].setSR ? (2n**21n * BigInt(rom.program[i].setSR)) : 0n)
+            + (rom.program[i].setCTX ? (2n**22n * BigInt(rom.program[i].setCTX)) : 0n)
+            + (rom.program[i].setSP ? (2n**23n * BigInt(rom.program[i].setSP)) : 0n)
+            + (rom.program[i].setPC ? (2n**24n * BigInt(rom.program[i].setPC)) : 0n)
+            + (rom.program[i].setGAS ? (2n**25n * BigInt(rom.program[i].setGAS)) : 0n)
+            + (rom.program[i].setMAXMEM ? (2n**26n * BigInt(rom.program[i].setMAXMEM)) : 0n)
+            + (rom.program[i].setRR ? (2n**27n * BigInt(rom.program[i].setRR)) : 0n)
+            + (rom.program[i].setHASHPOS ? (2n**28n * BigInt(rom.program[i].setHASHPOS)) : 0n)
+            + (rom.program[i].JMP ? (2n**29n * BigInt(rom.program[i].JMP)) : 0n)
+            + (rom.program[i].JMPN ? (2n**30n * BigInt(rom.program[i].JMPN)) : 0n)
+            + (rom.program[i].JMPC ? (2n**31n * BigInt(rom.program[i].JMPC)) : 0n)
+            + (rom.program[i].isStack ? (2n**32n * BigInt(rom.program[i].isStack)) : 0n)
+            + (rom.program[i].isCode ? (2n**33n * BigInt(rom.program[i].isCode)) : 0n)
+            + (rom.program[i].isMem ? (2n**34n * BigInt(rom.program[i].isMem)) : 0n)
+            + (rom.program[i].useCTX ? (2n**35n * BigInt(rom.program[i].useCTX)) : 0n)
+            + (rom.program[i].ind ? (2n**36n * BigInt(rom.program[i].ind)) : 0n)
+            + (rom.program[i].indRR ? (2n**37n * BigInt(rom.program[i].indRR)) : 0n)
+            + (rom.program[i].mOp ? (2n**38n * BigInt(rom.program[i].mOp)) : 0n)
+            + (rom.program[i].mWR ? (2n**39n * BigInt(rom.program[i].mWR)) : 0n)
+            + (rom.program[i].sWR ? (2n**40n * BigInt(rom.program[i].sWR)) : 0n)
+            + (rom.program[i].sRD ? (2n**41n * BigInt(rom.program[i].sRD)) : 0n)
+            + (rom.program[i].arith ? (2n**42n * BigInt(rom.program[i].arith)) : 0n)
+            + (rom.program[i].arithEq0 ? (2n**43n * BigInt(rom.program[i].arithEq0)) : 0n)
+            + (rom.program[i].arithEq1 ? (2n**44n * BigInt(rom.program[i].arithEq1)) : 0n)
+            + (rom.program[i].arithEq2 ? (2n**45n * BigInt(rom.program[i].arithEq2)) : 0n)
+            + (rom.program[i].arithEq3 ? (2n**46n * BigInt(rom.program[i].arithEq3)) : 0n)
+            + (rom.program[i].hashK ? (2n**47n * BigInt(rom.program[i].hashK)) : 0n)
+            + (rom.program[i].hashKLen ? (2n**48n * BigInt(rom.program[i].hashKLen)) : 0n)
+            + (rom.program[i].hashKDigest ? (2n**49n * BigInt(rom.program[i].hashKDigest)) : 0n)
+            + (rom.program[i].hashP ? (2n**50n * BigInt(rom.program[i].hashP)) : 0n)
+            + (rom.program[i].hashPLen ? (2n**51n * BigInt(rom.program[i].hashPLen)) : 0n)
+            + (rom.program[i].hashPDigest ? (2n**52n * BigInt(rom.program[i].hashPDigest)) : 0n)
+            + (rom.program[i].bin ? (2n**53n * BigInt(rom.program[i].bin)) : 0n)
+            + (rom.program[i].assert ? (2n**54n * BigInt(rom.program[i].assert)) : 0n)
+            + (rom.program[i].memAlign ? (2n**55n * BigInt(rom.program[i].memAlign)) : 0n)
+            + (rom.program[i].memAlignWR ? (2n**56n * BigInt(rom.program[i].memAlignWR)) : 0n)
+            + (rom.program[i].memAlignWR8 ? (2n**57n * BigInt(rom.program[i].memAlignWR8)) : 0n);
 
         pols.incStack[i] = rom.program[i].incStack ? BigInt(rom.program[i].incStack) : 0n;
         pols.incCode[i] = rom.program[i].incCode ? BigInt(rom.program[i].incCode) : 0n;
 
-        pols.isStack[i] = rom.program[i].isStack ? 1n : 0n;
-        pols.isCode[i] = rom.program[i].isCode ? 1n : 0n;
-        pols.isMem[i] = rom.program[i].isMem ? 1n : 0n;
-        pols.ind[i] = rom.program[i].ind ? 1n : 0n;
-        pols.indRR[i] = rom.program[i].indRR ? 1n : 0n;
-        pols.useCTX[i] = rom.program[i].useCTX ? 1n : 0n;
-
-        pols.mOp[i] = rom.program[i].mOp ? 1n : 0n;
-        pols.mWR[i] = rom.program[i].mWR ? 1n : 0n;
-        pols.sRD[i] = rom.program[i].sRD ? 1n : 0n;
-        pols.sWR[i] = rom.program[i].sWR ? 1n : 0n;
-        pols.arith[i] = rom.program[i].arith ? 1n : 0n;
-        pols.arithEq0[i] = rom.program[i].arithEq0 ? 1n : 0n;
-        pols.arithEq1[i] = rom.program[i].arithEq1 ? 1n : 0n;
-        pols.arithEq2[i] = rom.program[i].arithEq2 ? 1n : 0n;
-        pols.arithEq3[i] = rom.program[i].arithEq3 ? 1n : 0n;
-        pols.memAlign[i] = rom.program[i].memAlign ? 1n : 0n;
-        pols.memAlignWR[i] = rom.program[i].memAlignWR ? 1n : 0n;
-        pols.memAlignWR8[i] = rom.program[i].memAlignWR8 ? 1n : 0n;
-        pols.hashK[i] = rom.program[i].hashK ? 1n : 0n;
-        pols.hashKLen[i] = rom.program[i].hashKLen ? 1n : 0n;
-        pols.hashKDigest[i] = rom.program[i].hashKDigest ? 1n : 0n;
-        pols.hashP[i] = rom.program[i].hashP ? 1n : 0n;
-        pols.hashPLen[i] = rom.program[i].hashPLen ? 1n : 0n;
-        pols.hashPDigest[i] = rom.program[i].hashPDigest ? 1n : 0n;
-        pols.bin[i] = rom.program[i].bin ? 1n : 0n;
         pols.binOpcode[i] = rom.program[i].binOpcode ? BigInt(rom.program[i].binOpcode) : 0n;
-        pols.assert[i] = rom.program[i].assert ? 1n : 0n;
-
-
         pols.line[i] = BigInt(i);
 
     }
@@ -136,72 +137,12 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.CONST7[i] = F.zero;
         pols.offset[i] = F.zero;
 
-        pols.inA[i] = F.zero;
-        pols.inB[i] = F.zero;
-        pols.inC[i] = F.zero;
-        pols.inD[i] = F.zero;
-        pols.inE[i] = F.zero;
-        pols.inSR[i] = F.zero;
-        pols.inCTX[i] = F.zero;
-        pols.inSP[i] = F.zero;
-        pols.inPC[i] = F.zero;
-        pols.inMAXMEM[i] = F.zero;
-        pols.inSTEP[i] = F.zero;
-        pols.inFREE[i] = F.zero;
-        pols.inGAS[i] = F.zero;
-        pols.inRR[i] = F.zero;
-        pols.inHASHPOS[i] = F.zero;
-        pols.inROTL_C[i] = F.zero;
-
-        pols.setA[i] = F.zero;
-        pols.setB[i] = F.zero;
-        pols.setC[i] = F.zero;
-        pols.setD[i] = F.zero;
-        pols.setE[i] = F.zero;
-        pols.setSR[i] = F.zero;
-        pols.setCTX[i] = F.zero;
-        pols.setSP[i] = F.zero;
-        pols.setPC[i] = F.zero;
-        pols.setGAS[i] = F.zero;
-        pols.setMAXMEM[i] = F.zero;
-        pols.setRR[i] = F.zero;
-        pols.setHASHPOS[i] = F.zero;
-
-        pols.JMP[i] = F.zero;
-        pols.JMPC[i] = F.zero;
-        pols.JMPN[i] = F.zero;
+        pols.operations[i] = F.zero;
 
         pols.incStack[i] = F.zero;
         pols.incCode[i] = F.zero;
 
-        pols.isStack[i] = F.zero;
-        pols.isCode[i] = F.zero;
-        pols.isMem[i] = F.zero;
-        pols.ind[i] = F.zero;
-        pols.indRR[i] = F.zero;
-        pols.useCTX[i] = F.zero;
-
-        pols.mOp[i] = F.zero;
-        pols.mWR[i] = F.zero;
-        pols.sRD[i] = F.zero;
-        pols.sWR[i] = F.zero;
-        pols.arith[i] = F.zero;
-        pols.arithEq0[i] = F.zero;
-        pols.arithEq1[i] = F.zero;
-        pols.arithEq2[i] = F.zero;
-        pols.arithEq3[i] = F.zero;
-        pols.memAlign[i] = F.zero;
-        pols.memAlignWR[i] = F.zero;
-        pols.memAlignWR8[i] = F.zero;
-        pols.hashK[i] = F.zero;
-        pols.hashKLen[i] = F.zero;
-        pols.hashKDigest[i] = F.zero;
-        pols.hashP[i] = F.zero;
-        pols.hashPLen[i] = F.zero;
-        pols.hashPDigest[i] = F.zero;
-        pols.bin[i] = F.zero;
         pols.binOpcode[i] = F.zero;
-        pols.assert[i] = F.zero;
 
         pols.line[i] = BigInt(i);
     }
