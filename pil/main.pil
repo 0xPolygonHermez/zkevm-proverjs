@@ -330,7 +330,7 @@ namespace Main(%N);
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7
     } is
-    Binary.latchValidRange {
+    Binary.resultValidRange {
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
     };
 
@@ -456,7 +456,7 @@ namespace Main(%N);
         op0, op1, op2, op3, op4, op5, op6, op7,
         carry
     } is
-    Binary.latchBinOp {
+    Binary.resultBinOp {
         Binary.lOpcode,
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
         Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
