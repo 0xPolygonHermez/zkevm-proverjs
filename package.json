@@ -5,24 +5,27 @@
   "main": "index.js",
   "config": {
     "steps": [
-        "buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
-        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom",
-        "c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_exec c12b_pilverify c12b_buildconstanttree c12b_prove c12b_verify c12b_gencircom c12b_compilecircom",
-        "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity" ],
+      "buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom",
+      "c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_exec c12b_pilverify c12b_buildconstanttree c12b_prove c12b_verify c12b_gencircom c12b_compilecircom",
+      "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity"
+    ],
     "steps_setup": [
-        "buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
-        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
-        "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-        "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-        "recursive_pil_check recursive_verifier_check ",
-        "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-        "final_gencircom final_compile",
-        "g16setup g16contribute g16evk g16solidity"],
+      "buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
+      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
+      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
+      "recursive_pil_check recursive_verifier_check ",
+      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
+      "final_gencircom final_compile",
+      "g16setup g16contribute g16evk g16solidity"
+    ],
     "steps_proof": [
-        "exec pilverify prove verify",
-        "c12a_exec c12a_pilverify c12a_prove c12a_verify",
-        "c12b_exec c12b_pilverify c12b_prove c12b_verify",
-        "g16wc g16prove g16verify" ]
+      "exec pilverify prove verify",
+      "c12a_exec c12a_pilverify c12a_prove c12a_verify",
+      "c12b_exec c12b_pilverify c12b_prove c12b_verify",
+      "g16wc g16prove g16verify"
+    ]
   },
   "scripts": {
     "build:input": "node tools/build-genesis/build_genesis.js",
@@ -50,9 +53,7 @@
     "c12a_prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm.c12a.commit -c $BDIR/zkevm.c12a.const -t $BDIR/zkevm.c12a.consttree -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -o $BDIR/zkevm.c12a.proof.json -z $BDIR/zkevm.c12a.zkin.proof.json -b $BDIR/zkevm.c12a.public.json",
     "c12a_verify": ". ./pre.sh && $PILSTARK/main_verifier.js -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -o $BDIR/zkevm.c12a.proof.json -b $BDIR/zkevm.c12a.public.json -v $BDIR/zkevm.c12a.verkey.json",
     "c12a_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json -v $BDIR/zkevm.c12a.verkey.json -o $BDIR/zkevm.c12a.verifier.circom",
-
     "sandbox": ". ./pre.sh &&  echo \"$BDIR\" && diff /tmp/A1 /tmp/A2 || (echo \"FAIL\"; exit 1)",
-
     "recursive1_gencircom": ". ./pre.sh && cp recursive/recursive1.circom $BDIR",
     "recursive1_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursive1.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
     "recursive1_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js --forceNBits=23 -r $BDIR/recursive1.r1cs -p $BDIR/recursive1.pil -c $BDIR/recursive1.const -e $BDIR/recursive1.exec",
@@ -60,7 +61,6 @@
     "recursive1_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -c $BDIR/recursive1.chelpers/recursive1.chelpers.cpp -C StarkRecursive1",
     "recursive1_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursive1.const -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -t $BDIR/recursive1.consttree -v $BDIR/recursive1.verkey.json",
     "recursive1_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -v $BDIR/recursive1.verkey.json -o $BDIR/recursive1.verifier.circom",
-
     "recursive2_gencircom": ". ./pre.sh && node $NODE src/main_genrecursive.js -v $BDIR/recursive1.verkey.json -o $BDIR/recursive2.circom",
     "recursive2_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursive2.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
     "recursive2_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursive2.r1cs -p $BDIR/recursive2.pil -c $BDIR/recursive2.const -e $BDIR/recursive2.exec",
@@ -68,10 +68,8 @@
     "recursive2_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -c $BDIR/recursive2.chelpers/recursive2.chelpers.cpp -C StarkRecursive2",
     "recursive2_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursive2.const -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -t $BDIR/recursive2.consttree -v $BDIR/recursive2.verkey.json",
     "recursive2_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -v $BDIR/recursive2.verkey.json -o $BDIR/recursive2.verifier.circom",
-
     "recursive_pil_check": ". ./pre.sh && F1=$BDIR/recursive1.pil && F2=$BDIR/recursive2.pil && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
     "recursive_verifier_check": ". ./pre.sh && F1=$BDIR/recursive1.verifier.circom && F2=$BDIR/recursive2.verifier.circom && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
-
     "recursivef_gencircom": ". ./pre.sh && node $NODE src/main_genrecursivef.js --verkey1 $BDIR/recursive1.verkey.json --verkey2 $BDIR/recursive2.verkey.json -o $BDIR/recursivef.circom",
     "recursivef_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursivef.circom -o $BDIR -l node_modules/pil-stark/circuits.gl -l node_modules/circomlib/circuits",
     "recursivef_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursivef.r1cs -p $BDIR/recursivef.pil -c $BDIR/recursivef.const -e $BDIR/recursivef.exec",
@@ -79,17 +77,13 @@
     "recursivef_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -c $BDIR/recursivef.chelpers/recursivef.chelpers.cpp -C StarkRecursiveF",
     "recursivef_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
     "recursivef_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -v $BDIR/recursivef.verkey.json -o $BDIR/recursivef.verifier.circom",
-
     "final_gencircom": ". ./pre.sh && cp recursive/final.circom $BDIR",
     "final_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/final.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits",
-
     "downloadptaw": "wget -P build https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final.ptau",
     "g16setup": ". ./pre.sh && $SNARKJS g16s $BDIR/final.r1cs build/powersOfTau28_hez_final.ptau $BDIR/final.g16.0000.zkey",
     "g16contribute": ". ./pre.sh && $SNARKJS zkc  $BDIR/final.g16.0000.zkey $BDIR/final.g16.0001.zkey -e=\"$(dd if=/dev/random bs=64 count=1 | base64 -w0)\"",
     "g16evk": ". ./pre.sh && $SNARKJS zkev  $BDIR/final.g16.0001.zkey $BDIR/final.g16.verkey.json",
     "g16solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/final.g16.0001.zkey $BDIR/final.g16.verifier.sol",
-
-
     "preg16setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
     "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/zkevm.c12a.pil -s $BDIR/zkevm.c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR; fi",
@@ -98,9 +92,7 @@
     "buildsetup:basic": "npm run buildsetup --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildall:basic": "npm run buildall --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildproof:basic": "npm run buildproof --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
-
     "help": "npm_config_help=true && . ./pre.sh",
-
     "test": "mocha",
     "test:storage": "mocha test/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
