@@ -1,11 +1,3 @@
-const fs = require("fs")
-const { compile } = require("pilcom");
-const starkInfoGen = require("pil-stark/src/starkinfo.js");
-const { F1Field } = require("ffjavascript");
-const { title } = require("process");
-const { terminalWidth } = require("yargs");
-const F = new F1Field("0xFFFFFFFF00000001");
-
 const args = require("yargs")
     .usage("node $0 <pols> [-w <width>] [-l <lineSize>] [-p <prefix>] [-B] [-b] [-e]")
     .option('width',        { alias: 'w', describe: 'column with'})
@@ -17,7 +9,6 @@ const args = require("yargs")
     .help('h');
 
 const argv = args.argv;
-
 
 async function main(){
 
