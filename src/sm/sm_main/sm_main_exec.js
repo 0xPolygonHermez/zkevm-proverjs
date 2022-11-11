@@ -282,7 +282,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.inSTEP) {
             if (skipCounters) {
-                op0 = Fr.one;
+                op0 = Fr.zero;
                 pols.inSTEP[i] = Fr.e(l.inSTEP);
             } else {
                 op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
