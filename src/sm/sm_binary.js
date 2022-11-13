@@ -350,8 +350,7 @@ module.exports.execute = async function (pols, input) {
     buildFACTORS(FACTOR, N);
     buildRESET(RESET, N);
 
-    // Porcess all the inputs
-    console.log(input);
+    // Process all the inputs
     for (var i = 0; i < input.length; i++) {
         if (i % 10000 === 0) console.log(`Computing binary pols ${i}/${input.length}`);
         for (var j = 0; j < LATCH_SIZE; j++) {

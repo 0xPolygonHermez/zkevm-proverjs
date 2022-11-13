@@ -1604,12 +1604,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.cntArith[nexti] = pols.cntArith[i];
         }
 
-        if (l.bin == 1) {
-            if (skipCounters){
-                pols.cntBinary[nexti] = pols.cntBinary[i];
-            } else {
-                pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
-            }
+        if (!skipCounters && (l.bin == 1 || l.hashPDigest || l.sWR)) {
+            pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
         } else {
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }

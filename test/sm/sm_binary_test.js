@@ -510,20 +510,21 @@ describe("test plookup operations", async function () {
 
         const plookupLine = pil.plookupIdentities[0].line;
         const prefix = 'binary.pil:'+plookupLine+':  plookup not found ';
+        const suffix = ' (continue)';
 
-        expect(res[0]).to.equal(prefix + 'w=31 values: 1,0,15,15,1,0,15,0');
-        expect(res[1]).to.equal(prefix + 'w=32 values: 0,1,255,255,0,0,1,0');
-        expect(res[2]).to.equal(prefix + 'w=95 values: 1,2,0,0,1,1,0,1');
-        expect(res[3]).to.equal(prefix + 'w=127 values: 1,2,0,0,0,1,1,0');
-        expect(res[4]).to.equal(prefix + 'w=159 values: 1,3,128,0,0,1,0,1');
-        expect(res[5]).to.equal(prefix + 'w=191 values: 1,3,0,255,1,1,1,0');
-        expect(res[6]).to.equal(prefix + 'w=223 values: 1,4,0,0,1,1,0,1');
-        expect(res[7]).to.equal(prefix + 'w=255 values: 1,4,0,0,0,1,1,0');
-        expect(res[8]).to.equal(prefix + 'w=257 values: 0,4,255,255,1,0,1,1');
-        expect(res[9]).to.equal(prefix + 'w=319 values: 1,5,15,15,0,0,14,0');
-        expect(res[10]).to.equal(prefix + 'w=351 values: 1,6,176,180,0,0,164,0');
-        expect(res[11]).to.equal(prefix + 'w=383 values: 1,7,15,240,0,0,239,0');
-        expect(res[12]).to.equal(prefix + 'w=384 values: 0,2,255,0,0,0,16,0');
+        expect(res[0]).to.equal(prefix + 'w=31 values: 1,0,15,15,1,0,15,0' + suffix);
+        expect(res[1]).to.equal(prefix + 'w=32 values: 0,1,255,255,0,0,1,0' + suffix);
+        expect(res[2]).to.equal(prefix + 'w=95 values: 1,2,0,0,1,1,0,1' + suffix);
+        expect(res[3]).to.equal(prefix + 'w=127 values: 1,2,0,0,0,1,1,0' + suffix);
+        expect(res[4]).to.equal(prefix + 'w=159 values: 1,3,128,0,0,1,0,1' + suffix);
+        expect(res[5]).to.equal(prefix + 'w=191 values: 1,3,0,255,1,1,1,0' + suffix);
+        expect(res[6]).to.equal(prefix + 'w=223 values: 1,4,0,0,1,1,0,1' + suffix);
+        expect(res[7]).to.equal(prefix + 'w=255 values: 1,4,0,0,0,1,1,0' + suffix);
+        expect(res[8]).to.equal(prefix + 'w=257 values: 0,4,255,255,1,0,1,1' + suffix);
+        expect(res[9]).to.equal(prefix + 'w=319 values: 1,5,15,15,0,0,14,0' + suffix);
+        expect(res[10]).to.equal(prefix + 'w=351 values: 1,6,176,180,0,0,164,0' + suffix);
+        expect(res[11]).to.equal(prefix + 'w=383 values: 1,7,15,240,0,0,239,0' + suffix);
+        expect(res[12]).to.equal(prefix + 'w=384 values: 0,2,255,0,0,0,16,0' + suffix);
     })
 
 });
