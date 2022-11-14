@@ -31,8 +31,13 @@ namespace Arith(%N);
     pol commit q1[16];
     pol commit q2[16];
 
-    pol commit sel;
-    sel * (1 - sel) = 0;
+    pol commit resultEq0;
+    pol commit resultEq1;
+    pol commit resultEq2;
+    resultEq0 * (1 - resultEq0) = 0;
+    resultEq1 * (1 - resultEq1) = 0;
+    resultEq2 * (1 - resultEq2) = 0;
+
     /****
     *
     * LATCH POLS: x1,y1,x2,y2,x3,y3,s,q0,q1,q2
