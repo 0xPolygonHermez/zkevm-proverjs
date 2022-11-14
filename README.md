@@ -72,6 +72,24 @@ npm run buildall --build=build/basic_proof
 ```sh
 npm run buildall --input=test/myinputfile.json
 ```
+
+### Memory
+
+| Region (base-to)| Size | Content |
+|---|---|---|
+| 0x000000 - 0x03FFFF | 8MiB |
+| 0x040000 - 0x07FFFF | 8MiB | First context
+| 0x080000 - 0x0BFFFF | 8MiB | Second context
+|     :               | 8MiB | :
+
+
+| Region (base-to)| Size | Content |
+|---|---|---|
+| CTX.base + [0x000000 - 0x00FFFF] | 2MiB | Context specific variables
+| CTX.base + [0x010000 - 0x01FFFF] | 2MiB | EVM Stack
+| CTX.base + [0x020000 - 0x03FFFF] | 4MiB | EVM Memory
+
+
 ### Build steps
 | step | inputs | outputs | description|
 |---|---|---|---|
