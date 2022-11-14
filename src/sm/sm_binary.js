@@ -316,7 +316,6 @@ module.exports.execute = async function (pols, input) {
             pols[`b${j}`][i] = 0n;
             pols[`c${j}`][i] = 0n;
         }
-        // pols.last[i] = 0n;
         pols.opcode[i] = 0n;
         pols.freeInA[i] = 0n;
         pols.freeInB[i] = 0n;
