@@ -182,8 +182,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
     }
 
-    const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
-
     if (mainConfig && mainConfig.constFilename) {
         await constPols.saveToFile(mainConfig.constFilename);
     }
@@ -196,12 +194,18 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
     }
 
-    if (res.length != 0) {
-        console.log("Pil does not pass");
-        for (let i=0; i<res.length; i++) {
-            console.log(res[i]);
+    if (mainConfig && mainConfig.externalPilVerification) {
+        console.log(`call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
+    } else {
+        const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
+
+        if (res.length != 0) {
+            console.log("Pil does not pass");
+            for (let i=0; i<res.length; i++) {
+                console.log(res[i]);
+            }
+            assert(0);
         }
-        assert(0);
     }
 }
 

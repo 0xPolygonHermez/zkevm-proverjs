@@ -11,18 +11,10 @@ const {verifyZkasm} = require("./verify_zkasm");
 describe("Optimize Pils", async function () {
     this.timeout(10000000);
 
-    it("Verify Byte4 Zkasm Test", async () => {
-        await verifyZkasm("optimize-pils/byte4.zkasm", true,
-                { defines: {N: 2 ** 16},
-                  namespaces: ['Global', 'Main'],
-                  verbose: true,
-                  color: true,
-                  disableUnusedError: true});
-    });*/
     it("Verify Binary Zkasm Test", async () => {
         await verifyZkasm("optimize-pils/binary.zkasm", true,
                 { defines: {N: 2 ** 21},
-                  namespaces: ['Global', 'Main', 'Binary', 'PaddingPG', 'Storage', 'PoseidonG'],
+                  namespaces: ['Global', 'Main', 'Binary', 'Rom'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true}/*,
@@ -30,6 +22,7 @@ describe("Optimize Pils", async function () {
                     constFilename: "constFile.bin",
                     commitFilename: "commitFile.bin",
                     pilJsonFilename: "main.pil.jsonS",
+                    externalPilVerification: true
                 }*/);
     });
 });
