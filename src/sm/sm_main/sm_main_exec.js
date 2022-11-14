@@ -1092,11 +1092,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.hashPDigest || l.sWR) {
             const op = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 1});
+            required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
         }
 
         if (l.arith) {
-            if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2) && (!l.arithEq3)) {
+            if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2)) {
                 const A = fea2scalar(Fr, ctx.A);
                 const B = fea2scalar(Fr, ctx.B);
                 const C = fea2scalar(Fr, ctx.C);
@@ -1114,11 +1114,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                                                 + ' (0x' + right.toString(16)+')');
                     throw new Error(`Arithmetic does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                 }
-                pols.arith[i] = 1n;
                 pols.arithEq0[i] = 1n;
                 pols.arithEq1[i] = 0n;
                 pols.arithEq2[i] = 0n;
-                pols.arithEq3[i] = 0n;
                 required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0});
             }
             else {
@@ -1129,9 +1127,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const x3 = fea2scalar(Fr, ctx.E);
                 const y3 = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 let dbl = false;
-                if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2) && l.arithEq3) {
+                if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2)) {
                     dbl = false;
-                } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2 && l.arithEq3) {
+                } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2) {
                     dbl = true;
                 } else {
                     throw new Error(`Invalid arithmetic op: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
@@ -1165,19 +1163,15 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     throw new Error('Arithmetic curve '+(dbl?'dbl':'add')+` point does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                 }
 
-                pols.arith[i] = 1n;
                 pols.arithEq0[i] = 0n;
                 pols.arithEq1[i] = dbl ? 0n : 1n;
                 pols.arithEq2[i] = dbl ? 1n : 0n;
-                pols.arithEq3[i] = 1n;
                 required.Arith.push({x1: x1, y1: y1, x2: dbl ? x1:x2, y2: dbl? y1:y2, x3: x3, y3: y3, selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1});
             }
         } else {
-            pols.arith[i] = 0n;
             pols.arithEq0[i] = 0n;
             pols.arithEq1[i] = 0n;
             pols.arithEq2[i] = 0n;
-            pols.arithEq3[i] = 0n;
         }
 
         if (l.bin) {
@@ -1191,7 +1185,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 0n;
                 pols.carry[i] = (((a + b) >> 256n) > 0n) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 0});
+                required.Binary.push({a: a, b: b, c: c, opcode: 0, type: 1});
             } else if (l.binOpcode == 1) { // SUB
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1202,7 +1196,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 1n;
                 pols.carry[i] = ((a - b) < 0n) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 1});
+                required.Binary.push({a: a, b: b, c: c, opcode: 1, type: 1});
             } else if (l.binOpcode == 2) { // LT
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1213,7 +1207,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 2n;
                 pols.carry[i] = (a < b) ? 1n: 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 2});
+                required.Binary.push({a: a, b: b, c: c, opcode: 2, type: 1});
             } else if (l.binOpcode == 3) { // SLT
                 const a = Scalar.e(fea2scalar(Fr, ctx.A));
                 const b = Scalar.e(fea2scalar(Fr, ctx.B));
@@ -1228,7 +1222,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 3n;
                 pols.carry[i] = (signedA < signedB) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 3});
+                required.Binary.push({a: a, b: b, c: c, opcode: 3, type: 1});
             } else if (l.binOpcode == 4) { // EQ
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1239,7 +1233,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 4n;
                 pols.carry[i] = (a ==  b) ? 1n : 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 4});
+                required.Binary.push({a: a, b: b, c: c, opcode: 4, type: 1});
             } else if (l.binOpcode == 5) { // AND
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1250,7 +1244,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 5n;
                 pols.carry[i] = 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 5});
+                required.Binary.push({a: a, b: b, c: c, opcode: 5, type: 1});
             } else if (l.binOpcode == 6) { // OR
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1261,7 +1255,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 6n;
                 pols.carry[i] = 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 6});
+                required.Binary.push({a: a, b: b, c: c, opcode: 6, type: 1});
             } else if (l.binOpcode == 7) { // XOR
                 const a = fea2scalar(Fr, ctx.A);
                 const b = fea2scalar(Fr, ctx.B);
@@ -1272,7 +1266,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 pols.binOpcode[i] = 7n;
                 pols.carry[i] = 0n;
-                required.Binary.push({a: a, b: b, c: c, opcode: 7});
+                required.Binary.push({a: a, b: b, c: c, opcode: 7, type: 1});
             } else {
                 throw new Error("Invalid bin opcode");
             }
@@ -1594,22 +1588,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.RR[nexti] = pols.RR[i];
         }
 
-        if (l.arith == 1) {
-            if (skipCounters){
-                pols.cntArith[nexti] = pols.cntArith[i];
-            } else {
-                pols.cntArith[nexti] = pols.cntArith[i] + 1n;
-            }
+        if (!skipCounters && l.arith == 1) {
+            pols.cntArith[nexti] = pols.cntArith[i] + 1n;
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
         }
 
-        if (l.bin == 1) {
-            if (skipCounters){
-                pols.cntBinary[nexti] = pols.cntBinary[i];
-            } else {
-                pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
-            }
+        if (!skipCounters && (l.bin == 1 || l.hashPDigest || l.sWR)) {
+            pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
         } else {
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }
