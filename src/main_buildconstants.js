@@ -15,7 +15,6 @@ const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
 const smNine2One = require("./sm/sm_nine2one.js");
-const smNormGate9 = require("./sm/sm_norm_gate9.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
@@ -112,10 +111,6 @@ async function run() {
     if (constPols.Nine2One) {
         console.log("Nine2One...");
         await smNine2One.buildConstants(constPols.Nine2One);
-    }
-    if (constPols.NormGate9) {
-        console.log("NormGate9...");
-        await smNormGate9.buildConstants(constPols.NormGate9);
     }
     if (constPols.PaddingKK) {
         console.log("PaddingKK...");

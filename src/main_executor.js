@@ -16,7 +16,6 @@ const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
 const smNine2One = require("./sm/sm_nine2one.js");
-const smNormGate9 = require("./sm/sm_norm_gate9.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
@@ -152,12 +151,9 @@ async function run() {
         if (cmPols.Nine2One) console.log("Nine2One...");
         const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKBit.Nine2One || []) : false;
 
-        if (cmPols.KeccakF) console.log("KeccakF...");
-        const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF || []) : false;
-
-        if (cmPols.NormGate9) {
-            console.log("NormGate9...");
-            await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9 || []);
+        if (cmPols.KeccakF) {
+            console.log("KeccakF...");
+            await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF || []);
         }
 
         if (cmPols.PaddingPG) console.log("PaddingPG...");
