@@ -91,6 +91,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const iPrint = new Prints(ctx, smt);
     let fastDebugExit = false;
 
+    let pendingCmds = false;
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
@@ -115,6 +116,12 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.cntMemAlign = pols.cntMemAlign[i];
         ctx.cntPoseidonG = pols.cntPoseidonG[i];
         ctx.cntPaddingPG = pols.cntPaddingPG[i];
+
+        // evaluate commands "after" before start new line, but when new values of registers are ready.
+        if (pendingCmds) {
+            evalCommands(ctx, pendingCmds);
+            pendingCmds = false;
+        }
 
         const l = rom.program[ ctx.zkPC ];
 
@@ -1731,10 +1738,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
         }
 
-        if (l.cmdAfter) {
-            for (let j=0; j< l.cmdAfter.length; j++) {
-                evalCommand(ctx, l.cmdAfter[j]);
-            }
+        if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
+            pendingCmds = l.cmdAfter;
         }
     }
 
@@ -2018,6 +2023,12 @@ function initState(Fr, pols, ctx) {
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
+}
+
+function evalCommands(ctx, cmds) {
+    for (let j=0; j< cmds.length; j++) {
+        evalCommand(ctx, cmds[j]);
+    }
 }
 
 function evalCommand(ctx, tag) {
