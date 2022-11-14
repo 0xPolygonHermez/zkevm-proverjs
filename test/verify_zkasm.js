@@ -194,6 +194,18 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
     const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
 
+    if (mainConfig && mainConfig.constFilename) {
+        await constPols.saveToFile(mainConfig.constFilename);
+    }
+
+    if (mainConfig && mainConfig.commitFilename) {
+        await cmPols.saveToFile(mainConfig.commitFilename);
+    }
+
+    if (mainConfig && mainConfig.pilJsonFilename) {
+        fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+    }
+
     if (res.length != 0) {
         console.log("Pil does not pass");
         for (let i=0; i<res.length; i++) {
