@@ -65,7 +65,7 @@ namespace Main(%N);
     pol commit mOp, mWR;
     pol commit sWR, sRD;
     pol commit arithEq0, arithEq1, arithEq2;
-    pol commit memAlign, memAlignWR, memAlignWR8;
+    pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashKLen, hashKDigest;
     pol commit hashP, hashPLen, hashPDigest;
     pol commit bin;
@@ -343,7 +343,7 @@ namespace Main(%N);
     JMP, JMPN, JMPC,
     isStack, isCode, isMem, incStack, incCode, useCTX, ind, indRR,
     mOp, mWR, sWR, sRD, arithEq0, arithEq1, arithEq2, hashK, hashKLen, hashKDigest, hashP, hashPLen, hashPDigest,
-    bin, binOpcode, assert, memAlign, memAlignWR, memAlignWR8,
+    bin, binOpcode, assert, memAlignRD, memAlignWR, memAlignWR8,
     zkPC} in
     {Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7, Rom.offset,
     Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inSTEP, Rom.inFREE, Rom.inRR, Rom.inHASHPOS,
@@ -351,7 +351,7 @@ namespace Main(%N);
     Rom.JMP, Rom.JMPN, Rom.JMPC,
     Rom.isStack, Rom.isCode, Rom.isMem, Rom.incStack, Rom.incCode, Rom.useCTX, Rom.ind, Rom.indRR,
     Rom.mOp, Rom.mWR, Rom.sWR, Rom.sRD, Rom.arithEq0, Rom.arithEq1, Rom.arithEq2, Rom.hashK, Rom.hashKLen, Rom.hashKDigest, Rom.hashP, Rom.hashPLen, Rom.hashPDigest,
-    Rom.bin, Rom.binOpcode, Rom.assert, Rom.memAlign, Rom.memAlignWR, Rom.memAlignWR8,
+    Rom.bin, Rom.binOpcode, Rom.assert, Rom.memAlignRD, Rom.memAlignWR, Rom.memAlignWR8,
     Rom.line};
 
     pol commit sKeyI[4];
@@ -685,22 +685,44 @@ namespace Main(%N);
 // MemAlign Plookpups
 /////////
 
-    memAlign {
-        memAlignWR,
-        memAlignWR8,
+    // memAlign RD
+    memAlignRD {
+        0, 0,
         A0, A1, A2, A3,
         A4, A5, A6, A7,
-        (1 - memAlignWR8) * B0, (1 - memAlignWR8) * B1, (1 - memAlignWR8) * B2, (1 - memAlignWR8) * B3,
-        (1 - memAlignWR8) * B4, (1 - memAlignWR8) * B5, (1 - memAlignWR8) * B6, (1 - memAlignWR8) * B7,
+        B0, B1, B2, B3,
+        B4, B5, B6, B7,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7,
+        C0
+    } is
+    MemAlign.resultRd {
+        MemAlign.wr256,
+        MemAlign.wr8,
+        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
+        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
+        MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
+        MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
+        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
+        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
+        MemAlign.offset
+    };
+
+    memAlignWR {
+        1, 0,
+        A0, A1, A2, A3,
+        A4, A5, A6, A7,
+        B0, B1, B2, B3,
+        B4, B5, B6, B7,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         C0,
-        (memAlignWR + memAlignWR8) * D0, (memAlignWR + memAlignWR8)*D1, (memAlignWR + memAlignWR8)*D2, (memAlignWR + memAlignWR8)*D3,
-        (memAlignWR + memAlignWR8) * D4, (memAlignWR + memAlignWR8)*D5, (memAlignWR + memAlignWR8)*D6, (memAlignWR + memAlignWR8)*D7,
-        memAlignWR * E0, memAlignWR*E1, memAlignWR*E2, memAlignWR*E3,
-        memAlignWR * E4, memAlignWR*E5, memAlignWR*E6, memAlignWR*E7
-    } in
-    MemAlign.RESET {
+        D0, D1, D2, D3,
+        D4, D5, D6, D7,
+        E0, E1, E2, E3,
+        E4, E5, E6, E7
+    } is
+    MemAlign.resultWr256 {
         MemAlign.wr256,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
@@ -716,5 +738,27 @@ namespace Main(%N);
         MemAlign.w1[4], MemAlign.w1[5], MemAlign.w1[6], MemAlign.w1[7]
     };
 
-    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlign;
+    memAlignWR8 {
+        0, 1,
+        A0, A1, A2, A3,
+        A4, A5, A6, A7,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7,
+        C0,
+        D0, D1, D2, D3,
+        D4, D5, D6, D7
+    } is
+    MemAlign.resultWr8 {
+        MemAlign.wr256,
+        MemAlign.wr8,
+        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
+        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
+        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
+        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
+        MemAlign.offset,
+        MemAlign.w0[0], MemAlign.w0[1], MemAlign.w0[2], MemAlign.w0[3],
+        MemAlign.w0[4], MemAlign.w0[5], MemAlign.w0[6], MemAlign.w0[7]
+    };
+
+    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR + memAlignWR8;
 

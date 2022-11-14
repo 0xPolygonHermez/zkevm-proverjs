@@ -697,7 +697,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     }
                 }
 
-                if (l.memAlign && !l.memAlignWR) {
+                if (l.memAlignRD) {
                     const m0 = fea2scalar(Fr, ctx.A);
                     const m1 = fea2scalar(Fr, ctx.B);
                     const P2_256 = 2n ** 256n;
@@ -1277,7 +1277,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.carry[i] = 0n;
         }
 
-        if (l.memAlign == 1) {
+        if (l.memAlignRD || l.memAlignWR || l.memAlignWR8) {
             const m0 = fea2scalar(Fr, ctx.A);
             const v = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const P2_256 = 2n ** 256n;
@@ -1288,7 +1288,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 throw new Error(`MemAlign out of range (${offset}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
 
-            if (l.memAlignWR && !l.memAlignWR8) {
+            if (!l.memAlignRD && l.memAlignWR && !l.memAlignWR8) {
                 const m1 = fea2scalar(Fr, ctx.B);
                 const w0 = fea2scalar(Fr, ctx.D);
                 const w1 = fea2scalar(Fr, ctx.E);
@@ -1299,23 +1299,23 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     throw new Error(`MemAlign w0,w1 invalid (0x${w0.toString(16)},0x${w1.toString(16)}) vs (0x${_W0.toString(16)},0x${_W1.toString(16)})`+
                                     `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, v:${v.toString(16)}, offset:${offset}]: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                 }
-                pols.memAlign[i] = 1n;
+                pols.memAlignRD[i] = 0n;
                 pols.memAlignWR[i] = 1n;
                 pols.memAlignWR8[i] = 0n;
                 required.MemAlign.push({m0: m0, m1: m1, v: v, w0: w0, w1: w1, offset: offset, wr256: 1n, wr8: 0n});
             }
-            else if (!l.memAlignWR && l.memAlignWR8) {
+            else if (!l.memAlignRD && !l.memAlignWR && l.memAlignWR8) {
                 const w0 = fea2scalar(Fr, ctx.D);
                 const _W0 = Scalar.bor(Scalar.band(m0, Scalar.shr(byteMaskOn256, 8n * offset)), Scalar.shl(Scalar.band(v, 0xFF), 8n * (31n - offset)));
                 if (!Scalar.eq(w0, _W0)) {
                     throw new Error(`MemAlign w0 invalid (0x${w0.toString(16)}) vs (0x${_W0.toString(16)})`+
                                     `[m0:${m0.toString(16)}, v:${v.toString(16)}, offset:${offset}]: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                 }
-                pols.memAlign[i] = 1n;
+                pols.memAlignRD[i] = 0n;
                 pols.memAlignWR[i] = 0n;
                 pols.memAlignWR8[i] = 1n;
                 required.MemAlign.push({m0: m0, m1: 0n, v: v, w0: w0, w1: 0n, offset: offset, wr256: 0n, wr8: 1n});
-            } else if (!l.memAlignWR && !l.memAlignWR8) {
+            } else if (l.memAlignRD && !l.memAlignWR && !l.memAlignWR8) {
                 const m1 = fea2scalar(Fr, ctx.B);
                 const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
                 const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
@@ -1324,15 +1324,15 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     throw new Error(`MemAlign v invalid ${v.toString(16)} vs ${_V.toString(16)}:`+
                                     `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, offset:${offset}]: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                 }
-                pols.memAlign[i] = 1n;
+                pols.memAlignRD[i] = 1n;
                 pols.memAlignWR[i] = 0n;
                 pols.memAlignWR8[i] = 0n;
                 required.MemAlign.push({m0: m0, m1: m1, v: v, w0: Fr.zero, w1: Fr.zero, offset: offset, wr256: 0n, wr8: 0n});
             } else {
-                throw new Error(`Invalid memAlign operation (wr: ${l.memAlignWR}, wr8: ${l.memAlignWR8}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`Invalid    operation (rd: ${l.memAlignRD} wr: ${l.memAlignWR}, wr8: ${l.memAlignWR8}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
         } else {
-            pols.memAlign[i] = 0n;
+            pols.memAlignRD[i] = 0n;
             pols.memAlignWR[i] = 0n;
             pols.memAlignWR8[i] = 0n;
         }
@@ -1600,12 +1600,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }
 
-        if (l.memAlign == 1) {
-            if (skipCounters) {
-                pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
-            } else {
-                pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
-            }
+        if (!skipCounters && (l.memAlignRD || l.memAlignWR || l.memAlignWR8)) {
+            pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
         } else {
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
         }
