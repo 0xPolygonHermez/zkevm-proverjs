@@ -28,7 +28,7 @@ const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] [-D <databaseurl>] [-T <dbtable>] -u -e -v")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] [-D <databaseurl>] [-N <dbnodestable>] [-G <dbprogamtable>] -u -e -v")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("t", "test")
@@ -41,7 +41,8 @@ const argv = require("yargs")
     .alias("e", "execute")
     .alias("v", "verbose")
     .alias("D", "databaseurl")
-    .alias("T", "dbtable")
+    .alias("N", "dbnodestable")
+    .alias("G", "dbprogramtable")    
     .argv;
 
 async function run() {
@@ -109,7 +110,8 @@ async function run() {
         unsigned: (argv.unsigned === true),
         execute: (argv.execute === true),
         databaseURL: typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local",
-        dbTable: typeof(argv.dbtable) === "string" ?  argv.dbtable.trim() : "state.merkletree"
+        dbNodesTable: typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes",
+        dbProgramTable: typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program"
     }
 
     const N = cmPols.Main.PC.length;

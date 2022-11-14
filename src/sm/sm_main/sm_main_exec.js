@@ -60,7 +60,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
     const db = new Database(Fr, input.db);
-    await db.connect(config.databaseURL,config.dbTable);
+    await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
     const smt = new SMT(db, poseidon, Fr);
     initState(Fr, pols);
 

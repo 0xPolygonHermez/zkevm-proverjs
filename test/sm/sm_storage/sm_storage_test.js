@@ -37,7 +37,7 @@ describe("Test storage operations", async function () {
         pil = await compile(fr, __dirname + "/storage_main.pil");
 
         db = new Database(fr);
-        //await db.connect("postgresql://statedb:statedb@127.0.0.1:5432/testdb");
+        // await db.connect("postgresql://statedb:statedb@127.0.0.1:5432/testdb");
         smt = new SMT(db, poseidon, fr);
     })
 
