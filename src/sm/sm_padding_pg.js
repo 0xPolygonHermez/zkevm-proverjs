@@ -194,7 +194,8 @@ module.exports.execute = async function (pols, input) {
                     pols.curHash0[p],
                     pols.curHash1[p],
                     pols.curHash2[p],
-                    pols.curHash3[p]
+                    pols.curHash3[p],
+                    3
                 ]);
                 pols.acc[0][p+1] = 0n;
                 pols.acc[1][p+1] = 0n;
@@ -236,7 +237,7 @@ module.exports.execute = async function (pols, input) {
     const nFullUnused = Math.floor((N -p - 1)/BYTESPERBLOCK)+1;
 
     const h0 = poseidon([ 0x1n, 0n, 0n, 0n, 0n, 0n, 0n, 0x80n << 48n ], [0n, 0n, 0n, 0n]);
-    required.PoseidonG.push([ 0x1n, 0n, 0n, 0n, 0n, 0n, 0n, 0x80n << 48n, 0n, 0n, 0n, 0n, ...h0  ]);
+    required.PoseidonG.push([ 0x1n, 0n, 0n, 0n, 0n, 0n, 0n, 0x80n << 48n, 0n, 0n, 0n, 0n, ...h0, 3 ]);
 
 
     for (let i=0; i<nFullUnused; i++) {

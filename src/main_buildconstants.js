@@ -8,7 +8,6 @@ const { newConstantPolsArray, compile, newCommitPolsArray } = require("pilcom");
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
-const smByte4 = require("./sm/sm_byte4.js");
 const smGlobal = require("./sm/sm_global.js");
 const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("./sm/sm_main/sm_main.js");
@@ -83,10 +82,6 @@ async function run() {
     if (constPols.Binary) {
         console.log("Binary...");
         await smBinary.buildConstants(constPols.Binary);
-    }
-    if (constPols.Byte4) {
-        console.log("Byte4...");
-        await smByte4.buildConstants(constPols.Byte4);
     }
     if (constPols.Global) {
         console.log("Global...");

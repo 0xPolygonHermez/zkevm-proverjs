@@ -10,7 +10,6 @@ const { newCommitPolsArray, compile  } = require("pilcom");
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
-const smByte4 = require("./sm/sm_byte4.js");
 const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
@@ -122,10 +121,6 @@ async function run() {
         }
         const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage) : false;
 
-        if (cmPols.Byte4) {
-            console.log("Byte4...");
-            await smByte4.execute(cmPols.Byte4, requiredMain.Byte4 || []);
-        }
         if (cmPols.Arith) {
             console.log("Arith...");
             await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
