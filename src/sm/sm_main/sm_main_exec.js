@@ -76,8 +76,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const FrLast32Positive = 0xFFFFFFFFn;
 
     // load database
-    const db = new MemDB(Fr, input.db);
-    await db.connect(config.databaseURL,config.dbTable);
+    const db = new Database(Fr, input.db);
+    await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
 
     // load programs into DB
     for (const [key, value] of Object.entries(input.contractsBytecode)){

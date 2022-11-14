@@ -24,7 +24,7 @@ const smStorage = require("./sm/sm_storage/sm_storage.js");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -l <logs.json> [-p <main.pil>] [-P <pilconfig.json>] [-D <databaseurl>] [-DT <dbtable>] -u -e -v -T -c -s -d ")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -l <logs.json> [-p <main.pil>] [-P <pilconfig.json>] [-D <databaseurl>] [-N <dbnodestable>] [-G <dbprogamtable>]  -u -e -v -T -c -s -d ")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("l", "logs")
@@ -44,7 +44,8 @@ const argv = require("yargs")
     .alias("N", "stepsN")
     .alias("V", "verboseExecutor")
     .alias("D", "databaseurl")
-    .alias("DT", "dbtable")
+    .alias("N", "dbnodestable")
+    .alias("G", "dbprogramtable")    
     .argv;
 
 async function run() {
