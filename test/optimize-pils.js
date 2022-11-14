@@ -13,7 +13,8 @@ describe("Optimize Pils", async function () {
 
     it("Verify Byte4 Zkasm Test", async () => {
         await verifyZkasm("optimize-pils/byte4.zkasm", true,
-                { namespaces: ['Global', 'Main'],
+                { defines: {N: 2**16},
+                  namespaces: ['Global', 'Main'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});
