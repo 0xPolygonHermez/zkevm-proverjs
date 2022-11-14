@@ -16,7 +16,6 @@ const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
 const smNine2One = require("../src/sm/sm_nine2one.js");
-const smNormGate9 = require("../src/sm/sm_norm_gate9.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
@@ -62,8 +61,6 @@ describe("test main sm", async function () {
         await smStorage.buildConstants(constPols.Storage);
         console.log("Const MemAlign...");
         await smMemAlign.buildConstants(constPols.MemAlign);
-        console.log("Const NormGate9...");
-        await smNormGate9.buildConstants(constPols.NormGate9);
         console.log("Const Arith...");
         await smArith.buildConstants(constPols.Arith);
         console.log("Const Binary...");
@@ -78,8 +75,6 @@ describe("test main sm", async function () {
         const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
         console.log("Exec KeccakF...");
         const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
-        console.log("Exec NormGate9...");
-        await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
         console.log("Exec MemAlign...");
         await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
 

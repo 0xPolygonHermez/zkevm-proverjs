@@ -16,7 +16,6 @@ const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
 const smNine2One = require("../src/sm/sm_nine2one.js");
-const smNormGate9 = require("../src/sm/sm_norm_gate9.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
@@ -80,10 +79,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log("Const KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
     }
-    if (constPols.NormGate9) {
-        console.log("Const NormGate9...");
-        await smNormGate9.buildConstants(constPols.NormGate9);
-    }
     if (constPols.Mem) {
         console.log("Const Mem...");
         await smMem.buildConstants(constPols.Mem);
@@ -127,12 +122,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     if (cmPols.KeccakF) console.log("Exec KeccakF...");
     const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : false;
 
-    if (cmPols.NormGate9) {
-        console.log("Exec NormGate9...");
-        await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
-    } else if (verifyPilFlag && requiredMain.PaddingKK.length) {
-        console.log(`WARNING: Namespace PaddingKK isn't included, but there are ${requiredMain.PaddingKK.length} PaddingKK operations`);
-    }
     if (cmPols.MemAlign) {
         console.log("Exec MemAlign...");
         await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign || []);
