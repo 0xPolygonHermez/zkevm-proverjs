@@ -22,6 +22,7 @@ template Main() {
     signal input a_root2[4];
     signal input a_root3[4];
     signal input a_root4[4];
+
     signal input a_evals[82][3];
 
     signal input a_s0_vals1[64][12];
@@ -119,14 +120,14 @@ template Main() {
     component isOneBatchA = IsZero();
     isOneBatchA.in  <== a_publics[42] - a_publics[16] - 1;
     component a_muxRootC = MultiMux1(4);
-    a_muxRootC.c[0] <== rootCSingle;
-    a_muxRootC.c[1] <== rootC;
+    a_muxRootC.c[0] <== rootC;
+    a_muxRootC.c[1] <== rootCSingle;
     a_muxRootC.s <== isOneBatchA.out;
 
     for (var i=0; i<4; i++) {
-        vA.publics[43+i] <== a_muxRootC.out[i];
+        vA.publics[43+i] <== rootC[i];
     }
-
+    vA.rootC <== a_muxRootC.out;
 
     component vB = StarkVerifier();
 
@@ -164,13 +165,14 @@ template Main() {
     component isOneBatchB = IsZero();
     isOneBatchB.in <== b_publics[42] - b_publics[16] - 1;
     component b_muxRootC = MultiMux1(4);
-    b_muxRootC.c[0] <== rootCSingle;
-    b_muxRootC.c[1] <== rootC;
+    b_muxRootC.c[0] <== rootC;
+    b_muxRootC.c[1] <== rootCSingle;
     b_muxRootC.s <== isOneBatchB.out;
 
     for (var i=0; i<4; i++) {
-        vB.publics[43+i] <== b_muxRootC.out[i];
+        vB.publics[43+i] <== rootC[i];
     }
+    vB.rootC <== b_muxRootC.out;
 
     // oldStateRoot
     for (var i=0; i<8; i++) {
