@@ -130,7 +130,7 @@ namespace PaddingKK(%N);
     pol constant crValid;
 
     /* Read Data output
-        crLatch * crValid {addr, crOffset - crLen -1, crLen, crV0C, crV1C, crV2C, crV3C, crV4C, crV5C, crV6C, crV7C}
+        crLatch * crValid {addr, PaddingKK.len - PaddingKK.rem - PaddingKK.crLen + 1, crLen, crV0C, crV1C, crV2C, crV3C, crV4C, crV5C, crV6C, crV7C}
     */
 
     /* Read Len output
