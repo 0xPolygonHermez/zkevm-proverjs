@@ -66,7 +66,7 @@ namespace Binary(%N);
     pol commit opcode;
     pol commit cIn, cOut;
     pol commit lCout,lOpcode;
-    //pol commit last;
+
     pol commit useCarry;
     pol commit resultBinOp;
     pol commit resultValidRange;

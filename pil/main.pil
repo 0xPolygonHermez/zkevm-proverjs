@@ -464,8 +464,6 @@ namespace Main(%N);
         Binary.lCout
     };
 
-    ////// TODO REVIEW => need increment when store use (ZKASM must check bin + sWR + hashPDigest == [0,1])
-    ////// update executor cntBinary calculation
     cntBinary' = cntBinary*(1-Global.L1) + bin + sWR + hashPDigest;
 
 /////////
