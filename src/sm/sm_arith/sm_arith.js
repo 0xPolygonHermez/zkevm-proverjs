@@ -13,10 +13,7 @@ module.exports.buildConstants = async function (pols) {
 
     buildClocks(pols, N, 32);
     buildByte2Bits16(pols, N);
-    buildRange(pols, N, 'GL_SIGNED_4BITS_C0', -16n, 16n);
-    buildRange(pols, N, 'GL_SIGNED_4BITS_C1', -16n, 16n, 33);
-    buildRange(pols, N, 'GL_SIGNED_4BITS_C2', -16n, 16n, 33*33);
-    buildRange(pols, N, 'GL_SIGNED_18BITS', -(2n**18n), (2n**18n));
+    buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
 }
 
 function buildByte2Bits16(pols, N) {
@@ -85,11 +82,12 @@ module.exports.execute = async function (pols, input) {
             pols.q1[j][i] = 0n;
             pols.q2[j][i] = 0n;
             pols.s[j][i] = 0n;
-            if (j < pols.carryL.length) pols.carryL[j][i] = 0n;
-            if (j < pols.carryH.length) pols.carryH[j][i] = 0n;
+            if (j < pols.carry.length) pols.carry[j][i] = 0n;
             if (j < pols.selEq.length) pols.selEq[j][i] = 0n;
         }
-        pols.resultReady[i] = 0n;
+        pols.resultEq0[i] = 0n;
+        pols.resultEq1[i] = 0n;
+        pols.resultEq2[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
@@ -183,12 +181,13 @@ module.exports.execute = async function (pols, input) {
             eqIndexes.forEach((eqIndex) => {
                 let carryIndex = eqIndexToCarryIndex[eqIndex];
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
-                pols.carryL[carryIndex][offset + step] = Fr.e((carry[carryIndex]) % (2n**18n));
-                pols.carryH[carryIndex][offset + step] = Fr.e((carry[carryIndex]) / (2n**18n));
+                pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
         }
-        pols.resultReady[offset + 31] = 1n;
+        pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
+        pols.resultEq1[offset + 31] = pols.selEq[1][offset] ? 1n : 0n;
+        pols.resultEq2[offset + 31] = pols.selEq[2][offset] ? 1n : 0n;
     }
 }
 
