@@ -118,7 +118,7 @@ class FullTracer {
         this.logs[ctx.CTX][indexLog].batch_number = this.finalTrace.numBatch;
         this.logs[ctx.CTX][indexLog].tx_hash = this.finalTrace.responses[this.txCount].tx_hash;
         this.logs[ctx.CTX][indexLog].tx_index = this.txCount;
-        this.logs[ctx.CTX][indexLog].batch_hash = this.finalTrace.globalHash;
+        this.logs[ctx.CTX][indexLog].batch_hash = this.finalTrace.newAccInputHash;
         this.logs[ctx.CTX][indexLog].index = Number(indexLog);
     }
 
@@ -136,7 +136,8 @@ class FullTracer {
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
         context.value = getVarFromCtx(ctx, false, "txValue").toString();
-        context.batch = this.finalTrace.globalHash;
+        // TODO: future: should be set at the end of the tx with opBLOCKCHASH value
+        context.batch = this.finalTrace.newAccInputHash;
         context.output = ""
         context.gas_used = "";
         context.execution_time = ""
@@ -307,8 +308,9 @@ class FullTracer {
         }
         this.finalTrace.batchHash = ethers.utils.hexlify(getRegFromCtx(ctx, tag.params[1].regName));
         this.finalTrace.old_state_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "oldStateRoot"));
-        this.finalTrace.globalHash = ethers.utils.hexlify(getVarFromCtx(ctx, true, "globalHash"));
-        this.finalTrace.numBatch = Number(getVarFromCtx(ctx, true, "numBatch"));
+        // TODO: outputs should be set at the end of the batch
+        this.finalTrace.newAccInputHash = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newAccInputHash"));
+        this.finalTrace.numBatch = Number(getVarFromCtx(ctx, true, "oldNumBatch")) + 1;
         this.finalTrace.timestamp = Number(getVarFromCtx(ctx, true, "timestamp"));
         this.finalTrace.sequencerAddr = ethers.utils.hexlify(getVarFromCtx(ctx, true, "sequencerAddr"));
         this.finalTrace.responses = [];
@@ -332,9 +334,10 @@ class FullTracer {
         }
         //If some counter exceed, notify
         //if(this.finalTrace.counters.cnt_arith > )
-        // TODO: fix nsr
         this.finalTrace.new_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
+        this.finalTrace.new_acc_input_hash = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newAccInputHash"));
         this.finalTrace.new_local_exit_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newLocalExitRoot"));
+        this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
         // Create ouput files and dirs
         this.exportTrace();
     }

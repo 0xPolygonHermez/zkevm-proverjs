@@ -7,7 +7,8 @@
         {"nBits": 24},
         {"nBits": 20},
         {"nBits": 16},
-        {"nBits": 11},
-        {"nBits": 6}
+        {"nBits": 12},
+        {"nBits": 8},
+        {"nBits": 4}
     ]
 }

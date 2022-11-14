@@ -45,12 +45,11 @@ async function main(){
 
     // create a zkEVMDB and build a batch
     const db = new MemDB(F);
-
     const zkEVMDB = await ZkEVMDB.newZkEVM(
         db,
         poseidon,
         [F.zero, F.zero, F.zero, F.zero], // empty smt
-        smtUtils.stringToH4(generateData.oldLocalExitRoot),
+        smtUtils.stringToH4(generateData.oldAccInputHash),
         generateData.genesis,
         null,
         null,
@@ -74,8 +73,6 @@ async function main(){
 
     // get stark input
     const starkInput = await batch.getStarkInput();
-    delete starkInput.inputHash;
-    delete starkInput.batchHashData;
 
     // print new states
     const updatedAccounts = batch.getUpdatedAccountsBatch();

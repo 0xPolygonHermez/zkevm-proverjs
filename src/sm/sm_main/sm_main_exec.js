@@ -62,7 +62,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     const db = new MemDB(Fr, input.db);
     const smt = new SMT(db, poseidon, Fr);
-    initState(Fr, pols);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
 
@@ -71,7 +70,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         hashK: [],
         hashP: [],
         pols: pols,
-        input: input ,
+        input: input,
         vars:[],
         Fr: Fr,
         Fec: Fec,
@@ -83,7 +82,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         stepsN
     }
 
-    preprocessTxs(ctx);
+    initState(Fr, pols, ctx);
 
     if (debug && flagTracer) {
         fullTracer = new FullTracer(config.debugInfo.inputName)
@@ -93,7 +92,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     let fastDebugExit = false;
 
     let pendingCmds = false;
-    for (step=0; step < stepsN; step++) {
+    for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
         ctx.step = step;
@@ -130,6 +129,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.line = l.line;
 
         // breaks the loop in debug mode in order to test and debug faster
+        // assert outputs
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
             fastDebugExit = true;
             break;
@@ -138,16 +138,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         let incHashPos = 0;
         let incCounter = 0;
 
-        // if (step % 1000 ==0) {
-        //     console.log(`Step: ${step}`);
-        //     console.log("STEP: ", eval_getReg(ctx, { regName: "STEP" }));
-        //     console.log("CNT_ARITH: ", eval_getReg(ctx, { regName: "CNT_ARITH" }));
-        //     console.log("CNT_BINARY: ", eval_getReg(ctx, { regName: "CNT_BINARY" }));
-        //     console.log("CNT_KECCAK_F: ", eval_getReg(ctx, { regName: "CNT_KECCAK_F" }));
-        //     console.log("CNT_MEM_ALIGN: ", eval_getReg(ctx, { regName: "CNT_MEM_ALIGN" }));
-        //     console.log("CNT_PADDING_PG: ", eval_getReg(ctx, { regName: "CNT_PADDING_PG" }));
-        //     console.log("CNT_POSEIDON_G: ", eval_getReg(ctx, { regName: "CNT_POSEIDON_G" }));
-        // }
+        // if (step%100000==0) console.log(`Step: ${step}`);
 
         if (step==330) {
              // console.log("### > "+l.fileName + ':' + l.line);
@@ -298,7 +289,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         if (l.inSTEP) {
             if (skipCounters) {
-                op0 = Fr.one;
+                op0 = Fr.zero;
                 pols.inSTEP[i] = Fr.e(l.inSTEP);
             } else {
                 op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
@@ -1752,8 +1743,12 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
     }
 
-    if (!debug || !config.stepsN || !fastDebugExit) {
-        checkFinalState(Fr, pols);
+    if (fastDebugExit){
+        assertOutputs(ctx);
+    }
+
+    if (!(fastDebugExit || typeof config.stepsN === 'undefined')) {
+        checkFinalState(Fr, pols, ctx);
     }
 
     for (let i=0; i<ctx.hashK.length; i++) {
@@ -1803,12 +1798,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     return required;
 }
 
+/**
+ * This function creates an array of polynomials and a mapping that maps the reference name in pil to the polynomial
+ * @param {Field} Fr - Field element
+ * @param {Object} pols - polynomials
+ * @param {Object} ctx - context
+ */
+function checkFinalState(Fr, pols, ctx) {
 
-/*
-    This function creates an array of polynomials and a mapping that maps the reference name in pil to the polynomial
-*/
-
-function checkFinalState(Fr, pols) {
     if (
         (!Fr.isZero(pols.A0[0])) ||
         (!Fr.isZero(pols.A1[0])) ||
@@ -1818,22 +1815,6 @@ function checkFinalState(Fr, pols) {
         (!Fr.isZero(pols.A5[0])) ||
         (!Fr.isZero(pols.A6[0])) ||
         (!Fr.isZero(pols.A7[0])) ||
-        (!Fr.isZero(pols.B0[0])) ||
-        (!Fr.isZero(pols.B1[0])) ||
-        (!Fr.isZero(pols.B2[0])) ||
-        (!Fr.isZero(pols.B3[0])) ||
-        (!Fr.isZero(pols.B4[0])) ||
-        (!Fr.isZero(pols.B5[0])) ||
-        (!Fr.isZero(pols.B6[0])) ||
-        (!Fr.isZero(pols.B7[0])) ||
-        (!Fr.isZero(pols.C0[0])) ||
-        (!Fr.isZero(pols.C1[0])) ||
-        (!Fr.isZero(pols.C2[0])) ||
-        (!Fr.isZero(pols.C3[0])) ||
-        (!Fr.isZero(pols.C4[0])) ||
-        (!Fr.isZero(pols.C5[0])) ||
-        (!Fr.isZero(pols.C6[0])) ||
-        (!Fr.isZero(pols.C7[0])) ||
         (!Fr.isZero(pols.D0[0])) ||
         (!Fr.isZero(pols.D1[0])) ||
         (!Fr.isZero(pols.D2[0])) ||
@@ -1859,20 +1840,145 @@ function checkFinalState(Fr, pols) {
         (!Fr.isZero(pols.SR6[0])) ||
         (!Fr.isZero(pols.SR7[0])) ||
         (pols.CTX[0]) ||
-        (pols.SP[0]) ||
         (pols.PC[0]) ||
         (pols.MAXMEM[0]) ||
-        (pols.GAS[0]) ||
         (pols.zkPC[0])
     ) {
-        throw new Error("Program terminated with registers not set to zero");
+        throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
     }
 
+    const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+    if (
+        (!Fr.eq(pols.B0[0], feaOldStateRoot[0])) ||
+        (!Fr.eq(pols.B1[0], feaOldStateRoot[1])) ||
+        (!Fr.eq(pols.B2[0], feaOldStateRoot[2])) ||
+        (!Fr.eq(pols.B3[0], feaOldStateRoot[3])) ||
+        (!Fr.eq(pols.B4[0], feaOldStateRoot[4])) ||
+        (!Fr.eq(pols.B5[0], feaOldStateRoot[5])) ||
+        (!Fr.eq(pols.B6[0], feaOldStateRoot[6])) ||
+        (!Fr.eq(pols.B7[0], feaOldStateRoot[7]))
+    ) {
+        throw new Error("Register B not terminetd equal as its initial value");
+    }
+
+    const feaOldAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+    if (
+        (!Fr.eq(pols.C0[0], feaOldAccInputHash[0])) ||
+        (!Fr.eq(pols.C1[0], feaOldAccInputHash[1])) ||
+        (!Fr.eq(pols.C2[0], feaOldAccInputHash[2])) ||
+        (!Fr.eq(pols.C3[0], feaOldAccInputHash[3])) ||
+        (!Fr.eq(pols.C4[0], feaOldAccInputHash[4])) ||
+        (!Fr.eq(pols.C5[0], feaOldAccInputHash[5])) ||
+        (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
+        (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
+    ) {
+        throw new Error("Register C not terminetd equal as its initial value");
+    }
+
+    if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
+        throw new Error("Register SP not terminetd equal as its initial value");
+    }
+
+    if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
+        throw new Error("Register GAS not terminetd equal as its initial value");
+    }
+}
+
+/**
+ * get output registers and assert them agaunst outputs provided
+ * @param {Object} ctx - context
+ */
+function assertOutputs(ctx){
+    const feaNewStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newStateRoot));
+
+    if (
+        (!ctx.Fr.eq(ctx.SR[0], feaNewStateRoot[0])) ||
+        (!ctx.Fr.eq(ctx.SR[1], feaNewStateRoot[1])) ||
+        (!ctx.Fr.eq(ctx.SR[2], feaNewStateRoot[2])) ||
+        (!ctx.Fr.eq(ctx.SR[3], feaNewStateRoot[3])) ||
+        (!ctx.Fr.eq(ctx.SR[4], feaNewStateRoot[4])) ||
+        (!ctx.Fr.eq(ctx.SR[5], feaNewStateRoot[5])) ||
+        (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
+        (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
+    ) {
+        throw new Error("Assert Error: newStateRoot does not match");
+    }
+
+    const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
+
+    if (
+        (!ctx.Fr.eq(ctx.D[0], feaNewAccInputHash[0])) ||
+        (!ctx.Fr.eq(ctx.D[1], feaNewAccInputHash[1])) ||
+        (!ctx.Fr.eq(ctx.D[2], feaNewAccInputHash[2])) ||
+        (!ctx.Fr.eq(ctx.D[3], feaNewAccInputHash[3])) ||
+        (!ctx.Fr.eq(ctx.D[4], feaNewAccInputHash[4])) ||
+        (!ctx.Fr.eq(ctx.D[5], feaNewAccInputHash[5])) ||
+        (!ctx.Fr.eq(ctx.D[6], feaNewAccInputHash[6])) ||
+        (!ctx.Fr.eq(ctx.D[7], feaNewAccInputHash[7]))
+    ) {
+        throw new Error("Assert Error: newAccInputHash does not match");
+    }
+
+    const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
+
+    if (
+        (!ctx.Fr.eq(ctx.E[0], feaNewLocalExitRoot[0])) ||
+        (!ctx.Fr.eq(ctx.E[1], feaNewLocalExitRoot[1])) ||
+        (!ctx.Fr.eq(ctx.E[2], feaNewLocalExitRoot[2])) ||
+        (!ctx.Fr.eq(ctx.E[3], feaNewLocalExitRoot[3])) ||
+        (!ctx.Fr.eq(ctx.E[4], feaNewLocalExitRoot[4])) ||
+        (!ctx.Fr.eq(ctx.E[5], feaNewLocalExitRoot[5])) ||
+        (!ctx.Fr.eq(ctx.E[6], feaNewLocalExitRoot[6])) ||
+        (!ctx.Fr.eq(ctx.E[7], feaNewLocalExitRoot[7]))
+    ) {
+        throw new Error("Assert Error: newLocalExitRoot does not match");
+    }
+
+    if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
+        throw new Error("Assert Error: newNumBatch does not match");
+    }
+
+    console.log("Assert outputs run succesfully");
 }
 
 
-function initState(Fr, pols) {
-    // Register value initial parameters
+/**
+ * Set input parameters to initial registers
+ * @param {Field} Fr - field element
+ * @param {Object} pols - polynomials
+ * @param {Object} ctx - context
+ */
+function initState(Fr, pols, ctx) {
+    // Set oldStateRoot to register B
+    [
+        pols.B0[0],
+        pols.B1[0],
+        pols.B2[0],
+        pols.B3[0],
+        pols.B4[0],
+        pols.B5[0],
+        pols.B6[0],
+        pols.B7[0]
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+
+    // Set oldAccInputHash to register C
+    [
+        pols.C0[0],
+        pols.C1[0],
+        pols.C2[0],
+        pols.C3[0],
+        pols.C4[0],
+        pols.C5[0],
+        pols.C6[0],
+        pols.C7[0]
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+
+    // Set oldNumBatch to SP register
+    pols.SP[0] = ctx.Fr.e(ctx.input.oldNumBatch)
+
+    // Set chainID to GAS register
+    pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
+
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;
     pols.A2[0] = Fr.zero;
@@ -1881,22 +1987,6 @@ function initState(Fr, pols) {
     pols.A5[0] = Fr.zero;
     pols.A6[0] = Fr.zero;
     pols.A7[0] = Fr.zero;
-    pols.B0[0] = Fr.zero;
-    pols.B1[0] = Fr.zero;
-    pols.B2[0] = Fr.zero;
-    pols.B3[0] = Fr.zero;
-    pols.B4[0] = Fr.zero;
-    pols.B5[0] = Fr.zero;
-    pols.B6[0] = Fr.zero;
-    pols.B7[0] = Fr.zero;
-    pols.C0[0] = Fr.zero;
-    pols.C1[0] = Fr.zero;
-    pols.C2[0] = Fr.zero;
-    pols.C3[0] = Fr.zero;
-    pols.C4[0] = Fr.zero;
-    pols.C5[0] = Fr.zero;
-    pols.C6[0] = Fr.zero;
-    pols.C7[0] = Fr.zero;
     pols.D0[0] = Fr.zero;
     pols.D1[0] = Fr.zero;
     pols.D2[0] = Fr.zero;
@@ -1922,11 +2012,9 @@ function initState(Fr, pols) {
     pols.SR6[0] = Fr.zero;
     pols.SR7[0] = Fr.zero;
     pols.CTX[0] = 0n;
-    pols.SP[0] = 0n;
     pols.PC[0] = 0n;
     pols.MAXMEM[0] = 0n;
     pols.HASHPOS[0] = 0n;
-    pols.GAS[0] = 0n;
     pols.RR[0] = 0n;
     pols.zkPC[0] = 0n;
     pols.cntArith[0] = 0n;
@@ -2154,26 +2242,10 @@ function eval_getMemValue(ctx, tag) {
 }
 
 function eval_functionCall(ctx, tag) {
-    if (tag.funcName == "getGlobalHash") {
-        return eval_getGlobalHash(ctx, tag);
-    } else if (tag.funcName == "getOldStateRoot") {
-        return eval_getOldStateRoot(ctx, tag);
-    } else if (tag.funcName == "getNewStateRoot") {
-        return eval_getNewStateRoot(ctx, tag);
-    } else if (tag.funcName == "getSequencerAddr") {
+    if (tag.funcName == "getSequencerAddr") {
         return eval_getSequencerAddr(ctx, tag);
-    } else if (tag.funcName == "getOldLocalExitRoot") {
-        return eval_getOldLocalExitRoot(ctx, tag);
-    } else if (tag.funcName == "getNewLocalExitRoot") {
-        return eval_getNewLocalExitRoot(ctx, tag);
-    } else if (tag.funcName == "getNumBatch") {
-        return eval_getNumBatch(ctx, tag);
     } else if (tag.funcName == "getTimestamp") {
         return eval_getTimestamp(ctx, tag);
-    } else if (tag.funcName == "getChainId") {
-        return eval_getChainId(ctx, tag);
-    } else if (tag.funcName == "getBatchHashData") {
-        return eval_getBatchHashData(ctx, tag);
     } else if (tag.funcName == "getGlobalExitRoot") {
         return eval_getGlobalExitRoot(ctx, tag);
     } else if (tag.funcName == "getTxs") {
@@ -2213,18 +2285,6 @@ function eval_functionCall(ctx, tag) {
         return eval_getBytecode(ctx, tag);
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
-    } else if (tag.funcName == "isWarmedAddress") {
-        return eval_isWarmedAddress(ctx, tag)
-    } else if (tag.funcName == "checkpoint") {
-        return eval_checkpoint(ctx, tag)
-    } else if (tag.funcName == "revert") {
-        return eval_revert(ctx, tag)
-    } else if (tag.funcName == "commit") {
-        return eval_commit(ctx, tag)
-    } else if (tag.funcName == "clearWarmedStorage") {
-        return eval_clearWarmedStorage(ctx, tag)
-    } else if (tag.funcName == "isWarmedStorage") {
-        return eval_isWarmedStorage(ctx, tag)
     } else if (tag.funcName.includes("bitwise")) {
         return eval_bitwise(ctx, tag);
     } else if (tag.funcName.includes("comp") && tag.funcName.split('_')[0] === "comp") {
@@ -2255,29 +2315,9 @@ function eval_functionCall(ctx, tag) {
     throw new Error(`function not defined ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
 }
 
-function eval_getGlobalHash(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
-    return scalar2fea(ctx.Fr, ctx.globalHash);
-}
-
 function eval_getSequencerAddr(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
-}
-
-function eval_getBatchHashData(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.batchHashData));
-}
-
-function eval_getOldStateRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-    return  scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-}
-
-function eval_getNewStateRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-    return  scalar2fea(ctx.Fr, Scalar.e(ctx.input.newStateRoot));
 }
 
 function eval_getTxs(ctx, tag) {
@@ -2295,34 +2335,14 @@ function eval_getTxsLen(ctx, tag) {
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getOldLocalExitRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldLocalExitRoot));
-}
-
 function eval_getGlobalExitRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.globalExitRoot));
 }
 
-function eval_getNewLocalExitRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
-}
-
-function eval_getNumBatch(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-    return [ctx.Fr.e(ctx.input.numBatch), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
 function eval_getTimestamp(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
     return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-function eval_getChainId(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-    return [ctx.Fr.e(ctx.input.chainID), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_eventLog(ctx, tag) {
@@ -2352,118 +2372,12 @@ function eval_getBytecode(ctx, tag) {
     else
         len = 1;
     if (bytecode === undefined) return scalar2fea(ctx.Fr, Scalar.e(0));
-    // TODO: handle "0x"
+
     const offset0x = bytecode.startsWith('0x') ? 2 : 0;
     let d = "0x" + bytecode.slice(offset0x + offset * 2, offset0x + offset * 2 + len * 2);
     if (d.length == 2) d = d + '0';
     const ret = scalar2fea(ctx.Fr, Scalar.e(d));
     return scalar2fea(ctx.Fr, Scalar.e(d));
-}
-/**
- * Creates new storage checkpoint for warm slots and addresses
- */
-function eval_checkpoint(ctx) {
-    ctx.input.accessedStorage.push(new Map())
-    return scalar2fea(ctx.Fr, Scalar.e(0));
-}
-
-/**
- * Consolidates checkpoint, merge last access storage with beforeLast access storage
- * @param {Object} ctx current rom context object
- */
-function eval_commit(ctx) {
-    const storageMap = ctx.input.accessedStorage.pop()
-    if (storageMap) {
-        const mapTarget = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1]
-        if (mapTarget) {
-            storageMap?.forEach((slotSet, addressString) => {
-                const addressExists = mapTarget.get(addressString)
-                if (!addressExists) {
-                    mapTarget.set(addressString, new Set())
-                }
-                const storageSet = mapTarget.get(addressString)
-                slotSet.forEach((value) => {
-                    storageSet.add(value)
-                })
-            })
-        }
-    }
-    return scalar2fea(ctx.Fr, Scalar.e(0));
-}
-
-/**
- * Revert accessedStorage to last checkpoint
- * @param {Object} ctx current rom context object
- */
-function eval_revert(ctx) {
-    ctx.input.accessedStorage.pop()
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-/**
- * Checks if the address is warm or cold. In case of cold, the address is added as warm
- * @param {Object} ctx current rom context object
- * @param {Object} tag tag inputs in rom function
- * @returns {FEA} returns 0 if address is warm, 1 if cold
- */
-function eval_isWarmedAddress(ctx, tag) {
-    if (tag.params.length != 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    const address = evalCommand(ctx, tag.params[0]);
-    const addr = address.toString(16)
-    // if address is precompiled smart contract considered warm access
-    if (Scalar.gt(address, 0) && Scalar.lt(address, 10)) {
-        return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-    }
-
-    // if address is warm return 0
-    for (let i = ctx.input.accessedStorage.length - 1; i >= 0; i--) {
-        const currentMap = ctx.input.accessedStorage[i]
-        if (currentMap.has(addr)) {
-            return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-        }
-    }
-    //if address is not warm, return 1 and add it as warm. We add an emtpy set because is a warmed address (not warmed slot)
-    const storageSet = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].get(addr)
-    if (!storageSet) {
-        const emptyStorage = new Set()
-        ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].set(addr, emptyStorage)
-    }
-    return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-/**
- * Checks if the storage slot of the account is warm or cold. In case of cold, the slot is added as warm
- * @param {Object} ctx current rom context object
- * @param {Object} tag tag inputs in rom function
- * @returns {FEA} returns 0 if storage solt is warm, 1 if cold
- */
-function eval_isWarmedStorage(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
-    let addr = evalCommand(ctx, tag.params[0]).toString(16);
-    let key = evalCommand(ctx, tag.params[1])
-    // if address in acessStorage return 0
-    for (let i = ctx.input.accessedStorage.length - 1; i >= 0; i--) {
-        const currentMap = ctx.input.accessedStorage[i]
-        if (currentMap.has(addr) && currentMap.get(addr).has(key)) {
-            return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-        }
-    }
-    // if address in acessStorage return 1 and add it as warm
-    let storageSet = ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].get(addr)
-    if (!storageSet) {
-        storageSet = new Set()
-        ctx.input.accessedStorage[ctx.input.accessedStorage.length - 1].set(addr, storageSet)
-    }
-    storageSet.add(key)
-    return [ctx.Fr.e(1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-/**
- * Clears wamred storage array, ready to process a new tx
- */
-function eval_clearWarmedStorage(ctx) {
-    ctx.input.accessedStorage = [new Map()]
-    return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
 function eval_exp(ctx, tag) {
@@ -2730,40 +2644,6 @@ function eval_AddPointEc(ctx, tag, dbl)
     const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
 
     return [x3, y3];
-}
-
-function preprocessTxs(ctx) {
-
-    const {
-        numBatch,
-        sequencerAddr,
-        oldLocalExitRoot,
-        newLocalExitRoot,
-        oldStateRoot,
-        newStateRoot,
-        globalExitRoot,
-        timestamp,
-        chainID
-    } = ctx.input;
-
-    ctx.input.batchHashData = calculateBatchHashData(
-        ctx.input.batchL2Data,
-        globalExitRoot,
-        sequencerAddr
-    );
-
-    ctx.globalHash = calculateStarkInput(
-            oldStateRoot,
-            oldLocalExitRoot,
-            newStateRoot,
-            newLocalExitRoot,
-            ctx.input.batchHashData,
-            numBatch,
-            timestamp,
-            chainID
-    );
-
-    ctx.input.accessedStorage = [new Map()]
 }
 
 function printRegs(Fr, ctx) {
