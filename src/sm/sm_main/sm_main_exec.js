@@ -14,6 +14,8 @@ const testTools = require("./test_tools");
 
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
+const { polMulAxi } = require("pil-stark/src/polutils");
+const { ftruncate } = require("fs");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -26,7 +28,6 @@ let fullTracer;
 module.exports = async function execute(pols, input, rom, config = {}) {
 
     const required = {
-        Byte4: {},
         Arith: [],
         Binary: [],
         PaddingKK: [],
@@ -59,6 +60,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const Fr = poseidon.F;
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
+
+    const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
+    const FrLast32Positive = 0xFFFFFFFFn;
 
     const db = new MemDB(Fr, input.db);
     const smt = new SMT(db, poseidon, Fr);
@@ -1608,41 +1612,55 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
 
         if (l.JMPN) {
-            const o = fe2n(Fr, op0, ctx);
-            if (o<0) {
+            const o = Fr.toObject(op0);
+            let jmpnCondValue = o;
+            if (o > 0 && o >= FrFirst32Negative) {
                 pols.isNeg[i]=1n;
+                jmpnCondValue = Fr.toObject(Fr.e(jmpnCondValue + 2n**32n));
                 pols.zkPC[nexti] = BigInt(addr);
-                required.Byte4[0x100000000 + o] = true;
-            } else {
+            } else if (o >= 0 && o <= FrLast32Positive) {
                 pols.isNeg[i]=0n;
                 pols.zkPC[nexti] = pols.zkPC[i] + 1n;
-                required.Byte4[o] = true;
+            } else {
+                throw new Error(`Value ${o} not a valid 32bit value`);
+            }
+            pols.lJmpnCondValue[i] = jmpnCondValue & 0x7FFFFFn;
+            jmpnCondValue = jmpnCondValue >> 23n;
+            for (let index = 0; index < 9; ++index) {
+                pols.hJmpnCondValueBit[index][i] = jmpnCondValue & 0x01n;
+                jmpnCondValue = jmpnCondValue >> 1n;
             }
             pols.JMP[i] = 0n;
             pols.JMPN[i] = 1n;
             pols.JMPC[i] = 0n;
-        } else if (l.JMPC) {
-            if (pols.carry[i]) {
-                pols.zkPC[nexti] = BigInt(addr);
-            } else {
-                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
-            }
-            pols.isNeg[i]=0n;
-            pols.JMP[i] = 0n;
-            pols.JMPN[i] = 0n;
-            pols.JMPC[i] = 1n;
-        } else if (l.JMP) {
-            pols.isNeg[i]=0n;
-            pols.zkPC[nexti] = BigInt(addr);
-            pols.JMP[i] = 1n;
-            pols.JMPN[i] = 0n;
-            pols.JMPC[i] = 0n;
         } else {
-            pols.isNeg[i]=0n;
-            pols.zkPC[nexti] = pols.zkPC[i] + 1n;
-            pols.JMP[i] = 0n;
-            pols.JMPN[i] = 0n;
-            pols.JMPC[i] = 0n;
+            pols.lJmpnCondValue[i] = 0n;
+            for (let index = 0; index < 9; ++index) {
+                pols.hJmpnCondValueBit[index][i] = 0n;
+            }
+            if (l.JMPC) {
+                if (pols.carry[i]) {
+                    pols.zkPC[nexti] = BigInt(addr);
+                } else {
+                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                }
+                pols.isNeg[i]=0n;
+                pols.JMP[i] = 0n;
+                pols.JMPN[i] = 0n;
+                pols.JMPC[i] = 1n;
+            } else if (l.JMP) {
+                pols.isNeg[i]=0n;
+                pols.zkPC[nexti] = BigInt(addr);
+                pols.JMP[i] = 1n;
+                pols.JMPN[i] = 0n;
+                pols.JMPC[i] = 0n;
+            } else {
+                pols.isNeg[i]=0n;
+                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                pols.JMP[i] = 0n;
+                pols.JMPN[i] = 0n;
+                pols.JMPC[i] = 0n;
+            }
         }
 
         let maxMemCalculated;
