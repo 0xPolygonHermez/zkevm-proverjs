@@ -11,7 +11,7 @@ describe("Test MemAlign Counter", async function () {
     it("Verify MemAlign Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/mem_align.zkasm", true,
                 { defines: {N: 2 ** 19},
-                  namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'MemAlign'],
+                  namespaces: ['Global', 'Main', 'Rom', 'MemAlign'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});

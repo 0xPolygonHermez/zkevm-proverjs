@@ -11,7 +11,7 @@ describe("Test PaddingPg Counter", async function () {
     it("Verify PaddingPG Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/padding_pg.zkasm", true,
                 { defines: {N: 2 ** 21},
-                  namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'PaddingPG', 'PoseidonG', 'Binary'],
+                  namespaces: ['Global', 'Main', 'Rom', 'PaddingPG', 'PoseidonG', 'Binary'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});

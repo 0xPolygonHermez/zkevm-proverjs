@@ -83,11 +83,9 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         */
 
         pols.operations[i] =
-          (rom.program[i].arith ? (2n**0n  * BigInt(rom.program[i].arith)) : 0n)
-        + (rom.program[i].arithEq0 ? (2n**1n  * BigInt(rom.program[i].arithEq0)) : 0n)
+          (rom.program[i].arithEq0 ? (2n**1n  * BigInt(rom.program[i].arithEq0)) : 0n)
         + (rom.program[i].arithEq1 ? (2n**2n  * BigInt(rom.program[i].arithEq1)) : 0n)
         + (rom.program[i].arithEq2 ? (2n**3n  * BigInt(rom.program[i].arithEq2)) : 0n)
-        + (rom.program[i].arithEq3 ? (2n**4n  * BigInt(rom.program[i].arithEq3)) : 0n)
         + (rom.program[i].assert ? (2n**5n  * BigInt(rom.program[i].assert)) : 0n)
         + (rom.program[i].bin ? (2n**6n  * BigInt(rom.program[i].bin)) : 0n)
         + (rom.program[i].hashK ? (2n**7n  * BigInt(rom.program[i].hashK)) : 0n)
@@ -104,7 +102,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         + (rom.program[i].JMP ? (2n**18n * BigInt(rom.program[i].JMP)) : 0n)
         + (rom.program[i].JMPC ? (2n**19n * BigInt(rom.program[i].JMPC)) : 0n)
         + (rom.program[i].JMPN ? (2n**20n * BigInt(rom.program[i].JMPN)) : 0n)
-        + (rom.program[i].memAlign ? (2n**21n * BigInt(rom.program[i].memAlign)) : 0n)
+        + (rom.program[i].memAlignRD ? (2n**21n * BigInt(rom.program[i].memAlignRD)) : 0n)
         + (rom.program[i].memAlignWR ? (2n**22n * BigInt(rom.program[i].memAlignWR)) : 0n)
         + (rom.program[i].memAlignWR8 ? (2n**23n * BigInt(rom.program[i].memAlignWR8)) : 0n)
         + (rom.program[i].mOp ? (2n**24n * BigInt(rom.program[i].mOp)) : 0n)

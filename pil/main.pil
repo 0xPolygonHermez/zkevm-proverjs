@@ -1,7 +1,6 @@
 include "config.pil";
 include "global.pil";
 include "rom.pil";
-include "byte4.pil";
 include "mem_align.pil";
 include "arith.pil";
 include "binary.pil";
@@ -64,9 +63,8 @@ namespace Main(%N);
     // operations
     pol commit mOp, mWR;
     pol commit sWR, sRD;
-    pol commit arith;
-    pol commit arithEq0, arithEq1, arithEq2, arithEq3;
-    pol commit memAlign, memAlignWR, memAlignWR8;
+    pol commit arithEq0, arithEq1, arithEq2;
+    pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashKLen, hashKDigest;
     pol commit hashP, hashPLen, hashPDigest;
     pol commit bin;
@@ -212,7 +210,26 @@ namespace Main(%N);
 
     /////// isNeg
 
-    JMPN*(isNeg*2**32 + op0) in Byte4.out;
+    pol commit lJmpnCondValue;
+    pol jmpnCondValue = JMPN*(isNeg*2**32 + op0);
+
+    lJmpnCondValue in STEP;
+
+    pol commit hJmpnCondValueBit[9];
+
+    hJmpnCondValueBit[8] * (1-hJmpnCondValueBit[8]) = 0;
+    hJmpnCondValueBit[7] * (1-hJmpnCondValueBit[7]) = 0;
+    hJmpnCondValueBit[6] * (1-hJmpnCondValueBit[6]) = 0;
+    hJmpnCondValueBit[5] * (1-hJmpnCondValueBit[5]) = 0;
+    hJmpnCondValueBit[4] * (1-hJmpnCondValueBit[4]) = 0;
+    hJmpnCondValueBit[3] * (1-hJmpnCondValueBit[3]) = 0;
+    hJmpnCondValueBit[2] * (1-hJmpnCondValueBit[2]) = 0;
+    hJmpnCondValueBit[1] * (1-hJmpnCondValueBit[1]) = 0;
+    hJmpnCondValueBit[0] * (1-hJmpnCondValueBit[0]) = 0;
+
+    jmpnCondValue = 2**31*hJmpnCondValueBit[8] + 2**30*hJmpnCondValueBit[7] + 2**29*hJmpnCondValueBit[6] + 2**28*hJmpnCondValueBit[5] +
+                    2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
+                    2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
 
     /////// MAXMEM intermediary vals New State
 
@@ -329,8 +346,8 @@ namespace Main(%N);
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7
-    } in
-    Binary.RESET {
+    } is
+    Binary.resultValidRange {
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
     };
 
@@ -344,23 +361,21 @@ namespace Main(%N);
     */
 
     pol operations =
-              2**0  * arith         + 2**1  * arithEq0      + 2**2  * arithEq1      + 2**3  * arithEq2
-            + 2**4  * arithEq3      + 2**5  * assert        + 2**6  * bin           + 2**7  * hashK
+                                    + 2**1  * arithEq0      + 2**2  * arithEq1      + 2**3  * arithE2
+                                    + 2**5  * assert        + 2**6  * bin           + 2**7  * hashK
             + 2**8  * hashKDigest   + 2**9  * hashKLen      + 2**10 * hashP         + 2**11 * hashPDigest
             + 2**12 * hashPLen      + 2**13 * ind           + 2**14 * indRR         + 2**15 * isCode
             + 2**16 * isMem         + 2**17 * isStack       + 2**18 * JMP           + 2**19 * JMPC
-            + 2**20 * JMPN          + 2**21 * memAlign      + 2**22 * memAlignWR    + 2**23 * memAlignWR8
+            + 2**20 * JMPN          + 2**21 * memAlignRD    + 2**22 * memAlignWR    + 2**23 * memAlignWR8
             + 2**24 * mOp           + 2**25 * mWR           + 2**26 * setA          + 2**27 * setB
             + 2**28 * setC          + 2**29 * setCTX        + 2**30 * setD          + 2**31 * setE
             + 2**32 * setGAS        + 2**33 * setHASHPOS    + 2**34 * setMAXMEM     + 2**35 * setPC
             + 2**36 * setRR         + 2**37 * setSP         + 2**38 * setSR         + 2**39 * sRD
             + 2**40 * sWR           + 2**41 * useCTX;
 
-    (1 - arith) * arith = 0;
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
     (1 - arithEq2) * arithEq2 = 0;
-    (1 - arithEq3) * arithEq3 = 0;
     (1 - assert) * assert = 0;
     (1 - bin) * bin = 0;
     (1 - hashK) * hashK = 0;
@@ -377,7 +392,7 @@ namespace Main(%N);
     (1 - JMP) * JMP = 0;
     (1 - JMPC) * JMPC = 0;
     (1 - JMPN) * JMPN = 0;
-    (1 - memAlign) * memAlign = 0;
+    (1 - memAlignRD) * memAlignRD = 0;
     (1 - memAlignWR) * memAlignWR = 0;
     (1 - memAlignWR8) * memAlignWR8 = 0;
     (1 - mOp) * mOp = 0;
@@ -402,13 +417,13 @@ namespace Main(%N);
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
-        inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR,
+        inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR, inHASHPOS,
         inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, incCode, binOpcode, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
-        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inHASHPOS,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.incCode, Rom.binOpcode, Rom.line
     };
@@ -419,89 +434,111 @@ namespace Main(%N);
 /////////
 // Arithmetic Plookpups
 /////////
-    arith {  arithEq0, arithEq1, arithEq2, arithEq3,
+
+    pol ax1_0 = Arith.x1[0] + Arith.x1[1]*2**16;
+    pol ax1_1 = Arith.x1[2] + Arith.x1[3]*2**16;
+    pol ax1_2 = Arith.x1[4] + Arith.x1[5]*2**16;
+    pol ax1_3 = Arith.x1[6] + Arith.x1[7]*2**16;
+    pol ax1_4 = Arith.x1[8] + Arith.x1[9]*2**16;
+    pol ax1_5 = Arith.x1[10] + Arith.x1[11]*2**16;
+    pol ax1_6 = Arith.x1[12] + Arith.x1[13]*2**16;
+    pol ax1_7 = Arith.x1[14] + Arith.x1[15]*2**16;
+
+    pol ay1_0 = Arith.y1[0] + Arith.y1[1]*2**16;
+    pol ay1_1 = Arith.y1[2] + Arith.y1[3]*2**16;
+    pol ay1_2 = Arith.y1[4] + Arith.y1[5]*2**16;
+    pol ay1_3 = Arith.y1[6] + Arith.y1[7]*2**16;
+    pol ay1_4 = Arith.y1[8] + Arith.y1[9]*2**16;
+    pol ay1_5 = Arith.y1[10] + Arith.y1[11]*2**16;
+    pol ay1_6 = Arith.y1[12] + Arith.y1[13]*2**16;
+    pol ay1_7 = Arith.y1[14] + Arith.y1[15]*2**16;
+
+    pol ax2_0 = Arith.x2[0] + Arith.x2[1]*2**16;
+    pol ax2_1 = Arith.x2[2] + Arith.x2[3]*2**16;
+    pol ax2_2 = Arith.x2[4] + Arith.x2[5]*2**16;
+    pol ax2_3 = Arith.x2[6] + Arith.x2[7]*2**16;
+    pol ax2_4 = Arith.x2[8] + Arith.x2[9]*2**16;
+    pol ax2_5 = Arith.x2[10] + Arith.x2[11]*2**16;
+    pol ax2_6 = Arith.x2[12] + Arith.x2[13]*2**16;
+    pol ax2_7 = Arith.x2[14] + Arith.x2[15]*2**16;
+
+    pol ay2_0 = Arith.y2[0] + Arith.y2[1]*2**16;
+    pol ay2_1 = Arith.y2[2] + Arith.y2[3]*2**16;
+    pol ay2_2 = Arith.y2[4] + Arith.y2[5]*2**16;
+    pol ay2_3 = Arith.y2[6] + Arith.y2[7]*2**16;
+    pol ay2_4 = Arith.y2[8] + Arith.y2[9]*2**16;
+    pol ay2_5 = Arith.y2[10] + Arith.y2[11]*2**16;
+    pol ay2_6 = Arith.y2[12] + Arith.y2[13]*2**16;
+    pol ay2_7 = Arith.y2[14] + Arith.y2[15]*2**16;
+
+    pol ax3_0 = Arith.x3[0] + Arith.x3[1]*2**16;
+    pol ax3_1 = Arith.x3[2] + Arith.x3[3]*2**16;
+    pol ax3_2 = Arith.x3[4] + Arith.x3[5]*2**16;
+    pol ax3_3 = Arith.x3[6] + Arith.x3[7]*2**16;
+    pol ax3_4 = Arith.x3[8] + Arith.x3[9]*2**16;
+    pol ax3_5 = Arith.x3[10] + Arith.x3[11]*2**16;
+    pol ax3_6 = Arith.x3[12] + Arith.x3[13]*2**16;
+    pol ax3_7 = Arith.x3[14] + Arith.x3[15]*2**16;
+
+    pol ay3_0 = Arith.y3[0] + Arith.y3[1]*2**16;
+    pol ay3_1 = Arith.y3[2] + Arith.y3[3]*2**16;
+    pol ay3_2 = Arith.y3[4] + Arith.y3[5]*2**16;
+    pol ay3_3 = Arith.y3[6] + Arith.y3[7]*2**16;
+    pol ay3_4 = Arith.y3[8] + Arith.y3[9]*2**16;
+    pol ay3_5 = Arith.y3[10] + Arith.y3[11]*2**16;
+    pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
+    pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
+
+    arithEq0 {  1, 0, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
-
-        arithEq0*C0 + arithEq1*C0 + arithEq2*A0,
-        arithEq0*C1 + arithEq1*C1 + arithEq2*A1,
-        arithEq0*C2 + arithEq1*C2 + arithEq2*A2,
-        arithEq0*C3 + arithEq1*C3 + arithEq2*A3,
-        arithEq0*C4 + arithEq1*C4 + arithEq2*A4,
-        arithEq0*C5 + arithEq1*C5 + arithEq2*A5,
-        arithEq0*C6 + arithEq1*C6 + arithEq2*A6,
-        arithEq0*C7 + arithEq1*C7 + arithEq2*A7,
-
-        arithEq0*D0 + arithEq1*D0 + arithEq2*B0,
-        arithEq0*D1 + arithEq1*D1 + arithEq2*B1,
-        arithEq0*D2 + arithEq1*D2 + arithEq2*B2,
-        arithEq0*D3 + arithEq1*D3 + arithEq2*B3,
-        arithEq0*D4 + arithEq1*D4 + arithEq2*B4,
-        arithEq0*D5 + arithEq1*D5 + arithEq2*B5,
-        arithEq0*D6 + arithEq1*D6 + arithEq2*B6,
-        arithEq0*D7 + arithEq1*D7 + arithEq2*B7,
-
-        arithEq3 * E0, arithEq3 * E1, arithEq3 * E2, arithEq3 * E3, arithEq3 * E4, arithEq3 * E5, arithEq3 * E6, arithEq3 * E7,
-        op0, op1, op2, op3, op4, op5, op6, op7 } in
-    {
+        C0, C1, C2, C3, C4, C5, C6, C7,
+        D0, D1, D2, D3, D4, D5, D6, D7,
+        op0, op1, op2, op3, op4, op5, op6, op7 } is
+    Arith.resultEq0 {
         Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
-
-        Arith.x1[0] + Arith.x1[1]*2**16,
-        Arith.x1[2] + Arith.x1[3]*2**16,
-        Arith.x1[4] + Arith.x1[5]*2**16,
-        Arith.x1[6] + Arith.x1[7]*2**16,
-        Arith.x1[8] + Arith.x1[9]*2**16,
-        Arith.x1[10] + Arith.x1[11]*2**16,
-        Arith.x1[12] + Arith.x1[13]*2**16,
-        Arith.x1[14] + Arith.x1[15]*2**16,
-
-        Arith.y1[0] + Arith.y1[1]*2**16,
-        Arith.y1[2] + Arith.y1[3]*2**16,
-        Arith.y1[4] + Arith.y1[5]*2**16,
-        Arith.y1[6] + Arith.y1[7]*2**16,
-        Arith.y1[8] + Arith.y1[9]*2**16,
-        Arith.y1[10] + Arith.y1[11]*2**16,
-        Arith.y1[12] + Arith.y1[13]*2**16,
-        Arith.y1[14] + Arith.y1[15]*2**16,
-
-        Arith.x2[0] + Arith.x2[1]*2**16,
-        Arith.x2[2] + Arith.x2[3]*2**16,
-        Arith.x2[4] + Arith.x2[5]*2**16,
-        Arith.x2[6] + Arith.x2[7]*2**16,
-        Arith.x2[8] + Arith.x2[9]*2**16,
-        Arith.x2[10] + Arith.x2[11]*2**16,
-        Arith.x2[12] + Arith.x2[13]*2**16,
-        Arith.x2[14] + Arith.x2[15]*2**16,
-
-        Arith.y2[0] + Arith.y2[1]*2**16,
-        Arith.y2[2] + Arith.y2[3]*2**16,
-        Arith.y2[4] + Arith.y2[5]*2**16,
-        Arith.y2[6] + Arith.y2[7]*2**16,
-        Arith.y2[8] + Arith.y2[9]*2**16,
-        Arith.y2[10] + Arith.y2[11]*2**16,
-        Arith.y2[12] + Arith.y2[13]*2**16,
-        Arith.y2[14] + Arith.y2[15]*2**16,
-
-        Arith.x3[0] + Arith.x3[1]*2**16,
-        Arith.x3[2] + Arith.x3[3]*2**16,
-        Arith.x3[4] + Arith.x3[5]*2**16,
-        Arith.x3[6] + Arith.x3[7]*2**16,
-        Arith.x3[8] + Arith.x3[9]*2**16,
-        Arith.x3[10] + Arith.x3[11]*2**16,
-        Arith.x3[12] + Arith.x3[13]*2**16,
-        Arith.x3[14] + Arith.x3[15]*2**16,
-
-        Arith.y3[0] + Arith.y3[1]*2**16,
-        Arith.y3[2] + Arith.y3[3]*2**16,
-        Arith.y3[4] + Arith.y3[5]*2**16,
-        Arith.y3[6] + Arith.y3[7]*2**16,
-        Arith.y3[8] + Arith.y3[9]*2**16,
-        Arith.y3[10] + Arith.y3[11]*2**16,
-        Arith.y3[12] + Arith.y3[13]*2**16,
-        Arith.y3[14] + Arith.y3[15]*2**16
+        ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
+        ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
+        ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
+        ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+        ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    cntArith' = cntArith*(1-Global.L1) + arith;
+    arithEq1 {  0, 1, 0, 1,
+        A0, A1, A2, A3, A4, A5, A6, A7,
+        B0, B1, B2, B3, B4, B5, B6, B7,
+        C0, C1, C2, C3, C4, C5, C6, C7,
+        D0, D1, D2, D3, D4, D5, D6, D7,
+        E0, E1, E2, E3, E4, E5, E6, E7,
+        op0, op1, op2, op3, op4, op5, op6, op7 } is
+    Arith.resultEq1 {
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
+        ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
+        ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
+        ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
+        ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+        ax3_0, ax3_1, ax3_2, ax3_3, ax3_4, ax3_5, ax3_6, ax3_7,
+        ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
+    };
+
+    arithEq2 {  0, 0, 1, 1,
+        A0, A1, A2, A3, A4, A5, A6, A7,
+        B0, B1, B2, B3, B4, B5, B6, B7,
+        A0, A1, A2, A3, A4, A5, A6, A7,
+        B0, B1, B2, B3, B4, B5, B6, B7,
+        E0, E1, E2, E3, E4, E5, E6, E7,
+        op0, op1, op2, op3, op4, op5, op6, op7 } is
+    Arith.resultEq2 {
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
+        ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
+        ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
+        ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
+        ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+        ax3_0, ax3_1, ax3_2, ax3_3, ax3_4, ax3_5, ax3_6, ax3_7,
+        ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
+    };
+
+    cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2;
 
 /////////
 // Binary Plookpups
@@ -513,8 +550,8 @@ namespace Main(%N);
         B0, B1, B2, B3, B4, B5, B6, B7,
         op0, op1, op2, op3, op4, op5, op6, op7,
         carry
-    } in
-    Binary.RESET {
+    } is
+    Binary.resultBinOp {
         Binary.lOpcode,
         Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
         Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
@@ -522,9 +559,7 @@ namespace Main(%N);
         Binary.lCout
     };
 
-    cntBinary' = cntBinary*(1-Global.L1) + bin;
-
-
+    cntBinary' = cntBinary*(1-Global.L1) + bin + sWR + hashPDigest;
 
 /////////
 // HASHK Plookpups
@@ -724,22 +759,44 @@ namespace Main(%N);
 // MemAlign Plookpups
 /////////
 
-    memAlign {
-        memAlignWR,
-        memAlignWR8,
+    // memAlign RD
+    memAlignRD {
+        0, 0,
         A0, A1, A2, A3,
         A4, A5, A6, A7,
-        (1 - memAlignWR8) * B0, (1 - memAlignWR8) * B1, (1 - memAlignWR8) * B2, (1 - memAlignWR8) * B3,
-        (1 - memAlignWR8) * B4, (1 - memAlignWR8) * B5, (1 - memAlignWR8) * B6, (1 - memAlignWR8) * B7,
+        B0, B1, B2, B3,
+        B4, B5, B6, B7,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7,
+        C0
+    } is
+    MemAlign.resultRd {
+        MemAlign.wr256,
+        MemAlign.wr8,
+        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
+        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
+        MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
+        MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
+        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
+        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
+        MemAlign.offset
+    };
+
+    memAlignWR {
+        1, 0,
+        A0, A1, A2, A3,
+        A4, A5, A6, A7,
+        B0, B1, B2, B3,
+        B4, B5, B6, B7,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         C0,
-        (memAlignWR + memAlignWR8) * D0, (memAlignWR + memAlignWR8)*D1, (memAlignWR + memAlignWR8)*D2, (memAlignWR + memAlignWR8)*D3,
-        (memAlignWR + memAlignWR8) * D4, (memAlignWR + memAlignWR8)*D5, (memAlignWR + memAlignWR8)*D6, (memAlignWR + memAlignWR8)*D7,
-        memAlignWR * E0, memAlignWR*E1, memAlignWR*E2, memAlignWR*E3,
-        memAlignWR * E4, memAlignWR*E5, memAlignWR*E6, memAlignWR*E7
-    } in
-    MemAlign.RESET {
+        D0, D1, D2, D3,
+        D4, D5, D6, D7,
+        E0, E1, E2, E3,
+        E4, E5, E6, E7
+    } is
+    MemAlign.resultWr256 {
         MemAlign.wr256,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
@@ -755,5 +812,27 @@ namespace Main(%N);
         MemAlign.w1[4], MemAlign.w1[5], MemAlign.w1[6], MemAlign.w1[7]
     };
 
-    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlign;
+    memAlignWR8 {
+        0, 1,
+        A0, A1, A2, A3,
+        A4, A5, A6, A7,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7,
+        C0,
+        D0, D1, D2, D3,
+        D4, D5, D6, D7
+    } is
+    MemAlign.resultWr8 {
+        MemAlign.wr256,
+        MemAlign.wr8,
+        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
+        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
+        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
+        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
+        MemAlign.offset,
+        MemAlign.w0[0], MemAlign.w0[1], MemAlign.w0[2], MemAlign.w0[3],
+        MemAlign.w0[4], MemAlign.w0[5], MemAlign.w0[6], MemAlign.w0[7]
+    };
+
+    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR + memAlignWR8;
 

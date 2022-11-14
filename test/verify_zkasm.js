@@ -10,7 +10,6 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 
 const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
-const smByte4 = require("../src/sm/sm_byte4.js");
 const smGlobal = require("../src/sm/sm_global.js");
 const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("../src/sm/sm_main/sm_main.js");
@@ -27,7 +26,7 @@ const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 const { index } = require("../src/sm/sm_main/test_tools.js");
 const { config } = require("yargs");
 
-module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pilConfig = {}, mainConfig = {}) {
+module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
 
     const Fr = new F1Field("0xFFFFFFFF00000001");
     const brief = false;
@@ -38,6 +37,8 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
           namespaces: ['Main','Global'] }
     */
 
+    const verifyPilFlag = pilVerification ? true: false;
+    const verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
     const pil = await compile(Fr, "pil/main.pil", null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
@@ -62,10 +63,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     if (constPols.Rom) {
         console.log("Const Rom...");
         await smRom.buildConstants(constPols.Rom, rom);
-    }
-    if (constPols.Byte4) {
-        console.log("Const Byte4...");
-        await smByte4.buildConstants(constPols.Byte4);
     }
     if (constPols.PaddingKK) {
         console.log("Const PaddingKK...");
@@ -117,11 +114,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     }
 
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
-
-    if (cmPols.Byte4) {
-        console.log("Exec Byte4...");
-        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
-    }
 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
     const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
@@ -190,7 +182,19 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
     }
 
-    const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols) : [];
+    const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
+
+    if (mainConfig && mainConfig.constFilename) {
+        await constPols.saveToFile(mainConfig.constFilename);
+    }
+
+    if (mainConfig && mainConfig.commitFilename) {
+        await cmPols.saveToFile(mainConfig.commitFilename);
+    }
+
+    if (mainConfig && mainConfig.pilJsonFilename) {
+        fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+    }
 
     if (res.length != 0) {
         console.log("Pil does not pass");

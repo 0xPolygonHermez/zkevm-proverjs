@@ -9,7 +9,6 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 const smPath = '../../src/sm/';
 const smArith = require(smPath + "sm_arith/sm_arith.js");
 const smBinary = require(smPath + "sm_binary.js");
-const smByte4 = require(smPath + "sm_byte4.js");
 const smGlobal = require(smPath + "sm_global.js");
 const smKeccakF = require(smPath + "sm_keccakf/sm_keccakf.js");
 const smMain = require(smPath + "sm_main/sm_main.js");
@@ -42,8 +41,6 @@ describe("test main sm", async function () {
         await smMain.buildConstants(constPols.Main);
         console.log("Const Rom...");
         await smRom.buildConstants(constPols.Rom, rom);
-        console.log("Const Byte4...");
-        await smByte4.buildConstants(constPols.Byte4);
 
         console.log("Const PaddingKK...");
         await smPaddingKK.buildConstants(constPols.PaddingKK);
@@ -81,8 +78,6 @@ describe("test main sm", async function () {
         }
 
         const requiredMain = await smMain.execute(cmPols.Main, input, rom);
-        console.log("Exec Byte4...");
-        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
 
         console.log("Exec PaddingKK...");
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
