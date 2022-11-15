@@ -37,7 +37,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     */
 
     const verifyPilFlag = pilVerification ? true: false;
-    const verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
+    let verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
     const pil = await compile(Fr, "pil/main.pil", null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
@@ -48,7 +48,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     const polDeg = cmPols.$$defArray[0].polDeg;
     console.log('Pil N = 2 ** '+Math.log2(polDeg));
 
-    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
+    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
     const rom = await zkasm.compile(zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile));
 
     if (constPols.Global) {
@@ -186,6 +186,15 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     if (mainConfig && mainConfig.externalPilVerification) {
         console.log(`call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
     } else {
+        if (verifyPilConfig.publics) {
+            console.log('A');
+            if (!(verifyPilConfig.publics instanceof Object)) {
+                console.log('B');
+                const publicsFilename = (typeof verifyPilConfig.public === 'string') ? verifyPilConfig.public : path.join(__dirname, "..", "tools", "build-genesis", "public.json");
+                verifyPilConfig.publics = JSON.parse(await fs.promises.readFile(publicsFilename, "utf8"));
+            }
+        }
+        console.log(verifyPilConfig);
         const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
 
         if (res.length != 0) {
