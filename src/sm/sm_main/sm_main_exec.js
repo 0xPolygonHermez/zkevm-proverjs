@@ -48,6 +48,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
 
+    const POSEIDONG_PERMUTATION1_ID = 1;
+    const POSEIDONG_PERMUTATION2_ID = 2;
+
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
             throw new Error('Unsigned flag requires a `from` in the input');
@@ -524,9 +527,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     ];
 
                     const keyI = poseidon(Kin0);
-                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI,1]);
+                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
                     const key = poseidon(Kin1, keyI);
-                    required.PoseidonG.push([...Kin1, ...keyI,  ...key,2]);
+                    required.PoseidonG.push([...Kin1, ...keyI,  ...key, POSEIDONG_PERMUTATION2_ID]);
 
                     // commented since readings are done directly in the smt
                     // const keyS = Fr.toString(key, 16).padStart(64, "0");
@@ -564,9 +567,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     ];
 
                     const keyI = poseidon(Kin0);
-                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, 1]);
+                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
                     const key = poseidon(Kin1, keyI);
-                    required.PoseidonG.push([...Kin1, ...keyI,  ...key, 2]);
+                    required.PoseidonG.push([...Kin1, ...keyI,  ...key, POSEIDONG_PERMUTATION2_ID]);
 
                     ctx.lastSWrite.keyI = keyI;
                     ctx.lastSWrite.key = key;
