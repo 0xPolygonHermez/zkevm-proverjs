@@ -1,5 +1,3 @@
-const { PolField } = require("ffjavascript");
-
 const F1Field = require("ffjavascript").F1Field;
 const t = 12;
 const nRoundsF = 8;
