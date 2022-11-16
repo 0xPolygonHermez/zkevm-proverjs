@@ -1907,6 +1907,7 @@ namespace Arith(%N);
 	selEq[2] * (1-selEq[2]) = 0;
 	selEq[3] * (1-selEq[3]) = 0;
 
+
     pol commit carry[3];
 
     carry[0] * CLK[0] = 0;
@@ -1917,8 +1918,8 @@ namespace Arith(%N);
     carry[1] in GL_SIGNED_22BITS;
     carry[2] in GL_SIGNED_22BITS;
 
-    selEq[0] * (eq0 + carry[0]) = selEq[0] * (carry[0]' * 2**16);
-    selEq[1] * (eq1 + carry[0]) = selEq[1] * (carry[0]' * 2**16);
-    selEq[2] * (eq2 + carry[0]) = selEq[2] * (carry[0]' * 2**16);
-    selEq[3] * (eq3 + carry[1]) = selEq[3] * (carry[1]' * 2**16);
-    selEq[3] * (eq4 + carry[2]) = selEq[3] * (carry[2]' * 2**16);
+    selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+    selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
+    selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
+    selEq[3] * (eq3 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+    selEq[3] * (eq4 + carry[2]) = selEq[3] * carry[2]' * 2**16;

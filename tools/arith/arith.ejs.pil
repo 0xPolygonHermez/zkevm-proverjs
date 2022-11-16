@@ -16,10 +16,7 @@ namespace Arith(%N);
 
     pol constant BYTE2_BIT19;
     pol constant SEL_BYTE2_BIT19;
-    pol constant GL_SIGNED_4BITS_C0;
-    pol constant GL_SIGNED_4BITS_C1;
-    pol constant GL_SIGNED_4BITS_C2;
-    pol constant GL_SIGNED_18BITS;
+    pol constant GL_SIGNED_22BITS;
     pol constant CLK[32];      // 1 if CLK==0 and 0 if CLK!=0
 
     pol commit x1[16];
@@ -33,6 +30,13 @@ namespace Arith(%N);
     pol commit q0[16];
     pol commit q1[16];
     pol commit q2[16];
+
+    pol commit resultEq0;
+    pol commit resultEq1;
+    pol commit resultEq2;
+    resultEq0 * (1 - resultEq0) = 0;
+    resultEq1 * (1 - resultEq1) = 0;
+    resultEq2 * (1 - resultEq2) = 0;
 
     /****
     *
@@ -131,28 +135,18 @@ namespace Arith(%N);
     <%- latch(['selEq[0..3]'],'CLK[31]') %>
     <%- binary(['selEq[0..3]']) %>
 
-    pol commit carryL[3];
-    pol commit carryH[3];
+    pol commit carry[3];
 
-    carryL[0] * CLK[0] = 0;
-    carryL[1] * CLK[0] = 0;
-    carryL[2] * CLK[0] = 0;
-    carryH[0] * CLK[0] = 0;
-    carryH[1] * CLK[0] = 0;
-    carryH[2] * CLK[0] = 0;
+    carry[0] * CLK[0] = 0;
+    carry[1] * CLK[0] = 0;
+    carry[2] * CLK[0] = 0;
 
-    carryL[0] in GL_SIGNED_18BITS;
-    carryL[1] in GL_SIGNED_18BITS;
-    carryL[2] in GL_SIGNED_18BITS;
+    carry[0] in GL_SIGNED_22BITS;
+    carry[1] in GL_SIGNED_22BITS;
+    carry[2] in GL_SIGNED_22BITS;
 
-    {carryH[0], carryH[1], carryH[2]} in {GL_SIGNED_4BITS_C0, GL_SIGNED_4BITS_C1, GL_SIGNED_4BITS_C2}; // 3 * (4+1) = 15 bits
-
-    // eq + carry = carry' * 2**16
-    // carry = cl + ch * 2**18
-    // eq + cl + ch * 2**18 = cl 2**16 + ch * 2**34
-
-    selEq[0] * (eq0 + carryL[0] + 2**18 * carryH[0]) = selEq[0] * (carryL[0]' * 2**16 + carryH[0]' * 2**34);
-    selEq[1] * (eq1 + carryL[0] + 2**18 * carryH[0]) = selEq[1] * (carryL[0]' * 2**16 + carryH[0]' * 2**34);
-    selEq[2] * (eq2 + carryL[0] + 2**18 * carryH[0]) = selEq[2] * (carryL[0]' * 2**16 + carryH[0]' * 2**34);
-    selEq[3] * (eq3 + carryL[1] + 2**18 * carryH[1]) = selEq[3] * (carryL[1]' * 2**16 + carryH[1]' * 2**34);
-    selEq[3] * (eq4 + carryL[2] + 2**18 * carryH[2]) = selEq[3] * (carryL[2]' * 2**16 + carryH[2]' * 2**34);
+    selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+    selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
+    selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
+    selEq[3] * (eq3 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+    selEq[3] * (eq4 + carry[2]) = selEq[3] * carry[2]' * 2**16;
