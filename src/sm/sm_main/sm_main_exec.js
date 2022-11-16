@@ -1092,7 +1092,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
         }
 
-        if (l.arith) {
+        if (l.arithEq0 || l.arithEq1 || l.arithEq2) {
             if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2)) {
                 const A = fea2scalar(Fr, ctx.A);
                 const B = fea2scalar(Fr, ctx.B);
@@ -1585,7 +1585,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.RR[nexti] = pols.RR[i];
         }
 
-        if (!skipCounters && l.arith == 1) {
+        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2)) {
             pols.cntArith[nexti] = pols.cntArith[i] + 1n;
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
