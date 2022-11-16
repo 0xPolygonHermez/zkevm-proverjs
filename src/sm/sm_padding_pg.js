@@ -133,6 +133,9 @@ module.exports.execute = async function (pols, input) {
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
+            pols.lastHashLatchLen[p] = 0n;
+            pols.lastHashLatchDigest[p] = 0n;
+
 
             if (lastOffset == 0n) {
                 curRead += 1;
@@ -268,6 +271,9 @@ module.exports.execute = async function (pols, input) {
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = j>0 ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
+            pols.lastHashLen[p] = 0n;
+            pols.lastHashDigest[p] = 0n;
+
             pols.prevHash0[p] = 0n;
             pols.prevHash1[p] = 0n;
             pols.prevHash2[p] = 0n;
