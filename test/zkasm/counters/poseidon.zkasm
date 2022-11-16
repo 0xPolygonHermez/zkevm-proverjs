@@ -28,7 +28,8 @@ start:
 
         1 => A
         CNT_POSEIDON_G :ASSERT
-        CNT_PADDING_PG   :ASSERT
+        CNT_PADDING_PG :ASSERT
+        CNT_BINARY     :ASSERT
 
         ; TEST 56 bytes => counter increase 2 => total = 3
 
@@ -47,6 +48,8 @@ start:
         3 => A
         CNT_POSEIDON_G   :ASSERT
         CNT_PADDING_PG   :ASSERT
+        2 => A
+        CNT_BINARY       :ASSERT
 
         ; TEST 57 bytes => counter increase 2 => total = 5
 
@@ -65,6 +68,8 @@ start:
         5 => A
         CNT_POSEIDON_G   :ASSERT
         CNT_PADDING_PG   :ASSERT
+        3 => A
+        CNT_BINARY       :ASSERT
 
         ; 0x72913A40CC0E013B4F05C9E8E7A52562CB0FA774C1D1800BDFD5590F83DE53D8n => SR
 
@@ -88,6 +93,8 @@ start:
         CNT_POSEIDON_G   :ASSERT
         5 => A
         CNT_PADDING_PG   :ASSERT
+        4 => A
+        CNT_BINARY       :ASSERT
 
         0x13 => A
         0 => B,C
@@ -108,6 +115,7 @@ start:
         CNT_POSEIDON_G   :ASSERT
         5 => A
         CNT_PADDING_PG   :ASSERT
+        CNT_BINARY       :ASSERT
 
         0x13 => A
         0 => B,C
@@ -118,6 +126,7 @@ start:
         CNT_POSEIDON_G   :ASSERT
         5 => A
         CNT_PADDING_PG   :ASSERT
+        CNT_BINARY       :ASSERT
 
         0x23 => A
         0 => B,C
@@ -129,6 +138,7 @@ start:
         CNT_POSEIDON_G   :ASSERT
         5 => A
         CNT_PADDING_PG   :ASSERT
+        CNT_BINARY       :ASSERT
 
         ; TEST 111 bytes => counter increase 2 => total = 40/7
 
@@ -151,7 +161,8 @@ start:
         CNT_POSEIDON_G :ASSERT
         7 => A
         CNT_PADDING_PG   :ASSERT
-
+        6 => A
+        CNT_BINARY       :ASSERT
 
         ; TEST 112 bytes => counter increase 3 => total = 42/10
 
@@ -174,6 +185,8 @@ start:
         CNT_POSEIDON_G :ASSERT
         10 => A
         CNT_PADDING_PG   :ASSERT
+        7 => A
+        CNT_BINARY       :ASSERT
 
         ; TEST 112 bytes => counter increase 3 => total = 45/13
 
@@ -196,12 +209,13 @@ start:
         CNT_POSEIDON_G :ASSERT
         13 => A
         CNT_PADDING_PG   :ASSERT
+        8 => A
+        CNT_BINARY       :ASSERT
 
         ; to verify that there are no correlations between counters
 
         0 => A
         CNT_ARITH :ASSERT
-        CNT_BINARY :ASSERT
         CNT_MEM_ALIGN :ASSERT
         CNT_KECCAK_F :ASSERT
 

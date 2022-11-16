@@ -748,11 +748,13 @@ namespace Main(%N);
 /////////
 
     (sRD + sWR) {
+        1, 0, 0, 0, // Poseidon Result ID
         C0, C1, C2, C3, C4, C5, C6, C7,
         0, 0, 0, 0,
         sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3]
-    } in
-    PoseidonG.LATCH {
+    } is
+    PoseidonG.result1 {
+        PoseidonG.result1, PoseidonG.result2, PoseidonG.result3, PoseidonG.result4,
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
@@ -771,12 +773,14 @@ namespace Main(%N);
         PoseidonG.hash3
     };
 
-    sRD + sWR {
+    (sRD + sWR) {
+        0, 1, 0, 0,
         A0, A1, A2, A3, A4, A5, B0, B1,
         sKeyI[0], sKeyI[1], sKeyI[2], sKeyI[3],
         sKey[0], sKey[1], sKey[2], sKey[3]
-    } in
-    PoseidonG.LATCH {
+    } is
+    PoseidonG.result2 {
+        PoseidonG.result1, PoseidonG.result2, PoseidonG.result3, PoseidonG.result4,
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
