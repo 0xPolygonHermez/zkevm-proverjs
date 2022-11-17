@@ -111,19 +111,25 @@ module.exports.buildConstants = async function (pols) {
         pols.GateType[k] = 0n;
     }
 
-    var mask = 2n**NUsedBits-1n;
-    var c = 0;
+    const mask = 0b100000010000001000000100000010000001000000100000010000001n;
+    let c = 0;
     for (let a=0n; a<2n**NUsedBits; a++) {
+        const bitsA = ((a & 2n**0n) ? 2n**0n:0n)  + ((a & 2n**1n) ? 2n**7n:0n)  + ((a & 2n**2n) ? 2n**14n:0n) + ((a & 2n**3n) ? 2n**21n:0n)
+                    + ((a & 2n**4n) ? 2n**28n:0n) + ((a & 2n**5n) ? 2n**35n:0n) + ((a & 2n**6n) ? 2n**42n:0n) + ((a & 2n**7n) ? 2n**49n:0n)
+                    + ((a & 2n**8n) ? 2n**56n:0n);
         for (let b=0n; b<2n**NUsedBits; b++) {
+            const bitsB = ((b & 2n**0n) ? 2n**0n:0n)  + ((b & 2n**1n) ? 2n**7n:0n)  + ((b & 2n**2n) ? 2n**14n:0n) + ((b & 2n**3n) ? 2n**21n:0n)
+                        + ((b & 2n**4n) ? 2n**28n:0n) + ((b & 2n**5n) ? 2n**35n:0n) + ((b & 2n**6n) ? 2n**42n:0n) + ((b & 2n**7n) ? 2n**49n:0n)
+                        + ((b & 2n**8n) ? 2n**56n:0n);
             pols.kGateType[c] = 0n;
-            pols.kA[c] = a;
-            pols.kB[c] = b;
-            pols.kC[c] = a^b;
+            pols.kA[c] = bitsA;
+            pols.kB[c] = bitsB;
+            pols.kC[c] = bitsA^bitsB;
             c++;
             pols.kGateType[c] = 1n;
-            pols.kA[c] = a;
-            pols.kB[c] = b;
-            pols.kC[c] = (a^mask)&b;
+            pols.kA[c] = bitsA;
+            pols.kB[c] = bitsB;
+            pols.kC[c] = (bitsA^mask)&bitsB;
             c++;
         }
     }
