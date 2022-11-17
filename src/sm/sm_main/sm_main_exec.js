@@ -1226,6 +1226,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.eq(a, b);
                 if (!Scalar.eq(c, expectedC)) {
+                    console.log(ctx.line);
+                    console.log(ctx.fileName);
                     throw new Error("EQ does not match");
                 }
                 pols.binOpcode[i] = 4n;
