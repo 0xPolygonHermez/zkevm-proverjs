@@ -175,6 +175,7 @@ module.exports.execute = async function (pols, input) {
         pols.result1[p] = (input[i][16] == 1) ? 1n:0n;
         pols.result2[p] = (input[i][16] == 2) ? 1n:0n;
         pols.result3[p] = (input[i][16] == 3) ? 1n:0n;
+        pols.result4[p] = (input[i][16] == 4) ? 1n:0n;
 
         p += 1;
         let state = [
@@ -221,6 +222,7 @@ module.exports.execute = async function (pols, input) {
             pols.result1[p] = 0n;
             pols.result2[p] = 0n;
             pols.result3[p] = 0n;
+            pols.result4[p] = 0n;
             p+=1;
         }
     }
@@ -259,6 +261,7 @@ module.exports.execute = async function (pols, input) {
         pols.result1[p] = 0n;
         pols.result2[p] = 0n;
         pols.result3[p] = 0n;
+        pols.result4[p] = 0n;
         p+=1;
     }
 

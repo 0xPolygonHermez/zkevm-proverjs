@@ -50,7 +50,12 @@ namespace PaddingPG(%N);
     acc[6]' = acc6C*(1-lastBlock);
     acc[7]' = acc7C*(1-lastBlock);
 
-    lastBlock {
+    pol commit lastBlockUsed;
+    lastBlockUsed * (1 - lastBlockUsed) = 0;
+    lastBlockUsed * (1 - lastBlock) = 0;
+
+    lastBlockUsed {
+        0, 0, 0, 1,
         acc0C,
         acc1C,
         acc2C,
@@ -67,7 +72,8 @@ namespace PaddingPG(%N);
         curHash1,
         curHash2,
         curHash3
-     } in PoseidonG.LATCH {
+     } is PoseidonG.result4 {
+        PoseidonG.result1, PoseidonG.result2, PoseidonG.result3, PoseidonG.result4,
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
@@ -84,7 +90,7 @@ namespace PaddingPG(%N);
         PoseidonG.hash1,
         PoseidonG.hash2,
         PoseidonG.hash3
-     };
+    };
 
     pol commit curHash0, curHash1, curHash2, curHash3;
     curHash0' * (1-lastBlock) = curHash0*(1-lastBlock);
@@ -99,8 +105,8 @@ namespace PaddingPG(%N);
     prevHash3' = lastBlock*(curHash3 - prevHash3)  +  prevHash3   - lastHash*curHash3;
 
     pol commit incCounter;
-    // if lastHash=0 && lastBLock=0 then incCounter'=incCounter
-    // if lastHash=0 && lastBLock=1 then incCounter'=incCounter+1
+    // if lastHash=0 && lastBlock=0 then incCounter'=incCounter
+    // if lastHash=0 && lastBlock=1 then incCounter'=incCounter+1
     // if lastHash=1 && lastBlock=1 then incCounter'=1
     incCounter' = incCounter*(1-lastBlock) + (incCounter +1)*(lastBlock-lastHash) + lastHash;
 

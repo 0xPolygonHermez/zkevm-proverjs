@@ -133,6 +133,7 @@ module.exports.execute = async function (pols, input) {
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
+            pols.lastBlockUsed[p] = ((p % BYTESPERBLOCK) == (BYTESPERBLOCK-1)) ? 1n : 0n;
 
             if (lastOffset == 0n) {
                 curRead += 1;
@@ -240,7 +241,7 @@ module.exports.execute = async function (pols, input) {
     const h0 = poseidon([ 0x1n, 0n, 0n, 0n, 0n, 0n, 0n, 0x80n << 48n ], [0n, 0n, 0n, 0n]);
     required.PoseidonG.push([ 0x1n, 0n, 0n, 0n, 0n, 0n, 0n, 0x80n << 48n, 0n, 0n, 0n, 0n, ...h0, POSEIDONG_PERMUTATION4_ID ]);
 
-
+    let pendingUse = true;
     for (let i=0; i<nFullUnused; i++) {
         const bytesBlock = N-p > BYTESPERBLOCK ? BYTESPERBLOCK : N-p;
         if (bytesBlock < 2) {
@@ -268,6 +269,13 @@ module.exports.execute = async function (pols, input) {
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = j>0 ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
+            if (pendingUse && (p % BYTESPERBLOCK) == (BYTESPERBLOCK-1)) {
+                pols.lastBlockUsed[p] = 1n;
+                pendingUse = false;
+            }
+            else {
+                pols.lastBlockUsed[p] = 0n;
+            }
             pols.prevHash0[p] = 0n;
             pols.prevHash1[p] = 0n;
             pols.prevHash2[p] = 0n;
