@@ -247,6 +247,9 @@ class FullTracer {
         //If processed opcodes
         if (this.info.length) {
             const lastOpcode = this.info[this.info.length - 1];
+            // set refunded gas
+            response.gas_refunded = lastOpcode.gas_refund;
+
             // Set counters of last opcode to zero
             Object.keys(lastOpcode.counters).forEach(key => {
                 lastOpcode.counters[key] = 0;
