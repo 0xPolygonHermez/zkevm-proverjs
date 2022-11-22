@@ -120,6 +120,9 @@ async function main(){
             second += info;
             if(argv.exit)
                 break;
+            if(argv.ignore) {
+                fs.rename(fileName, fileName+"-ignore", () => {})
+            }
         }
         console.log(info);
     }
