@@ -794,7 +794,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                         (!Fr.eq(ctx.mem[addr][6],  op6)) ||
                         (!Fr.eq(ctx.mem[addr][7],  op7)))
                     {
-                        throw new Error("Memory Read does not match");
+                        throw new Error(`Memory Read does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     }
                 } else {
                     if ((!Fr.isZero(op0)) ||
@@ -806,7 +806,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                         (!Fr.isZero(op6)) ||
                         (!Fr.isZero(op7)))
                     {
-                        throw new Error("Memory Read does not match");
+                        throw new Error(`Memory Read does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                     }
                 }
 
@@ -861,7 +861,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }});
 
             if (!Scalar.eq(res.value,fea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
-                throw new Error(`Storage read does not match: ${ctx.ln}`);
+                throw new Error(`Storage read does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
 
             for (let k=0; k<4; k++) {
@@ -932,7 +932,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }});
 
             if (!nodeIsEq(ctx.lastSWrite.newRoot, sr8to4(ctx.Fr, [op0, op1, op2, op3, op4, op5, op6, op7 ]), ctx.Fr)) {
-                throw new Error(`Storage write does not match: ${ctx.ln}`);
+                throw new Error(`Storage write does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
 
             // commented since readings are also done directly in the smt
@@ -979,7 +979,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if ((typeof ctx.hashK[addr].reads[pos] !== "undefined") &&
                 (ctx.hashK[addr].reads[pos] != size))
             {
-                throw new Error(`HashK diferent read sizes in the same position ${addr}:${pos}`)
+                throw new Error(`HashK diferent read sizes in the same position ${addr}:${pos} on ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
             ctx.hashK[addr].reads[pos] = size;
             incHashPos = size;
@@ -990,16 +990,19 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (l.hashKLen) {
             pols.hashKLen[i] = 1n;
             const lm = fe2n(Fr, op0, ctx);
-            // If it's undefined compute hash 0f 0 bytes
+            // If it's undefined compute hash of 0 bytes
             if(typeof ctx.hashK[addr] === "undefined") {
                 // len must be 0
-                if (lm != 0) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${0}`);
+                if (lm != 0) throw new Error(`HashK length does not match ${addr} is ${lm} and should be 0 on ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
                 ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false };
                 ctx.hashK[addr].digest = ethers.utils.keccak256("0x");
             }
+            if (ctx.hashK[addr].lenCalled) {
+                throw new Error(`Call HASHKLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
             ctx.hashK[addr].lenCalled = true;
             const lh = ctx.hashK[addr].data.length;
-            if (lm != lh) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${lh}`);
+            if (lm != lh) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${lh} on ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             if (typeof ctx.hashK[addr].digest === "undefined") {
                 ctx.hashK[addr].digest = ethers.utils.keccak256(ethers.utils.hexlify(ctx.hashK[addr].data));
             }
@@ -1011,10 +1014,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashKDigest[i] = 1n;
             const dg = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             if (typeof ctx.hashK[addr].digest === "undefined") {
-                throw new Error(`Cannnot load keccak from DB`);
+                throw new Error(`Cannnot load keccak @${addr} from DB: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashK[addr].digest))) {
-                throw new Error(`Digest doesn't match`);
+                throw new Error(`Digest @${addr} doesn't match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+            if (ctx.hashK[addr].digestCalled) {
+                throw new Error(`Call HASHKDIGEST @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
             ctx.hashK[addr].digestCalled = true;
             incCounter = Math.ceil((ctx.hashK[addr].data.length + 1) / 136)
@@ -1027,7 +1033,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashP[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size(${size}) for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -1036,7 +1042,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 if (typeof bh === "undefined") {
                     ctx.hashP[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashP do not match ${addr}:${pos+k} is ${bm} and should be ${bh}`)
+                    throw new Error(`HashP do not match ${addr}:${pos+k} is ${bm} and should be ${bh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
                 }
             }
             const paddingA = Scalar.shr(a, size * 8);
@@ -1047,7 +1053,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if ((typeof ctx.hashP[addr].reads[pos] !== "undefined") &&
                 (ctx.hashP[addr].reads[pos] != size))
             {
-                throw new Error(`HashP diferent read sizes in the same position ${addr}:${pos}`)
+                throw new Error(`HashP diferent read sizes in the same position ${addr}:${pos} on ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
             }
             ctx.hashP[addr].reads[pos] = size;
             incHashPos = size;
@@ -1059,14 +1065,17 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashPLen[i] = 1n;
             const lm = fe2n(Fr, op0, ctx);
             const lh = ctx.hashP[addr].data.length;
-            if (lm != lh) throw new Error(`HashP length does not match ${addr}  is ${lm} and should be ${lh}`);
+            if (lm != lh) throw new Error(`HASHPLEN length does not match @${addr} is ${lm} and should be ${lh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             if (typeof ctx.hashP[addr].digest === "undefined") {
                 // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
                 ctx.hashP[addr].digestCalled = false;
-                ctx.hashP[addr].lenCalled = true;
                 await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data)
             }
+            if (ctx.hashP[addr].lenCalled) {
+                throw new Error(`Call HASHPLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+            ctx.hashP[addr].lenCalled = true;
         } else {
             pols.hashPLen[i] = 0n;
         }
@@ -1084,10 +1093,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     lenCalled: false
                 }
             }
+            if (ctx.hashP[addr].digestCalled) {
+                throw new Error(`Call HASHPDIGEST @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
             ctx.hashP[addr].digestCalled = true;
             incCounter = Math.ceil((ctx.hashP[addr].data.length + 1) / 56);
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashP[addr].digest))) {
-                throw new Error(`Digest doesn't match`);
+                throw new Error(`HASHPDIGEST @${addr} doesn't match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
         } else {
             pols.hashPDigest[i] = 0n;
