@@ -657,7 +657,7 @@ namespace Main(%N);
         addr,
         op0
     } is
-    PaddingKK.lastHashLatchLen {
+    PaddingKK.lastHashLen {
         PaddingKK.addr,
         PaddingKK.len
     };
@@ -668,7 +668,7 @@ namespace Main(%N);
         op4, op5, op6, op7,
         incCounter
     } is
-    PaddingKK.lastHashLatchDigest {
+    PaddingKK.lastHashDigest {
         PaddingKK.addr,
         PaddingKK.hash0, PaddingKK.hash1, PaddingKK.hash2, PaddingKK.hash3,
         PaddingKK.hash4, PaddingKK.hash5, PaddingKK.hash6, PaddingKK.hash7,

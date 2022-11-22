@@ -26,14 +26,14 @@ namespace PaddingKK(%N);
     pol lastHashLatch = lastBlockLatch * (spare + remIsZero);
     spare' = (spare + remIsZero)*(1-lastHash);
 
-    pol commit lastHashLatchLen;
-    pol commit lastHashLatchDigest;
+    pol commit lastHashLen;
+    pol commit lastHashDigest;
 
-    lastHashLatchLen * (1 - lastHashLatchLen) = 0;
-    lastHashLatchDigest * (1 - lastHashLatchDigest) = 0;
+    lastHashLen * (1 - lastHashLen) = 0;
+    lastHashDigest * (1 - lastHashDigest) = 0;
 
-    lastHashLatchLen * (1 - lastHashLatch) = 0;
-    lastHashLatchDigest * (1 - lastHashLatch) = 0;
+    lastHashLen * (1 - lastHashLatch) = 0;
+    lastHashDigest * (1 - lastHashLatch) = 0;
 
     pol commit firstHash;
     firstHash' = lastHash;

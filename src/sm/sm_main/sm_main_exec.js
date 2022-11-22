@@ -590,7 +590,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
 
                 if (l.hashK == 1) {
-                    if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} };
+                    if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false };
                     const size = fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
@@ -614,7 +614,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     nHits++;
                 }
                 if (l.hashP == 1) {
-                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {} };
+                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false };
                     const size = fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
@@ -954,7 +954,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
 
         if (l.hashK) {
-            if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} };
+            if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false };
             pols.hashK[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
@@ -994,9 +994,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if(typeof ctx.hashK[addr] === "undefined") {
                 // len must be 0
                 if (lm != 0) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${0}`);
-                ctx.hashK[addr] = { data: [], reads: {} };
+                ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false };
                 ctx.hashK[addr].digest = ethers.utils.keccak256("0x");
             }
+            ctx.hashK[addr].lenCalled = true;
             const lh = ctx.hashK[addr].data.length;
             if (lm != lh) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${lh}`);
             if (typeof ctx.hashK[addr].digest === "undefined") {
@@ -1015,13 +1016,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashK[addr].digest))) {
                 throw new Error(`Digest doesn't match`);
             }
+            ctx.hashK[addr].digestCalled = true;
             incCounter = Math.ceil((ctx.hashK[addr].data.length + 1) / 136)
         } else {
             pols.hashKDigest[i] = 0n;
         }
 
         if (l.hashP) {
-            if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {} };
+            if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false };
             pols.hashP[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
@@ -1061,6 +1063,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             if (typeof ctx.hashP[addr].digest === "undefined") {
                 // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
+                ctx.hashP[addr].digestCalled = false;
+                ctx.hashP[addr].lenCalled = true;
                 await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data)
             }
         } else {
@@ -1076,9 +1080,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
                 ctx.hashP[addr] = {
                     data: data,
-                    digest: dg
+                    digest: dg,
+                    lenCalled: false
                 }
             }
+            ctx.hashP[addr].digestCalled = true;
             incCounter = Math.ceil((ctx.hashP[addr].data.length + 1) / 56);
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashP[addr].digest))) {
                 throw new Error(`Digest doesn't match`);
@@ -1749,7 +1755,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     for (let i=0; i<ctx.hashK.length; i++) {
         const h = {
             data: ctx.hashK[i].data,
-            reads: []
+            reads: [],
+            digestCalled: ctx.hashK[i].digestCalled,
+            lenCalled: ctx.hashK[i].lenCalled
         }
         let p= 0;
         while (p<ctx.hashK[i].data.length) {
@@ -1770,6 +1778,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     for (let i=0; i<ctx.hashP.length; i++) {
         const h = {
             data: ctx.hashP[i].data,
+            digestCalled: ctx.hashP[i].digestCalled,
+            lenCalled: ctx.hashP[i].lenCalled,
             reads: []
         }
         let p= 0;

@@ -110,8 +110,11 @@ module.exports.execute = async function (pols, input) {
             pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.incCounter[p] = BigInt(Math.floor(j / BYTESPERBLOCK) +1);
-            pols.lastHashLen[p] = 0n;
-            pols.lastHashDigest[p] = 0n;
+            const lastBlockLatch = (p % BYTESPERBLOCK) == (BYTESPERBLOCK - 1);
+            const lastHashLatch = lastBlockLatch && (pols.spare[p] || !pols.rem[p]);
+
+            pols.lastHashLen[p] = lastHashLatch && input[i].lenCalled ? 1n: 0n;
+            pols.lastHashDigest[p] = lastHashLatch && input[i].digestCalled ? 1n: 0n;
 
             if (lastOffset == 0n) {
                 curRead += 1;
