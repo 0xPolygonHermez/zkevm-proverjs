@@ -146,7 +146,7 @@ module.exports.buildConstants = async function (pols) {
 }
 
 module.exports.execute = async function (pols, input) {
-    const N = pols.a.length;
+    const N = pols.a[0].length;
 
     const script = JSON.parse(await fs.promises.readFile(path.join(__dirname, "keccak_script.json"), "utf8"));
 
@@ -156,10 +156,13 @@ module.exports.execute = async function (pols, input) {
     assert(script.program.length == SlotSize);
 
     const nSlots = Math.floor((N-1)/SlotSize);
+    const chunks = 4;
 
-    pols.a[0] = 0n;
-    pols.b[0] = 0xFFFFFFFFFFFn;
-    pols.c[0] = 0xFFFFFFFFFFFn;
+    for (let ichunk=0; ichunk < chunks; ++ichunk) {
+        pols.a[ichunk][0] = 0n;
+        pols.b[ichunk][0] = 0x7FFn;
+        pols.c[ichunk][0] = 0x7FFn;
+    }
 
     let p=1;
     let offset = 0;
@@ -228,16 +231,16 @@ module.exports.execute = async function (pols, input) {
     function setPol(pol, index, value)
     {
         pol[0][index] = value & 0x7FFn;
-        value = value >> 11;
+        value = value >> 11n;
         pol[1][index] = value & 0x7FFn;
-        value = value >> 11;
+        value = value >> 11n;
         pol[2][index] = value & 0x7FFn;
-        value = value >> 11;
+        value = value >> 11n;
         pol[3][index] = value & 0x7FFn;
     }
 
     function getPol(pol, index)
     {
-        return 2n**33n * pol[3][index] + 2n**22n * pol[2][index] + 2n**11n * pol[1][index] + pol[0][index];
+       return 2n**33n * pol[3][index] + 2n**22n * pol[2][index] + 2n**11n * pol[1][index] + pol[0][index];
     }
 }

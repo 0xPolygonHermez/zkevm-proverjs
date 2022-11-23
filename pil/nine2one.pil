@@ -7,7 +7,7 @@ namespace Nine2One(%N);
     pol commit bit;
     pol commit field44;
 
-    field44' = (1-Fieldlatch)*field44 + bit*Factor;
+    field44' = (1-FieldLatch)*field44 + bit*Factor;
     bit *(1-bit) = 0;
 
-    FieldLatch*(field44 - KeccakF.a) = 0;
+    FieldLatch*(field44 - KeccakF.a44) = 0;
