@@ -7,7 +7,7 @@ const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 const { F1Field } = require("ffjavascript");
 const getKs = require("pilcom").getKs;
 
-const SlotSize = 158418;
+const SlotSize = 155286;
 
 module.exports.buildConstants = async function (pols) {
     const N = pols.ConnA.length;

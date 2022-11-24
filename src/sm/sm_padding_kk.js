@@ -5,7 +5,7 @@ Scalar = require("ffjavascript").Scalar;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 
 const BYTESPERBLOCK = 136;
-const BlockSize = 158418;
+const BlockSize = 155286;
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
