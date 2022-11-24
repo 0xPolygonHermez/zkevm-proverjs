@@ -9,15 +9,15 @@ describe("Test Keccak Counter", async function () {
     this.timeout(10000000000);
 
     it("Verify Keccak Zkasm Test", async () => {
-        await verifyZkasm("../zkasm/counters/keccak.zkasm", true,
-                { defines: {N: 2 ** 17},
+        await verifyZkasm(__dirname + "/one_big_keccak.zkasm", true,
+                { defines: {N: 2 ** 23},
                   namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Nine2One'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true},
-		{ commitFilename: '/mnt/data/zkronos73/build/test/commit.bin',
-		  constFilename: '/mnt/data/zkronos73/build/test/const.bin',
-		  pilJsonFilename: '/mnt/data/zkronos73/build/test/mail.pil.json',
+		{ commitFilename: 'build/test/commit.bin',
+		  constFilename: 'build/test/const.bin',
+		  pilJsonFilename: 'build/test/mail.pil.json',
 		  externalPilVerification: true});
     });
 });

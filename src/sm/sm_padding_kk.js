@@ -13,7 +13,7 @@ module.exports.buildConstants = async function (pols) {
 
     const N = pols.lastBlock.length;
 
-    const nBlocks = 9*Math.floor((N-1)/BlockSize);
+    const nBlocks = 44*Math.floor((N-1)/BlockSize);
 
     let p =0;
 
@@ -107,7 +107,10 @@ module.exports.execute = async function (pols, input) {
             pols.connected[p] = j<BYTESPERBLOCK ? 0n : 1n;
             pols.rem[p] = F.e(input[i].realLen - BigInt(j));
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
-            pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
+
+            // spare means we are in padding zone (realLen < j < dataBytes.length )
+            // check if pols.rem[p] was "negative"
+            pols.spare[p] = pols.rem[p] > 0x7FFFFFFF80000000n ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.incCounter[p] = BigInt(Math.floor(j / BYTESPERBLOCK) +1);
 
@@ -173,7 +176,7 @@ module.exports.execute = async function (pols, input) {
         addr += 1n;
     }
 
-    const nTotalBlocks = 9*Math.floor(N/BlockSize);
+    const nTotalBlocks = 44*Math.floor(N/BlockSize);
     const nUsedBlocks = p/BYTESPERBLOCK;
 
     if (nUsedBlocks > nTotalBlocks) throw new Error(`Too many keccak blocks (${nUsedBlocks} vs ${nTotalBlocks} BS:${BlockSize})`);
@@ -196,7 +199,10 @@ module.exports.execute = async function (pols, input) {
             pols.addr[p] = addr;
             pols.rem[p] = F.e(-j);
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
-            pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
+
+            // spare means we are in padding zone
+            // check if pols.rem[p] was "negative"
+            pols.spare[p] = pols.rem[p] > 0x7FFFFFFF80000000n ? 1n : 0n;
             pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.connected[p] = 0n;
             pols.incCounter[p] = 1n;
