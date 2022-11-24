@@ -8,12 +8,12 @@ const { F1Field } = require("ffjavascript");
 const getKs = require("pilcom").getKs;
 
 const SlotSize = 155286;
+const chunks = 4;
+const chunkBits = 11n;
 
 module.exports.buildConstants = async function (pols) {
     const N = pols.ConnA.length;
-    const chunks = 4;
-    const chunkBits = 11n;
-    const NUsedBits = 9n;
+
 
     const F = new F1Field("0xFFFFFFFF00000001");
 
@@ -156,7 +156,6 @@ module.exports.execute = async function (pols, input) {
     assert(script.program.length == SlotSize);
 
     const nSlots = Math.floor((N-1)/SlotSize);
-    const chunks = 4;
 
     for (let ichunk=0; ichunk < chunks; ++ichunk) {
         pols.a[ichunk][0] = 0n;
@@ -208,7 +207,7 @@ module.exports.execute = async function (pols, input) {
                 assert(false, "Invalid field type");
             }
 
-            const mask = 0xFFFFFFFFFFFn;
+            const mask = 0xFFFFFFFFFFF;
             if (l.op === "xor") {
                 setPol(pols.c, r,(getPol(pols.a,r) & mask) ^ (getPol(pols.b,r) &  mask));
             } else if (l.op === "andp") {
