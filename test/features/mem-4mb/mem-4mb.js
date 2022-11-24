@@ -3,7 +3,7 @@ const assert = chai.assert;
 const fs = require("fs");
 const path = require("path");
 
-const {verifyZkasm} = require("../verify_zkasm");
+const {verifyZkasm} = require("../../verify_zkasm");
 
 describe("Test Binary Counter", async function () {
     this.timeout(10000000000);

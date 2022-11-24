@@ -21,8 +21,8 @@ start:
         ;
         ; lines generated with commands:
         ;
-        ;   dd if=/dev/random bs=9690 count=32 of=tmp/random.bin
-        ;   hexdump -e '"0x" 32/1 "%02X" "n :HASHK(E)\n"' tmp/random.bin
+        ;   dd if=/dev/random bs=$((2376 * 136 - 1)) count=1 of=tmp/random.bin
+        ;   hexdump -e '"        0x" 32/1 "%02X" "n :HASHK(E)\n"' tmp/random.bin
 
         0x5F2387967325622575A230CB70634CD278E84B0E2F07D8C8C8DACBB8A7E6EC27n :HASHK(E)
         0x7442C513BF276A0C0627307FEE14921DBA6644AA6BE35DDE93C576338C8F5C87n :HASHK(E)
