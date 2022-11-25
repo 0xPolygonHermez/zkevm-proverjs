@@ -135,6 +135,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         ctx.fileName = l.fileName;
         ctx.line = l.line;
+        const sourceRef = `[zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
+        ctx.sourceRef = sourceRef;
 
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
@@ -437,8 +439,8 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
             if (l.offset) addrRel += l.offset;
             if (!skipAddrRelControl) {
-                if (addrRel >= 0x20000 || (!l.isMem && addrRel >= 0x10000)) throw new Error(`Address too big: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                if (addrRel <0 ) throw new Error(`Address can not be negative: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                if (addrRel >= 0x20000 || (!l.isMem && addrRel >= 0x10000)) throw new Error(`Address too big ${sourceRef}`);
+                if (addrRel <0 ) throw new Error(`Address can not be negative ${sourceRef}`);
             }
             addr = addrRel;
         }
@@ -489,7 +491,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (l.inFREE) {
 
             if (!l.freeInTag) {
-                throw new Error(`Instruction with freeIn without freeInTag: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`Instruction with freeIn without freeInTag ${sourceRef}`);
             }
 
             let fi;
@@ -590,14 +592,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
 
                 if (l.hashK == 1) {
-                    if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} };
+                    if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {}, sourceRef };
                     const size = fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-                    if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                    if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK out of bounds ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
+                    if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK(${addr}) out of bounds (${pos+size} > ${ctx.hashK[addr].data.length}) ${sourceRef}`);
                     let s = Scalar.zero;
                     for (let k=0; k<size; k++) {
-                        if (typeof ctx.hashK[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashK not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        if (typeof ctx.hashK[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashK(${addr}) not defined place ${pos+k} ${sourceRef}`);
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[addr].data[pos + k]));
                     }
                     fi = scalar2fea(Fr, s);
@@ -605,24 +607,24 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 if (l.hashKDigest == 1) {
                     if (typeof ctx.hashK[addr] === "undefined") {
-                        throw new Error(`digest not defined.  ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        throw new Error(`digest(${addr}) not defined ${sourceRef}`);
                     }
                     if (typeof ctx.hashK[addr].digest === "undefined") {
-                        throw new Error(`digest not calculated.  Call hashKlen to finish digest: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        throw new Error(`digest(${addr}) not calculated. Call hashKlen to finish digest ${sourceRef}`);
                     }
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
                     nHits++;
                 }
                 if (l.hashP == 1) {
-                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {} };
+                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, sourceRef };
                     const size = fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
-                    if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-                    if (pos+size > ctx.hashP[addr].data.length) throw new Error(`Accessing hashP out of bounds ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
+                    if (pos+size > ctx.hashP[addr].data.length) throw new Error(`Accessing hashP(${addr}) out of bounds ${sourceRef}`);
                     let s = Scalar.zero;
                     for (let k=0; k<size; k++) {
-                        if (typeof ctx.hashP[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashP not defined place ${addr}, ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        if (typeof ctx.hashP[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashP(${addr}) not defined place ${pos+k} ${sourceRef}`);
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[addr].data[pos + k]));
                     }
                     fi = scalar2fea(Fr, s);
@@ -630,10 +632,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 if (l.hashPDigest == 1) {
                     if (typeof ctx.hashP[addr] === "undefined") {
-                        throw new Error(`digest not defined.  ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        throw new Error(`digest(${addr}) not defined ${sourceRef}`);
                     }
                     if (typeof ctx.hashP[addr].digest === "undefined") {
-                        throw new Error(`digest not calculated.  Call hashPlen to finish digest: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        throw new Error(`digest(${addr}) not calculated. Call hashPlen to finish digest ${sourceRef}`);
                     }
                     fi = scalar2fea(Fr, ctx.hashP[addr].digest);
                     nHits++;
@@ -690,7 +692,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else {
-                        throw new Error("Invalid Binary operation");
+                        throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
                     }
                 }
 
@@ -701,7 +703,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     const MASK_256 = P2_256 - 1n;
                     const offset = fea2scalar(Fr, ctx.C);
                     if (offset < 0 || offset > 32) {
-                        throw new Error(`MemAlign out of range (${offset}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                        throw new Error(`MemAlign out of range (${offset})  ${sourceRef}`);
                     }
                     const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
                     const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
@@ -711,10 +713,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
 
                 if (nHits==0) {
-                    throw new Error(`Empty freeIn without a valid instruction: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    throw new Error(`Empty freeIn without a valid instruction ${sourceRef}`);
                 }
                 if (nHits>1) {
-                    throw new Error(`Only one instruction that requires freeIn is allowed: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    throw new Error(`Only one instruction that requires freeIn is allowed ${sourceRef}`);
                 }
             } else {
                 fi = evalCommand(ctx, l.freeInTag);
@@ -756,7 +758,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                throw new Error(`Assert does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
+                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
         } else {
@@ -794,7 +796,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                         (!Fr.eq(ctx.mem[addr][6],  op6)) ||
                         (!Fr.eq(ctx.mem[addr][7],  op7)))
                     {
-                        throw new Error("Memory Read does not match");
+                        throw new Error(`Memory Read does not match ${sourceRef}`);
                     }
                 } else {
                     if ((!Fr.isZero(op0)) ||
@@ -806,7 +808,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                         (!Fr.isZero(op6)) ||
                         (!Fr.isZero(op7)))
                     {
-                        throw new Error("Memory Read does not match");
+                        throw new Error(`Memory Read does not match ${sourceRef}`);
                     }
                 }
 
@@ -861,7 +863,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }});
 
             if (!Scalar.eq(res.value,fea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
-                throw new Error(`Storage read does not match: ${ctx.ln}`);
+                throw new Error(`Storage read does not match ${sourceRef}`);
             }
 
             for (let k=0; k<4; k++) {
@@ -932,7 +934,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }});
 
             if (!nodeIsEq(ctx.lastSWrite.newRoot, sr8to4(ctx.Fr, [op0, op1, op2, op3, op4, op5, op6, op7 ]), ctx.Fr)) {
-                throw new Error(`Storage write does not match: ${ctx.ln}`);
+                throw new Error(`Storage write does not match ${sourceRef}`);
             }
 
             // commented since readings are also done directly in the smt
@@ -954,11 +956,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
 
         if (l.hashK) {
-            if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} };
+            if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {}, sourceRef };
             pols.hashK[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK ${sourceRef}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -967,19 +969,19 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 if (typeof bh === "undefined") {
                     ctx.hashK[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashK do not match ${addr}:${pos+k} is ${bm} and should be ${bh}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
+                    throw new Error(`HashK(${addr}) do not match, pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
                 }
             }
 
             const paddingA = Scalar.shr(a, size * 8);
             if (!Scalar.isZero(paddingA)) {
-                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashK (w=${step}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`HashK(${addr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
             }
 
             if ((typeof ctx.hashK[addr].reads[pos] !== "undefined") &&
                 (ctx.hashK[addr].reads[pos] != size))
             {
-                throw new Error(`HashK diferent read sizes in the same position ${addr}:${pos}`)
+                throw new Error(`HashK(${addr}) diferent read sizes (${ctx.hashK[addr].reads[pos]} != ${size}) in the same position ${pos} ${sourceRef}`)
             }
             ctx.hashK[addr].reads[pos] = size;
             incHashPos = size;
@@ -993,12 +995,12 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             // If it's undefined compute hash 0f 0 bytes
             if(typeof ctx.hashK[addr] === "undefined") {
                 // len must be 0
-                if (lm != 0) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${0}`);
-                ctx.hashK[addr] = { data: [], reads: {} };
+                if (lm != 0) throw new Error(`HashKLen(${addr}) length does not match is ${lm} and should be 0 ${sourceRef}`);
+                ctx.hashK[addr] = { data: [], reads: {}, sourceRef };
                 ctx.hashK[addr].digest = ethers.utils.keccak256("0x");
             }
             const lh = ctx.hashK[addr].data.length;
-            if (lm != lh) throw new Error(`HashK length does not match ${addr}  is ${lm} and should be ${lh}`);
+            if (lm != lh) throw new Error(`HashKLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
             if (typeof ctx.hashK[addr].digest === "undefined") {
                 ctx.hashK[addr].digest = ethers.utils.keccak256(ethers.utils.hexlify(ctx.hashK[addr].data));
             }
@@ -1010,10 +1012,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashKDigest[i] = 1n;
             const dg = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             if (typeof ctx.hashK[addr].digest === "undefined") {
-                throw new Error(`Cannnot load keccak from DB`);
+                throw new Error(`HashKDigest(${addr}) cannnot load keccak from DB ${sourceRef}`);
             }
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashK[addr].digest))) {
-                throw new Error(`Digest doesn't match`);
+                throw new Error(`HashKDigest(${addr}) doesn't match ${sourceRef}`);
             }
             incCounter = Math.ceil((ctx.hashK[addr].data.length + 1) / 136)
         } else {
@@ -1021,11 +1023,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
 
         if (l.hashP) {
-            if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {} };
+            if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, sourceRef };
             pols.hashP[i] = 1n;
             const size = fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size for hash: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            if ((size<0) || (size>32)) throw new Error(`HashP(${addr}) invalid size ${size} ${sourceRef}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -1034,18 +1036,18 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 if (typeof bh === "undefined") {
                     ctx.hashP[addr].data[pos + k] = bm;
                 } else if (bm != bh) {
-                    throw new Error(`HashP do not match ${addr}:${pos+k} is ${bm} and should be ${bh}`)
+                    throw new Error(`HashP(${addr}) do not match pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
                 }
             }
             const paddingA = Scalar.shr(a, size * 8);
             if (!Scalar.isZero(paddingA)) {
-                throw new Error(`Incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) for hashP (w=${step}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`HashP(${addr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
             }
 
             if ((typeof ctx.hashP[addr].reads[pos] !== "undefined") &&
                 (ctx.hashP[addr].reads[pos] != size))
             {
-                throw new Error(`HashP diferent read sizes in the same position ${addr}:${pos}`)
+                throw new Error(`HashP(${addr}) diferent read sizes in the same position ${pos} (${ctx.hashP[addr].reads[pos]} != ${size}) ${sourceRef}`);
             }
             ctx.hashP[addr].reads[pos] = size;
             incHashPos = size;
@@ -1057,7 +1059,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.hashPLen[i] = 1n;
             const lm = fe2n(Fr, op0, ctx);
             const lh = ctx.hashP[addr].data.length;
-            if (lm != lh) throw new Error(`HashP length does not match ${addr}  is ${lm} and should be ${lh}`);
+            if (lm != lh) throw new Error(`HashPLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
             if (typeof ctx.hashP[addr].digest === "undefined") {
                 // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
@@ -1076,12 +1078,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
                 ctx.hashP[addr] = {
                     data: data,
-                    digest: dg
+                    digest: dg,
+                    sourceRef
                 }
             }
             incCounter = Math.ceil((ctx.hashP[addr].data.length + 1) / 56);
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashP[addr].digest))) {
-                throw new Error(`Digest doesn't match`);
+                throw new Error(`HashPDigest(${addr}) doesn't match ${sourceRef}`);
             }
         } else {
             pols.hashPDigest[i] = 0n;
@@ -1109,7 +1112,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     let right = Scalar.add(Scalar.shl(D, 256), op);
                     console.log(left.toString() + ' (0x'+left.toString(16)+') != '+ right.toString()
                                                 + ' (0x' + right.toString(16)+')');
-                    throw new Error(`Arithmetic does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    throw new Error(`Arithmetic(Eq0) does not match ${sourceRef}`);
                 }
                 pols.arithEq0[i] = 1n;
                 pols.arithEq1[i] = 0n;
@@ -1129,7 +1132,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2) {
                     dbl = true;
                 } else {
-                    throw new Error(`Invalid arithmetic op: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    throw new Error(`Invalid arithmetic op (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
                 }
 
                 let s;
@@ -1157,7 +1160,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                     console.log('x3: '+x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
                     console.log('y3: '+y3.toString()+(y3eq ? ' == ' : ' != ')+_y3.toString());
 
-                    throw new Error('Arithmetic curve '+(dbl?'dbl':'add')+` point does not match: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                    throw new Error('Arithmetic curve '+(dbl?'dbl':'add')+` point does not match: ${sourceRef}`);
                 }
 
                 pols.arithEq0[i] = 0n;
@@ -1178,7 +1181,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(Scalar.add(a, b), Mask256);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("ADD does not match");
+                    throw new Error(`ADD does not match (${expectedC} != ${c}) $${sourceRef}`);
                 }
                 pols.binOpcode[i] = 0n;
                 pols.carry[i] = (((a + b) >> 256n) > 0n) ? 1n : 0n;
@@ -1189,7 +1192,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("SUB does not match");
+                    throw new Error(`SUB does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 1n;
                 pols.carry[i] = ((a - b) < 0n) ? 1n : 0n;
@@ -1200,7 +1203,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.lt(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("LT does not match");
+                    throw new Error(`LT does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 2n;
                 pols.carry[i] = (a < b) ? 1n: 0n;
@@ -1215,7 +1218,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const expectedC = Scalar.lt(signedA, signedB);
 
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("SLT does not match");
+                    throw new Error(`SLT does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 3n;
                 pols.carry[i] = (signedA < signedB) ? 1n : 0n;
@@ -1226,9 +1229,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.eq(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    console.log(ctx.line);
-                    console.log(ctx.fileName);
-                    throw new Error("EQ does not match");
+                    throw new Error(`EQ does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 4n;
                 pols.carry[i] = (a ==  b) ? 1n : 0n;
@@ -1239,7 +1240,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("AND does not match");
+                    throw new Error(`AND does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 5n;
                 pols.carry[i] = 0n;
@@ -1250,7 +1251,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.bor(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("OR does not match");
+                    throw new Error(`OR does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 6n;
                 pols.carry[i] = 0n;
@@ -1261,13 +1262,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.bxor(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error("XOR does not match");
+                    throw new Error(`XOR does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 7n;
                 pols.carry[i] = 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 7, type: 1});
             } else {
-                throw new Error("Invalid bin opcode");
+                throw new Error(`Invalid bin opcode (${l.binOpcode}) ${sourceRef}`);
             }
             pols.bin[i] = 1n;
         } else {
@@ -1284,7 +1285,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             const offset = fea2scalar(Fr, ctx.C);
 
             if (offset < 0 || offset >= 32) {
-                throw new Error(`MemAlign out of range (${offset}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`MemAlign out of range (${offset}) ${sourceRef}`);
             }
 
             if (!l.memAlignRD && l.memAlignWR && !l.memAlignWR8) {
@@ -1296,7 +1297,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                                        Scalar.band(Scalar.shl(v, (256n - (offset * 8n))), MASK_256));
                 if (!Scalar.eq(w0, _W0) || !Scalar.eq(w1, _W1) ) {
                     throw new Error(`MemAlign w0,w1 invalid (0x${w0.toString(16)},0x${w1.toString(16)}) vs (0x${_W0.toString(16)},0x${_W1.toString(16)})`+
-                                    `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, v:${v.toString(16)}, offset:${offset}]: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                                    `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, v:${v.toString(16)}, offset:${offset}] ${sourceRef}`);
                 }
                 pols.memAlignRD[i] = 0n;
                 pols.memAlignWR[i] = 1n;
@@ -1308,7 +1309,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const _W0 = Scalar.bor(Scalar.band(m0, Scalar.shr(byteMaskOn256, 8n * offset)), Scalar.shl(Scalar.band(v, 0xFF), 8n * (31n - offset)));
                 if (!Scalar.eq(w0, _W0)) {
                     throw new Error(`MemAlign w0 invalid (0x${w0.toString(16)}) vs (0x${_W0.toString(16)})`+
-                                    `[m0:${m0.toString(16)}, v:${v.toString(16)}, offset:${offset}]: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                                    `[m0:${m0.toString(16)}, v:${v.toString(16)}, offset:${offset}] ${sourceRef}`);
                 }
                 pols.memAlignRD[i] = 0n;
                 pols.memAlignWR[i] = 0n;
@@ -1321,14 +1322,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 const _V = Scalar.bor(leftV, rightV);
                 if (!Scalar.eq(v, _V)) {
                     throw new Error(`MemAlign v invalid ${v.toString(16)} vs ${_V.toString(16)}:`+
-                                    `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, offset:${offset}]: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                                    `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, offset:${offset}] ${sourceRef}`);
                 }
                 pols.memAlignRD[i] = 1n;
                 pols.memAlignWR[i] = 0n;
                 pols.memAlignWR8[i] = 0n;
                 required.MemAlign.push({m0: m0, m1: m1, v: v, w0: Fr.zero, w1: Fr.zero, offset: offset, wr256: 0n, wr8: 0n});
             } else {
-                throw new Error(`Invalid    operation (rd: ${l.memAlignRD} wr: ${l.memAlignWR}, wr8: ${l.memAlignWR8}): ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+                throw new Error(`Invalid operation (rd: ${l.memAlignRD} wr: ${l.memAlignWR}, wr8: ${l.memAlignWR8}) ${sourceRef}`);
             }
         } else {
             pols.memAlignRD[i] = 0n;
@@ -1617,7 +1618,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.isNeg[i]=0n;
                 pols.zkPC[nexti] = pols.zkPC[i] + 1n;
             } else {
-                throw new Error(`Value ${o} not a valid 32bit value`);
+                throw new Error(`On JMPN value ${o} not a valid 32bit value ${sourceRef}`);
             }
             pols.lJmpnCondValue[i] = jmpnCondValue & 0x7FFFFFn;
             jmpnCondValue = jmpnCondValue >> 23n;
@@ -1749,6 +1750,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     }
 
     for (let i=0; i<ctx.hashK.length; i++) {
+        if (typeof ctx.hashK[i] === 'undefined') {
+            const nextAddr = Object.keys(ctx.hashK)[i];
+            throw new Error(`Reading hashK(${i}) not defined, next defined was ${nextAddr} on ${ctx.hashK[nextAddr].sourceRef||''}`);
+        }
         const h = {
             data: ctx.hashK[i].data,
             reads: []
@@ -1764,12 +1769,16 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
         }
         if (p!= ctx.hashK[i].data.length) {
-            throw new Error(`Reading hashK out of limits: ${step}`);
+            throw new Error(`Reading hashK(${i}) out of limits (${p} != ${ctx.hashK[i].data.length})`);
         }
         required.PaddingKK.push(h);
     }
 
     for (let i=0; i<ctx.hashP.length; i++) {
+        if (typeof ctx.hashP[i] === 'undefined') {
+            const nextAddr = Object.keys(ctx.hashP)[i];
+            throw new Error(`Reading hashP(${i}) not defined, next defined was ${nextAddr} on ${ctx.hashP[nextAddr].sourceRef||''}`);
+        }
         const h = {
             data: ctx.hashP[i].data,
             reads: []
@@ -1785,7 +1794,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
         }
         if (p!= ctx.hashP[i].data.length) {
-            throw new Error(`Reading hashP out of limits: ${step}`);
+            throw new Error(`Reading hashP(${i}) out of limits (${p} != ${ctx.hashP[i].data.length})`);
         }
         required.PaddingPG.push(h);
     }
@@ -1869,15 +1878,15 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
         (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
     ) {
-        throw new Error("Register C not terminetd equal as its initial value");
+        throw new Error("Register C not termined equal as its initial value");
     }
 
     if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
-        throw new Error("Register SP not terminetd equal as its initial value");
+        throw new Error("Register SP not termined equal as its initial value");
     }
 
     if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
-        throw new Error("Register GAS not terminetd equal as its initial value");
+        throw new Error("Register GAS not termined equal as its initial value");
     }
 }
 
@@ -2063,7 +2072,7 @@ function evalCommand(ctx, tag) {
     } else if (tag.op == "getMemValue") {
         return eval_getMemValue(ctx, tag);
     } else {
-        throw new Error(`Invalid operation ${tag.op}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        throw new Error(`Invalid operation ${tag.op} ${ctx.sourceRef}`);
     }
 
 }
@@ -2077,7 +2086,7 @@ function eval_setVar(ctx, tag) {
 
     const varName = eval_left(ctx, tag.values[0]);
 
-    if (typeof ctx.vars[varName] == "undefined") throw new Error(`Variable not defined ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (typeof ctx.vars[varName] == "undefined") throw new Error(`Variable ${varName} not defined ${ctx.sourceRef}`);
 
     ctx.vars[varName] = evalCommand(ctx, tag.values[1]);
     return ctx.vars[varName];
@@ -2090,21 +2099,21 @@ function eval_left(ctx, tag) {
     } else if (tag.op == "getVar") {
         return tag.varName;
     } else {
-        throw new Error(`Invalid left expression: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        throw new Error(`Invalid left expression (${tag.op}) ${ctx.sourceRef}`);
     }
 }
 
 function eval_declareVar(ctx, tag) {
     // local variables, redeclared must start with _
     if (tag.varName[0] !== '_' && typeof ctx.vars[tag.varName] != "undefined") {
-        throw new Error(`Variable already declared: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        throw new Error(`Variable ${tag.varName} already declared ${ctx.sourceRef}`);
     }
     ctx.vars[tag.varName] = Scalar.e(0);
     return ctx.vars[tag.varName];
 }
 
 function eval_getVar(ctx, tag) {
-    if (typeof ctx.vars[tag.varName] == "undefined") throw new Error(`Variable not defined ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (typeof ctx.vars[tag.varName] == "undefined") throw new Error(`Variable ${tag.varName} not defined ${ctx.sourceRef}`);
     return ctx.vars[tag.varName];
 }
 
@@ -2152,7 +2161,7 @@ function eval_getReg(ctx, tag) {
     } else if (tag.regName == "HASHPOS") {
         return Scalar.e(ctx.HASHPOS);
     } else {
-        throw new Error(`Invalid register ${tag.regName}:  ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }
 }
 
@@ -2205,7 +2214,7 @@ function eval_bit_operation(ctx, tag)
         case 'shl':      return Scalar.shl(a,b);
         case 'shr':      return Scalar.shr(a,b);
     }
-    throw new Error(`bit operation ${tag.op} not defined: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    throw new Error(`bit operation ${tag.op} not defined ${ctx.sourceRef}`);
 }
 
 function eval_if(ctx, tag)
@@ -2231,7 +2240,7 @@ function eval_logical_operation(ctx, tag)
         case 'lt':      return (a < b)  ? 1 : 0;
         case 'le':      return (a > b)  ? 1 : 0;
     }
-    throw new Error(`logical operation ${tag.op} not defined: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    throw new Error(`logical operation ${tag.op} not defined ${ctx.sourceRef}`);
 }
 
 function eval_getMemValue(ctx, tag) {
@@ -2306,19 +2315,17 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR8_W0(ctx, tag);
     } else if (tag.funcName == "saveContractBytecode") { // Added by opcodes
         return eval_saveContractBytecode(ctx, tag);
-    }  else {
-        throw new Error(`function not defined ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
     }
-    throw new Error(`function not defined ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
 
 function eval_getSequencerAddr(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
 }
 
 function eval_getTxs(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     const txs = ctx.input.batchL2Data;
     const offset = Number(evalCommand(ctx,tag.params[0]));
     const len = Number(evalCommand(ctx,tag.params[1]));
@@ -2328,33 +2335,33 @@ function eval_getTxs(ctx, tag) {
 }
 
 function eval_getTxsLen(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_getGlobalExitRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.globalExitRoot));
 }
 
 function eval_getTimestamp(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_getChainId(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     return [ctx.Fr.e(ctx.input.chainID), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_eventLog(ctx, tag) {
-    if (tag.params.length < 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     if(fullTracer) fullTracer.handleEvent(ctx, tag)
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_cond(ctx, tag) {
-    if (tag.params.length != 1) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (1 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     const result = Number(evalCommand(ctx,tag.params[0]));
     if (result) {
         return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
@@ -2363,7 +2370,7 @@ function eval_cond(ctx, tag) {
 }
 
 function eval_getBytecode(ctx, tag) {
-    if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln}`)
+    if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters ((2,3) != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
     let hashcontract = evalCommand(ctx, tag.params[0]);
     hashcontract = "0x" + hashcontract.toString(16).padStart(64, '0');
     const bytecode = ctx.input.contractsBytecode[hashcontract] || ctx.input.contractsBytecode[hashcontract.slice(2)];
@@ -2389,7 +2396,7 @@ function eval_checkpoint(ctx) {
 }
 
 function eval_exp(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
     const a = evalCommand(ctx, tag.params[0]);
     const b = evalCommand(ctx, tag.params[1])
     return scalar2fea(ctx.Fr, Scalar.exp(a, b));;
@@ -2417,7 +2424,7 @@ function eval_bitwise(ctx, tag) {
             checkParams(ctx, tag, 1);
             return Scalar.bxor(a, Mask256);
         default:
-            throw new Error(`Invalid bitwise operation ${func}. ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
+            throw new Error(`Invalid bitwise operation ${func} (${tag.funcName}) ${ctx.sourceRef}`)
     }
 }
 
@@ -2444,7 +2451,7 @@ function eval_comp(ctx, tag){
         case 'eq':
             return Scalar.eq(a, b) ? 1 : 0;
         default:
-            throw new Error(`Invalid bitwise operation ${func}. ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`)
+            throw new Error(`Invalid bitwise operation ${func} (${tag.funcName}) ${ctx.sourceRef}`)
     }
 }
 
@@ -2492,7 +2499,7 @@ function eval_log(ctx, tag) {
             hexLog = `0x${scalarLog.toString(16)}`;
         }
 
-        console.log(`Log regname ${tag.params[0].regName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        console.log(`Log regname ${tag.params[0].regName} ${ctx.sourceRef}`);
         if (label !== "notset")
             console.log("       Label: ", label);
         console.log("       Scalar: ", scalarLog);
@@ -2503,7 +2510,7 @@ function eval_log(ctx, tag) {
 }
 
 function eval_breakPoint(ctx, tag) {
-    console.log(`Breakpoint: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    console.log(`Breakpoint: ${ctx.sourceRef}`);
     return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
@@ -2547,7 +2554,7 @@ function eval_saveContractBytecode(ctx, tag) {
 }
 
 function checkParams(ctx, tag, expectedParams){
-    if (tag.params.length != expectedParams) throw new Error(`Invalid number of parameters function ${tag.funcName}: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+    if (tag.params.length != expectedParams) throw new Error(`Invalid number of parameters (${expectedParams} != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 }
 
 function eval_dumpRegs(ctx, tag) {
@@ -2593,7 +2600,7 @@ function eval_dumphex(ctx, tag) {
 function eval_inverseFpEc(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
     if (ctx.Fec.isZero(a)) {
-        throw new Error(`inverseFpEc: Division by zero  on: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
     }
     return ctx.Fec.inv(a);
 }
@@ -2601,7 +2608,7 @@ function eval_inverseFpEc(ctx, tag) {
 function eval_inverseFnEc(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
     if (ctx.Fnec.isZero(a)) {
-        throw new Error(`inverseFpEc: Division by zero  on: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
     }
     return ctx.Fnec.inv(a);
 }

@@ -207,7 +207,7 @@ module.exports.execute = async function (pols, input) {
                 assert(false, "Invalid field type");
             }
 
-            const mask = 0xFFFFFFFFFFF;
+            const mask = 0xFFFFFFFFFFFn;
             if (l.op === "xor") {
                 setPol(pols.c, r,(getPol(pols.a,r) & mask) ^ (getPol(pols.b,r) &  mask));
             } else if (l.op === "andp") {

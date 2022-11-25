@@ -5,11 +5,11 @@ const path = require("path");
 
 const {verifyZkasm} = require("../../verify_zkasm");
 
-describe("Test Keccak Counter", async function () {
+describe("Test Keccak (multiples keccaks)", async function () {
     this.timeout(10000000000);
 
     it("Verify Keccak Zkasm Test", async () => {
-        await verifyZkasm(__dirname + "/one_big_keccak.zkasm", true,
+        await verifyZkasm(__dirname + "/multiples_keccaks.zkasm", true,
                 { defines: {N: 2 ** 23},
                   namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Nine2One'],
                   verbose: true,
