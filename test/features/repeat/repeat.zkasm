@@ -1,0 +1,22 @@
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        10 => A
+
+        14 => RCX
+        A + 2 => A  :REPEAT(RCX)
+
+        40  :ASSERT ; REPEAT 14 TIMES => 1 TIME + 14 REPS = 15 TIMES x 2 = 30 => 10 + 30 = 40
+        0 => A
+        RCX   :ASSERT
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
