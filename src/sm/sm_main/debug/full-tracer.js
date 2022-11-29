@@ -1,14 +1,17 @@
 const fs = require("fs");
 const path = require("path");
-const codes = require("./opcodes");
-const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const { fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const { ethers } = require("ethers");
+const { Scalar } = require("ffjavascript");
+
+const codes = require("./opcodes");
+const Verbose = require("./verbose-tracer");
+const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
+
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
-const { Scalar } = require("ffjavascript");
 const generate_call_trace = true;
 const generate_execute_trace = false;
-const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
@@ -20,8 +23,10 @@ class FullTracer {
     /**
      * Constructor, instantation of global vars
      * @param {String} logFileName Name of the output file
-     */
-    constructor(logFileName) {
+     * @param {Object} options full-tracer options
+     * @param {Bool} options.verbose flag to print traces
+    */
+    constructor(logFileName, options) {
         // Opcode step traces of the all the processed tx
         this.info = [];
         // Stack of the transaction
@@ -43,6 +48,9 @@ class FullTracer {
         this.txGAS = {};
         this.accBatchGas = 0;
         this.logs = [];
+
+        // options
+        this.verbose = new Verbose(options.verbose);
     }
 
     /**
@@ -77,7 +85,9 @@ class FullTracer {
      */
     onError(ctx, tag) {
         const errorName = tag.params[1].varName
-        //Intrinsic error should be set at tx level (not opcode)
+        this.verbose.printError(errorName);
+
+        // Intrinsic error should be set at tx level (not opcode)
         if (responseErrors.includes(errorName)) {
             if (this.finalTrace.responses[this.txCount]) {
                 this.finalTrace.responses[this.txCount].error = errorName;
@@ -190,6 +200,8 @@ class FullTracer {
         this.depth = 0;
         this.deltaStorage = { 0: {} };
         this.txGAS[this.depth] = context.gas;
+
+        this.verbose.printTx(`start ${this.txCount}`);
     }
 
     /**
@@ -300,6 +312,9 @@ class FullTracer {
         }
 
         fs.writeFileSync(`${this.pathLogFile}_${this.txCount}.json`, JSON.stringify(this.finalTrace.responses[this.txCount], null, 2));
+
+        this.verbose.printTx(`finish ${this.txCount}`);
+
         // Increase transaction count
         this.txCount++;
     }
@@ -321,6 +336,8 @@ class FullTracer {
         this.finalTrace.timestamp = Number(getVarFromCtx(ctx, true, "timestamp"));
         this.finalTrace.sequencerAddr = ethers.utils.hexlify(getVarFromCtx(ctx, true, "sequencerAddr"));
         this.finalTrace.responses = [];
+
+        this.verbose.printBatch("start");
     }
 
     /**
@@ -345,6 +362,9 @@ class FullTracer {
         this.finalTrace.new_acc_input_hash = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newAccInputHash"));
         this.finalTrace.new_local_exit_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newLocalExitRoot"));
         this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
+
+        this.verbose.printBatch("finish");
+
         // Create ouput files and dirs
         this.exportTrace();
     }
@@ -497,6 +517,8 @@ class FullTracer {
         if (opIncContext.includes(singleInfo.opcode)) {
             this.deltaStorage[this.depth + 1] = {};
         }
+
+        this.verbose.printOpcode(opcode);
     }
 
     /**
