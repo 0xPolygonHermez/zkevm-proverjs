@@ -124,11 +124,13 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         + (rom.program[pIndex].setSR ? (2n**37n * BigInt(rom.program[pIndex].setSR)) : 0n)
         + (rom.program[pIndex].sRD ? (2n**38n * BigInt(rom.program[pIndex].sRD)) : 0n)
         + (rom.program[pIndex].sWR ? (2n**39n * BigInt(rom.program[pIndex].sWR)) : 0n)
-        + (rom.program[pIndex].useCTX ? (2n**40n * BigInt(rom.program[pIndex].useCTX)) : 0n);
+        + (rom.program[pIndex].useCTX ? (2n**40n * BigInt(rom.program[pIndex].useCTX)) : 0n)
+        + (rom.program[pIndex].useJmpAddr ? (2n**41n * BigInt(rom.program[pIndex].useJmpAddr)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;
 
         pols.binOpcode[i] = rom.program[pIndex].binOpcode ? BigInt(rom.program[pIndex].binOpcode) : 0n;
+        pols.jmpAddr[i] = rom.program[pIndex].jmpAddr ? BigInt(rom.program[pIndex].jmpAddr) : 0n;
         pols.line[i] = BigInt(pIndex);
     }
 }

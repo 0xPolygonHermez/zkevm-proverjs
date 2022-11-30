@@ -318,8 +318,12 @@ namespace Main(%N);
 
     pol doJMP = JMPN*isNeg + JMP + JMPC*carry;
 
-    zkPC' = doJMP       *   (addr - (zkPC+1)) +
-                            (zkPC+1-((1-RCXIsZero)*repeat));
+    pol commit jmpAddr;
+    pol commit useJmpAddr;
+    pol finalJmpAddr = useJmpAddr * jmpAddr + (1 - useJmpAddr) * addr;
+    pol nextNoJmpZkPC = zkPC + 1 - ((1-RCXIsZero)*repeat);
+
+    zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
     (A0-op0)*assert = 0;
     (A1-op1)*assert = 0;
@@ -440,7 +444,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr" -b
     */
 
     pol operations =
@@ -454,7 +458,7 @@ namespace Main(%N);
         + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
         + 2**32 * setMAXMEM     + 2**33 * setPC         + 2**34 * setRCX        + 2**35 * setRR
         + 2**36 * setSP         + 2**37 * setSR         + 2**38 * sRD           + 2**39 * sWR
-        + 2**40 * useCTX;
+        + 2**40 * useCTX        + 2**41 * useJmpAddr;
 
         (1 - arithEq0) * arithEq0 = 0;
         (1 - arithEq1) * arithEq1 = 0;
@@ -497,19 +501,20 @@ namespace Main(%N);
         (1 - sRD) * sRD = 0;
         (1 - sWR) * sWR = 0;
         (1 - useCTX) * useCTX = 0;
+        (1 - useJmpAddr) * useJmpAddr = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
         inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR, inHASHPOS, inRCX,
         inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
-        operations, offset, incStack, binOpcode, zkPC
+        operations, offset, incStack, binOpcode, jmpAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inHASHPOS, Rom.inRCX,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
-        Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.line
+        Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.line
     };
 
     pol commit sKeyI[4];

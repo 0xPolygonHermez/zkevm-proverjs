@@ -1641,16 +1641,18 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.RCXInv[nexti] = previousRCVInv;
         }
 
+        const finalJmpAddr = l.useJmpAddr ? l.jmpAddr : addr;
+        const nextNoJmpZkPC = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
         if (l.JMPN) {
             const o = Fr.toObject(op0);
             let jmpnCondValue = o;
             if (o > 0 && o >= FrFirst32Negative) {
                 pols.isNeg[i]=1n;
                 jmpnCondValue = Fr.toObject(Fr.e(jmpnCondValue + 2n**32n));
-                pols.zkPC[nexti] = BigInt(addr);
+                pols.zkPC[nexti] = BigInt(finalJmpAddr);
             } else if (o >= 0 && o <= FrLast32Positive) {
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                pols.zkPC[nexti] = nextNoJmpZkPC;
             } else {
                 throw new Error(`Value ${o} not a valid 32bit value`);
             }
@@ -1670,9 +1672,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             }
             if (l.JMPC) {
                 if (pols.carry[i]) {
-                    pols.zkPC[nexti] = BigInt(addr);
+                    pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 } else {
-                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                    pols.zkPC[nexti] = nextNoJmpZkPC;
                 }
                 pols.isNeg[i]=0n;
                 pols.JMP[i] = 0n;
@@ -1680,13 +1682,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.JMPC[i] = 1n;
             } else if (l.JMP) {
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = BigInt(addr);
+                pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 pols.JMP[i] = 1n;
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
             } else {
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
+                pols.zkPC[nexti] = nextNoJmpZkPC;
                 pols.JMP[i] = 0n;
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
