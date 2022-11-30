@@ -317,9 +317,9 @@ namespace Main(%N);
     HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP)*D0;
 
     pol doJMP = JMPN*isNeg + JMP + JMPC*carry;
-    pol nextNoJmpZkPC = zkPC + 1 - ((1-RCXIsZero)*repeat);
 
-    zkPC' = doJMP       *   (addr - nextNoJmpZkPC) + nextNoJmpZkPC;
+    zkPC' = doJMP       *   (addr - (zkPC+1-decRCX)) +
+                            (zkPC+1-decRCX);
 
     (A0-op0)*assert = 0;
     (A1-op1)*assert = 0;
