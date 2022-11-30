@@ -17,6 +17,7 @@ const argv = require("yargs")
     .alias("r", "rom")
     .alias("o", "output")
     .alias("e", "exit")
+    .alias("p", "pil")
     .argv;
 
 // example: node run-inputs.js -f ../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/stMemoryTest -r ../../../zkevm-rom/build/rom.json
@@ -71,7 +72,7 @@ async function main(){
     const rom = JSON.parse(fs.readFileSync(path.join(__dirname, romFile), "utf8"));
 
     let pil;
-    if (fs.existsSync(fileCachePil)) {
+    if (fs.existsSync(fileCachePil) && !argv.pil) {
         pil = JSON.parse(await fs.promises.readFile(fileCachePil, "utf8"));
     } else {
         const pilConfig = {
