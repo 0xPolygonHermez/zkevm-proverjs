@@ -1,8 +1,8 @@
 #!/bin/sh
 
-BDIR=build/postmerge2
+BDIR=/mnt/data/zkronos73/build/v0.5.0.0-rc.3
 BASEDIR=.
-DST=/mnt/ofs/zkproverc/pre-pomegranate-20221116
+DST=/mnt/ofs/zkproverc/v0.5.0.0-rc.3
 # DST=build/postmerge.config2
 # CPFLAGS=-lv
 CPFLAGS=-v
