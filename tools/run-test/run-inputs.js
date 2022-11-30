@@ -79,8 +79,8 @@ async function main(){
             namespaces: ['Main', 'Global'],
             disableUnusedError: true
         };
-
-        pil = await compile(F, "../../pil/main.pil", null, pilConfig);
+        const pilPath = path.join(__dirname, "../../pil/main.pil");
+        pil = await compile(F, pilPath, null, pilConfig);
         await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
