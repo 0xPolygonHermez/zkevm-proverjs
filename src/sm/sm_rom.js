@@ -69,6 +69,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.inRR[i] = rom.program[pIndex].inRR ? F.e(rom.program[pIndex].inRR) : F.zero;
         pols.inHASHPOS[i] = rom.program[pIndex].inHASHPOS ? F.e(rom.program[pIndex].inHASHPOS) : F.zero;
         pols.inROTL_C[i] = rom.program[pIndex].inROTL_C ? F.e(rom.program[pIndex].inROTL_C) : F.zero;
+        pols.inRCX[i] = rom.program[pIndex].inRCX ? F.e(rom.program[pIndex].inRCX) : F.zero;
 
         pols.inCntArith[i] = rom.program[pIndex].inCntArith ? F.e(rom.program[pIndex].inCntArith) : F.zero;
         pols.inCntBinary[i] = rom.program[pIndex].inCntBinary ? F.e(rom.program[pIndex].inCntBinary) : F.zero;
@@ -79,49 +80,51 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRR,setSP,setSR,sRD,sWR,useCTX,isCode"  -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX"  -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
-                  (rom.program[pIndex].arithEq0 ? (2n**0n  * BigInt(rom.program[pIndex].arithEq0)) : 0n)
-                + (rom.program[pIndex].arithEq1 ? (2n**1n  * BigInt(rom.program[pIndex].arithEq1)) : 0n)
-                + (rom.program[pIndex].arithEq2 ? (2n**2n  * BigInt(rom.program[pIndex].arithEq2)) : 0n)
-                + (rom.program[pIndex].assert ? (2n**3n  * BigInt(rom.program[pIndex].assert)) : 0n)
-                + (rom.program[pIndex].bin ? (2n**4n  * BigInt(rom.program[pIndex].bin)) : 0n)
-                + (rom.program[pIndex].hashK ? (2n**5n  * BigInt(rom.program[pIndex].hashK)) : 0n)
-                + (rom.program[pIndex].hashKDigest ? (2n**6n  * BigInt(rom.program[pIndex].hashKDigest)) : 0n)
-                + (rom.program[pIndex].hashKLen ? (2n**7n  * BigInt(rom.program[pIndex].hashKLen)) : 0n)
-                + (rom.program[pIndex].hashP ? (2n**8n  * BigInt(rom.program[pIndex].hashP)) : 0n)
-                + (rom.program[pIndex].hashPDigest ? (2n**9n  * BigInt(rom.program[pIndex].hashPDigest)) : 0n)
-                + (rom.program[pIndex].hashPLen ? (2n**10n * BigInt(rom.program[pIndex].hashPLen)) : 0n)
-                + (rom.program[pIndex].ind ? (2n**11n * BigInt(rom.program[pIndex].ind)) : 0n)
-                + (rom.program[pIndex].indRR ? (2n**12n * BigInt(rom.program[pIndex].indRR)) : 0n)
-                + (rom.program[pIndex].isMem ? (2n**13n * BigInt(rom.program[pIndex].isMem)) : 0n)
-                + (rom.program[pIndex].isStack ? (2n**14n * BigInt(rom.program[pIndex].isStack)) : 0n)
-                + (rom.program[pIndex].JMP ? (2n**15n * BigInt(rom.program[pIndex].JMP)) : 0n)
-                + (rom.program[pIndex].JMPC ? (2n**16n * BigInt(rom.program[pIndex].JMPC)) : 0n)
-                + (rom.program[pIndex].JMPN ? (2n**17n * BigInt(rom.program[pIndex].JMPN)) : 0n)
-                + (rom.program[pIndex].memAlignRD ? (2n**18n * BigInt(rom.program[pIndex].memAlignRD)) : 0n)
-                + (rom.program[pIndex].memAlignWR ? (2n**19n * BigInt(rom.program[pIndex].memAlignWR)) : 0n)
-                + (rom.program[pIndex].memAlignWR8 ? (2n**20n * BigInt(rom.program[pIndex].memAlignWR8)) : 0n)
-                + (rom.program[pIndex].mOp ? (2n**21n * BigInt(rom.program[pIndex].mOp)) : 0n)
-                + (rom.program[pIndex].mWR ? (2n**22n * BigInt(rom.program[pIndex].mWR)) : 0n)
-                + (rom.program[pIndex].setA ? (2n**23n * BigInt(rom.program[pIndex].setA)) : 0n)
-                + (rom.program[pIndex].setB ? (2n**24n * BigInt(rom.program[pIndex].setB)) : 0n)
-                + (rom.program[pIndex].setC ? (2n**25n * BigInt(rom.program[pIndex].setC)) : 0n)
-                + (rom.program[pIndex].setCTX ? (2n**26n * BigInt(rom.program[pIndex].setCTX)) : 0n)
-                + (rom.program[pIndex].setD ? (2n**27n * BigInt(rom.program[pIndex].setD)) : 0n)
-                + (rom.program[pIndex].setE ? (2n**28n * BigInt(rom.program[pIndex].setE)) : 0n)
-                + (rom.program[pIndex].setGAS ? (2n**29n * BigInt(rom.program[pIndex].setGAS)) : 0n)
-                + (rom.program[pIndex].setHASHPOS ? (2n**30n * BigInt(rom.program[pIndex].setHASHPOS)) : 0n)
-                + (rom.program[pIndex].setMAXMEM ? (2n**31n * BigInt(rom.program[pIndex].setMAXMEM)) : 0n)
-                + (rom.program[pIndex].setPC ? (2n**32n * BigInt(rom.program[pIndex].setPC)) : 0n)
-                + (rom.program[pIndex].setRR ? (2n**33n * BigInt(rom.program[pIndex].setRR)) : 0n)
-                + (rom.program[pIndex].setSP ? (2n**34n * BigInt(rom.program[pIndex].setSP)) : 0n)
-                + (rom.program[pIndex].setSR ? (2n**35n * BigInt(rom.program[pIndex].setSR)) : 0n)
-                + (rom.program[pIndex].sRD ? (2n**36n * BigInt(rom.program[pIndex].sRD)) : 0n)
-                + (rom.program[pIndex].sWR ? (2n**37n * BigInt(rom.program[pIndex].sWR)) : 0n)
-                + (rom.program[pIndex].useCTX ? (2n**38n * BigInt(rom.program[pIndex].useCTX)) : 0n)
+          (rom.program[pIndex].arithEq0 ? (2n**0n  * BigInt(rom.program[pIndex].arithEq0)) : 0n)
+        + (rom.program[pIndex].arithEq1 ? (2n**1n  * BigInt(rom.program[pIndex].arithEq1)) : 0n)
+        + (rom.program[pIndex].arithEq2 ? (2n**2n  * BigInt(rom.program[pIndex].arithEq2)) : 0n)
+        + (rom.program[pIndex].assert ? (2n**3n  * BigInt(rom.program[pIndex].assert)) : 0n)
+        + (rom.program[pIndex].bin ? (2n**4n  * BigInt(rom.program[pIndex].bin)) : 0n)
+        + (rom.program[pIndex].hashK ? (2n**5n  * BigInt(rom.program[pIndex].hashK)) : 0n)
+        + (rom.program[pIndex].hashKDigest ? (2n**6n  * BigInt(rom.program[pIndex].hashKDigest)) : 0n)
+        + (rom.program[pIndex].hashKLen ? (2n**7n  * BigInt(rom.program[pIndex].hashKLen)) : 0n)
+        + (rom.program[pIndex].hashP ? (2n**8n  * BigInt(rom.program[pIndex].hashP)) : 0n)
+        + (rom.program[pIndex].hashPDigest ? (2n**9n  * BigInt(rom.program[pIndex].hashPDigest)) : 0n)
+        + (rom.program[pIndex].hashPLen ? (2n**10n * BigInt(rom.program[pIndex].hashPLen)) : 0n)
+        + (rom.program[pIndex].ind ? (2n**11n * BigInt(rom.program[pIndex].ind)) : 0n)
+        + (rom.program[pIndex].indRR ? (2n**12n * BigInt(rom.program[pIndex].indRR)) : 0n)
+        + (rom.program[pIndex].isMem ? (2n**13n * BigInt(rom.program[pIndex].isMem)) : 0n)
+        + (rom.program[pIndex].isStack ? (2n**14n * BigInt(rom.program[pIndex].isStack)) : 0n)
+        + (rom.program[pIndex].JMP ? (2n**15n * BigInt(rom.program[pIndex].JMP)) : 0n)
+        + (rom.program[pIndex].JMPC ? (2n**16n * BigInt(rom.program[pIndex].JMPC)) : 0n)
+        + (rom.program[pIndex].JMPN ? (2n**17n * BigInt(rom.program[pIndex].JMPN)) : 0n)
+        + (rom.program[pIndex].memAlignRD ? (2n**18n * BigInt(rom.program[pIndex].memAlignRD)) : 0n)
+        + (rom.program[pIndex].memAlignWR ? (2n**19n * BigInt(rom.program[pIndex].memAlignWR)) : 0n)
+        + (rom.program[pIndex].memAlignWR8 ? (2n**20n * BigInt(rom.program[pIndex].memAlignWR8)) : 0n)
+        + (rom.program[pIndex].mOp ? (2n**21n * BigInt(rom.program[pIndex].mOp)) : 0n)
+        + (rom.program[pIndex].mWR ? (2n**22n * BigInt(rom.program[pIndex].mWR)) : 0n)
+        + (rom.program[pIndex].repeat ? (2n**23n * BigInt(rom.program[pIndex].repeat)) : 0n)
+        + (rom.program[pIndex].setA ? (2n**24n * BigInt(rom.program[pIndex].setA)) : 0n)
+        + (rom.program[pIndex].setB ? (2n**25n * BigInt(rom.program[pIndex].setB)) : 0n)
+        + (rom.program[pIndex].setC ? (2n**26n * BigInt(rom.program[pIndex].setC)) : 0n)
+        + (rom.program[pIndex].setCTX ? (2n**27n * BigInt(rom.program[pIndex].setCTX)) : 0n)
+        + (rom.program[pIndex].setD ? (2n**28n * BigInt(rom.program[pIndex].setD)) : 0n)
+        + (rom.program[pIndex].setE ? (2n**29n * BigInt(rom.program[pIndex].setE)) : 0n)
+        + (rom.program[pIndex].setGAS ? (2n**30n * BigInt(rom.program[pIndex].setGAS)) : 0n)
+        + (rom.program[pIndex].setHASHPOS ? (2n**31n * BigInt(rom.program[pIndex].setHASHPOS)) : 0n)
+        + (rom.program[pIndex].setMAXMEM ? (2n**32n * BigInt(rom.program[pIndex].setMAXMEM)) : 0n)
+        + (rom.program[pIndex].setPC ? (2n**33n * BigInt(rom.program[pIndex].setPC)) : 0n)
+        + (rom.program[pIndex].setRCX ? (2n**34n * BigInt(rom.program[pIndex].setRCX)) : 0n)
+        + (rom.program[pIndex].setRR ? (2n**35n * BigInt(rom.program[pIndex].setRR)) : 0n)
+        + (rom.program[pIndex].setSP ? (2n**36n * BigInt(rom.program[pIndex].setSP)) : 0n)
+        + (rom.program[pIndex].setSR ? (2n**37n * BigInt(rom.program[pIndex].setSR)) : 0n)
+        + (rom.program[pIndex].sRD ? (2n**38n * BigInt(rom.program[pIndex].sRD)) : 0n)
+        + (rom.program[pIndex].sWR ? (2n**39n * BigInt(rom.program[pIndex].sWR)) : 0n)
+        + (rom.program[pIndex].useCTX ? (2n**40n * BigInt(rom.program[pIndex].useCTX)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;
 

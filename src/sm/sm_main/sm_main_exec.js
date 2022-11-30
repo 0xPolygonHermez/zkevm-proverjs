@@ -100,6 +100,9 @@ module.exports = async function execute(pols, input, rom, config = {}) {
     let fastDebugExit = false;
 
     let pendingCmds = false;
+    let previousRCX = 0n;
+    let previousRCVInv = 0n;
+
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
@@ -124,6 +127,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         ctx.cntMemAlign = pols.cntMemAlign[i];
         ctx.cntPoseidonG = pols.cntPoseidonG[i];
         ctx.cntPaddingPG = pols.cntPaddingPG[i];
+        ctx.RCX = pols.RCX[i];
 
         // evaluate commands "after" before start new line, but when new values of registers are ready.
         if (pendingCmds) {
@@ -381,6 +385,14 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         } else {
             pols.inROTL_C[i] = Fr.zero;
         }
+
+        if (l.inRCX) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inRCX), Fr.e(ctx.RCX)));
+            pols.inRCX[i] = Fr.e(l.inRCX);
+        } else {
+            pols.inRCX[i] = Fr.zero;
+        }
+
 
         if ((!isNaN(l.CONSTL))&&(l.CONSTL)) {
             [
@@ -1355,6 +1367,12 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.memAlignWR8[i] = 0n;
         }
 
+        if (l.repeat) {
+            pols.repeat[i] = 1n;
+        } else {
+            pols.repeat[i] = 0n;
+        }
+
     //////////
     // SET NEXT REGISTERS
     //////////
@@ -1624,6 +1642,23 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
         }
 
+        if (l.setRCX == 1) {
+            pols.setRCX[i] = 1n;
+            pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+        } else {
+            pols.setRCX[i] = 0n;
+            pols.RCX[nexti] = Fr.add(pols.RCX[i], ((!Fr.isZero(pols.RCX[i]) && l.repeat == 1) ? Fr.negone:Fr.zero));
+        }
+
+        if (Fr.isZero(pols.RCX[nexti])) {
+            pols.RCXInv[nexti] = 0n;
+        } else {
+            if (!Fr.eq(previousRCX,pols.RCXInv[nexti])) {
+                previousRCX = pols.RCX[nexti];
+                previousRCVInv = Fr.inv(previousRCX);
+            }
+            pols.RCXInv[nexti] = previousRCVInv;
+        }
 
         if (l.JMPN) {
             const o = Fr.toObject(op0);
@@ -1670,7 +1705,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.JMPC[i] = 0n;
             } else {
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                pols.zkPC[nexti] = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
                 pols.JMP[i] = 0n;
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
@@ -2051,6 +2086,8 @@ function initState(Fr, pols, ctx) {
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
+    pols.RCX[0] = 0n;
+    pols.RCXInv[0] = 0n;
 }
 
 function evalCommands(ctx, cmds) {
