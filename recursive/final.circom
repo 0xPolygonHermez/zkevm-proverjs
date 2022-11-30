@@ -112,7 +112,7 @@ template Main() {
         n2bOldStateRoot[i] = Num2Bits(32);
         n2bOldStateRoot[i].in <== publics[0 + i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[160 + 32*(i+1) - 1 -j] <== n2bOldStateRoot[i].out[j];
+            publicsHasher.in[160 + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i].out[j];
         }
     }
 
@@ -121,7 +121,7 @@ template Main() {
         n2bOldAccInputHash[i] = Num2Bits(32);
         n2bOldAccInputHash[i].in <== publics[8 + i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[416 + 32*(i+1) - 1 -j] <== n2bOldAccInputHash[i].out[j];
+            publicsHasher.in[416 + 32*(8-i) - 1 -j] <== n2bOldAccInputHash[i].out[j];
         }
     }
 
@@ -145,7 +145,7 @@ template Main() {
         n2bNewStateRoot[i] = Num2Bits(32);
         n2bNewStateRoot[i].in <== publics[18+i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[800 + 32*(i+1) - 1 -j] <== n2bNewStateRoot[i].out[j];
+            publicsHasher.in[800 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i].out[j];
         }
     }
 
@@ -154,7 +154,7 @@ template Main() {
         n2bNewAccInputHash[i] = Num2Bits(32);
         n2bNewAccInputHash[i].in <== publics[26+i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1056 + 32*(i+1) - 1 -j] <== n2bNewAccInputHash[i].out[j];
+            publicsHasher.in[1056 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i].out[j];
         }
     }
 
@@ -163,7 +163,7 @@ template Main() {
         n2bNewLocalExitRoot[i] = Num2Bits(32);
         n2bNewLocalExitRoot[i].in <== publics[34+i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1312 + 32*(i+1) - 1 -j] <== n2bNewLocalExitRoot[i].out[j];
+            publicsHasher.in[1312 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i].out[j];
         }
     }
 

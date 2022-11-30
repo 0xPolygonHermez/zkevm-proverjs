@@ -132,7 +132,7 @@ class FullTracer {
         const context = {};
         context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
-        context.to = (context.to === "0x0") ? "0x" : context.to;
+        context.to = (context.to === "0x0") ? "0x" : ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
         context.value = getVarFromCtx(ctx, false, "txValue").toString();
@@ -247,6 +247,9 @@ class FullTracer {
         //If processed opcodes
         if (this.info.length) {
             const lastOpcode = this.info[this.info.length - 1];
+            // set refunded gas
+            response.gas_refunded = lastOpcode.gas_refund;
+
             // Set counters of last opcode to zero
             Object.keys(lastOpcode.counters).forEach(key => {
                 lastOpcode.counters[key] = 0;
@@ -366,12 +369,12 @@ class FullTracer {
         const offsetCtx = Number(ctx.CTX) * 0x40000;
         let addrMem = 0;
         addrMem += offsetCtx;
-        addrMem += 0x30000;
+        addrMem += 0x20000;
 
         const finalMemory = [];
         const lengthMemOffset = findOffsetLabel(ctx.rom.program, "memLength");
         const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
-        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue))/32);
+        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
 
         for (let i = 0; i < lenMemValueFinal; i++) {
             const memValue = ctx.mem[addrMem + i];
@@ -388,7 +391,7 @@ class FullTracer {
         // store stack
         let addr = 0;
         addr += offsetCtx;
-        addr += 0x20000;
+        addr += 0x10000;
 
         const finalStack = [];
 

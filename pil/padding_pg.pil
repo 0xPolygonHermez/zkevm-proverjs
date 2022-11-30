@@ -60,7 +60,6 @@ namespace PaddingPG(%N);
     acc[7]' = acc7C*(1-lastBlock);
 
     lastBlock {
-        0, 0, 0, 1,
         acc0C,
         acc1C,
         acc2C,
@@ -77,8 +76,7 @@ namespace PaddingPG(%N);
         curHash1,
         curHash2,
         curHash3
-     } is PoseidonG.result4 {
-        PoseidonG.result1, PoseidonG.result2, PoseidonG.result3, PoseidonG.result4,
+     } in PoseidonG.LATCH {
         PoseidonG.in0,
         PoseidonG.in1,
         PoseidonG.in2,
