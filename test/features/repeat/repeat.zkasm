@@ -12,6 +12,86 @@ start:
         0 => A
         RCX   :ASSERT
 
+        0 => A
+        :JMP(label2)
+        1 => A  :JMP(endJmpTest)
+label1:
+        2 => A  :JMP(endJmpTest)
+label2:
+        3 => A  :JMP(endJmpTest)
+label3:
+        4 => A  :JMP(endJmpTest)
+
+endJmpTest:
+        3 :ASSERT
+        3 :ASSERT
+        3 :ASSERT
+
+
+        0 => A
+        A - 1 :JMPN(labelB1)
+        10 => A  :JMP(endJmpBTest)
+labelB1:
+        20 => A  :JMP(endJmpBTest)
+labelB2:
+        30 => A  :JMP(endJmpBTest)
+labelB3:
+        40 => A  :JMP(endJmpBTest)
+
+endJmpBTest:
+        20 :ASSERT
+        20 :ASSERT
+        20 :ASSERT
+
+        0 => A
+        A :JMPN(labelC1)
+        110 => A  :JMP(endJmpCTest)
+labelC1:
+        120 => A  :JMP(endJmpCTest)
+labelC2:
+        130 => A  :JMP(endJmpCTest)
+labelC3:
+        140 => A  :JMP(endJmpCTest)
+
+endJmpCTest:
+        110 :ASSERT
+        110 :ASSERT
+        110 :ASSERT
+
+
+        0 => A
+        0 => B
+        $ :EQ,JMPC(labelD2)
+        210 => A  :JMP(endJmpDTest)
+labelD1:
+        220 => A  :JMP(endJmpDTest)
+labelD2:
+        230 => A  :JMP(endJmpDTest)
+labelD3:
+        240 => A  :JMP(endJmpDTest)
+
+endJmpDTest:
+        230 :ASSERT
+        230 :ASSERT
+        230 :ASSERT
+
+
+        0 => A
+        1 => B
+        $ :EQ,JMPC(labelE1)
+        310 => A  :JMP(endJmpETest)
+labelE1:
+        320 => A  :JMP(endJmpETest)
+labelE2:
+        330 => A  :JMP(endJmpETest)
+labelE3:
+        340 => A  :JMP(endJmpETest)
+
+endJmpETest:
+        310 :ASSERT
+        310 :ASSERT
+        310 :ASSERT
+
 end:
        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
 
