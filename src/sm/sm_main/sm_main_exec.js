@@ -1092,7 +1092,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 ctx.hashP[addr] = {
                     data: data,
                     digest: dg,
-                    lenCalled: false
+                    lenCalled: false,
                     sourceRef
                 }
             }
