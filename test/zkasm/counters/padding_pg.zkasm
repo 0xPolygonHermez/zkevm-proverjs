@@ -147,9 +147,10 @@ start:
         0x5E1268E5B2A8DC1D0BB047386FC227FA4C85n :HASHP(E)
 
         114            :HASHPLEN(E)
-        $ => A         :HASHPDIGEST(E)
+        ; $ => A         :HASHPDIGEST(E)
 
-        16 => A
+        ; 16 => A
+        13 => A
         CNT_POSEIDON_G   :ASSERT
         CNT_PADDING_PG   :ASSERT
 
@@ -157,9 +158,12 @@ start:
 
         0 => A
         CNT_ARITH :ASSERT
-        CNT_BINARY :ASSERT
         CNT_MEM_ALIGN :ASSERT
         CNT_KECCAK_F :ASSERT
+
+        ; 7 => A
+        6 => A
+        CNT_BINARY :ASSERT
 
 end:
        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS
