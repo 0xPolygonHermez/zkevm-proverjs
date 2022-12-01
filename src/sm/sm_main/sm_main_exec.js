@@ -101,7 +101,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
     let pendingCmds = false;
     let previousRCX = 0n;
-    let previousRCVInv = 0n;
+    let previousRCXInv = 0n;
 
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
@@ -1653,11 +1653,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         if (Fr.isZero(pols.RCX[nexti])) {
             pols.RCXInv[nexti] = 0n;
         } else {
-            if (!Fr.eq(previousRCX,pols.RCXInv[nexti])) {
+            if (!Fr.eq(previousRCX,pols.RCX[nexti])) {
                 previousRCX = pols.RCX[nexti];
-                previousRCVInv = Fr.inv(previousRCX);
+                previousRCXInv = Fr.inv(previousRCX);
             }
-            pols.RCXInv[nexti] = previousRCVInv;
+            pols.RCXInv[nexti] = previousRCXInv;
         }
 
         if (l.JMPN) {
@@ -2219,6 +2219,8 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.step);
     } else if (tag.regName == "HASHPOS") {
         return Scalar.e(ctx.HASHPOS);
+    } else if (tag.regName == "RCX") {
+        return Scalar.e(ctx.RCX);
     } else {
         throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }

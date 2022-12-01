@@ -40,6 +40,7 @@ const argv = require("yargs")
     .alias("v", "verbose")
     .alias("T", "tracer")
     .alias("c", "counters")
+    .alias("N", "stepsN")
     .argv;
 
 async function run() {
@@ -107,7 +108,8 @@ async function run() {
         unsigned: (argv.unsigned === true),
         execute: (argv.execute === true),
         tracer: (argv.tracer === true),
-        counters: (argv.counters === true)
+        counters: (argv.counters === true),
+        stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN)
     }
 
     const N = cmPols.Main.PC.length;
