@@ -123,7 +123,7 @@
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "pil-stark": "0.0.36",
-    "pilcom": "0.0.18",
+    "pilcom": "0.0.19",
     "snarkjs": "0.4.27",
     "yargs": "^17.4.0"
   },
