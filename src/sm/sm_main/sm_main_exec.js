@@ -1647,7 +1647,11 @@ module.exports = async function execute(pols, input, rom, config = {}) {
             pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setRCX[i] = 0n;
-            pols.RCX[nexti] = Fr.add(pols.RCX[i], ((!Fr.isZero(pols.RCX[i]) && l.repeat == 1) ? Fr.negone:Fr.zero));
+            if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
+                pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
+            } else {
+                pols.RCX[nexti] = pols.RCX[i];
+            }
         }
 
         if (Fr.isZero(pols.RCX[nexti])) {
@@ -1704,8 +1708,12 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
             } else {
+                if (l.repeat && !Fr.isZero(ctx.RCX)) {
+                    pols.zkPC[nexti] = pols.zkPC[i];
+                } else {
+                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                }
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
                 pols.JMP[i] = 0n;
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
