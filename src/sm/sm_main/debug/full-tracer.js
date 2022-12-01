@@ -8,8 +8,8 @@ const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO'
 const { Scalar } = require("ffjavascript");
 const generate_call_trace = true;
 const generate_execute_trace = false;
-const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
-
+const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx } = require("./full-tracer-utils");
+const printTx = false;
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
  * for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
@@ -298,8 +298,9 @@ class FullTracer {
         for (const l of this.logs) {
             this.finalTrace.responses[this.txCount].logs = this.finalTrace.responses[this.txCount].logs.concat(Object.values(l));
         }
-
-        fs.writeFileSync(`${this.pathLogFile}_${this.txCount}.json`, JSON.stringify(this.finalTrace.responses[this.txCount], null, 2));
+        if (printTx) {
+            fs.writeFileSync(`${this.pathLogFile}_${this.txCount}.json`, JSON.stringify(this.finalTrace.responses[this.txCount], null, 2));
+        }
         // Increase transaction count
         this.txCount++;
     }
@@ -338,6 +339,27 @@ class FullTracer {
             cnt_padding_pg: Number(ctx.cntPaddingPG),
             cnt_poseidon_g: Number(ctx.cntPoseidonG),
             cont_steps: Number(ctx.step),
+        }
+        if(Number(ctx.cntArith) > getConstantFromCtx(ctx, "MAX_CNT_ARITH")) {
+            console.log("WARNING: max arith counters exceed")
+        }
+        if(Number(ctx.cntBinary) > getConstantFromCtx(ctx, "MAX_CNT_BINARY")) {
+            console.log("WARNING: max binary counters exceed")
+        }
+        if(Number(ctx.cntMemAlign) > getConstantFromCtx(ctx, "MAX_CNT_MEM_ALIGN")) {
+            console.log("WARNING: max mem align counters exceed")
+        }
+        if(Number(ctx.cntKeccakF) > getConstantFromCtx(ctx, "MAX_CNT_KECCAK_F")) {
+            console.log("WARNING: max keccack counters exceed")
+        }
+        if(Number(ctx.cntPaddingPG) > getConstantFromCtx(ctx, "MAX_CNT_PADDING_PG")) {
+            console.log("WARNING: max padding counters exceed")
+        }
+        if(Number(ctx.cntPoseidonG) > getConstantFromCtx(ctx, "MAX_CNT_POSEIDON_G")) {
+            console.log("WARNING: max poseidon counters exceed")
+        }
+        if(Number(ctx.step) > getConstantFromCtx(ctx, "MAX_CNT_STEPS")) {
+            console.log("WARNING: max steps counters exceed")
         }
         //If some counter exceed, notify
         //if(this.finalTrace.counters.cnt_arith > )

@@ -158,6 +158,15 @@ function getFromMemory(offset, length, ctx) {
     }
     return finalMemory
 }
+/**
+ * Get range from memory
+ * @param {Object} ctx current context object
+ * @param {String} constantName constant name identifier
+ * @returns {Number} constant value
+ */
+function getConstantFromCtx(ctx, constantName) {
+    return Number(ctx.rom.constants[constantName].value)
+}
 
 module.exports = {
     getTransactionHash,
@@ -165,6 +174,7 @@ module.exports = {
     getVarFromCtx,
     getCalldataFromStack,
     getRegFromCtx,
-    getFromMemory
+    getFromMemory,
+    getConstantFromCtx
 }
 
