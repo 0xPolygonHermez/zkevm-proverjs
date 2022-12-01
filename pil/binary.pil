@@ -59,12 +59,12 @@ namespace Binary(%N);
     // ============================================================
     // cIn -> Carry In ; cOut -> Carry Out ; lCIn -> Latch Carry in
     // ============================================================
-    pol commit freeInA, freeInB, freeInC;
+    pol commit freeInA[2], freeInB[2], freeInC[2];
     pol commit a0, a1, a2, a3, a4, a5, a6, a7;
     pol commit b0, b1, b2, b3, b4, b5, b6, b7;
     pol commit c0, c1, c2, c3, c4, c5, c6, c7;
     pol commit opcode;
-    pol commit cIn, cOut;
+    pol commit cIn, cMiddle, cOut;
     pol commit lCout,lOpcode;
 
     pol commit useCarry;
@@ -83,35 +83,36 @@ namespace Binary(%N);
     lCout' = cOut;
     lOpcode' = opcode;
 
-    {resultValidRange' + resultBinOp', opcode, freeInA, freeInB , cIn, useCarry ,freeInC, cOut} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    {resultValidRange' + resultBinOp', opcode, freeInA[0], freeInB[0], cIn, useCarry ,freeInC[0], cMiddle} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
 
-    a0' = a0 * (1 - RESET) + freeInA * FACTOR[0];
-    a1' = a1 * (1 - RESET) + freeInA * FACTOR[1];
-    a2' = a2 * (1 - RESET) + freeInA * FACTOR[2];
-    a3' = a3 * (1 - RESET) + freeInA * FACTOR[3];
-    a4' = a4 * (1 - RESET) + freeInA * FACTOR[4];
-    a5' = a5 * (1 - RESET) + freeInA * FACTOR[5];
-    a6' = a6 * (1 - RESET) + freeInA * FACTOR[6];
-    a7' = a7 * (1 - RESET) + freeInA * FACTOR[7];
+    a0' = a0 * (1 - RESET) + freeInA[0] * FACTOR[0] + 256 * freeInA[1] * FACTOR[0];
+    a1' = a1 * (1 - RESET) + freeInA[0] * FACTOR[1] + 256 * freeInA[1] * FACTOR[1];
+    a2' = a2 * (1 - RESET) + freeInA[0] * FACTOR[2] + 256 * freeInA[1] * FACTOR[2];
+    a3' = a3 * (1 - RESET) + freeInA[0] * FACTOR[3] + 256 * freeInA[1] * FACTOR[3];
+    a4' = a4 * (1 - RESET) + freeInA[0] * FACTOR[4] + 256 * freeInA[1] * FACTOR[4];
+    a5' = a5 * (1 - RESET) + freeInA[0] * FACTOR[5] + 256 * freeInA[1] * FACTOR[5];
+    a6' = a6 * (1 - RESET) + freeInA[0] * FACTOR[6] + 256 * freeInA[1] * FACTOR[6];
+    a7' = a7 * (1 - RESET) + freeInA[0] * FACTOR[7] + 256 * freeInA[1] * FACTOR[7];
 
-    b0' = b0 * (1 - RESET) + freeInB * FACTOR[0];
-    b1' = b1 * (1 - RESET) + freeInB * FACTOR[1];
-    b2' = b2 * (1 - RESET) + freeInB * FACTOR[2];
-    b3' = b3 * (1 - RESET) + freeInB * FACTOR[3];
-    b4' = b4 * (1 - RESET) + freeInB * FACTOR[4];
-    b5' = b5 * (1 - RESET) + freeInB * FACTOR[5];
-    b6' = b6 * (1 - RESET) + freeInB * FACTOR[6];
-    b7' = b7 * (1 - RESET) + freeInB * FACTOR[7];
+    b0' = b0 * (1 - RESET) + freeInB[0] * FACTOR[0] + 256 * freeInB[1] * FACTOR[0];
+    b1' = b1 * (1 - RESET) + freeInB[0] * FACTOR[1] + 256 * freeInB[1] * FACTOR[1];
+    b2' = b2 * (1 - RESET) + freeInB[0] * FACTOR[2] + 256 * freeInB[1] * FACTOR[2];
+    b3' = b3 * (1 - RESET) + freeInB[0] * FACTOR[3] + 256 * freeInB[1] * FACTOR[3];
+    b4' = b4 * (1 - RESET) + freeInB[0] * FACTOR[4] + 256 * freeInB[1] * FACTOR[4];
+    b5' = b5 * (1 - RESET) + freeInB[0] * FACTOR[5] + 256 * freeInB[1] * FACTOR[5];
+    b6' = b6 * (1 - RESET) + freeInB[0] * FACTOR[6] + 256 * freeInB[1] * FACTOR[6];
+    b7' = b7 * (1 - RESET) + freeInB[0] * FACTOR[7] + 256 * freeInB[1] * FACTOR[7];
 
-    pol c0Temp = c0 * (1 - RESET) + freeInC * FACTOR[0];
+    pol c0Temp = c0 * (1 - RESET) + freeInC[0] * FACTOR[0] + 256 * freeIn[1] * FACTOR[0];
     c0' = useCarry * (cOut - c0Temp ) + c0Temp;
 
-    c1' = c1 * (1 - RESET) + freeInC * FACTOR[1];
-    c2' = c2 * (1 - RESET) + freeInC * FACTOR[2];
-    c3' = c3 * (1 - RESET) + freeInC * FACTOR[3];
-    c4' = c4 * (1 - RESET) + freeInC * FACTOR[4];
-    c5' = c5 * (1 - RESET) + freeInC * FACTOR[5];
-    c6' = c6 * (1 - RESET) + freeInC * FACTOR[6];
+    c1' = c1 * (1 - RESET) + freeInC[0] * FACTOR[1] + 256 * freeInC[1] * FACTOR[1];
+    c2' = c2 * (1 - RESET) + freeInC[0] * FACTOR[2] + 256 * freeInC[1] * FACTOR[2];
+    c3' = c3 * (1 - RESET) + freeInC[0] * FACTOR[3] + 256 * freeInC[1] * FACTOR[3];
+    c4' = c4 * (1 - RESET) + freeInC[0] * FACTOR[4] + 256 * freeInC[1] * FACTOR[4];
+    c5' = c5 * (1 - RESET) + freeInC[0] * FACTOR[5] + 256 * freeInC[1] * FACTOR[5];
+    c6' = c6 * (1 - RESET) + freeInC[0] * FACTOR[6] + 256 * freeInC[1] * FACTOR[6];
 
-    pol c7Temp = c7 * (1 - RESET) + freeInC * FACTOR[7];
+    pol c7Temp = c7 * (1 - RESET) + freeInC[0] * FACTOR[7] + 256 * freeInC[1] * FACTOR[7];
     c7' = (1 - useCarry) * c7Temp;
