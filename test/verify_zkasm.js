@@ -108,6 +108,15 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.buildConstants(constPols.Binary);
     }
 
+    for (let i=0; i<constPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof constPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+            }
+        }
+    }
+
+    console.log("Exec Main...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
@@ -169,6 +178,14 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.execute(cmPols.Binary, requiredMain.Binary || []);
     } else if (verifyPilFlag && requiredMain.Binary && requiredMain.Binary.length) {
         console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
+    }
+
+    for (let i=0; i<cmPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof cmPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+            }
+        }
     }
 
     if (mainConfig && mainConfig.constFilename) {

@@ -25,7 +25,7 @@ const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8
 
 let fullTracer;
 
-module.exports = async function execute(pols, input, rom, config = {}) {
+module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
 
     const required = {
         Arith: [],
@@ -90,6 +90,13 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         stepsN
     }
 
+    if (config.stats) {
+        metadata.stats = {
+            trace:[],
+            line:[]
+        };
+    }
+
     initState(Fr, pols, ctx);
 
     if (debug && flagTracer) {
@@ -136,6 +143,10 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         }
 
         const l = rom.program[ ctx.zkPC ];
+        if (config.stats) {
+            metadata.stats.trace.push(ctx.zkPC);
+            metadata.stats.lineTimes[ctx.zkPC] = (metadata.stats.line[ctx.zkPC] || 0) + 1;
+        }
 
         ctx.fileName = l.fileName;
         ctx.line = l.line;
