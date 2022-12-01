@@ -79,7 +79,11 @@ class FullTracer {
         const errorName = tag.params[1].varName
         //Intrinsic error should be set at tx level (not opcode)
         if (responseErrors.includes(errorName)) {
-            this.finalTrace.responses[this.txCount].error = errorName;
+            if (this.finalTrace.responses[this.txCount]) {
+                this.finalTrace.responses[this.txCount].error = errorName;
+            } else {
+                this.finalTrace.responses[this.txCount] = {error: errorName};
+            }
             return;
         }
         this.info[this.info.length - 1].error = errorName;
@@ -219,7 +223,7 @@ class FullTracer {
         };
 
         //Set consumed tx gas
-        if(Number(ctx.GAS) > Number(response.gas_left)) {
+        if (Number(ctx.GAS) > Number(response.gas_left)) {
             response.gas_used = String(Number(response.gas_left));
         } else {
             response.gas_used = String(Number(response.gas_left) - Number(ctx.GAS));
