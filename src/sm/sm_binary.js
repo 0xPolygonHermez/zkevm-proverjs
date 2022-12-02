@@ -265,13 +265,14 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
                 break;
             // EQ    (OPCODE = 4)
             case 4n:
-                if (pol_a[i] == pol_b[i] && pol_cin[i] == 1n) {
-                    pol_cout[i] = 1n;
+                if (pol_a[i] == pol_b[i] && pol_cin[i] == 0n) {
+                    pol_cout[i] = 0n;
                     pol_c[i] = pol_last[i] ? 1n : 0n;
                 } else {
-                    pol_cout[i] = 0n;
+                    pol_cout[i] = 1n;
                     pol_c[i] = 0n
                 }
+                if (pol_last[i]) pol_cout[i] = (1n - pol_cout[i]);
                 pol_use_carry[i] = pol_last[i] ? 1n : 0n;
 
                 break;
@@ -440,19 +441,20 @@ module.exports.execute = async function (pols, input) {
                     // EQ    (OPCODE = 4)
                     case 4n:
                         if (resetByte) {
-                            cIn = 1n
-                            pols.cIn[index] = 1n;
+                            // cIn = 1n
+                            // pols.cIn[index] = 1n;
                             pols.freeInC[k][index] = BigInt(input[i]["c_bytes"][STEPS-1]);
                         }
 
-                        if (byteA == byteB && cIn == 1) {
-                            cOut = 1n;
-                        } else {
+                        if (byteA == byteB && cIn == 0) {
                             cOut = 0n;
+                        } else {
+                            cOut = 1n;
                         }
 
                         if (lastByte) {
                             useCarry = 1n;
+                            cOut = cOut ? 0n:1n;
                             pols.freeInC[k][index] = BigInt(input[i]["c_bytes"][0]); // Only change the freeInC when reset or Last
                         }
                         break;

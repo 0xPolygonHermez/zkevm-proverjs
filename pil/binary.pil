@@ -78,8 +78,7 @@ namespace Binary(%N);
 
     (opcode' - opcode) * ( 1 - RESET' ) = 0;
     (cOut - cIn') * (1 - RESET') = 0;
-    // change
-    // cIn * RESET = 0;
+    cIn * RESET = 0;
 
     lCout' = cOut;
     lOpcode' = opcode;
