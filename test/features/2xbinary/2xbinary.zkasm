@@ -1,0 +1,44 @@
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        ; to verify that there are no correlations between counters
+        0 => A
+        CNT_ARITH :ASSERT
+        CNT_BINARY :ASSERT
+        CNT_MEM_ALIGN :ASSERT
+        CNT_KECCAK_F :ASSERT
+        CNT_POSEIDON_G :ASSERT
+        CNT_PADDING_PG :ASSERT
+
+
+
+        0x1000000000000000000000000000000000000000000000000000000000000000n => A,B
+        $ => A:AND,JMPC(test1_ok)
+        0x1000000000000000000000000000000000000000000000000000000000000000n :ASSERT
+        2 => A :JMP(test1_end)
+
+test1_ok:
+        1 => A
+test1_end:
+        1 :ASSERT
+        CNT_BINARY :ASSERT
+
+        ; to verify that there are no correlations between counters
+        0 => A
+        CNT_ARITH :ASSERT
+        CNT_KECCAK_F :ASSERT
+        CNT_MEM_ALIGN :ASSERT
+        CNT_POSEIDON_G :ASSERT
+        CNT_PADDING_PG :ASSERT
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
+

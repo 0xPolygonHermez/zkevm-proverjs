@@ -279,7 +279,11 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
             // AND   (OPCODE = 5)
             case 5n:
                 pol_c[i] = pol_a[i] & pol_b[i];
-                pol_cout[i] = 0n;
+                if (pol_cin[i] == 0n && pol_c[i] == 0n) {
+                    pol_cout[i] = 0n;
+                } else {
+                    pol_cout[i] = 1n;
+                }
                 pol_use_carry[i] = 0n;
                 break;
             // OR    (OPCODE = 6)
@@ -446,7 +450,7 @@ module.exports.execute = async function (pols, input) {
                             pols.freeInC[k][index] = BigInt(input[i]["c_bytes"][STEPS-1]);
                         }
 
-                        if (byteA == byteB && cIn == 0) {
+                        if (byteA == byteB && cIn == 0n) {
                             cOut = 0n;
                         } else {
                             cOut = 1n;
@@ -457,6 +461,16 @@ module.exports.execute = async function (pols, input) {
                             cOut = cOut ? 0n:1n;
                             pols.freeInC[k][index] = BigInt(input[i]["c_bytes"][0]); // Only change the freeInC when reset or Last
                         }
+                        break;
+                    // AND    (OPCODE = 5)
+                    case 5n:
+                        // setting carry if result of AND was non zero
+                        if (byteC == 0n && cIn == 0n) {
+                            cOut = 0n;
+                        } else {
+                            cOut = 1n;
+                        }
+
                         break;
                     default:
                         cIn = 0n;
