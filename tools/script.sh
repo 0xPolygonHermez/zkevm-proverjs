@@ -1,18 +1,19 @@
 #!/bin/sh
 
-BDIR=/mnt/data/zkronos73/build/v0.5.0.0-rc.3
+BDIR=build/v0.5.1.0-rc.1-stark
 BASEDIR=.
-DST=/mnt/ofs/zkproverc/v0.5.0.0-rc.3
+DST=/mnt/ofs/zkproverc/v0.5.1.0-rc.1-evals2
 # DST=build/postmerge.config2
 # CPFLAGS=-lv
 CPFLAGS=-v
-FOLDERS="c12a final recursive1 recursive2 recursivef scripts zkevm"
+FOLDERS="c12a final recursive1 recursive2 recursivef scripts zkevm c_files"
 
 for FOLDER in $FOLDERS; do [ ! -d $DST/config/$FOLDER ] && mkdir -p  $DST/config/$FOLDER; done
 
 cp $CPFLAGS $BDIR/rom.json $DST/config/scripts/rom.json
 cp $CPFLAGS $BASEDIR/testvectors/storage_sm_rom.json $DST/config/scripts/storage_sm_rom.json
 cp $CPFLAGS $BASEDIR/src/sm/sm_keccakf/keccak_script.json $DST/config/scripts/keccak_script.json
+cp $CPFLAGS $BASEDIR/src/sm/sm_keccakf/keccak_connections.json $DST/config/scripts/keccak_connections.json
 
 #zkevm
 cp $CPFLAGS $BDIR/zkevm.const $DST/config/zkevm/zkevm.const
@@ -58,3 +59,7 @@ cp $CPFLAGS $BDIR/final.g16.0001.zkey $DST/config/final/final.g16.0001.zkey
 cp $CPFLAGS $BDIR/final_cpp/final.dat $DST/config/final/final.verifier.dat
 cp $CPFLAGS $BDIR/final.g16.verkey.json $DST/config/final/final.g16.verkey.json
 
+# sources
+
+SOURCE_FOLDERS="pols_generated zkevm.verifier_cpp zkevm.chelpers c12a.chelpers recursive1_cpp recursive1.chelpers recursive2_cpp recursive2.chelpers recursivef_cpp recursivef.chelpers final_cpp
+for SOURCE_FOLDER in $SOURCE_FOLDERS; do cp -r $CPFLAGS $BDIR/$SOURCE_FOLDER $DST/c_files; done
