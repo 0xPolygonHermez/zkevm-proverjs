@@ -108,7 +108,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     let pendingCmds = false;
     let previousRCX = 0n;
-    let previousRCVInv = 0n;
+    let previousRCXInv = 0n;
 
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
@@ -317,7 +317,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 op0 = Fr.zero;
                 pols.inSTEP[i] = Fr.e(l.inSTEP);
             } else {
-                op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(i)));
+                op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSTEP), Fr.e(step)));
                 pols.inSTEP[i] = Fr.e(l.inSTEP);
             }
         } else {
@@ -1658,17 +1658,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setRCX[i] = 0n;
-            pols.RCX[nexti] = Fr.add(pols.RCX[i], ((!Fr.isZero(pols.RCX[i]) && l.repeat == 1) ? Fr.negone:Fr.zero));
+            if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
+                pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
+            } else {
+                pols.RCX[nexti] = pols.RCX[i];
+            }
         }
 
         if (Fr.isZero(pols.RCX[nexti])) {
             pols.RCXInv[nexti] = 0n;
         } else {
-            if (!Fr.eq(previousRCX,pols.RCXInv[nexti])) {
+            if (!Fr.eq(previousRCX,pols.RCX[nexti])) {
                 previousRCX = pols.RCX[nexti];
-                previousRCVInv = Fr.inv(previousRCX);
+                previousRCXInv = Fr.inv(previousRCX);
             }
-            pols.RCXInv[nexti] = previousRCVInv;
+            pols.RCXInv[nexti] = previousRCXInv;
         }
 
         if (l.JMPN) {
@@ -1715,8 +1719,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
             } else {
+                if (l.repeat && !Fr.isZero(ctx.RCX)) {
+                    pols.zkPC[nexti] = pols.zkPC[i];
+                } else {
+                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                }
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
                 pols.JMP[i] = 0n;
                 pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 0n;
@@ -2230,6 +2238,8 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.step);
     } else if (tag.regName == "HASHPOS") {
         return Scalar.e(ctx.HASHPOS);
+    } else if (tag.regName == "RCX") {
+        return Scalar.e(ctx.RCX);
     } else {
         throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }
