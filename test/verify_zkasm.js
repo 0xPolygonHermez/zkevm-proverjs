@@ -118,6 +118,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             }
         }
     }
+
     console.log("Exec Main...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
 
@@ -182,7 +183,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     } else if (verifyPilFlag && requiredMain.Binary && requiredMain.Binary.length) {
         console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
     }
-
 
     for (let i=0; i<cmPols.$$array.length; i++) {
         for (let j=0; j<N; j++) {
