@@ -446,7 +446,7 @@ namespace Main(%N);
         op0, op1, op2, op3, op4, op5, op6, op7
     } is
     Binary.resultValidRange {
-        Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
+        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7]
     };
 
 /////////
@@ -659,9 +659,9 @@ namespace Main(%N);
     } is
     Binary.resultBinOp {
         Binary.lOpcode,
-        Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
-        Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
-        Binary.c0, Binary.c1, Binary.c2, Binary.c3, Binary.c4, Binary.c5, Binary.c6, Binary.c7,
+        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7],
+        Binary.b[0], Binary.b[1], Binary.b[2], Binary.b[3], Binary.b[4], Binary.b[5], Binary.b[6], Binary.b[7],
+        Binary.c[0], Binary.c[1], Binary.c[2], Binary.c[3], Binary.c[4], Binary.c[5], Binary.c[6], Binary.c[7],
         Binary.lCout
     };
 

@@ -1295,7 +1295,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`AND does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 5n;
-                pols.carry[i] = 0n;
+                pols.carry[i] = Scalar.eq(c, Fr.zero) ? 0n:1n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 5, type: 1});
             } else if (l.binOpcode == 6) { // OR
                 const a = fea2scalar(Fr, ctx.A);
