@@ -442,7 +442,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
 
         let addrRel = 0;
         let addr = 0;
-        if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPNC || l.JMPZ || l.JMPNZ ||
+        if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ ||
             l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
@@ -630,8 +630,7 @@ module.exports = async function execute(pols, input, rom, config = {}) {
                 }
                 if (l.hashP || l.hashP1) {
                     if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx); 
-                    console.log([l, size]);
+                    const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
@@ -1837,8 +1836,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         checkFinalState(Fr, pols, ctx);
     }
 
-    console.log('**hashK**');
-    console.log(ctx.hashK);
     for (let i=0; i<ctx.hashK.length; i++) {
         if (typeof ctx.hashK[i] === 'undefined') {
             const nextAddr = Object.keys(ctx.hashK)[i];
@@ -1866,8 +1863,6 @@ module.exports = async function execute(pols, input, rom, config = {}) {
         required.PaddingKK.push(h);
     }
 
-    console.log('**hashP**');
-    console.log(ctx.hashP);
     for (let i=0; i<ctx.hashP.length; i++) {
         if (typeof ctx.hashP[i] === 'undefined') {
             const nextAddr = Object.keys(ctx.hashP)[i];
