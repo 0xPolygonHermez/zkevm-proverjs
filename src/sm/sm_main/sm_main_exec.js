@@ -15,7 +15,7 @@ const testTools = require("./test_tools");
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const { polMulAxi } = require("pil-stark/src/polutils");
-const { ftruncate } = require("fs");
+const { ftruncate, lchown } = require("fs");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -453,7 +453,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         let addrRel = 0;
         let addr = 0;
-        if (l.mOp || l.JMP || l.JMPN || l.JMPC ||  l.hashP || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashKLen || l.hashKDigest || l.JMP || l.JMPC) {
+        if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ ||
+            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -614,9 +615,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
 
-                if (l.hashK == 1) {
-                    if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-                    const size = fe2n(Fr, ctx.D[0], ctx);
+                if (l.hashK || l.hashK1) {
+                    if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
+                    const size = hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK(${addr}) out of bounds (${pos+size} > ${ctx.hashK[addr].data.length}) ${sourceRef}`);
@@ -638,9 +639,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
                     nHits++;
                 }
-                if (l.hashP == 1) {
-                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = fe2n(Fr, ctx.D[0], ctx);
+                if (l.hashP || l.hashP1) {
+                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
+                    const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
@@ -760,6 +761,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
             pols.inFREE[i] = Fr.zero;
+        }
+
+        if (Fr.isZero(op0)) {
+            pols.op0Inv[i] = 0n;
+        } else {
+            pols.op0Inv[i] = Fr.inv(op0);
         }
 
 //////////
@@ -978,10 +985,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
 
-        if (l.hashK) {
+        if (l.hashK || l.hashK1) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-            pols.hashK[i] = 1n;
-            const size = fe2n(Fr, ctx.D[0], ctx);
+            pols.hashK[i] = l.hashK ? 1n : 0n;
+            pols.hashK1[i] = l.hashK1 ? 1n : 0n;
+            const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK ${sourceRef}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1010,6 +1018,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashK[i] = 0n;
+            pols.hashK1[i] = 0n;
         }
 
         if (l.hashKLen) {
@@ -1053,10 +1062,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashKDigest[i] = 0n;
         }
 
-        if (l.hashP) {
+        if (l.hashP || l.hashP1) {
             if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-            pols.hashP[i] = 1n;
-            const size = fe2n(Fr, ctx.D[0], ctx);
+            pols.hashP[i] = l.hashP ? 1n : 0n;
+            pols.hashP1[i] = l.hashP1 ? 1n : 0n;
+            const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`HashP(${addr}) invalid size ${size} ${sourceRef}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1084,6 +1094,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashP[i] = 0n;
+            pols.hashP1[i] = 0n;
         }
 
         if (l.hashPLen) {
@@ -1632,7 +1643,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setRR[i]=0n;
-            pols.RR[nexti] = pols.RR[i];
+            pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
         }
 
         if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2)) {
@@ -1675,16 +1686,33 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RCXInv[nexti] = previousRCXInv;
         }
 
+        pols.JMP[i] = 0n;
+        pols.JMPN[i] = 0n;
+        pols.JMPC[i] = 0n;
+        pols.JMPZ[i] = 0n;
+        pols.return[i] = 0n;
+        pols.call[i] = 0n;
+
+        pols.jmpAddr[i] = l.jmpAddr ? BigInt(l.jmpAddr) : 0n;
+        pols.useJmpAddr[i] = l.useJmpAddr ? 1n: 0n;
+
+
+        const elseAddr = l.elseAddr ? BigInt(l.elseAddr) : 0n;
+        pols.elseAddr[i] = elseAddr;
+
+        const finalJmpAddr = l.useJmpAddr ? l.jmpAddr : addr;
+        const nextNoJmpZkPC = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
+
         if (l.JMPN) {
             const o = Fr.toObject(op0);
             let jmpnCondValue = o;
             if (o > 0 && o >= FrFirst32Negative) {
                 pols.isNeg[i]=1n;
                 jmpnCondValue = Fr.toObject(Fr.e(jmpnCondValue + 2n**32n));
-                pols.zkPC[nexti] = BigInt(addr);
+                pols.zkPC[nexti] = BigInt(finalJmpAddr);
             } else if (o >= 0 && o <= FrLast32Positive) {
                 pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                pols.zkPC[nexti] = elseAddr;
             } else {
                 throw new Error(`On JMPN value ${o} not a valid 32bit value ${sourceRef}`);
             }
@@ -1694,40 +1722,38 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.hJmpnCondValueBit[index][i] = jmpnCondValue & 0x01n;
                 jmpnCondValue = jmpnCondValue >> 1n;
             }
-            pols.JMP[i] = 0n;
             pols.JMPN[i] = 1n;
-            pols.JMPC[i] = 0n;
         } else {
+            pols.isNeg[i] = 0n;
             pols.lJmpnCondValue[i] = 0n;
             for (let index = 0; index < 9; ++index) {
                 pols.hJmpnCondValueBit[index][i] = 0n;
             }
             if (l.JMPC) {
                 if (pols.carry[i]) {
-                    pols.zkPC[nexti] = BigInt(addr);
+                    pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 } else {
-                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                    pols.zkPC[nexti] = elseAddr;
                 }
-                pols.isNeg[i]=0n;
-                pols.JMP[i] = 0n;
-                pols.JMPN[i] = 0n;
                 pols.JMPC[i] = 1n;
-            } else if (l.JMP) {
-                pols.isNeg[i]=0n;
-                pols.zkPC[nexti] = BigInt(addr);
-                pols.JMP[i] = 1n;
-                pols.JMPN[i] = 0n;
-                pols.JMPC[i] = 0n;
-            } else {
-                if (l.repeat && !Fr.isZero(ctx.RCX)) {
-                    pols.zkPC[nexti] = pols.zkPC[i];
+            } else if (l.JMPZ) {
+                if (Fr.isZero(op0)) {
+                    pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 } else {
-                    pols.zkPC[nexti] = pols.zkPC[i] + 1n;
+                    pols.zkPC[nexti] = elseAddr;
                 }
-                pols.isNeg[i]=0n;
-                pols.JMP[i] = 0n;
-                pols.JMPN[i] = 0n;
-                pols.JMPC[i] = 0n;
+                pols.JMPZ[i] = 1n;
+            } else if (l.JMP) {
+                pols.zkPC[nexti] = BigInt(finalJmpAddr);
+                pols.JMP[i] = 1n;
+            } else if (l.call) {
+                pols.zkPC[nexti] = BigInt(finalJmpAddr);
+                pols.call[i] = 1n;
+            } else if (l.return) {
+                pols.zkPC[nexti] = ctx.RR;
+                pols.return[i] = 1n;
+            } else {
+                pols.zkPC[nexti] = nextNoJmpZkPC;
             }
         }
 
@@ -1924,7 +1950,9 @@ function checkFinalState(Fr, pols, ctx) {
         (pols.CTX[0]) ||
         (pols.PC[0]) ||
         (pols.MAXMEM[0]) ||
-        (pols.zkPC[0])
+        (pols.HASHPOS[0]) ||
+        (pols.RR[0]) ||
+        (pols.RCX[0])
     ) {
         throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
     }
@@ -2107,6 +2135,7 @@ function initState(Fr, pols, ctx) {
     pols.cntPoseidonG[0] = 0n;
     pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
+    pols.op0Inv[0] = 0n;
 }
 
 function evalCommands(ctx, cmds) {

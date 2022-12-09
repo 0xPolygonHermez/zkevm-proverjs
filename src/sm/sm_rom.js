@@ -80,7 +80,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX"  -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
@@ -124,11 +124,19 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         + (rom.program[pIndex].setSR ? (2n**37n * BigInt(rom.program[pIndex].setSR)) : 0n)
         + (rom.program[pIndex].sRD ? (2n**38n * BigInt(rom.program[pIndex].sRD)) : 0n)
         + (rom.program[pIndex].sWR ? (2n**39n * BigInt(rom.program[pIndex].sWR)) : 0n)
-        + (rom.program[pIndex].useCTX ? (2n**40n * BigInt(rom.program[pIndex].useCTX)) : 0n);
+        + (rom.program[pIndex].useCTX ? (2n**40n * BigInt(rom.program[pIndex].useCTX)) : 0n)
+        + (rom.program[pIndex].useJmpAddr ? (2n**41n * BigInt(rom.program[pIndex].useJmpAddr)) : 0n)
+        + (rom.program[pIndex].JMPZ ? (2n**42n * BigInt(rom.program[pIndex].JMPZ)) : 0n)
+        + (rom.program[pIndex].call ? (2n**43n * BigInt(rom.program[pIndex].call)) : 0n)
+        + (rom.program[pIndex].return ? (2n**44n * BigInt(rom.program[pIndex].return)) : 0n)
+        + (rom.program[pIndex].hashK1 ? (2n**45n * BigInt(rom.program[pIndex].hashK1)) : 0n)
+        + (rom.program[pIndex].hashP1 ? (2n**46n * BigInt(rom.program[pIndex].hashP1)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;
 
         pols.binOpcode[i] = rom.program[pIndex].binOpcode ? BigInt(rom.program[pIndex].binOpcode) : 0n;
+        pols.jmpAddr[i] = rom.program[pIndex].jmpAddr ? BigInt(rom.program[pIndex].jmpAddr) : 0n;
+        pols.elseAddr[i] = rom.program[pIndex].elseAddr ? BigInt(rom.program[pIndex].elseAddr) : 0n;
         pols.line[i] = BigInt(pIndex);
     }
 }
