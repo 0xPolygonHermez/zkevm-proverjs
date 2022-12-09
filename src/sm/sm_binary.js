@@ -357,7 +357,6 @@ module.exports.execute = async function (pols, input) {
             let useCarry = 0n;
             for (let k = 0; k < 2; ++k) {
                 cIn = (k == 0) ? pols.cIn[index] : cOut;
-                // console.log([index, k, pols.cIn[index], cOut]);
                 const byteA = BigInt(input[i]["a_bytes"][j * 2 + k]);
                 const byteB = BigInt(input[i]["b_bytes"][j * 2 + k]);
                 const byteC = BigInt(input[i]["c_bytes"][j * 2 + k]);
@@ -373,7 +372,6 @@ module.exports.execute = async function (pols, input) {
 
                     // ADD   (OPCODE = 0)
                     case 0n:
-                        console.log([byteA, byteB, cIn]);
                         let sum = byteA + byteB + cIn;
                         cOut = BigInt(sum >> 8n);
                         break;
@@ -485,7 +483,6 @@ module.exports.execute = async function (pols, input) {
                     pols.cOut[index] = cOut;
                 }
             }
-            // console.log({index, in: pols.cIn[index], middle: pols.cMiddle[index], out: pols.cOut[index]});
             pols.useCarry[index] = useCarry;
 
             const nextIndex = (index + 1) % N;

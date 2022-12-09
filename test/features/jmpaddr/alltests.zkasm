@@ -1,0 +1,225 @@
+VAR GLOBAL v1
+VAR GLOBAL v2
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        3 => A
+        3       :ASSERT ; OK
+                :JMP(directJmpOk)
+        0       :ASSERT ; FAIL
+directJmpOk:
+        3       :ASSERT ; OK
+
+;
+; JMPN without ELSE label
+;
+
+        4 => A
+        A - 5   :JMPN(jmpNegativeWithoutElse)
+        0       :ASSERT ; FAIL
+
+jmpNegativeWithoutElse:
+        4       :ASSERT ; OK
+
+
+        5 => A
+        A - 2   :JMPN(jmpElseNegativeWithoutElseFail)
+        5       :ASSERT ; OK
+                :JMP(jmpElseNegativeWithoutElseEnd)
+jmpElseNegativeWithoutElseFail:
+        0       :ASSERT ; FAIL
+jmpElseNegativeWithoutElseEnd:
+
+
+;
+; JMPN with ELSE label
+;
+
+        6 => A
+        A - 7   :JMPN(jmpNegative_Ok,jmpNegative_Fail)
+        0       :ASSERT ; FAIL
+jmpNegative_Fail:
+        0       :ASSERT ; FAIL
+
+jmpNegative_Ok:
+        6       :ASSERT ; OK
+
+        7 => A
+        A - 2   :JMPN(jmpElseNegative_fail,jmpElseNegative_Ok)
+        0       :ASSERT ; FAIL
+jmpElseNegative_fail:
+        0       :ASSERT ; FAIL
+
+jmpElseNegative_Ok:
+        7       :ASSERT ; OK
+
+;
+; JMPZ without ELSE label
+;
+
+        8 => A
+        0 => B
+        B       :JMPZ(jmpZeroWithoutElse)
+        0       :ASSERT ; FAIL
+
+jmpZeroWithoutElse:
+        8       :ASSERT ; OK
+
+
+        9 => A
+        A       :JMPZ(jmpZeroFalseWithoutElseFail)
+        9       :ASSERT ; OK
+                :JMP(jmpZeroFalseWithoutElseEnd)
+jmpZeroFalseWithoutElseFail:
+        0       :ASSERT ; FAIL
+jmpZeroFalseWithoutElseEnd:
+
+
+;
+; JMPZ with ELSE label
+;
+
+        10 => A
+        0       :JMPZ(jmpZero_Ok,jmpZero_Fail)
+        0       :ASSERT ; FAIL
+jmpZero_Fail:
+        0       :ASSERT ; FAIL
+
+jmpZero_Ok:
+        10      :ASSERT ; OK
+
+
+        11 => A
+        A       :JMPZ(jmpZeroFalse_Fail,jmpZeroFalse_Ok)
+        0       :ASSERT ; FAIL
+jmpZeroFalse_Fail:
+        0       :ASSERT ; FAIL
+
+jmpZeroFalse_Ok:
+        11      :ASSERT
+
+;
+; JMP with other address instructions
+;
+
+        12 => A
+        12      :ASSERT ; OK
+        365423847278443895435n :MSTORE(v1),JMP(jmpWithMStoreOk)
+        0       :ASSERT ; FAIL
+jmpWithMStoreOk:
+        12      :ASSERT ; OK
+        $ => A  :MLOAD(v1)
+        365423847278443895435n :ASSERT
+
+        13 => A
+        13      :ASSERT ; OK
+        99363847278443895435n :MSTORE(v1),JMP(jmpWithMStore2Ok)
+        0       :ASSERT ; FAIL
+jmpWithMStore2Ok:
+        13      :ASSERT ; OK
+        $ => A  :MLOAD(v1)
+        99363847278443895435n :ASSERT
+
+
+;
+; JMPZ with other address instructions
+;
+
+        0n      :MSTORE(v1)
+        14 => A
+        14      :ASSERT ; OK
+        $       :MLOAD(v1),JMPZ(jmpzWithMemOk,jmpzWithMemFail)
+        0       :ASSERT ; FAIL
+jmpzWithMemFail:
+        0       :ASSERT ; FAIL
+jmpzWithMemOk:
+        14      :ASSERT ; OK
+
+        255n    :MSTORE(v1)
+        15 => A
+        15      :ASSERT ; OK
+        $       :MLOAD(v1),JMPZ(jmpzWithMem2Fail,jmpzWithMem2Ok)
+        0       :ASSERT ; FAIL
+jmpzWithMem2Fail:
+        0       :ASSERT ; FAIL
+jmpzWithMem2Ok:
+        15      :ASSERT ; OK
+
+
+        3 => A
+                :CALL(myfunc)
+        9 :ASSERT
+                :JMP(end)
+
+        49      :MSTORE(v1),CALL(myfunc)
+        21      :ASSERT ; OK
+
+        $ => A  :MLOAD(v1),CALL(myfunc)
+        101     :ASSERT ; OK
+
+        $ => A  :MLOAD(v2)
+        101     :ASSERT ; OK
+
+                :JMP(hashTest)
+        0       :ASSERT ; FAIL
+myfunc:
+        A * 2 + 3 => A :MSTORE(v2),RETURN
+        0       :ASSERT ; FAIL
+
+hashTest:
+        ; HASHP1 TEST
+
+        0 => E
+        1 => D
+        0 => HASHPOS
+
+        0x23    :HASHP(E)
+        1       :HASHPLEN(E)
+        $ => A  :HASHPDIGEST(E)
+
+        10 => D
+
+        1 => E
+        0 => HASHPOS
+
+        0x23    :HASHP1(E)
+        1       :HASHPLEN(E)
+        $ => B  :HASHPDIGEST(E)
+
+        B       :ASSERT
+        17060325562426532769153589598752500045331206259578007688662617173019385936311n :ASSERT
+
+
+        ; HASHK1 TEST
+
+        0 => E
+        1 => D
+        0 => HASHPOS
+
+        0x23    :HASHK(E)
+        1       :HASHKLEN(E)
+        $ => A  :HASHKDIGEST(E)
+
+        10 => D
+
+        1 => E
+        0 => HASHPOS
+
+        0x23    :HASHK1(E)
+        1       :HASHKLEN(E)
+        $ => B  :HASHKDIGEST(E)
+
+        B       :ASSERT
+        78206343477686460350329009240152897803789856569547528343105340995421106273246n :ASSERT
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR, RCX
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

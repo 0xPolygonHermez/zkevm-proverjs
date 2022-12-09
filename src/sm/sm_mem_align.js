@@ -85,7 +85,6 @@ module.exports.execute = async function (pols, input) {
 
     const factors = [ 1, 2 ** 8, 2 ** 16, 2 ** 24];
     for (let i = 0; i < input.length; i++) {
-        console.log([`input${i}`, input[i]]);
         let m0v = BigInt(input[i]["m0"]);
         let m1v = BigInt(input[i]["m1"]);
         const _v = BigInt(input[i]["v"]);

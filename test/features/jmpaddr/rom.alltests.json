@@ -1,0 +1,1131 @@
+{
+ "program": [
+  {
+   "inSTEP": "1",
+   "setA": 1,
+   "line": 6,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        STEP => A"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 7,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 :ASSERT"
+  },
+  {
+   "CONST": "3",
+   "setA": 1,
+   "line": 9,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        3 => A"
+  },
+  {
+   "CONST": "3",
+   "assert": 1,
+   "line": 10,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        3       :ASSERT ; OK"
+  },
+  {
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 6,
+   "elseAddr": 5,
+   "line": 11,
+   "jmpAddrLabel": "directJmpOk",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                :JMP(directJmpOk)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 12,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "3",
+   "assert": 1,
+   "line": 14,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        3       :ASSERT ; OK"
+  },
+  {
+   "CONST": "4",
+   "setA": 1,
+   "line": 20,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        4 => A"
+  },
+  {
+   "inA": "1",
+   "CONST": "-5",
+   "JMPN": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 10,
+   "elseAddr": 9,
+   "line": 21,
+   "jmpAddrLabel": "jmpNegativeWithoutElse",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A - 5   :JMPN(jmpNegativeWithoutElse)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 22,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "4",
+   "assert": 1,
+   "line": 25,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        4       :ASSERT ; OK"
+  },
+  {
+   "CONST": "5",
+   "setA": 1,
+   "line": 28,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        5 => A"
+  },
+  {
+   "inA": "1",
+   "CONST": "-2",
+   "JMPN": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 15,
+   "elseAddr": 13,
+   "line": 29,
+   "jmpAddrLabel": "jmpElseNegativeWithoutElseFail",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A - 2   :JMPN(jmpElseNegativeWithoutElseFail)"
+  },
+  {
+   "CONST": "5",
+   "assert": 1,
+   "line": 30,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        5       :ASSERT ; OK"
+  },
+  {
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 16,
+   "elseAddr": 15,
+   "line": 31,
+   "jmpAddrLabel": "jmpElseNegativeWithoutElseEnd",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                :JMP(jmpElseNegativeWithoutElseEnd)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 33,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "6",
+   "setA": 1,
+   "line": 41,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        6 => A"
+  },
+  {
+   "inA": "1",
+   "CONST": "-7",
+   "JMPN": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 20,
+   "elseAddr": 19,
+   "line": 42,
+   "jmpAddrLabel": "jmpNegative_Ok",
+   "elseAddrLabel": "jmpNegative_Fail",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A - 7   :JMPN(jmpNegative_Ok,jmpNegative_Fail)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 43,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 45,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "6",
+   "assert": 1,
+   "line": 48,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        6       :ASSERT ; OK"
+  },
+  {
+   "CONST": "7",
+   "setA": 1,
+   "line": 50,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        7 => A"
+  },
+  {
+   "inA": "1",
+   "CONST": "-2",
+   "JMPN": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 24,
+   "elseAddr": 25,
+   "line": 51,
+   "jmpAddrLabel": "jmpElseNegative_fail",
+   "elseAddrLabel": "jmpElseNegative_Ok",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A - 2   :JMPN(jmpElseNegative_fail,jmpElseNegative_Ok)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 52,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 54,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "7",
+   "assert": 1,
+   "line": 57,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        7       :ASSERT ; OK"
+  },
+  {
+   "CONST": "8",
+   "setA": 1,
+   "line": 63,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        8 => A"
+  },
+  {
+   "CONST": "0",
+   "setB": 1,
+   "line": 64,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => B"
+  },
+  {
+   "inB": "1",
+   "JMPZ": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 30,
+   "elseAddr": 29,
+   "line": 65,
+   "jmpAddrLabel": "jmpZeroWithoutElse",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        B       :JMPZ(jmpZeroWithoutElse)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 66,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "8",
+   "assert": 1,
+   "line": 69,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        8       :ASSERT ; OK"
+  },
+  {
+   "CONST": "9",
+   "setA": 1,
+   "line": 72,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        9 => A"
+  },
+  {
+   "inA": "1",
+   "JMPZ": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 35,
+   "elseAddr": 33,
+   "line": 73,
+   "jmpAddrLabel": "jmpZeroFalseWithoutElseFail",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A       :JMPZ(jmpZeroFalseWithoutElseFail)"
+  },
+  {
+   "CONST": "9",
+   "assert": 1,
+   "line": 74,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        9       :ASSERT ; OK"
+  },
+  {
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 36,
+   "elseAddr": 35,
+   "line": 75,
+   "jmpAddrLabel": "jmpZeroFalseWithoutElseEnd",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                :JMP(jmpZeroFalseWithoutElseEnd)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 77,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "10",
+   "setA": 1,
+   "line": 85,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        10 => A"
+  },
+  {
+   "CONST": "0",
+   "JMPZ": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 40,
+   "elseAddr": 39,
+   "line": 86,
+   "jmpAddrLabel": "jmpZero_Ok",
+   "elseAddrLabel": "jmpZero_Fail",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :JMPZ(jmpZero_Ok,jmpZero_Fail)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 87,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 89,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "10",
+   "assert": 1,
+   "line": 92,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        10      :ASSERT ; OK"
+  },
+  {
+   "CONST": "11",
+   "setA": 1,
+   "line": 95,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        11 => A"
+  },
+  {
+   "inA": "1",
+   "JMPZ": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 44,
+   "elseAddr": 45,
+   "line": 96,
+   "jmpAddrLabel": "jmpZeroFalse_Fail",
+   "elseAddrLabel": "jmpZeroFalse_Ok",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A       :JMPZ(jmpZeroFalse_Fail,jmpZeroFalse_Ok)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 97,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 99,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "11",
+   "assert": 1,
+   "line": 102,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        11      :ASSERT"
+  },
+  {
+   "CONST": "12",
+   "setA": 1,
+   "line": 108,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        12 => A"
+  },
+  {
+   "CONST": "12",
+   "assert": 1,
+   "line": 109,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        12      :ASSERT ; OK"
+  },
+  {
+   "CONSTL": "365423847278443895435",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 1,
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 50,
+   "elseAddr": 49,
+   "line": 110,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "jmpAddrLabel": "jmpWithMStoreOk",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        365423847278443895435n :MSTORE(v1),JMP(jmpWithMStoreOk)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 111,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "12",
+   "assert": 1,
+   "line": 113,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        12      :ASSERT ; OK"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setA": 1,
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 0,
+   "line": 114,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => A  :MLOAD(v1)"
+  },
+  {
+   "CONSTL": "365423847278443895435",
+   "assert": 1,
+   "line": 115,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        365423847278443895435n :ASSERT"
+  },
+  {
+   "CONST": "13",
+   "setA": 1,
+   "line": 117,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        13 => A"
+  },
+  {
+   "CONST": "13",
+   "assert": 1,
+   "line": 118,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        13      :ASSERT ; OK"
+  },
+  {
+   "CONSTL": "99363847278443895435",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 1,
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 57,
+   "elseAddr": 56,
+   "line": 119,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "jmpAddrLabel": "jmpWithMStore2Ok",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        99363847278443895435n :MSTORE(v1),JMP(jmpWithMStore2Ok)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 120,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "13",
+   "assert": 1,
+   "line": 122,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        13      :ASSERT ; OK"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setA": 1,
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 0,
+   "line": 123,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => A  :MLOAD(v1)"
+  },
+  {
+   "CONSTL": "99363847278443895435",
+   "assert": 1,
+   "line": 124,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        99363847278443895435n :ASSERT"
+  },
+  {
+   "CONSTL": "0",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 1,
+   "line": 131,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0n      :MSTORE(v1)"
+  },
+  {
+   "CONST": "14",
+   "setA": 1,
+   "line": 132,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        14 => A"
+  },
+  {
+   "CONST": "14",
+   "assert": 1,
+   "line": 133,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        14      :ASSERT ; OK"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 0,
+   "JMPZ": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 66,
+   "elseAddr": 65,
+   "line": 134,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "jmpAddrLabel": "jmpzWithMemOk",
+   "elseAddrLabel": "jmpzWithMemFail",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $       :MLOAD(v1),JMPZ(jmpzWithMemOk,jmpzWithMemFail)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 135,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 137,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "14",
+   "assert": 1,
+   "line": 139,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        14      :ASSERT ; OK"
+  },
+  {
+   "CONSTL": "255",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 1,
+   "line": 141,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        255n    :MSTORE(v1)"
+  },
+  {
+   "CONST": "15",
+   "setA": 1,
+   "line": 142,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        15 => A"
+  },
+  {
+   "CONST": "15",
+   "assert": 1,
+   "line": 143,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        15      :ASSERT ; OK"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 0,
+   "JMPZ": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 72,
+   "elseAddr": 73,
+   "line": 144,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "jmpAddrLabel": "jmpzWithMem2Fail",
+   "elseAddrLabel": "jmpzWithMem2Ok",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $       :MLOAD(v1),JMPZ(jmpzWithMem2Fail,jmpzWithMem2Ok)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 145,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 147,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "15",
+   "assert": 1,
+   "line": 149,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        15      :ASSERT ; OK"
+  },
+  {
+   "CONST": "3",
+   "setA": 1,
+   "line": 152,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        3 => A"
+  },
+  {
+   "JMP": 0,
+   "JMPC": 0,
+   "JMPN": 0,
+   "useJmpAddr": 1,
+   "jmpAddr": 86,
+   "call": 1,
+   "line": 153,
+   "jmpAddrLabel": "myfunc",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                :CALL(myfunc)"
+  },
+  {
+   "CONST": "9",
+   "assert": 1,
+   "line": 154,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        9 :ASSERT"
+  },
+  {
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 116,
+   "elseAddr": 78,
+   "line": 155,
+   "jmpAddrLabel": "end",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                :JMP(end)"
+  },
+  {
+   "CONST": "49",
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 1,
+   "JMP": 0,
+   "JMPC": 0,
+   "JMPN": 0,
+   "useJmpAddr": 1,
+   "jmpAddr": 86,
+   "call": 1,
+   "line": 157,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "jmpAddrLabel": "myfunc",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        49      :MSTORE(v1),CALL(myfunc)"
+  },
+  {
+   "CONST": "21",
+   "assert": 1,
+   "line": 158,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        21      :ASSERT ; OK"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setA": 1,
+   "offset": 0,
+   "mOp": 1,
+   "mWR": 0,
+   "JMP": 0,
+   "JMPC": 0,
+   "JMPN": 0,
+   "useJmpAddr": 1,
+   "jmpAddr": 86,
+   "call": 1,
+   "line": 160,
+   "offsetLabel": "v1",
+   "useCTX": 0,
+   "jmpAddrLabel": "myfunc",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => A  :MLOAD(v1),CALL(myfunc)"
+  },
+  {
+   "CONST": "101",
+   "assert": 1,
+   "line": 161,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        101     :ASSERT ; OK"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setA": 1,
+   "offset": 1,
+   "mOp": 1,
+   "mWR": 0,
+   "line": 163,
+   "offsetLabel": "v2",
+   "useCTX": 0,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => A  :MLOAD(v2)"
+  },
+  {
+   "CONST": "101",
+   "assert": 1,
+   "line": 164,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        101     :ASSERT ; OK"
+  },
+  {
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 88,
+   "elseAddr": 85,
+   "line": 166,
+   "jmpAddrLabel": "hashTest",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                :JMP(hashTest)"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 167,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "inA": "2",
+   "CONST": "3",
+   "setA": 1,
+   "offset": 1,
+   "mOp": 1,
+   "mWR": 1,
+   "JMP": 0,
+   "JMPC": 0,
+   "JMPN": 0,
+   "ind": 0,
+   "indRR": 0,
+   "return": 1,
+   "line": 169,
+   "offsetLabel": "v2",
+   "useCTX": 0,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        A * 2 + 3 => A :MSTORE(v2),RETURN"
+  },
+  {
+   "CONST": "0",
+   "assert": 1,
+   "line": 170,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0       :ASSERT ; FAIL"
+  },
+  {
+   "CONST": "0",
+   "setE": 1,
+   "line": 175,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => E"
+  },
+  {
+   "CONST": "1",
+   "setD": 1,
+   "line": 176,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1 => D"
+  },
+  {
+   "CONST": "0",
+   "setHASHPOS": 1,
+   "line": 177,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => HASHPOS"
+  },
+  {
+   "CONST": "35",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashP": 1,
+   "line": 179,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0x23    :HASHP(E)"
+  },
+  {
+   "CONST": "1",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashPLen": 1,
+   "line": 180,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1       :HASHPLEN(E)"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setA": 1,
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashPDigest": 1,
+   "line": 181,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => A  :HASHPDIGEST(E)"
+  },
+  {
+   "CONST": "10",
+   "setD": 1,
+   "line": 183,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        10 => D"
+  },
+  {
+   "CONST": "1",
+   "setE": 1,
+   "line": 185,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1 => E"
+  },
+  {
+   "CONST": "0",
+   "setHASHPOS": 1,
+   "line": 186,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => HASHPOS"
+  },
+  {
+   "CONST": "35",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashP1": 1,
+   "line": 188,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0x23    :HASHP1(E)"
+  },
+  {
+   "CONST": "1",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashPLen": 1,
+   "line": 189,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1       :HASHPLEN(E)"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setB": 1,
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashPDigest": 1,
+   "line": 190,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => B  :HASHPDIGEST(E)"
+  },
+  {
+   "inB": "1",
+   "assert": 1,
+   "line": 192,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        B       :ASSERT"
+  },
+  {
+   "CONSTL": "17060325562426532769153589598752500045331206259578007688662617173019385936311",
+   "assert": 1,
+   "line": 193,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        17060325562426532769153589598752500045331206259578007688662617173019385936311n :ASSERT"
+  },
+  {
+   "CONST": "0",
+   "setE": 1,
+   "line": 198,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => E"
+  },
+  {
+   "CONST": "1",
+   "setD": 1,
+   "line": 199,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1 => D"
+  },
+  {
+   "CONST": "0",
+   "setHASHPOS": 1,
+   "line": 200,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => HASHPOS"
+  },
+  {
+   "CONST": "35",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashK": 1,
+   "line": 202,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0x23    :HASHK(E)"
+  },
+  {
+   "CONST": "1",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashKLen": 1,
+   "line": 203,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1       :HASHKLEN(E)"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setA": 1,
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashKDigest": 1,
+   "line": 204,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => A  :HASHKDIGEST(E)"
+  },
+  {
+   "CONST": "10",
+   "setD": 1,
+   "line": 206,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        10 => D"
+  },
+  {
+   "CONST": "1",
+   "setE": 1,
+   "line": 208,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1 => E"
+  },
+  {
+   "CONST": "0",
+   "setHASHPOS": 1,
+   "line": 209,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0 => HASHPOS"
+  },
+  {
+   "CONST": "35",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashK1": 1,
+   "line": 211,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        0x23    :HASHK1(E)"
+  },
+  {
+   "CONST": "1",
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashKLen": 1,
+   "line": 212,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        1       :HASHKLEN(E)"
+  },
+  {
+   "freeInTag": {
+    "op": ""
+   },
+   "inFREE": "1",
+   "setB": 1,
+   "ind": 1,
+   "indRR": 0,
+   "offset": 0,
+   "hashKDigest": 1,
+   "line": 213,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        $ => B  :HASHKDIGEST(E)"
+  },
+  {
+   "inB": "1",
+   "assert": 1,
+   "line": 215,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        B       :ASSERT"
+  },
+  {
+   "CONSTL": "78206343477686460350329009240152897803789856569547528343105340995421106273246",
+   "assert": 1,
+   "line": 216,
+   "fileName": "alltests.zkasm",
+   "lineStr": "        78206343477686460350329009240152897803789856569547528343105340995421106273246n :ASSERT"
+  },
+  {
+   "CONST": "0",
+   "setA": 1,
+   "setB": 1,
+   "setC": 1,
+   "setD": 1,
+   "setE": 1,
+   "setCTX": 1,
+   "setSP": 1,
+   "setPC": 1,
+   "setGAS": 1,
+   "setMAXMEM": 1,
+   "setSR": 1,
+   "setHASHPOS": 1,
+   "setRR": 1,
+   "setRCX": 1,
+   "line": 219,
+   "fileName": "alltests.zkasm",
+   "lineStr": "       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR, RCX"
+  },
+  {
+   "freeInTag": {
+    "op": "functionCall",
+    "funcName": "beforeLast",
+    "params": []
+   },
+   "inFREE": "1",
+   "JMPN": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 117,
+   "elseAddr": 118,
+   "line": 222,
+   "jmpAddrLabel": "finalWait",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "        ${beforeLast()}  : JMPN(finalWait)"
+  },
+  {
+   "JMP": 1,
+   "useJmpAddr": 1,
+   "jmpAddr": 0,
+   "elseAddr": 119,
+   "line": 224,
+   "jmpAddrLabel": "start",
+   "elseAddrLabel": "next",
+   "fileName": "alltests.zkasm",
+   "lineStr": "                         : JMP(start)"
+  }
+ ],
+ "labels": {
+  "start": 0,
+  "directJmpOk": 6,
+  "jmpNegativeWithoutElse": 10,
+  "jmpElseNegativeWithoutElseFail": 15,
+  "jmpElseNegativeWithoutElseEnd": 16,
+  "jmpNegative_Fail": 19,
+  "jmpNegative_Ok": 20,
+  "jmpElseNegative_fail": 24,
+  "jmpElseNegative_Ok": 25,
+  "jmpZeroWithoutElse": 30,
+  "jmpZeroFalseWithoutElseFail": 35,
+  "jmpZeroFalseWithoutElseEnd": 36,
+  "jmpZero_Fail": 39,
+  "jmpZero_Ok": 40,
+  "jmpZeroFalse_Fail": 44,
+  "jmpZeroFalse_Ok": 45,
+  "jmpWithMStoreOk": 50,
+  "jmpWithMStore2Ok": 57,
+  "jmpzWithMemFail": 65,
+  "jmpzWithMemOk": 66,
+  "jmpzWithMem2Fail": 72,
+  "jmpzWithMem2Ok": 73,
+  "myfunc": 86,
+  "hashTest": 88,
+  "end": 116,
+  "finalWait": 117,
+  "opINVALID": 119
+ },
+ "constants": {}
+}

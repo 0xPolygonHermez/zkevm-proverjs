@@ -52,7 +52,9 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
     const rom = await zkasm.compile(zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile));
 
-    await fs.promises.writeFile("tmp/rom.json", JSON.stringify(rom, null, 1) + "\n");
+    if (mainConfig && mainConfig.romFilename) {
+        await fs.promises.writeFile(mainConfig.romFilename, JSON.stringify(rom, null, 1) + "\n");
+    }
 
     if (constPols.Global) {
         console.log("Const Global...");
@@ -125,7 +127,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
     const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
 
-    console.log(requiredKK.paddingKKBit);
     if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
     const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
 
