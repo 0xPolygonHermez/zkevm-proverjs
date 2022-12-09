@@ -151,8 +151,7 @@ jmpzWithMem2Ok:
 
         3 => A
                 :CALL(myfunc)
-        9 :ASSERT
-                :JMP(end)
+        9       :ASSERT ; OK
 
         49      :MSTORE(v1),CALL(myfunc)
         21      :ASSERT ; OK
@@ -214,10 +213,10 @@ hashTest:
 
         B       :ASSERT
         78206343477686460350329009240152897803789856569547528343105340995421106273246n :ASSERT
-
 end:
        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR, RCX
 
+finalizeExecution:
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)
 

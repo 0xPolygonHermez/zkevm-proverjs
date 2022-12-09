@@ -10,7 +10,7 @@ describe("Test JmpAddr Instruction", async function () {
 
     it("Test JmpAddr Pack test", async () => {
         await verifyZkasm(__dirname + "/alltests.zkasm", true,
-                { defines: {N: 2 ** 23},
+                { defines: {N: 2 ** 18},
                   namespaces: ['Global', 'Main', 'Rom', 'Binary', 'PaddingPG', 'PoseidonG' ,'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Nine2One'],
                   verbose: true,
                   color: true,
