@@ -656,7 +656,7 @@
    "JMPC": 0,
    "JMPN": 0,
    "useJmpAddr": 1,
-   "jmpAddr": 86,
+   "jmpAddr": 85,
    "call": 1,
    "line": 153,
    "jmpAddrLabel": "myfunc",
@@ -668,18 +668,7 @@
    "assert": 1,
    "line": 154,
    "fileName": "alltests.zkasm",
-   "lineStr": "        9 :ASSERT"
-  },
-  {
-   "JMP": 1,
-   "useJmpAddr": 1,
-   "jmpAddr": 116,
-   "elseAddr": 78,
-   "line": 155,
-   "jmpAddrLabel": "end",
-   "elseAddrLabel": "next",
-   "fileName": "alltests.zkasm",
-   "lineStr": "                :JMP(end)"
+   "lineStr": "        9       :ASSERT ; OK"
   },
   {
    "CONST": "49",
@@ -690,9 +679,9 @@
    "JMPC": 0,
    "JMPN": 0,
    "useJmpAddr": 1,
-   "jmpAddr": 86,
+   "jmpAddr": 85,
    "call": 1,
-   "line": 157,
+   "line": 156,
    "offsetLabel": "v1",
    "useCTX": 0,
    "jmpAddrLabel": "myfunc",
@@ -702,7 +691,7 @@
   {
    "CONST": "21",
    "assert": 1,
-   "line": 158,
+   "line": 157,
    "fileName": "alltests.zkasm",
    "lineStr": "        21      :ASSERT ; OK"
   },
@@ -719,9 +708,9 @@
    "JMPC": 0,
    "JMPN": 0,
    "useJmpAddr": 1,
-   "jmpAddr": 86,
+   "jmpAddr": 85,
    "call": 1,
-   "line": 160,
+   "line": 159,
    "offsetLabel": "v1",
    "useCTX": 0,
    "jmpAddrLabel": "myfunc",
@@ -731,7 +720,7 @@
   {
    "CONST": "101",
    "assert": 1,
-   "line": 161,
+   "line": 160,
    "fileName": "alltests.zkasm",
    "lineStr": "        101     :ASSERT ; OK"
   },
@@ -744,7 +733,7 @@
    "offset": 1,
    "mOp": 1,
    "mWR": 0,
-   "line": 163,
+   "line": 162,
    "offsetLabel": "v2",
    "useCTX": 0,
    "fileName": "alltests.zkasm",
@@ -753,16 +742,16 @@
   {
    "CONST": "101",
    "assert": 1,
-   "line": 164,
+   "line": 163,
    "fileName": "alltests.zkasm",
    "lineStr": "        101     :ASSERT ; OK"
   },
   {
    "JMP": 1,
    "useJmpAddr": 1,
-   "jmpAddr": 88,
-   "elseAddr": 85,
-   "line": 166,
+   "jmpAddr": 87,
+   "elseAddr": 84,
+   "line": 165,
    "jmpAddrLabel": "hashTest",
    "elseAddrLabel": "next",
    "fileName": "alltests.zkasm",
@@ -771,7 +760,7 @@
   {
    "CONST": "0",
    "assert": 1,
-   "line": 167,
+   "line": 166,
    "fileName": "alltests.zkasm",
    "lineStr": "        0       :ASSERT ; FAIL"
   },
@@ -788,7 +777,7 @@
    "ind": 0,
    "indRR": 0,
    "return": 1,
-   "line": 169,
+   "line": 168,
    "offsetLabel": "v2",
    "useCTX": 0,
    "fileName": "alltests.zkasm",
@@ -797,28 +786,28 @@
   {
    "CONST": "0",
    "assert": 1,
-   "line": 170,
+   "line": 169,
    "fileName": "alltests.zkasm",
    "lineStr": "        0       :ASSERT ; FAIL"
   },
   {
    "CONST": "0",
    "setE": 1,
-   "line": 175,
+   "line": 174,
    "fileName": "alltests.zkasm",
    "lineStr": "        0 => E"
   },
   {
    "CONST": "1",
    "setD": 1,
-   "line": 176,
+   "line": 175,
    "fileName": "alltests.zkasm",
    "lineStr": "        1 => D"
   },
   {
    "CONST": "0",
    "setHASHPOS": 1,
-   "line": 177,
+   "line": 176,
    "fileName": "alltests.zkasm",
    "lineStr": "        0 => HASHPOS"
   },
@@ -828,7 +817,7 @@
    "indRR": 0,
    "offset": 0,
    "hashP": 1,
-   "line": 179,
+   "line": 178,
    "fileName": "alltests.zkasm",
    "lineStr": "        0x23    :HASHP(E)"
   },
@@ -838,7 +827,7 @@
    "indRR": 0,
    "offset": 0,
    "hashPLen": 1,
-   "line": 180,
+   "line": 179,
    "fileName": "alltests.zkasm",
    "lineStr": "        1       :HASHPLEN(E)"
   },
@@ -852,28 +841,28 @@
    "indRR": 0,
    "offset": 0,
    "hashPDigest": 1,
-   "line": 181,
+   "line": 180,
    "fileName": "alltests.zkasm",
    "lineStr": "        $ => A  :HASHPDIGEST(E)"
   },
   {
    "CONST": "10",
    "setD": 1,
-   "line": 183,
+   "line": 182,
    "fileName": "alltests.zkasm",
    "lineStr": "        10 => D"
   },
   {
    "CONST": "1",
    "setE": 1,
-   "line": 185,
+   "line": 184,
    "fileName": "alltests.zkasm",
    "lineStr": "        1 => E"
   },
   {
    "CONST": "0",
    "setHASHPOS": 1,
-   "line": 186,
+   "line": 185,
    "fileName": "alltests.zkasm",
    "lineStr": "        0 => HASHPOS"
   },
@@ -883,7 +872,7 @@
    "indRR": 0,
    "offset": 0,
    "hashP1": 1,
-   "line": 188,
+   "line": 187,
    "fileName": "alltests.zkasm",
    "lineStr": "        0x23    :HASHP1(E)"
   },
@@ -893,7 +882,7 @@
    "indRR": 0,
    "offset": 0,
    "hashPLen": 1,
-   "line": 189,
+   "line": 188,
    "fileName": "alltests.zkasm",
    "lineStr": "        1       :HASHPLEN(E)"
   },
@@ -907,42 +896,42 @@
    "indRR": 0,
    "offset": 0,
    "hashPDigest": 1,
-   "line": 190,
+   "line": 189,
    "fileName": "alltests.zkasm",
    "lineStr": "        $ => B  :HASHPDIGEST(E)"
   },
   {
    "inB": "1",
    "assert": 1,
-   "line": 192,
+   "line": 191,
    "fileName": "alltests.zkasm",
    "lineStr": "        B       :ASSERT"
   },
   {
    "CONSTL": "17060325562426532769153589598752500045331206259578007688662617173019385936311",
    "assert": 1,
-   "line": 193,
+   "line": 192,
    "fileName": "alltests.zkasm",
    "lineStr": "        17060325562426532769153589598752500045331206259578007688662617173019385936311n :ASSERT"
   },
   {
    "CONST": "0",
    "setE": 1,
-   "line": 198,
+   "line": 197,
    "fileName": "alltests.zkasm",
    "lineStr": "        0 => E"
   },
   {
    "CONST": "1",
    "setD": 1,
-   "line": 199,
+   "line": 198,
    "fileName": "alltests.zkasm",
    "lineStr": "        1 => D"
   },
   {
    "CONST": "0",
    "setHASHPOS": 1,
-   "line": 200,
+   "line": 199,
    "fileName": "alltests.zkasm",
    "lineStr": "        0 => HASHPOS"
   },
@@ -952,7 +941,7 @@
    "indRR": 0,
    "offset": 0,
    "hashK": 1,
-   "line": 202,
+   "line": 201,
    "fileName": "alltests.zkasm",
    "lineStr": "        0x23    :HASHK(E)"
   },
@@ -962,7 +951,7 @@
    "indRR": 0,
    "offset": 0,
    "hashKLen": 1,
-   "line": 203,
+   "line": 202,
    "fileName": "alltests.zkasm",
    "lineStr": "        1       :HASHKLEN(E)"
   },
@@ -976,28 +965,28 @@
    "indRR": 0,
    "offset": 0,
    "hashKDigest": 1,
-   "line": 204,
+   "line": 203,
    "fileName": "alltests.zkasm",
    "lineStr": "        $ => A  :HASHKDIGEST(E)"
   },
   {
    "CONST": "10",
    "setD": 1,
-   "line": 206,
+   "line": 205,
    "fileName": "alltests.zkasm",
    "lineStr": "        10 => D"
   },
   {
    "CONST": "1",
    "setE": 1,
-   "line": 208,
+   "line": 207,
    "fileName": "alltests.zkasm",
    "lineStr": "        1 => E"
   },
   {
    "CONST": "0",
    "setHASHPOS": 1,
-   "line": 209,
+   "line": 208,
    "fileName": "alltests.zkasm",
    "lineStr": "        0 => HASHPOS"
   },
@@ -1007,7 +996,7 @@
    "indRR": 0,
    "offset": 0,
    "hashK1": 1,
-   "line": 211,
+   "line": 210,
    "fileName": "alltests.zkasm",
    "lineStr": "        0x23    :HASHK1(E)"
   },
@@ -1017,7 +1006,7 @@
    "indRR": 0,
    "offset": 0,
    "hashKLen": 1,
-   "line": 212,
+   "line": 211,
    "fileName": "alltests.zkasm",
    "lineStr": "        1       :HASHKLEN(E)"
   },
@@ -1031,21 +1020,21 @@
    "indRR": 0,
    "offset": 0,
    "hashKDigest": 1,
-   "line": 213,
+   "line": 212,
    "fileName": "alltests.zkasm",
    "lineStr": "        $ => B  :HASHKDIGEST(E)"
   },
   {
    "inB": "1",
    "assert": 1,
-   "line": 215,
+   "line": 214,
    "fileName": "alltests.zkasm",
    "lineStr": "        B       :ASSERT"
   },
   {
    "CONSTL": "78206343477686460350329009240152897803789856569547528343105340995421106273246",
    "assert": 1,
-   "line": 216,
+   "line": 215,
    "fileName": "alltests.zkasm",
    "lineStr": "        78206343477686460350329009240152897803789856569547528343105340995421106273246n :ASSERT"
   },
@@ -1065,7 +1054,7 @@
    "setHASHPOS": 1,
    "setRR": 1,
    "setRCX": 1,
-   "line": 219,
+   "line": 217,
    "fileName": "alltests.zkasm",
    "lineStr": "       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR, RCX"
   },
@@ -1078,9 +1067,9 @@
    "inFREE": "1",
    "JMPN": 1,
    "useJmpAddr": 1,
-   "jmpAddr": 117,
-   "elseAddr": 118,
-   "line": 222,
+   "jmpAddr": 116,
+   "elseAddr": 117,
+   "line": 221,
    "jmpAddrLabel": "finalWait",
    "elseAddrLabel": "next",
    "fileName": "alltests.zkasm",
@@ -1090,8 +1079,8 @@
    "JMP": 1,
    "useJmpAddr": 1,
    "jmpAddr": 0,
-   "elseAddr": 119,
-   "line": 224,
+   "elseAddr": 118,
+   "line": 223,
    "jmpAddrLabel": "start",
    "elseAddrLabel": "next",
    "fileName": "alltests.zkasm",
@@ -1121,11 +1110,12 @@
   "jmpzWithMemOk": 66,
   "jmpzWithMem2Fail": 72,
   "jmpzWithMem2Ok": 73,
-  "myfunc": 86,
-  "hashTest": 88,
-  "end": 116,
-  "finalWait": 117,
-  "opINVALID": 119
+  "myfunc": 85,
+  "hashTest": 87,
+  "end": 115,
+  "finalizeExecution": 116,
+  "finalWait": 116,
+  "opINVALID": 118
  },
  "constants": {}
 }
