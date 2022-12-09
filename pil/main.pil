@@ -688,8 +688,8 @@ namespace Main(%N);
     hashKLen {
         addr,
         op0
-    } in
-    PaddingKK.lastHashLatch {
+    } is
+    PaddingKK.lastHashLen {
         PaddingKK.addr,
         PaddingKK.len
     };
@@ -699,8 +699,8 @@ namespace Main(%N);
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         incCounter
-    } in
-    PaddingKK.lastHashLatch {
+    } is
+    PaddingKK.lastHashDigest {
         PaddingKK.addr,
         PaddingKK.hash0, PaddingKK.hash1, PaddingKK.hash2, PaddingKK.hash3,
         PaddingKK.hash4, PaddingKK.hash5, PaddingKK.hash6, PaddingKK.hash7,
@@ -730,8 +730,8 @@ namespace Main(%N);
     hashPLen {
         addr,
         op0
-    } in
-    PaddingPG.lastHash {
+    } is
+    PaddingPG.lastHashLen {
         PaddingPG.addr,
         PaddingPG.len
     };
@@ -743,8 +743,8 @@ namespace Main(%N);
         op4 + 2**32 * op5,
         op6 + 2**32 * op7,
         incCounter
-    } in
-    PaddingPG.lastHash {
+    } is
+    PaddingPG.lastHashDigest {
         PaddingPG.addr,
         PaddingPG.curHash0,
         PaddingPG.curHash1,

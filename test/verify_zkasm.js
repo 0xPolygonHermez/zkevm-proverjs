@@ -215,7 +215,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
                 verifyPilConfig.publics = JSON.parse(await fs.promises.readFile(publicsFilename, "utf8"));
             }
         }
-        console.log(verifyPilConfig);
         const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
 
         if (res.length != 0) {
