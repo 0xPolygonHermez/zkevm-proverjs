@@ -33,7 +33,7 @@
     "buildall": "tools/build_all.sh ${npm_package_config_steps}",
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
-    "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build -- -s 23) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
+    "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const $PIL",

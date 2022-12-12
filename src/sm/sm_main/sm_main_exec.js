@@ -93,7 +93,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     if (config.stats) {
         metadata.stats = {
             trace:[],
-            line:[]
+            lineTimes:[]
         };
     }
 
@@ -145,13 +145,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         const l = rom.program[ ctx.zkPC ];
         if (config.stats) {
             metadata.stats.trace.push(ctx.zkPC);
-            metadata.stats.lineTimes[ctx.zkPC] = (metadata.stats.line[ctx.zkPC] || 0) + 1;
+            metadata.stats.lineTimes[ctx.zkPC] = (metadata.stats.lineTimes[ctx.zkPC] || 0) + 1;
         }
 
         ctx.fileName = l.fileName;
         ctx.line = l.line;
-        const sourceRef = `[zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
+        const sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
+        console.log(sourceRef+' '+l.lineStr);
 
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
@@ -453,7 +454,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         let addrRel = 0;
         let addr = 0;
-        if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ ||
+        if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
             l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
@@ -617,7 +618,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
                 if (l.hashK || l.hashK1) {
                     if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK(${addr}) out of bounds (${pos+size} > ${ctx.hashK[addr].data.length}) ${sourceRef}`);
@@ -991,7 +992,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashK1[i] = l.hashK1 ? 1n : 0n;
             const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size for hashK ${sourceRef}`);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
             const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -1696,12 +1697,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         pols.jmpAddr[i] = l.jmpAddr ? BigInt(l.jmpAddr) : 0n;
         pols.useJmpAddr[i] = l.useJmpAddr ? 1n: 0n;
 
-
-        const elseAddr = l.elseAddr ? BigInt(l.elseAddr) : 0n;
-        pols.elseAddr[i] = elseAddr;
-
         const finalJmpAddr = l.useJmpAddr ? l.jmpAddr : addr;
         const nextNoJmpZkPC = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
+
+        const elseAddr = l.useElseAddr ? BigInt(l.elseAddr) : nextNoJmpZkPC;
+        pols.elseAddr[i] = elseAddr;
+        pols.useElseAddr[i] = l.useElseAddr ? 1n: 0n;
 
         if (l.JMPN) {
             const o = Fr.toObject(op0);
@@ -1743,6 +1744,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     pols.zkPC[nexti] = elseAddr;
                 }
                 pols.JMPZ[i] = 1n;
+                const o = Fr.toObject(op0);
+                if (o > 0 && o >= FrFirst32Negative) {
+                    console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
+                }
             } else if (l.JMP) {
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 pols.JMP[i] = 1n;

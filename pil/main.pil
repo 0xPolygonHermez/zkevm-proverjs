@@ -328,13 +328,15 @@ namespace Main(%N);
     pol commit jmpAddr;
     pol commit elseAddr;
     pol commit useJmpAddr;
+    pol commit useElseAddr;
 
     // ROM/Zkasm constraint: useJmpAddr * return = 0
     pol finalJmpAddr = useJmpAddr * (jmpAddr - addr ) + return * (RR - addr) + addr;
     pol nextNoJmpZkPC = zkPC + 1 - ((1-RCXIsZero)*repeat);
+    pol finalElseAddr = useElseAddr * (elseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
     // if elseAddr wasn't specified on zkasm, compiler put current address + 1
-    zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (elseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
+    zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (finalElseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
     (A0-op0)*assert = 0;
     (A1-op1)*assert = 0;
@@ -455,7 +457,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -b
     */
 
     pol operations =
@@ -470,7 +472,7 @@ namespace Main(%N);
         + 2**32 * setMAXMEM     + 2**33 * setPC         + 2**34 * setRCX        + 2**35 * setRR
         + 2**36 * setSP         + 2**37 * setSR         + 2**38 * sRD           + 2**39 * sWR
         + 2**40 * useCTX        + 2**41 * useJmpAddr    + 2**42 * JMPZ          + 2**43 * call
-        + 2**44 * return        + 2**45 * hashK1        + 2**46 * hashP1;
+        + 2**44 * return        + 2**45 * hashK1        + 2**46 * hashP1        + 2**47 * useElseAddr;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -519,6 +521,7 @@ namespace Main(%N);
     (1 - return) * return = 0;
     (1 - hashK1) * hashK1 = 0;
     (1 - hashP1) * hashP1 = 0;
+    (1 - useElseAddr) * useElseAddr = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,

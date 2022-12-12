@@ -32,6 +32,7 @@ const argv = require("yargs")
     .alias("t", "test")
     .alias("l", "logs")
     .alias("s", "skip")
+    .alias("S", "stats")
     .alias("d", "debug")
     .alias("p", "pil")
     .alias("P", "pilconfig")
@@ -112,7 +113,7 @@ async function run() {
         execute: (argv.execute === true),
         tracer: (argv.tracer === true),
         counters: (argv.counters === true),
-        stats
+        stats,
         stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN)
     }
     let metadata = {};

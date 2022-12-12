@@ -22,7 +22,7 @@ namespace Rom(%N);
 
     /*
       comment genereated with:
-      node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1"
+      node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr"
 
       operations =
               2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
@@ -36,6 +36,6 @@ namespace Rom(%N);
             + 2**32 * setMAXMEM     + 2**33 * setPC         + 2**34 * setRCX        + 2**35 * setRR
             + 2**36 * setSP         + 2**37 * setSR         + 2**38 * sRD           + 2**39 * sWR
             + 2**40 * useCTX        + 2**41 * useJmpAddr    + 2**42 * JMPZ          + 2**43 * call
-            + 2**44 * return        + 2**45 * hashK1        + 2**46 * hashP1;
+            + 2**44 * return        + 2**45 * hashK1        + 2**46 * hashP1        + 2**47 * useElseAddr
 
     */
