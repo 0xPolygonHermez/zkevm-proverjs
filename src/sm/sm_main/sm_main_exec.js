@@ -152,7 +152,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.line = l.line;
         const sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
-        console.log(sourceRef+' '+l.lineStr);
 
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
