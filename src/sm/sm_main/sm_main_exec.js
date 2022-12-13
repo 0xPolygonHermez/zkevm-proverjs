@@ -1700,7 +1700,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         const nextNoJmpZkPC = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
 
         const elseAddr = l.useElseAddr ? BigInt(l.elseAddr) : nextNoJmpZkPC;
-        pols.elseAddr[i] = elseAddr;
+        pols.elseAddr[i] = l.elseAddr ? BigInt(l.elseAddr) : 0n;
         pols.useElseAddr[i] = l.useElseAddr ? 1n: 0n;
 
         if (l.JMPN) {
