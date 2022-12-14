@@ -467,6 +467,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 addrRel += fe2n(Fr, ctx.RR, ctx);
             }
             if (l.offset) addrRel += l.offset;
+            if (l.isStack == 1) addrRel += Number(ctx.SP);
             if (!skipAddrRelControl) {
                 if (addrRel >= 0x20000 || (!l.isMem && addrRel >= 0x10000)) throw new Error(`Address too big ${sourceRef}`);
                 if (addrRel <0 ) throw new Error(`Address can not be negative ${sourceRef}`);
@@ -481,7 +482,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         if (l.isStack==1) {
             addr += 0x10000;
-            addr += Number(ctx.SP);
             pols.isStack[i] = 1n;
         } else {
             pols.isStack[i] = 0n;
