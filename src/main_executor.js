@@ -42,6 +42,7 @@ const argv = require("yargs")
     .alias("T", "tracer")
     .alias("c", "counters")
     .alias("N", "stepsN")
+    .alias("V", "verboseFullTracer")
     .argv;
 
 async function run() {
@@ -114,7 +115,8 @@ async function run() {
         tracer: (argv.tracer === true),
         counters: (argv.counters === true),
         stats,
-        stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN)
+        stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN),
+        verboseFullTracer: (argv.verboseFullTracer === true)
     }
     let metadata = {};
     const N = cmPols.Main.PC.length;

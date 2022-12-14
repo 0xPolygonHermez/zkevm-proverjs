@@ -44,6 +44,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     const debug = config && config.debug;
     const flagTracer = config && config.tracer;
+    const verboseFullTracer = config.verboseFullTracer;
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
@@ -100,7 +101,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     initState(Fr, pols, ctx);
 
     if (debug && flagTracer) {
-        fullTracer = new FullTracer(config.debugInfo.inputName)
+        fullTracer = new FullTracer(config.debugInfo.inputName,
+            {
+                verbose: verboseFullTracer
+            }
+        );
     }
 
     const iPrint = new Prints(ctx, smt);
