@@ -2462,15 +2462,10 @@ function eval_getTimestamp(ctx, tag) {
     return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getChainId(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e(ctx.input.chainID), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
 function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    if(fullTracer) fullTracer.handleEvent(ctx, tag)
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    if (fullTracer)
+        fullTracer.handleEvent(ctx, tag);
 }
 
 function eval_cond(ctx, tag) {
@@ -2499,13 +2494,6 @@ function eval_getBytecode(ctx, tag) {
     if (d.length == 2) d = d + '0';
     const ret = scalar2fea(ctx.Fr, Scalar.e(d));
     return scalar2fea(ctx.Fr, Scalar.e(d));
-}
-/**
- * Creates new storage checkpoint for warm slots and addresses
- */
-function eval_checkpoint(ctx) {
-    ctx.input.accessedStorage.push(new Map())
-    return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
 function eval_exp(ctx, tag) {
@@ -2592,8 +2580,8 @@ function eval_storeLog(ctx, tag){
     } else {
         ctx.outLogs[indexLog].data.push(data.toString(16));
     }
-    if(fullTracer) fullTracer.handleEvent(ctx, tag)
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    if (fullTracer)
+        fullTracer.handleEvent(ctx, tag);
 }
 
 function eval_log(ctx, tag) {
@@ -2663,7 +2651,6 @@ function eval_memAlignWR8_W0(ctx, tag) {
 function eval_saveContractBytecode(ctx, tag) {
     const addr = evalCommand(ctx, tag.params[0]);
     ctx.input.contractsBytecode[ctx.hashP[addr].digest] = "0x"+byteArray2HexString(ctx.hashP[addr].data);
-    return scalar2fea(ctx.Fr, Scalar.e(0));
 }
 
 function checkParams(ctx, tag, expectedParams){
@@ -2882,28 +2869,4 @@ function sr4to8(F, r) {
     sr[6] = r[3] & 0xFFFFFFFFn;
     sr[7] = r[3] >> 32n;
     return sr;
-}
-
-async function poseidonLinear(inp) {
-    const poseidon = await buildPoseidon()
-    const F = poseidon.F;
-
-    bytes = inp.slice();
-    bytes.push(0x01);
-    while((bytes.length % 56) !== 0) bytes.push(0);
-
-    bytes[bytes.length-1] |= 0x80;
-
-    let st = [F.zero, F.zero, F.zero, F.zero];
-    for (let j=0; j<bytes.length;j+=56) {
-        let A = [F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero];
-        for (k=0; k<56; k++) {
-            const e = Math.floor(k / 7);
-            const pe = k % 7;
-            A[e] = F.add(A[e], F.e(BigInt(bytes[j+k]) << BigInt(pe * 8)));
-        }
-        st = poseidon(A, st);
-    }
-
-    return h4toString(st);
 }
