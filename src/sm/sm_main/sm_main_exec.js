@@ -1681,7 +1681,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             if (!Fr.eq(previousRCX,pols.RCX[nexti])) {
                 previousRCX = pols.RCX[nexti];
-                previousRCXInv = Fr.e(Fr.inv(Fr.e(previousRCX)));
+                previousRCXInv = Fr.inv(Fr.e(previousRCX));
             }
             pols.RCXInv[nexti] = previousRCXInv;
         }

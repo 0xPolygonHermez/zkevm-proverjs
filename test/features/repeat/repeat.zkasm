@@ -92,8 +92,27 @@ endJmpETest:
         310 :ASSERT
         310 :ASSERT
 
+        ; positive values
+        ; 0xFFFFFFFFn => RCX,A
+        ; RCX :ASSERT
+
+        0x7FFFFFFFn => RCX,A
+        RCX :ASSERT
+
+        10 => RCX,A
+        RCX :ASSERT
+
+        11 => A
+        RCX + 1 => RCX
+        RCX :ASSERT
+
+        ; negative values
+        -1 => A
+        RCX - 12 => RCX
+        RCX :ASSERT
+
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RCX, HASHPOS
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)
