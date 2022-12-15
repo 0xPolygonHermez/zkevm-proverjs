@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "zkevm.c12a.verifier.circom";
+include "c12a.verifier.circom";
 
 template Main() {
 
