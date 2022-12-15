@@ -50,8 +50,8 @@ namespace Main(%N);
     pol commit CONST7, CONST6, CONST5, CONST4, CONST3, CONST2, CONST1, CONST0;
     pol commit FREE7, FREE6, FREE5, FREE4, FREE3, FREE2, FREE1, FREE0;
     pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inRR, inHASHPOS, inRCX;
-    pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, JMP, JMPN, JMPC, setRR, setHASHPOS, setRCX;
-    pol commit offset;
+    pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setRR, setHASHPOS, setRCX;
+    pol commit JMP, JMPN, JMPC, JMPZ, offset;
     pol commit incStack;
     pol commit isStack;
     pol commit isMem;
@@ -64,17 +64,16 @@ namespace Main(%N);
     pol commit sWR, sRD;
     pol commit arithEq0, arithEq1, arithEq2;
     pol commit memAlignRD, memAlignWR, memAlignWR8;
-    pol commit hashK, hashKLen, hashKDigest;
-    pol commit hashP, hashPLen, hashPDigest;
+    pol commit hashK, hashK1, hashKLen, hashKDigest;
+    pol commit hashP, hashP1, hashPLen, hashPDigest;
     pol commit bin;
     pol commit binOpcode;
     pol commit assert;
-    pol commit repeat;
+    pol commit repeat, call, return;
 
     ///////  Intermediary commit polynomials
     pol commit isNeg;
     pol commit isMaxMem;
-
 
     /// Counters
     pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntPoseidonG, cntPaddingPG;
@@ -236,6 +235,11 @@ namespace Main(%N);
     pol RCXIsZero = 1 - RCX*RCXInv;
     RCXIsZero*RCX = 0;
 
+    /// op0 check zero
+    pol commit op0Inv;
+    pol op0IsZero = 1 - op0*op0Inv;
+    op0IsZero*op0 = 0;
+
     /////// MAXMEM intermediary vals New State
 
     pol diffMem = isMaxMem* ( (maxMemRel - MAXMEM) -
@@ -306,7 +310,9 @@ namespace Main(%N);
     CTX' = setCTX * (op0 - CTX) + CTX;
     SP' = setSP * (op0 - (SP +incStack)) + (SP +incStack);
     PC' = setPC * (op0 - PC) + PC;
-    RR' = setRR * (op0 - RR) + RR;
+
+    // ROM constraint: call * setRR = 0
+    RR' = setRR * (op0 - RR) + call * (zkPC + 1 - RR) + RR;
     GAS' = setGAS * (op0 - GAS) + GAS;
 
     pol decRCX = repeat * (1-RCXIsZero);
@@ -314,12 +320,23 @@ namespace Main(%N);
 
     MAXMEM' = setMAXMEM * (op0 - maxMemCalculated) + maxMemCalculated;
 
-    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP)*D0;
+    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP)*D0 + hashK1 + hashP1;
 
-    pol doJMP = JMPN*isNeg + JMP + JMPC*carry;
+    pol doJMP = JMPN*isNeg + JMP + JMPC*carry + JMPZ*op0IsZero + return + call;
+    pol elseJMP = JMPN*(1-isNeg) + JMPC*(1-carry) + JMPZ*(1-op0IsZero);
 
-    zkPC' = doJMP       *   (addr - (zkPC+1-decRCX)) +
-                            (zkPC+1-decRCX);
+    pol commit jmpAddr;
+    pol commit elseAddr;
+    pol commit useJmpAddr;
+    pol commit useElseAddr;
+
+    // ROM/Zkasm constraint: useJmpAddr * return = 0
+    pol finalJmpAddr = useJmpAddr * (jmpAddr - addr ) + return * (RR - addr) + addr;
+    pol nextNoJmpZkPC = zkPC + 1 - ((1-RCXIsZero)*repeat);
+    pol finalElseAddr = useElseAddr * (elseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
+
+    // if elseAddr wasn't specified on zkasm, compiler put current address + 1
+    zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (finalElseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
     (A0-op0)*assert = 0;
     (A1-op1)*assert = 0;
@@ -431,7 +448,7 @@ namespace Main(%N);
         op0, op1, op2, op3, op4, op5, op6, op7
     } is
     Binary.resultValidRange {
-        Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7
+        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7]
     };
 
 /////////
@@ -440,7 +457,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -b
     */
 
     pol operations =
@@ -454,62 +471,70 @@ namespace Main(%N);
         + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
         + 2**32 * setMAXMEM     + 2**33 * setPC         + 2**34 * setRCX        + 2**35 * setRR
         + 2**36 * setSP         + 2**37 * setSR         + 2**38 * sRD           + 2**39 * sWR
-        + 2**40 * useCTX;
+        + 2**40 * useCTX        + 2**41 * useJmpAddr    + 2**42 * JMPZ          + 2**43 * call
+        + 2**44 * return        + 2**45 * hashK1        + 2**46 * hashP1        + 2**47 * useElseAddr;
 
-        (1 - arithEq0) * arithEq0 = 0;
-        (1 - arithEq1) * arithEq1 = 0;
-        (1 - arithEq2) * arithEq2 = 0;
-        (1 - assert) * assert = 0;
-        (1 - bin) * bin = 0;
-        (1 - hashK) * hashK = 0;
-        (1 - hashKDigest) * hashKDigest = 0;
-        (1 - hashKLen) * hashKLen = 0;
-        (1 - hashP) * hashP = 0;
-        (1 - hashPDigest) * hashPDigest = 0;
-        (1 - hashPLen) * hashPLen = 0;
-        (1 - ind) * ind = 0;
-        (1 - indRR) * indRR = 0;
-        (1 - isMem) * isMem = 0;
-        (1 - isStack) * isStack = 0;
-        (1 - JMP) * JMP = 0;
-        (1 - JMPC) * JMPC = 0;
-        (1 - JMPN) * JMPN = 0;
-        (1 - memAlignRD) * memAlignRD = 0;
-        (1 - memAlignWR) * memAlignWR = 0;
-        (1 - memAlignWR8) * memAlignWR8 = 0;
-        (1 - mOp) * mOp = 0;
-        (1 - mWR) * mWR = 0;
-        (1 - repeat) * repeat = 0;
-        (1 - setA) * setA = 0;
-        (1 - setB) * setB = 0;
-        (1 - setC) * setC = 0;
-        (1 - setCTX) * setCTX = 0;
-        (1 - setD) * setD = 0;
-        (1 - setE) * setE = 0;
-        (1 - setGAS) * setGAS = 0;
-        (1 - setHASHPOS) * setHASHPOS = 0;
-        (1 - setMAXMEM) * setMAXMEM = 0;
-        (1 - setPC) * setPC = 0;
-        (1 - setRCX) * setRCX = 0;
-        (1 - setRR) * setRR = 0;
-        (1 - setSP) * setSP = 0;
-        (1 - setSR) * setSR = 0;
-        (1 - sRD) * sRD = 0;
-        (1 - sWR) * sWR = 0;
-        (1 - useCTX) * useCTX = 0;
+    (1 - arithEq0) * arithEq0 = 0;
+    (1 - arithEq1) * arithEq1 = 0;
+    (1 - arithEq2) * arithEq2 = 0;
+    (1 - assert) * assert = 0;
+    (1 - bin) * bin = 0;
+    (1 - hashK) * hashK = 0;
+    (1 - hashKDigest) * hashKDigest = 0;
+    (1 - hashKLen) * hashKLen = 0;
+    (1 - hashP) * hashP = 0;
+    (1 - hashPDigest) * hashPDigest = 0;
+    (1 - hashPLen) * hashPLen = 0;
+    (1 - ind) * ind = 0;
+    (1 - indRR) * indRR = 0;
+    (1 - isMem) * isMem = 0;
+    (1 - isStack) * isStack = 0;
+    (1 - JMP) * JMP = 0;
+    (1 - JMPC) * JMPC = 0;
+    (1 - JMPN) * JMPN = 0;
+    (1 - memAlignRD) * memAlignRD = 0;
+    (1 - memAlignWR) * memAlignWR = 0;
+    (1 - memAlignWR8) * memAlignWR8 = 0;
+    (1 - mOp) * mOp = 0;
+    (1 - mWR) * mWR = 0;
+    (1 - repeat) * repeat = 0;
+    (1 - setA) * setA = 0;
+    (1 - setB) * setB = 0;
+    (1 - setC) * setC = 0;
+    (1 - setCTX) * setCTX = 0;
+    (1 - setD) * setD = 0;
+    (1 - setE) * setE = 0;
+    (1 - setGAS) * setGAS = 0;
+    (1 - setHASHPOS) * setHASHPOS = 0;
+    (1 - setMAXMEM) * setMAXMEM = 0;
+    (1 - setPC) * setPC = 0;
+    (1 - setRCX) * setRCX = 0;
+    (1 - setRR) * setRR = 0;
+    (1 - setSP) * setSP = 0;
+    (1 - setSR) * setSR = 0;
+    (1 - sRD) * sRD = 0;
+    (1 - sWR) * sWR = 0;
+    (1 - useCTX) * useCTX = 0;
+    (1 - useJmpAddr) * useJmpAddr = 0;
+    (1 - JMPZ) * JMPZ = 0;
+    (1 - call) * call = 0;
+    (1 - return) * return = 0;
+    (1 - hashK1) * hashK1 = 0;
+    (1 - hashP1) * hashP1 = 0;
+    (1 - useElseAddr) * useElseAddr = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
         inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR, inHASHPOS, inRCX,
         inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
-        operations, offset, incStack, binOpcode, zkPC
+        operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inHASHPOS, Rom.inRCX,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
-        Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.line
+        Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
 
     pol commit sKeyI[4];
@@ -637,9 +662,9 @@ namespace Main(%N);
     } is
     Binary.resultBinOp {
         Binary.lOpcode,
-        Binary.a0, Binary.a1, Binary.a2, Binary.a3, Binary.a4, Binary.a5, Binary.a6, Binary.a7,
-        Binary.b0, Binary.b1, Binary.b2, Binary.b3, Binary.b4, Binary.b5, Binary.b6, Binary.b7,
-        Binary.c0, Binary.c1, Binary.c2, Binary.c3, Binary.c4, Binary.c5, Binary.c6, Binary.c7,
+        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7],
+        Binary.b[0], Binary.b[1], Binary.b[2], Binary.b[3], Binary.b[4], Binary.b[5], Binary.b[6], Binary.b[7],
+        Binary.c[0], Binary.c[1], Binary.c[2], Binary.c[3], Binary.c[4], Binary.c[5], Binary.c[6], Binary.c[7],
         Binary.lCout
     };
 
@@ -648,10 +673,10 @@ namespace Main(%N);
 /////////
 // HASHK Plookpups
 /////////
-    hashK {
+    hashK + hashK1 {
         addr,
         HASHPOS,
-        D0,
+        D0 * hashK + hashK1,
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in
@@ -690,10 +715,10 @@ namespace Main(%N);
 /////////
 // HASHP Plookpups
 /////////
-    hashP {
+    hashP + hashP1 {
         addr,
         HASHPOS,
-        D0,
+        D0 * hashP + hashP1,
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in

@@ -32,6 +32,7 @@ const argv = require("yargs")
     .alias("t", "test")
     .alias("l", "logs")
     .alias("s", "skip")
+    .alias("S", "stats")
     .alias("d", "debug")
     .alias("p", "pil")
     .alias("P", "pilconfig")
@@ -41,6 +42,7 @@ const argv = require("yargs")
     .alias("T", "tracer")
     .alias("c", "counters")
     .alias("N", "stepsN")
+    .alias("V", "verboseFullTracer")
     .argv;
 
 async function run() {
@@ -99,6 +101,9 @@ async function run() {
 
     const test = testFile ? JSON.parse(await fs.promises.readFile(testFile, "utf8")) : false;
     const cmPols = newCommitPolsArray(pil);
+    const stats = (argv.stats === true || typeof argv.stats === 'string');
+    const statsFile = typeof argv.stats === 'string' ? argv.stats.trim() : 'program.stats';
+
     const config = {
         test: test,
         debug: (argv.debug === true),
@@ -109,14 +114,16 @@ async function run() {
         execute: (argv.execute === true),
         tracer: (argv.tracer === true),
         counters: (argv.counters === true),
-        stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN)
+        stats,
+        stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN),
+        verboseFullTracer: (argv.verboseFullTracer === true)
     }
-
+    let metadata = {};
     const N = cmPols.Main.PC.length;
 
     console.log(`N = ${N}`);
     console.log("Main ...");
-    const requiredMain = await smMain.execute(cmPols.Main, input, rom, config);
+    const requiredMain = await smMain.execute(cmPols.Main, input, rom, config, metadata);
     if (typeof outputFile !== "undefined") {
         if (cmPols.Storage) {
             console.log("Storage...");
@@ -172,6 +179,22 @@ async function run() {
 
         console.log("Exporting Polynomials...");
         await cmPols.saveToFile(outputFile);
+    }
+    if (stats) {
+        console.log(`generating lines info .... ${outputFile}`);
+        let output = await fs.promises.open(statsFile, 'w');
+        let w = 0;
+        const sep = '|';
+        const content = ['w', 'zkPC', 'times', 'sourceFile', 'sourceLine', 'code'].join(sep) + "\n";
+        let res = await output.write(content);
+
+        for (const zkPC of metadata.stats.trace) {
+            const line = rom.program[zkPC];
+            const content = [w, zkPC, metadata.stats.lineTimes[zkPC] || 0,line.fileName, line.line, line.lineStr.trim()].join('|') + "\n";
+            res = await output.write(content);
+            ++w;
+        }
+        await output.close();
     }
 
     if (logsFile) {

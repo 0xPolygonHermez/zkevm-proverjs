@@ -46,10 +46,17 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     const constPols =  newConstantPolsArray(pil);
     const cmPols =  newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
+    const N = polDeg;
     console.log('Pil N = 2 ** '+Math.log2(polDeg));
 
     const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
-    const rom = await zkasm.compile(zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile));
+    const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
+    console.log(zkasmFinalFilename);
+    const rom = await zkasm.compile(zkasmFinalFilename);
+
+    if (mainConfig && mainConfig.romFilename) {
+        await fs.promises.writeFile(mainConfig.romFilename, JSON.stringify(rom, null, 1) + "\n");
+    }
 
     if (constPols.Global) {
         console.log("Const Global...");
@@ -108,6 +115,15 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.buildConstants(constPols.Binary);
     }
 
+    for (let i=0; i<constPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof constPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+            }
+        }
+    }
+
+    console.log("Exec Main...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
@@ -169,6 +185,14 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.execute(cmPols.Binary, requiredMain.Binary || []);
     } else if (verifyPilFlag && requiredMain.Binary && requiredMain.Binary.length) {
         console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
+    }
+
+    for (let i=0; i<cmPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof cmPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+            }
+        }
     }
 
     if (mainConfig && mainConfig.constFilename) {
