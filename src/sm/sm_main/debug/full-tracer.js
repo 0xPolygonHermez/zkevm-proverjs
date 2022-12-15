@@ -9,7 +9,7 @@ const Verbose = require("./verbose-tracer");
 const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory } = require("./full-tracer-utils");
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
-const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
+const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_gas_overflow`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
 const generate_call_trace = true;
 const generate_execute_trace = false;
 
