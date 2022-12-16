@@ -10,7 +10,7 @@ const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const fileCachePil = path.join(__dirname, "../../cache-main-pil.json");
 
 const argv = require("yargs")
-    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> - e")
+    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> -e")
     .help('h')
     .alias("i", "input")
     .alias("f", "folder")

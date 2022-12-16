@@ -24,6 +24,7 @@ const Mask256 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
 const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8n));
 
 let fullTracer;
+let debug;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
 
@@ -42,7 +43,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         testTools.setup(config.test, evalCommand);
     }
 
-    const debug = config && config.debug;
+    debug = config && config.debug;
     const flagTracer = config && config.tracer;
     const verboseFullTracer = config.verboseFullTracer;
     const N = pols.zkPC.length;
@@ -1008,7 +1009,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`HashK(${addr}) do not match, pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
                 }
             }
-
             const paddingA = Scalar.shr(a, size * 8);
             if (!Scalar.isZero(paddingA)) {
                 throw new Error(`HashK(${addr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
@@ -2471,6 +2471,8 @@ function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     if (fullTracer)
         fullTracer.handleEvent(ctx, tag);
+    if (debug && tag.params[0].varName == 'onError')
+        console.log(`Error triggered zkrom: ${tag.params[1].varName}\nsource: ${ctx.sourceRef}`);
 }
 
 function eval_cond(ctx, tag) {
