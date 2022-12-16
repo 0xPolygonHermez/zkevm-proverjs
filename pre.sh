@@ -1,3 +1,4 @@
+#set -x
 checkMandatoryOptArg() {
     argname=$3
     [ "$2" = "true" ] && echo "ERROR: --$1 without mandatory argument. usage: --$1=<${argname:=value}>" && exit 1
@@ -43,9 +44,12 @@ type head free tail sed >/dev/null 2>&1 && MEM=`free|head -2|tail -1|sed 's/Mem:
 MEM=$((MEM * 9/10000))
 [ $MEM -gt 524288 ] && MEM=524288
 NODE="--max-old-space-size=$MEM"
-PIL="-p ${npm_config_pil:=pil/main.pil}`[ ! -z $npm_config_pilconfig ] && echo \" -P $npm_config_pilconfig\"`"
+PIL_MAIN="${npm_config_pil:=pil/main.pil}"
+PIL_JSON="`basename $PIL_MAIN`.json"
+PIL_DIR="`dirname $PIL_MAIN`"
+PIL="$PIL_MAIN`[ ! -z $npm_config_pilconfig ] && echo \" -P $npm_config_pilconfig\"`"
 PILSTARK="node $NODE node_modules/pil-stark/src"
-PILCOM="node $NODE node_modules/pilcom/src"
+PILCOM="node $NODE node_modules/.bin/pilcom"
 SNARKJS="node $NODE node_modules/snarkjs/cli.js"
 BCTREE="${npm_config_bctree:=$PILSTARK/main_buildconsttree.js}"
 # [ ! -z $npm_config_nth ] &&

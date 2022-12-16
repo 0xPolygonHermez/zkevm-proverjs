@@ -5,13 +5,13 @@
   "main": "index.js",
   "config": {
     "steps": [
-      "buildrom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
+      "buildrom buildpil buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
       "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom",
       "c12b_setup c12b_buildstarkinfo c12b_buildchelpers c12b_exec c12b_pilverify c12b_buildconstanttree c12b_prove c12b_verify c12b_gencircom c12b_compilecircom",
       "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity"
     ],
     "steps_setup": [
-      "buildrom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+      "buildrom buildpil buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
       "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
       "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
       "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
@@ -35,15 +35,16 @@
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
 
     "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
-    "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
-    "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
-    "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const $PIL",
-    "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
-    "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m $PIL -s $BDIR/zkevm.starkinfo.json -c $BDIR/zkevm.chelpers/zkevm.chelpers.cpp -C ZkevmSteps",
-    "buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/zkevm.const $PIL -s $BDIR/zkevm.starkstruct.json -t $BDIR/zkevm.consttree -v $BDIR/zkevm.verkey.json",
-    "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm$NTH.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree $PIL -s $BDIR/zkevm.starkinfo.json -o $BDIR/zkevm$NTH.proof.json -z $BDIR/zkevm$NTH.zkin.proof.json -b $BDIR/zkevm$NTH.public.json",
-    "verify": ". ./pre.sh && $PILSTARK/main_verifier.js $PIL -s $BDIR/zkevm.starkinfo.json -o $BDIR/zkevm$NTH.proof.json -b $BDIR/zkevm$NTH.public.json -v $BDIR/zkevm.verkey.json",
-    "gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js $PIL -s $BDIR/zkevm.starkinfo.json -v $BDIR/zkevm.verkey.json -o $BDIR/zkevm.verifier.circom",
+    "buildpil": ". ./pre.sh && mkdir -p $BDIR/pil/zkevm && mkdir -p $BDIR/c_files && node $NODE node_modules/.bin/pilcom $PIL -o $BDIR/pil/zkevm/$PIL_JSON -c $BDIR/c_files/pols_generated && for PF in `tools/included_pils.sh $BDIR/pil/zkevm/$PIL_JSON`; do cp -v $PIL_DIR/$PF $BDIR/pil/zkevm/$PF; done",
+    "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
+    "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
+    "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const -p $PIL",
+    "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
+    "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $PIL -s $BDIR/zkevm.starkinfo.json -c $BDIR/zkevm.chelpers/zkevm.chelpers.cpp -C ZkevmSteps",
+    "buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/zkevm.const -p $PIL -s $BDIR/zkevm.starkstruct.json -t $BDIR/zkevm.consttree -v $BDIR/zkevm.verkey.json",
+    "prove": ". ./pre.sh && $PILSTARK/main_prover.js -m $BDIR/zkevm$NTH.commit  -c $BDIR/zkevm.const -t $BDIR/zkevm.consttree -p $PIL -s $BDIR/zkevm.starkinfo.json -o $BDIR/zkevm$NTH.proof.json -z $BDIR/zkevm$NTH.zkin.proof.json -b $BDIR/zkevm$NTH.public.json",
+    "verify": ". ./pre.sh && $PILSTARK/main_verifier.js -p $PIL -s $BDIR/zkevm.starkinfo.json -o $BDIR/zkevm$NTH.proof.json -b $BDIR/zkevm$NTH.public.json -v $BDIR/zkevm.verkey.json",
+    "gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js -p $PIL -s $BDIR/zkevm.starkinfo.json -v $BDIR/zkevm.verkey.json -o $BDIR/zkevm.verifier.circom",
     "compilecircom": ". ./pre.sh && circom --O1 --prime goldilocks --r1cs --sym --wasm --c --verbose $BDIR/zkevm.verifier.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
 
     "c12a_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js  -r $BDIR/zkevm.verifier.r1cs  -p $BDIR/c12a.pil -c $BDIR/c12a.const -e $BDIR/c12a.exec",
@@ -93,7 +94,7 @@
     "g16solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/final.g16.0001.zkey $BDIR/final.g16.verifier.sol",
 
     "preg16setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
-    "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
+    "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/c12a.pil -s $BDIR/c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR/c12a.starkstruct.json; fi",
     "buildarith": "node tools/arith/parse tools/arith/arith.ejs.pil -o pil/arith.pil && node tools/arith/arith_eq_gen tools/arith/arith.ejs.pil -o src/sm/sm_arith/sm_arith_##.js",
     "prerecursive1_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json; else cp src/recursive.starkstruct.json $BDIR; fi",
@@ -121,7 +122,7 @@
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git",
     "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v0.5.1.0",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#v0.5.2.0",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#develop",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "^0.1.1",

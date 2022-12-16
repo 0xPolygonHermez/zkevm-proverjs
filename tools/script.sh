@@ -1,24 +1,23 @@
 #!/bin/sh
 
-BDIR=build/v0.5.1.0-evals2-20221212
+BDIR=build/v0.5.2.0-evals2
 BASEDIR=.
-DST=/mnt/ofs/zkproverc/v0.5.1.0-evals2-20221212
+DST=/mnt/ofs/zkproverc/v0.5.2.0-evals2-20221215
 # DST=build/postmerge.config2
 # CPFLAGS=-lv
 CPFLAGS=-v
-FOLDERS="c12a final recursive1 recursive2 recursivef scripts zkevm"
+FOLDERS="c12a final recursive1 recursive2 recursivef scripts zkevm c_files pil"
 
 for FOLDER in $FOLDERS; do [ ! -d $DST/config/$FOLDER ] && mkdir -p  $DST/config/$FOLDER; done
 
-CP_SCRIPTS=1
-CP_ZKEVM=1
+CP_SCRIPTS=0
+CP_ZKEVM=0
 CP_C12A=1
 CP_RECURSIVE1=1
 CP_RECURSIVE2=1
 CP_RECURSIVEF=1
 CP_FINAL=1
 CP_CIRCOM=1
-CP_SOURCES=1
 CP_PIL=1
 
 CP="cp $CPFLAGS"
@@ -37,11 +36,14 @@ if [ $CP_ZKEVM -eq 1 ]; then
 # zkevm
 FULLDST=$DST/config/zkevm
 [ ! -d $FULLDST ] && mkdir -p $FULLDST
-$CP $BDIR/zkevm.const                           $FULLDST
-$CP $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat $FULLDST/zkevm.verifier.dat
-$CP $BDIR/zkevm.consttree                       $FULLDST
-$CP $BDIR/zkevm.starkinfo.json                  $FULLDST
-$CP $BDIR/zkevm.verkey.json        		$FULLDST
+$CP $BDIR/zkevm.const                                   $FULLDST
+$CP $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.dat
+$CP $BDIR/zkevm.consttree                               $FULLDST
+$CP $BDIR/zkevm.starkinfo.json                          $FULLDST
+$CP $BDIR/zkevm.verkey.json        		                $FULLDST
+$CP -r $BDIR/pols_generated                                $DST/c_files
+$CP -r $BDIR/zkevm.verifier_cpp                            $DST/c_files
+$CP -r $BDIR/zkevm.chelpers                                $DST/c_files
 fi
 
 if [ $CP_C12A -eq 1 ]; then
@@ -53,6 +55,7 @@ $CP $BDIR/c12a.exec                     $FULLDST
 $CP $BDIR/c12a.consttree                $FULLDST
 $CP $BDIR/c12a.verkey.json              $FULLDST
 $CP $BDIR/c12a.starkinfo.json           $FULLDST
+$CP -r $BDIR/c12a.chelpers              $DST/c_files
 fi
 
 if [ $CP_RECURSIVE1 -eq 1 ]; then
@@ -67,6 +70,8 @@ $CP $BDIR/recursive.starkstruct.json    $FULLDST/recursive1.starkstruct.json
 $CP $BDIR/recursive1.starkinfo.json     $FULLDST
 $CP $BDIR/recursive1.verkey.json        $FULLDST
 $CP $BDIR/recursive1.pil                $FULLDST
+$CP -r $BDIR/recursive1_cpp             $DST/c_files
+$CP -r $BDIR/recursive1.chelpers        $DST/c_files
 fi
 
 if [ $CP_RECURSIVE2 -eq 1 ]; then
@@ -81,6 +86,8 @@ $CP $BDIR/recursive2_cpp/recursive2.dat $FULLDST/recursive2.verifier.dat
 $CP $BDIR/recursive2.verkey.json        $FULLDST
 $CP $BDIR/recursive2.consttree          $FULLDST
 $CP $BDIR/recursive2.const              $FULLDST
+$CP -r $BDIR/recursive2_cpp             $DST/c_files
+$CP -r $BDIR/recursive2.chelpers        $DST/c_files
 fi
 
 if [ $CP_RECURSIVEF -eq 1 ]; then
@@ -92,6 +99,8 @@ $CP $BDIR/recursivef.starkinfo.json     $FULLDST
 $CP $BDIR/recursivef.exec               $FULLDST
 $CP $BDIR/recursivef.const              $FULLDST
 $CP $BDIR/recursivef_cpp/recursivef.dat $FULLDST/recursivef.verifier.dat
+$CP -r $BDIR/recursivef_cpp             $DST/c_files
+$CP -r $BDIR/recursivef.chelpers        $DST/c_files
 fi
 
 if [ $CP_FINAL -eq 1 ]; then
@@ -101,15 +110,7 @@ FULLDST=$DST/config/final
 $CP $BDIR/final.g16.0001.zkey $FULLDST
 $CP $BDIR/final_cpp/final.dat $FULLDST/final.verifier.dat
 $CP $BDIR/final.g16.verkey.json $FULLDST
-fi
-
-if [ $CP_SOURCES -eq 1 ]; then
-# sources
-FULLDST=$DST/c_files
-[ ! -d $FULLDST ] && mkdir -p $FULLDST
-SOURCE_FOLDERS="pols_generated zkevm.verifier_cpp zkevm.chelpers c12a.chelpers recursive1_cpp recursive1.chelpers recursive2_cpp recursive2.chelpers recursivef_cpp recursivef.chelpers final_cpp"
-for SOURCE_FOLDER in $SOURCE_FOLDERS; do
-$CP -r $BDIR/$SOURCE_FOLDER $FULLDST; done
+$CP -r $BDIR/final_cpp             $DST/c_files
 fi
 
 if [ $CP_CIRCOM -eq 1 ]; then
