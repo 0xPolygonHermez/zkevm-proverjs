@@ -28,6 +28,7 @@ const argv = require("yargs")
     .usage("main_buildconstants -r <rom.json> -o <constant.bin|json> [-p <main.pil>] [-P <pilconfig.json>] [-v]")
     .alias("r", "rom")
     .alias("o", "output")
+    .alias("t", "text")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("v", "verbose")
@@ -44,6 +45,7 @@ async function run() {
         throw new Error("A output file needs to be specified")
     }
     const outputFile = argv.output.trim();
+    const outputTextDir = argv.text ? (typeof argv.text == 'string' ? argv.text.trim() : ''):false;
 
     let pilFile = __dirname + "/../pil/main.pil";
     if (argv.pil) {
@@ -83,10 +85,12 @@ async function run() {
         console.log("Binary...");
         await smBinary.buildConstants(constPols.Binary);
     }
+
     if (constPols.Global) {
         console.log("Global...");
         await smGlobal.buildConstants(constPols.Global);
     }
+
     if (constPols.KeccakF) {
         console.log("KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
@@ -130,6 +134,25 @@ async function run() {
     if (constPols.Storage) {
         console.log("Storage...");
         await smStorage.buildConstants(constPols.Storage);
+    }
+
+    if (typeof outputTextDir === 'string') {
+        let index = 0;
+        const pathSep = (outputTextDir.length > 0 & !outputTextDir.endsWith('/')) ? '/':'';
+        const blockSize = 16*1024;
+        for (cpol of constPols.$$defArray) {
+            const name = cpol.name + (typeof cpol.idx == 'undefined' ? '':('#'+cpol.idx));
+            const polfile = outputTextDir + pathSep + name + '.txt';
+            console.log(`saving constant ${name} on ${polfile}.... `);
+            let output = await fs.promises.open(polfile, 'w');
+            let from = 0;
+            while (from < constPols.$$array[index].length) {
+                res = await output.write(constPols.$$array[index].slice(from, from+blockSize-1).join("\n")+"\n");
+                from += blockSize;
+            }
+            await output.close();
+            ++index;
+        }
     }
 
     for (let i=0; i<constPols.$$array.length; i++) {
