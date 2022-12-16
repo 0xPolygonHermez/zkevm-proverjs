@@ -4,6 +4,9 @@
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "config": {
+    "steps_piltoolfiles": [
+        "buildrom buildpil buildconstants exec"
+      ],
     "steps": [
       "buildrom buildpil buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
       "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom c12a_compilecircom",
@@ -31,6 +34,7 @@
     "build:input": "node tools/build-genesis/build_genesis.js",
     "build:input-recursive": "node tools/build-genesis-recursive/build_genesis_recursive.js",
     "buildall": "tools/build_all.sh ${npm_package_config_steps}",
+    "buildpiltoolfiles": "tools/build_all.sh ${npm_package_config_steps_piltoolfiles}",
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
 
