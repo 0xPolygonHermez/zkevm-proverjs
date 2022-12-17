@@ -15,25 +15,26 @@ module.exports.buildConstants = async function (pols) {
 
 function buidBYTE2(pol, F, N) {
     const m = 1<<16;
-    if (N<m) throw new Error("GLOBAL.BYTE does not fit");
-    for (let i=0; i<m; i++) {
-        pol[i] = BigInt(i);
-    }
-
-    for (let i=m; i<N; i++) {
-        pol[i] = 0n;
+    if (N<m) throw new Error("GLOBAL.BYTE2 does not fit");
+    for (let i=0; i<N; i++) {
+        pol[i] = BigInt(i & 0xFFFF);
     }
 }
 
 function buidBYTE(pol, F, N) {
     if (N<256) throw new Error("GLOBAL.BYTE does not fit");
 
-    for (let i=0; i<256; i++) {
-        pol[i] = BigInt(i);
+    for (let i=0; i<N; i++) {
+        pol[i] = BigInt(i & 0xFF);
     }
+}
 
-    for (let i=256; i<N; i++) {
-        pol[i] = 0n;
+function buidBYTE_2A(pol, F, N) {
+    const m = 1<<16;
+    if (N<m) throw new Error("GLOBAL.BYTE_2A does not fit");
+
+    for (let i=0; i<N; i++) {
+        pol[i] = BigInt((i >> 8) & 0xFF);
     }
 }
 

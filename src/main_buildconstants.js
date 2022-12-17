@@ -147,7 +147,7 @@ async function run() {
             let output = await fs.promises.open(polfile, 'w');
             let from = 0;
             while (from < constPols.$$array[index].length) {
-                res = await output.write(constPols.$$array[index].slice(from, from+blockSize-1).join("\n")+"\n");
+                res = await output.write(constPols.$$array[index].slice(from, from+blockSize).join("\n")+"\n");
                 from += blockSize;
             }
             await output.close();

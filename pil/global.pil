@@ -2,4 +2,5 @@ namespace Global(%N);
     pol constant L1;    // 1, 0, 0, 0, 0,
     pol constant LLAST; // 0,0,0,0,0, ...., 0, 1
     pol constant BYTE;
+    pol constant BYTE_2A;
     pol constant BYTE2;
