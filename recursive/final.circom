@@ -29,17 +29,17 @@ template Main() {
     signal input root3;
     signal input root4;
 
-    signal input evals[57][3];
+    signal input evals[72][3];
 
-    signal input s0_vals1[64][12];
-    signal input s0_vals3[64][15];
-    signal input s0_vals4[64][12];
-    signal input s0_valsC[64][23];
+    signal input s0_vals1[32][12];
+    signal input s0_vals3[32][3];
+    signal input s0_vals4[32][36];
+    signal input s0_valsC[32][34];
 
-    signal input s0_siblings1[64][6][16];
-    signal input s0_siblings3[64][6][16];
-    signal input s0_siblings4[64][6][16];
-    signal input s0_siblingsC[64][6][16];
+    signal input s0_siblings1[32][6][16];
+    signal input s0_siblings3[32][6][16];
+    signal input s0_siblings4[32][6][16];
+    signal input s0_siblingsC[32][6][16];
 
     signal input s1_root;
     signal input s2_root;
@@ -47,16 +47,16 @@ template Main() {
     signal input s4_root;
     signal input s5_root;
 
-    signal input s1_vals[64][48];
-    signal input s1_siblings[64][5][16];
-    signal input s2_vals[64][48];
-    signal input s2_siblings[64][4][16];
-    signal input s3_vals[64][48];
-    signal input s3_siblings[64][3][16];
-    signal input s4_vals[64][48];
-    signal input s4_siblings[64][2][16];
-    signal input s5_vals[64][48];
-    signal input s5_siblings[64][1][16];
+    signal input s1_vals[32][24];
+    signal input s1_siblings[32][5][16];
+    signal input s2_vals[32][48];
+    signal input s2_siblings[32][4][16];
+    signal input s3_vals[32][48];
+    signal input s3_siblings[32][3][16];
+    signal input s4_vals[32][48];
+    signal input s4_siblings[32][2][16];
+    signal input s5_vals[32][48];
+    signal input s5_siblings[32][1][16];
 
     signal input finalPol[16][3];
 

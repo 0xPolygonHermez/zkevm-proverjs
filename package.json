@@ -1,6 +1,6 @@
 {
   "name": "@0xpolygonhermez/zkevm-proverjs",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "config": {
@@ -63,7 +63,7 @@
 
     "recursive1_gencircom": ". ./pre.sh && cp recursive/recursive1.circom $BDIR",
     "recursive1_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose --O1 --prime goldilocks $BDIR/recursive1.circom -o $BDIR -l node_modules/pil-stark/circuits.gl",
-    "recursive1_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js --forceNBits=23 -r $BDIR/recursive1.r1cs -p $BDIR/recursive1.pil -c $BDIR/recursive1.const -e $BDIR/recursive1.exec",
+    "recursive1_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursive1.r1cs -p $BDIR/recursive1.pil -c $BDIR/recursive1.const -e $BDIR/recursive1.exec",
     "recursive1_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -i $BDIR/recursive1.starkinfo.json",
     "recursive1_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive1.pil -s $BDIR/recursive1.starkinfo.json -c $BDIR/recursive1.chelpers/recursive1.chelpers.cpp -C Recursive1Steps",
     "recursive1_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursive1.const -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -t $BDIR/recursive1.consttree -v $BDIR/recursive1.verkey.json",
@@ -125,8 +125,8 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v0.5.1.0",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#develop",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v0.6.0.0-rc.1",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#v0.6.0.0-rc.1",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "^0.1.1",
@@ -135,8 +135,8 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
-    "pil-stark": "0.0.44",
-    "pilcom": "0.0.19",
+    "pil-stark": "0.0.47",
+    "pilcom": "0.0.20",
     "snarkjs": "0.4.27",
     "yargs": "^17.4.0"
   },

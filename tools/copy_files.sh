@@ -1,17 +1,17 @@
 #!/bin/sh
 
-BDIR=build/v0.5.2.0-evals2
+BDIR=build/v0.5.2.0-evals2-20221217_2203
 BASEDIR=.
-DST=/mnt/ofs/zkproverc/v0.5.2.0-evals2-20221215
-# DST=build/postmerge.config2
+# DST=/mnt/ofs/zkproverc/v0.5.2.0-evals2-20221217
+DST=/home/ubuntu/data/v0.5.2.0-evals2-20221217_2203
 # CPFLAGS=-lv
-CPFLAGS=-v
+CPFLAGS=-lv
 FOLDERS="c12a final recursive1 recursive2 recursivef scripts zkevm c_files pil"
 
 for FOLDER in $FOLDERS; do [ ! -d $DST/config/$FOLDER ] && mkdir -p  $DST/config/$FOLDER; done
 
-CP_SCRIPTS=0
-CP_ZKEVM=0
+CP_SCRIPTS=1
+CP_ZKEVM=1
 CP_C12A=1
 CP_RECURSIVE1=1
 CP_RECURSIVE2=1
@@ -41,9 +41,9 @@ $CP $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.
 $CP $BDIR/zkevm.consttree                               $FULLDST
 $CP $BDIR/zkevm.starkinfo.json                          $FULLDST
 $CP $BDIR/zkevm.verkey.json        		                $FULLDST
-$CP -r $BDIR/pols_generated                                $DST/c_files
-$CP -r $BDIR/zkevm.verifier_cpp                            $DST/c_files
-$CP -r $BDIR/zkevm.chelpers                                $DST/c_files
+$CP -r $BDIR/c_files/pols_generated                     $DST/c_files
+$CP -r $BDIR/zkevm.verifier_cpp                         $DST/c_files
+$CP -r $BDIR/zkevm.chelpers                             $DST/c_files
 fi
 
 if [ $CP_C12A -eq 1 ]; then
