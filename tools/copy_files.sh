@@ -1,14 +1,11 @@
 #!/bin/sh
 
-BDIR=build/v0.5.2.0-evals2-20221217_2203
+BDIR=build/v0.6.0.0-rc.1
 BASEDIR=.
-# DST=/mnt/ofs/zkproverc/v0.5.2.0-evals2-20221217
-DST=/home/ubuntu/data/v0.5.2.0-evals2-20221217_2203
-# CPFLAGS=-lv
-CPFLAGS=-lv
-FOLDERS="c12a final recursive1 recursive2 recursivef scripts zkevm c_files pil"
+DST=/mnt/ofs/zkproverc/v0.6.0.0-rc.1
+CPFLAGS=-v
 
-for FOLDER in $FOLDERS; do [ ! -d $DST/config/$FOLDER ] && mkdir -p  $DST/config/$FOLDER; done
+[ ! -d $DST/c_files ] && mkdir -p $DST/c_files
 
 CP_SCRIPTS=1
 CP_ZKEVM=1
@@ -41,7 +38,7 @@ $CP $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.
 $CP $BDIR/zkevm.consttree                               $FULLDST
 $CP $BDIR/zkevm.starkinfo.json                          $FULLDST
 $CP $BDIR/zkevm.verkey.json        		                $FULLDST
-$CP -r $BDIR/c_files/pols_generated                     $DST/c_files
+$CP -r $BDIR/pols_generated                             $DST/c_files
 $CP -r $BDIR/zkevm.verifier_cpp                         $DST/c_files
 $CP -r $BDIR/zkevm.chelpers                             $DST/c_files
 fi
@@ -106,11 +103,11 @@ fi
 if [ $CP_FINAL -eq 1 ]; then
 # final
 FULLDST=$DST/config/final
-[ ! -d $FULLDST ] && mkdir -p $FULLDST
-$CP $BDIR/final.g16.0001.zkey $FULLDST
-$CP $BDIR/final_cpp/final.dat $FULLDST/final.verifier.dat
-$CP $BDIR/final.g16.verkey.json $FULLDST
-$CP -r $BDIR/final_cpp             $DST/c_files
+[ ! -d $FULLDST ] && mkdir -p           $FULLDST
+$CP $BDIR/final.g16.0001.zkey           $FULLDST
+$CP $BDIR/final_cpp/final.dat           $FULLDST/final.verifier.dat
+$CP $BDIR/final.g16.verkey.json         $FULLDST
+$CP -r $BDIR/final_cpp                  $DST/c_files
 fi
 
 if [ $CP_CIRCOM -eq 1 ]; then

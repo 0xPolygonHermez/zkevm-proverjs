@@ -52,6 +52,10 @@ npm run buildall --from=c12setup
 ```sh
 npm run buildall --continue
 ```
+**step**: syntax is --step=\<step\> to indicate step to execute (one step only)
+```sh
+npm run buildall --step=c12setup
+```
 **pil**: syntax is --pil=\<main.pil\> where main.pil was name of pil to compile. For debugging could use basic_main.pil. See --starkstruct option
 ```sh
 npm run buildall --pil=pil/basic_main.pil --starkstruct=debug
@@ -89,48 +93,6 @@ npm run buildall --input=test/myinputfile.json
 | CTX.base + [0x010000 - 0x01FFFF] | 2MiB | EVM Stack
 | CTX.base + [0x020000 - 0x03FFFF] | 4MiB | EVM Memory
 
-
-### Build steps
-| step | inputs | outputs | description|
-|---|---|---|---|
-| buildrom | | | compile main rom of zkevm-rom|
-| buildconstants | | | generate file with all evaluations of constant polynomials|
-| exec | | | execute all state machines to generate file with all evaluations of commited polynomials |
-| pilverify | | | verify constraints |
-| buildstarkinfo | | | |
-| buildchelpers | | | |
-| buildconstanttree | | | |
-| prove | | | |
-| verify | | | |
-| gencircom | | | |
-| compilecircom | | | |
-| c12a_setup | | | |
-| c12a_buildstarkinfo | | | |
-| c12a_buildchelpers | | | |
-| c12a_exec | | | |
-| c12a_pilverify | | | |
-| c12a_buildconstanttree | | | |
-| c12a_prove | | | |
-| c12a_verify | | | |
-| c12a_gencircom | | | |
-| c12a_compilecircom | | | |
-| c12b_setup | | | |
-| c12b_buildstarkinfo | | | |
-| c12b_buildchelpers | | | |
-| c12b_exec | | | |
-| c12b_pilverify | | | |
-| c12b_buildconstanttree | | | |
-| c12b_prove | | | |
-| c12b_verify | | | |
-| c12b_gencircom | | | |
-| c12b_compilecircom | | | |
-| g16setup | | | |
-| g16contribute | | | |
-| g16evk | | | |
-| g16wc | | | |
-| g16prove | | | |
-| g16verify | | | |
-| g16solidity | | | |
 
 ## License
 
