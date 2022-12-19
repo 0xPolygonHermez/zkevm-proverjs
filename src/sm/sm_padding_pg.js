@@ -16,12 +16,6 @@ module.exports.buildConstants = async function (pols) {
 
     let p =0;
 
-    pols.k_crF = [];
-
-    for (let i=0; i<8; i++) {
-        pols.k_crF[i] = pols[`k_crF${i}`];
-    }
-
     for (let i=0; i<nBlocks; i++) {
         const bytesBlock = N-p > BYTESPERBLOCK ? BYTESPERBLOCK : N-p;
         for (let j=0; j<bytesBlock; j++) {
@@ -42,24 +36,6 @@ module.exports.buildConstants = async function (pols) {
             p += 1;
         }
     }
-
-
-    for (let i=0; i<32; i++) {
-        pols.k_crOffset[i] = BigInt(i);
-        const acci = Math.floor(i / 4);
-        const sh = BigInt((i % 4)*8);
-        for (let k=0; k<8; k++) {
-            pols.k_crF[k][i] = (k == acci) ? BigInt(1n << sh) : 0n;
-        }
-    }
-
-    for (let i=32; i<N; i++) {
-        pols.k_crOffset[i] = pols.k_crOffset[0];
-        for (let k=0; k<8; k++) {
-            pols.k_crF[k][i] =  pols.k_crF[k][0]
-        }
-    }
-
 }
 
 

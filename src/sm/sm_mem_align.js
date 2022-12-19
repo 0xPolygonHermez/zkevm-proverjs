@@ -4,11 +4,6 @@ mapRange = (value, fromValue, mappings, elseValue = 0) =>
           (value >= fromValue && value <= (fromValue + mappings.length - 1)) ? mappings[value - fromValue] : elseValue;
 
 const CONST_F = {
-    // 0 (x256), 1 (x256), ..., 255 (x256), 0 (x256), ...
-    BYTE2A: (i) => (i & 0xFFFF) >> 8, // [0:256..255:256]
-
-    // 0, 1, 2, 3, ..., 254, 255, 0, 1, 2, ...
-    BYTE2B: (i) => (i & 0xFF), // [0..255]
 
     // 0 (x4096), 1 (x4096), ..., 255 (x4096), 0 (x4096), ...
     BYTE_C4096: (i) => (i >> 12), // [0:4096..255:4096]
@@ -20,27 +15,21 @@ const CONST_F = {
     WR256: (i) => ((i & 0x0C00) == 0x0800) ? true: false, // [0:2048,1:1024:0:1024]
     WR8: (i) => ((i & 0x0C00) == 0x0C00) ?  true: false,  // [0:3072,1:1024]
 
-    // 0, 1, 2, ..., 30, 31, 0, 1, ...
-    STEP: (i) => i % 32, // [0..32]
-
-    // 1, 0 (x31), 1, 0 (x31), 1, ...
-    RESET: (i) => (i % 32) == 0 ? true : false, // [1,0:31]
-
     // 0 (x32), 1 (x32), ...., 31 (x32), 0 (x32), ...
     OFFSET: (i) => (i >> 5) % 32, // [0:32..31:32]
 
     // For internal use
-    V_BYTE: (i) => (31 + (CONST_F.OFFSET(i) + CONST_F.WR8(i)) - CONST_F.STEP(i)) % 32,
+    V_BYTE: (i) => (31 + (CONST_F.OFFSET(i) + CONST_F.WR8(i)) - (i % 32)) % 32,
 
-    SELM1: (i) => (CONST_F.WR8(i) ? (CONST_F.STEP(i) == CONST_F.OFFSET(i)) :
-                                    (CONST_F.OFFSET(i) > CONST_F.STEP(i))) ? 1:0,
+    SELM1: (i) => (CONST_F.WR8(i) ? ((i % 32) == CONST_F.OFFSET(i)) :
+                                    (CONST_F.OFFSET(i) > (i % 32))) ? 1:0,
 
     FACTOR: (index, i) => mapRange(i % 32, 28 - 4 * index, [0x1000000, 0x10000, 0x100, 1], 0),
     FACTORV: (index, i) => (CONST_F.V_BYTE(i) >> 2) == index ? [1, 0x100, 0x10000, 0x1000000][CONST_F.V_BYTE(i) % 4] : 0,
 }
 
 module.exports.buildConstants = async function (pols) {
-    const N = pols.STEP.length;
+    const N = pols.OFFSET.length;
     Object.entries(CONST_F).forEach(([name, func]) => {
         if (typeof pols[name] === 'undefined') return;
 

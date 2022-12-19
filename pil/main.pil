@@ -16,9 +16,6 @@ namespace Main(%N);
 // Definitions
 ///////////
 
-    /////// Constant Polynomials
-    pol constant STEP;  // 0, 1, 2, 3, .......
-
     /////// State Polynomials
     pol commit A7, A6, A5, A4, A3, A2, A1;
     pol commit A0;
@@ -101,7 +98,7 @@ namespace Main(%N);
         PC * inPC +
         GAS * inGAS +
         MAXMEM * inMAXMEM +
-        STEP * inSTEP +
+        Global.STEP * inSTEP +
         RR * inRR +
         HASHPOS * inHASHPOS +
         cntArith * inCntArith +
@@ -212,7 +209,7 @@ namespace Main(%N);
     pol commit lJmpnCondValue;
     pol jmpnCondValue = JMPN*(isNeg*2**32 + op0);
 
-    lJmpnCondValue in STEP;
+    lJmpnCondValue in Global.STEP;
 
     pol commit hJmpnCondValueBit[9];
 
@@ -680,7 +677,7 @@ namespace Main(%N);
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in
-    PaddingKK.crLatch * PaddingKK.crValid {
+    PaddingKK.crLatch * PaddingKK.r8valid {
         PaddingKK.addr,
         PaddingKK.len - PaddingKK.rem - PaddingKK.crLen + 1,
         PaddingKK.crLen,
@@ -764,7 +761,7 @@ namespace Main(%N);
 /////////
     mOp {
         addr,
-        STEP,
+        Global.STEP,
         mWR,
         op0, op1, op2, op3,
         op4, op5, op6, op7

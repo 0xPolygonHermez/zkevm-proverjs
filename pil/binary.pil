@@ -12,6 +12,8 @@
         - [X] XOR   (OPCODE = 7)
 */
 
+include "global.pil";
+
 namespace Binary(%N);
 
 //  ##############################################################
@@ -20,11 +22,11 @@ namespace Binary(%N);
     //  Plockup polinomials
     //  ==============================================================
     //  ==== IN ====
-    //  P_OPCODE    (3  bits) Operation code
-    //  P_CIN       (1  bits) Carry in
-    //  P_LAST      (1  bits) Last byte
-    //  P_A         (8  bits) Input A
-    //  P_B         (8  bits) Input B
+    //  P_OPCODE         (3  bits) Operation code
+    //  P_CIN            (1  bits) Carry in
+    //  P_LAST           (1  bits) Last byte
+    //  Global.BYTE_2A   (8  bits) Input A
+    //  Global.BYTE      (8  bits) Input B
     //  ==== OUT ======
     //  P_C         (8 bits) Output C
     //  P_COUT      (1  bits) Carry out
@@ -34,17 +36,15 @@ namespace Binary(%N);
     //  ==============================================================
     //  NAME    | 0 | 1 | 2 | 3 | ... | 32 |
     //  ==============================================================
-    //  RESET   | 1 | 0 | 0 | 0 | ... |  1 |
-    //  FACTOR0 | 0x1 | 0x100 | 0x10000 | 0x1000000 | 0x0 | 0x0   | ... | 0x0 | 0x0   | 0x0     | 0x0       |
-    //  FACTOR1 | 0x0 | 0x0   | 0x0     | 0x0       | 0x1 | 0x100 | ... | 0x0 | 0x0   | 0x0     | 0x0       |
+    //  FACTOR0 | 0x1 | 0x10000 | 0x0 | 0x0     | ... | 0x0 | 0x0
+    //  FACTOR1 | 0x0 | 0x0     | 0x1 | 0x10000 | ... | 0x0 | 0x0
     //  ...
-    //  FACTOR7 | 0x0 | 0x0   | 0x0     | 0x0       | 0x0 | 0x0   | ... | 0x1 | 0x100 | 0x10000 | 0x1000000 |
-    pol constant P_OPCODE, P_A, P_B, P_CIN, P_LAST, P_USE_CARRY;
+    //  FACTOR7 | 0x0 | 0x0     | 0x0 | 0x0     | ... | 0x1 | 0x10000
+    pol constant P_OPCODE, P_CIN, P_LAST, P_USE_CARRY;
     pol constant P_C, P_COUT;
 
-    pol constant RESET;
+    pol RESET = Global.CLK32[0] + Global.CLK32[16];
     pol constant FACTOR[8];
-    // pol constant LAST;
 
     // ############################################################
     // COMMIT POLINOMIALS
@@ -83,9 +83,8 @@ namespace Binary(%N);
     lCout' = cOut;
     lOpcode' = opcode;
 
-
-    {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
-    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, P_A, P_B, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
 
     a[0]' = a[0] * (1 - RESET) + freeInA[0] * FACTOR[0] + 256 * freeInA[1] * FACTOR[0];
     a[1]' = a[1] * (1 - RESET) + freeInA[0] * FACTOR[1] + 256 * freeInA[1] * FACTOR[1];

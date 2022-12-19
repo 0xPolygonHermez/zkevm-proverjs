@@ -14,23 +14,18 @@ let OPCODE_SIZE = 2 ** 2
     ==================
     Build Contants
     ==================
-    FACTOR0_7, P_A, P_B, P_C, P_CIN, P_COUT, P_OPCODE, RESET
+    FACTOR0_7, P_C, P_CIN, P_COUT, P_OPCODE
 */
 module.exports.buildConstants = async function (pols) {
 
-    const N = pols.RESET.length;
+    const N = pols.P_C.length;
     buildFACTORS(pols.FACTOR, N);
-    buildRESET(pols.RESET, N);
 
-    buildP_A(pols.P_A, REG_SIZE, N);
-    buildP_B(pols.P_B, REG_SIZE, N);
     buildP_P_CIN(pols.P_CIN, CIN_SIZE, REG_SIZE * REG_SIZE, N);
     buildP_LAST(pols.P_LAST, P_LAST_SIZE, REG_SIZE * REG_SIZE * CIN_SIZE, N);
     buildP_OPCODE(pols.P_OPCODE, REG_SIZE * REG_SIZE * CIN_SIZE * P_LAST_SIZE, N);
 
     buildP_C_P_COUT_P_USE_CARRY(
-        pols.P_A,
-        pols.P_B,
         pols.P_CIN,
         pols.P_LAST,
         pols.P_OPCODE,
@@ -43,10 +38,10 @@ module.exports.buildConstants = async function (pols) {
 /*  =========
     FACTORS
     =========
-    FACTOR0 => 0x1  0x100   0x10000 0x01000000  0x0  0x0    0x0     0x0         ... 0x0  0x0    0x0     0x0         0x1 0x100   0x10000 0x01000000  0x0  ...
-    FACTOR1 => 0x0  0x0     0x0     0x0         0x1  0x100  0x10000 0x01000000  ... 0x0  0x0    0x0     0x0         0x0 0x0     0x0     0x0         0x0  ...
+    FACTOR0 => [0x1,0x10000,0:14]  (cyclic)
+    FACTOR1 => [0:2,0x1,0x10000,0:12] (cyclic)
     ...
-    FACTOR7 => 0x0  0x0     0x0     0x0         0x0  0x0     0x0     0x0        ... 0x1  0x100  0x10000 0x01000000  0x0 0x0     0x0     0x0         0x0  ...
+    FACTOR7 => [0:14,0x1,0x10000] (cyclic)
 */
 function buildFACTORS(FACTORS, N) {
     for (let index = 0; index < N; ++index) {
@@ -57,62 +52,6 @@ function buildFACTORS(FACTORS, N) {
              } else {
                 FACTORS[j][index] = 0n;
              }
-        }
-    }
-}
-
-/*  =========
-    RESET
-    =========
-    1 0 0 ... { STEPS } ... 0 1 0 ... { STEPS } 0
-    1 0 0 ... { STEPS } ... 0 1 0 ... { STEPS } 0
-    ...
-    1 0 0 ... { STEPS } ... 0 1 0 ... { STEPS } 0
-*/
-function buildRESET(pol, N) {
-    for (let i = 0; i < N; i++) {
-        pol[i] = BigInt((i % STEPS) == 0);
-    }
-}
-
-/*  ============
-    A
-    =========
-    0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15 (size * size)
-    0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15
-    ...
-    0 .. {size} .. 0 1 .. {size} .. 1 ... {size} ... 15 ... {size} ... 15
-*/
-function buildP_A(pol, size, N) {
-    let index = 0;
-    for (let i = 0; i < N; i += (size * size)) {
-        let value = 0;
-        for (let j = 0; j < size; j++) {
-            for (let k = 0; k < size; k++) {
-                pol[index++] = BigInt(value);
-            }
-            value++;
-        }
-    }
-}
-
-/*  =========
-    B
-    =========
-    0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 ... {size} ... 15 (size * size)
-    0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 ... {size} ... 15 (size * size)
-    ...
-    0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 .. {size} .. 15 0 1 2 ... {size} ... 15 (size * size)
- */
-function buildP_B(pol, size, N) {
-    let index = 0;
-    for (let i = 0; i < N; i = i + (size * size)) {
-        for (let j = 0; j < size; j++) {
-            let value = 0;
-            for (let k = 0; k < size; k++) {
-                pol[index++] = BigInt(value);
-                value++;
-            }
         }
     }
 }
@@ -181,40 +120,42 @@ function buildP_LAST(pol, pol_size, accumulated_size, N) {
         * Get the carry out -> COUT
     0 => AND
         * A & B -> C
-        * 0 -> COUT (AND doesn't have carry)
+        * [C != 0] => COUT
     default
         * 0 -> C
         * 0 -> COUT
  */
-function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, pol_use_carry, pol_c, pol_cout, N) {
+function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, pol_c, pol_cout, N) {
     // All opcodes
     let carry = 0;
     for (let i = 0; i < N; i++) {
+        const pol_a = BigInt((i >> 8) & 0xFF);
+        const pol_b = BigInt(i & 0xFF);
         switch (pol_opc[i]) {
             // ADD   (OPCODE = 0)
             case 0n:
-                let sum = pol_cin[i] + pol_a[i] + pol_b[i];
+                let sum = pol_cin[i] + pol_a + pol_b;
                 pol_c[i] = sum & 255n;
                 pol_cout[i] = sum >> 8n;
                 pol_use_carry[i] = 0n;
                 break;
             // SUB   (OPCODE = 1)
             case 1n:
-                if (pol_a[i] - pol_cin[i] >= pol_b[i]) {
-                    pol_c[i] = pol_a[i] - pol_cin[i] - pol_b[i];
+                if (pol_a - pol_cin[i] >= pol_b) {
+                    pol_c[i] = pol_a - pol_cin[i] - pol_b;
                     pol_cout[i] = 0n;
                 } else {
-                    pol_c[i] =  255n - pol_b[i] + pol_a[i] - pol_cin[i] + 1n;
+                    pol_c[i] =  255n - pol_b + pol_a - pol_cin[i] + 1n;
                     pol_cout[i] = 1n;
                 }
                 pol_use_carry[i] = 0n;
                 break;
             // LT    (OPCODE = 2)
             case 2n:
-                if (pol_a[i] < pol_b[i]) {
+                if (pol_a < pol_b) {
                     pol_cout[i] = 1n;
                     pol_c[i] = pol_last[i] ? 1n : 0n;
-                } else if (pol_a[i] == pol_b[i]) {
+                } else if (pol_a == pol_b) {
                     pol_cout[i] = pol_cin[i];
                     pol_c[i] = pol_last[i] ? pol_cin[i] : 0n;
                 } else {
@@ -226,10 +167,10 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
             // SLT   (OPCODE = 3)
             case 3n:
                 if (!pol_last[i]) {
-                    if (pol_a[i] < pol_b[i]) {
+                    if (pol_a < pol_b) {
                         pol_cout[i] = 1n;
                         pol_c[i] = 0n;
-                    } else if (pol_a[i] == pol_b[i]) {
+                    } else if (pol_a == pol_b) {
                         pol_cout[i] = pol_cin[i];
                         pol_c[i] = 0n;
                     } else {
@@ -237,8 +178,8 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
                         pol_c[i] = 0n;
                     }
                 } else {
-                    let sig_a = pol_a[i] >> 7n;
-                    let sig_b = pol_b[i] >> 7n;
+                    let sig_a = pol_a >> 7n;
+                    let sig_b = pol_b >> 7n;
                     // A Negative ; B Positive
                     if (sig_a > sig_b) {
                         pol_cout[i] = 1n;
@@ -249,10 +190,10 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
                         pol_c[i] = 0n;
                         // A and B equals
                     } else {
-                        if (pol_a[i] < pol_b[i]) {
+                        if (pol_a < pol_b) {
                             pol_cout[i] = 1n;
                             pol_c[i] = 1n;
-                        } else if (pol_a[i] == pol_b[i]) {
+                        } else if (pol_a == pol_b) {
                             pol_cout[i] = pol_cin[i];
                             pol_c[i] = pol_cin[i];
                         } else {
@@ -265,7 +206,7 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
                 break;
             // EQ    (OPCODE = 4)
             case 4n:
-                if (pol_a[i] == pol_b[i] && pol_cin[i] == 0n) {
+                if (pol_a == pol_b && pol_cin[i] == 0n) {
                     pol_cout[i] = 0n;
                     pol_c[i] = pol_last[i] ? 1n : 0n;
                 } else {
@@ -278,7 +219,7 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
                 break;
             // AND   (OPCODE = 5)
             case 5n:
-                pol_c[i] = pol_a[i] & pol_b[i];
+                pol_c[i] = pol_a & pol_b;
                 if (pol_cin[i] == 0n && pol_c[i] == 0n) {
                     pol_cout[i] = 0n;
                 } else {
@@ -288,13 +229,13 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_a, pol_b, pol_cin, pol_last, pol_opc, p
                 break;
             // OR    (OPCODE = 6)
             case 6n:
-                pol_c[i] = pol_a[i] | pol_b[i];
+                pol_c[i] = pol_a | pol_b;
                 pol_cout[i] = 0n;
                 pol_use_carry[i] = 0n;
                 break;
             // XOR   (OPCODE = 7)
             case 7n:
-                pol_c[i] = pol_a[i] ^ pol_b[i];
+                pol_c[i] = pol_a ^ pol_b;
                 pol_cout[i] = 0n;
                 pol_use_carry[i] = 0n;
                 break;
