@@ -12,6 +12,8 @@
         - [X] XOR   (OPCODE = 7)
 */
 
+include "global.pil";
+
 namespace Binary(%N);
 
 //  ##############################################################
@@ -34,17 +36,15 @@ namespace Binary(%N);
     //  ==============================================================
     //  NAME    | 0 | 1 | 2 | 3 | ... | 32 |
     //  ==============================================================
-    //  RESET   | 1 | 0 | 0 | 0 | ... |  1 |
-    //  FACTOR0 | 0x1 | 0x100 | 0x10000 | 0x1000000 | 0x0 | 0x0   | ... | 0x0 | 0x0   | 0x0     | 0x0       |
-    //  FACTOR1 | 0x0 | 0x0   | 0x0     | 0x0       | 0x1 | 0x100 | ... | 0x0 | 0x0   | 0x0     | 0x0       |
+    //  FACTOR0 | 0x1 | 0x10000 | 0x0 | 0x0     | ... | 0x0 | 0x0
+    //  FACTOR1 | 0x0 | 0x0     | 0x1 | 0x10000 | ... | 0x0 | 0x0
     //  ...
-    //  FACTOR7 | 0x0 | 0x0   | 0x0     | 0x0       | 0x0 | 0x0   | ... | 0x1 | 0x100 | 0x10000 | 0x1000000 |
+    //  FACTOR7 | 0x0 | 0x0     | 0x0 | 0x0     | ... | 0x1 | 0x10000
     pol constant P_OPCODE, P_CIN, P_LAST, P_USE_CARRY;
     pol constant P_C, P_COUT;
 
-    pol constant RESET;
+    pol RESET = Global.CLK32[0] + Global.CLK32[16];
     pol constant FACTOR[8];
-    // pol constant LAST;
 
     // ############################################################
     // COMMIT POLINOMIALS
@@ -63,13 +63,14 @@ namespace Binary(%N);
     pol commit a[8], b[8], c[8];
     pol commit opcode;
     pol commit cIn, cMiddle, cOut;
+    pol commit lCout,lOpcode;
 
     pol commit useCarry;
     pol commit resultBinOp;
     pol commit resultValidRange;
 
-    (1 - RESET') * resultBinOp = 0;
-    (1 - RESET') * resultValidRange = 0;
+    (1 - RESET) * resultBinOp = 0;
+    (1 - RESET) * resultValidRange = 0;
 
     resultBinOp * (1-resultBinOp) = 0;
     resultValidRange * (1-resultValidRange) = 0;
@@ -79,8 +80,12 @@ namespace Binary(%N);
     (cOut - cIn') * (1 - RESET') = 0;
     cIn * RESET = 0;
 
+    lCout' = cOut;
+    lOpcode' = opcode;
+
     {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
-    {resultValidRange + resultBinOp, opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
+
     a[0]' = a[0] * (1 - RESET) + freeInA[0] * FACTOR[0] + 256 * freeInA[1] * FACTOR[0];
     a[1]' = a[1] * (1 - RESET) + freeInA[0] * FACTOR[1] + 256 * freeInA[1] * FACTOR[1];
     a[2]' = a[2] * (1 - RESET) + freeInA[0] * FACTOR[2] + 256 * freeInA[1] * FACTOR[2];

@@ -9,9 +9,8 @@ const arithEq4 = require('./sm_arith_eq4');
 const F1Field = require("ffjavascript").F1Field;
 
 module.exports.buildConstants = async function (pols) {
-    const N = pols.CLK[0].length;
+    const N = pols.SEL_BYTE2_BIT19.length;
 
-    buildClocks(pols, N, 32);
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
 }
@@ -24,14 +23,6 @@ function buildByte2Bits16(pols, N) {
         const value = i % modBase;
         pols.SEL_BYTE2_BIT19[i] = (i < modB1 ? 0n:1n);
         pols.BYTE2_BIT19[i] = BigInt(value);
-    }
-}
-
-function buildClocks(pols, N, clocksByCycle) {
-    for (let i = 0; i < clocksByCycle; i++) {
-        for (let j = 0; j < N; ++j) {
-            pols.CLK[i][j] = ((j + (clocksByCycle - i)) % clocksByCycle) == 0 ? 1n : 0n;
-        }
     }
 }
 

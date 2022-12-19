@@ -17,17 +17,11 @@ module.exports.buildConstants = async function (pols) {
 
     let p =0;
 
-    pols.k_crF = [];
-    for (let i=0; i<8; i++) {
-        pols.k_crF[i] = pols[`k_crF${i}`];
-    }
-
     for (let i=0; i<nBlocks; i++) {
         const bytesBlock = 136;
         for (let j=0; j<bytesBlock; j++) {
             pols.lastBlock[p] = (j == bytesBlock-1) ? 1n : 0n;
             pols.lastBlockLatch[p] = (j == bytesBlock-1) ? 1n : 0n;
-            pols.crValid[p] = F.one;
             pols.r8Id[p] = F.e(p);
             pols.sOutId[p] =  (j == bytesBlock-1) ? F.e(i) : F.zero;
             pols.forceLastHash[p] = ((j == bytesBlock-1)&&(i==nBlocks-1)) ? F.one : F.zero;
@@ -37,7 +31,6 @@ module.exports.buildConstants = async function (pols) {
     }
 
     for (let i=p; i<N; i++) {
-        pols.crValid[i] = F.zero;
         pols.r8Id[i] = F.zero;    // Must repeat the first byte
         pols.lastBlock[i] = i<N-1 ? F.zero : F.one;
         pols.lastBlockLatch[i] = F.zero;
@@ -45,23 +38,6 @@ module.exports.buildConstants = async function (pols) {
         pols.forceLastHash[i] = i==N-1 ? F.one : F.zero;
         pols.r8valid[i] = F.zero;
     }
-
-    for (let i=0; i<32; i++) {
-        pols.k_crOffset[i] = BigInt(i);
-        const acci = Math.floor(i / 4);
-        const sh = BigInt((i % 4)*8);
-        for (let k=0; k<8; k++) {
-            pols.k_crF[k][i] = (k == acci) ? BigInt(1n << sh) : 0n;
-        }
-    }
-
-    for (let i=32; i<N; i++) {
-        pols.k_crOffset[i] = pols.k_crOffset[0];
-        for (let k=0; k<8; k++) {
-            pols.k_crF[k][i] =  pols.k_crF[k][0]
-        }
-    }
-
 }
 
 

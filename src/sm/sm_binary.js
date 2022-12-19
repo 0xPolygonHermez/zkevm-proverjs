@@ -14,13 +14,12 @@ let OPCODE_SIZE = 2 ** 2
     ==================
     Build Contants
     ==================
-    FACTOR0_7, P_A, P_B, P_C, P_CIN, P_COUT, P_OPCODE, RESET
+    FACTOR0_7, P_C, P_CIN, P_COUT, P_OPCODE
 */
 module.exports.buildConstants = async function (pols) {
 
-    const N = pols.RESET.length;
+    const N = pols.P_C.length;
     buildFACTORS(pols.FACTOR, N);
-    buildRESET(pols.RESET, N);
 
     buildP_P_CIN(pols.P_CIN, CIN_SIZE, REG_SIZE * REG_SIZE, N);
     buildP_LAST(pols.P_LAST, P_LAST_SIZE, REG_SIZE * REG_SIZE * CIN_SIZE, N);
@@ -39,10 +38,10 @@ module.exports.buildConstants = async function (pols) {
 /*  =========
     FACTORS
     =========
-    FACTOR0 => 0x1  0x100   0x10000 0x01000000  0x0  0x0    0x0     0x0         ... 0x0  0x0    0x0     0x0         0x1 0x100   0x10000 0x01000000  0x0  ...
-    FACTOR1 => 0x0  0x0     0x0     0x0         0x1  0x100  0x10000 0x01000000  ... 0x0  0x0    0x0     0x0         0x0 0x0     0x0     0x0         0x0  ...
+    FACTOR0 => [0x1,0x10000,0:14]  (cyclic)
+    FACTOR1 => [0:2,0x1,0x10000,0:12] (cyclic)
     ...
-    FACTOR7 => 0x0  0x0     0x0     0x0         0x0  0x0     0x0     0x0        ... 0x1  0x100  0x10000 0x01000000  0x0 0x0     0x0     0x0         0x0  ...
+    FACTOR7 => [0:14,0x1,0x10000] (cyclic)
 */
 function buildFACTORS(FACTORS, N) {
     for (let index = 0; index < N; ++index) {
@@ -56,21 +55,6 @@ function buildFACTORS(FACTORS, N) {
         }
     }
 }
-
-/*  =========
-    RESET
-    =========
-    1 0 0 ... { STEPS } ... 0 1 0 ... { STEPS } 0
-    1 0 0 ... { STEPS } ... 0 1 0 ... { STEPS } 0
-    ...
-    1 0 0 ... { STEPS } ... 0 1 0 ... { STEPS } 0
-*/
-function buildRESET(pol, N) {
-    for (let i = 0; i < N; i++) {
-        pol[i] = BigInt((i % STEPS) == 0);
-    }
-}
-
 
 /*
     =========

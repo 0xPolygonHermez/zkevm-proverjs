@@ -74,7 +74,7 @@ async function run() {
 
     // BREAK HERE TO DETECT N
 
-    const N = constPols.Main.STEP.length;
+    const N = constPols.Global.L1.length;
     console.log(`N = ${N}`);
 
     if (constPols.Arith) {
