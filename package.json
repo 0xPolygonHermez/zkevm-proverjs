@@ -135,7 +135,7 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
-    "pil-stark": "0.0.47",
+    "pil-stark": "0.0.48",
     "pilcom": "0.0.20",
     "snarkjs": "0.4.27",
     "yargs": "^17.4.0"
