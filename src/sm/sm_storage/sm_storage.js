@@ -21,7 +21,6 @@ module.exports.buildConstants = async function (pols) {
     const polSize = pols.rLine.length;
 
     for (let i=0; i<polSize; i++) {
-        // TODO: REVIEW Jordi
         const romLine = i % rom.line.length;
         const l = rom.line[romLine];
 

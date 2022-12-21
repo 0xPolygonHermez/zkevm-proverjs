@@ -82,7 +82,6 @@ module.exports.execute = async function (pols, input) {
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
-        // TODO: if not have x1, need to componse it
         let x1 = BigInt(input[i]["x1"]);
         let y1 = BigInt(input[i]["y1"]);
         let x2 = BigInt(input[i]["x2"]);
