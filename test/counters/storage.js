@@ -10,7 +10,7 @@ describe("Test Storage Counters", async function () {
 
     it("Verify Storage Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/storage.zkasm", true,
-            { defines: {N: 2 ** 16},
+            { defines: {N: 2 ** 18},
               namespaces: ['Global', 'Main', 'Storage'],
               verbose: true,
               color: true,
@@ -19,8 +19,8 @@ describe("Test Storage Counters", async function () {
 
     it("Verify Storage Zkasm Test (some delete edge cases)", async () => {
         await verifyZkasm("../zkasm/counters/storage2.zkasm", true,
-            { defines: {N: 2 ** 16},
-              namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'Storage', 'PoseidonG'],
+            { defines: {N: 2 ** 18},
+              namespaces: ['Global', 'Main', 'Rom', 'Storage', 'PoseidonG'],
               verbose: true,
               color: true,
               disableUnusedError: true});

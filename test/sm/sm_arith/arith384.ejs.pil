@@ -1,0 +1,57 @@
+
+/*
+    Equations:
+
+    EQ: a * b + c = d * P + e
+
+*/
+
+namespace Arith384(2**16);
+
+    pol constant BYTE2;
+    pol constant CLK[48];      // 1 if CLK==0 and 0 if CLK!=0
+
+    pol commit a[24];
+    pol commit b[24];
+    pol commit c[24];
+    pol commit d[24];
+    pol commit e[24];
+
+    /****
+    *
+    * LATCH POLS: a,b,c,d,e
+    *
+    *****/
+
+    <%- latch('a[0..23]','CLK[47]') %>
+    <%- latch('b[0..23]','CLK[47]') %>
+    <%- latch('c[0..23]','CLK[47]') %>
+    <%- latch('d[0..23]','CLK[47]') %>
+    <%- latch('e[0..23]','CLK[47]') %>
+
+    /****
+    *
+    * RANGE CHECK A,B,C,Q
+    *
+    *****/
+
+    <%- clksel(['a[0..23]','b[0..23]']) %> in BYTE2;
+    <%- clksel(['c[0..23]','d[0..23]']) %> in BYTE2;
+    <%- clksel(['e[0..23]']) %> in BYTE2;
+
+
+    /*******
+    *
+    * EQ: A * B + C = D * P + E
+    *
+    *******/
+
+    <%- equation('pol eq_## =', 'a*b-P*d+c-e', {P: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn }, {chunkSize: 24}) %>
+
+    pol eq = <%- clksel(['eq_[0..47]'], 'CLK') %>;
+
+    pol commit carry;
+
+    eq + carry = carry' * 2**16;
+
+    // NOTE: non complete PIL, missing implement carry range check

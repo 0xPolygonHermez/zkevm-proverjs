@@ -9,9 +9,9 @@ describe("Test Poseidon Counter", async function () {
     this.timeout(10000000000);
 
     it("Verify Poseidon Zkasm Test", async () => {
-        await verifyZkasm("../zkasm/counters/poseidon.zkasm", true,
-                { defines: {N: 2 ** 21},
-                  namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'PoseidonG', 'Binary'],
+        await verifyZkasm("../zkasm/counters/poseidon.zkasm", {continueOnError: true},
+                { defines: {N: 2 ** 18},
+                  namespaces: ['Global', 'Main', 'Rom', 'PoseidonG', 'Binary', 'Storage'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});

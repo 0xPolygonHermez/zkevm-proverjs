@@ -10,13 +10,14 @@ const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const fileCachePil = path.join(__dirname, "../../cache-main-pil.json");
 
 const argv = require("yargs")
-    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> - e")
+    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> -e")
     .help('h')
     .alias("i", "input")
     .alias("f", "folder")
     .alias("r", "rom")
     .alias("o", "output")
     .alias("e", "exit")
+    .alias("p", "pil")
     .argv;
 
 // example: node run-inputs.js -f ../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/stMemoryTest -r ../../../zkevm-rom/build/rom.json
@@ -71,15 +72,16 @@ async function main(){
     const rom = JSON.parse(fs.readFileSync(path.join(__dirname, romFile), "utf8"));
 
     let pil;
-    if (fs.existsSync(fileCachePil)) {
+    if (fs.existsSync(fileCachePil) && !argv.pil) {
         pil = JSON.parse(await fs.promises.readFile(fileCachePil, "utf8"));
     } else {
         const pilConfig = {
             defines: { N: 4096 },
-            namespaces: ['Main', 'Global']
+            namespaces: ['Main', 'Global'],
+            disableUnusedError: true
         };
-
-        pil = await compile(F, "../../pil/main.pil", null, pilConfig);
+        const pilPath = path.join(__dirname, "../../pil/main.pil");
+        pil = await compile(F, pilPath, null, pilConfig);
         await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
@@ -119,6 +121,9 @@ async function main(){
             second += info;
             if(argv.exit)
                 break;
+            if(argv.ignore) {
+                fs.rename(fileName, fileName+"-ignore", () => {})
+            }
         }
         console.log(info);
     }

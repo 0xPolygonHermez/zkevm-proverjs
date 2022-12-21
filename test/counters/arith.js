@@ -11,7 +11,7 @@ describe("Test Arith Counter", async function () {
     it("Verify Arith Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/arith.zkasm", true,
                 { defines: {N: 2 ** 21},
-                  namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'Arith'],
+                  namespaces: ['Global', 'Main', 'Rom', 'Arith'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});

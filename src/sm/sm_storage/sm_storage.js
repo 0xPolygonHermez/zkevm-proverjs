@@ -76,6 +76,7 @@ module.exports.execute = async function (pols, action) {
 
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
+    const POSEIDONG_PERMUTATION3_ID = 3;
 
     // Init rom from file
     const rawdata = fs.readFileSync("testvectors/storage_sm_rom.json");
@@ -663,7 +664,7 @@ module.exports.execute = async function (pols, action) {
 
             pols.iHash[i] = 1n;
 
-            required.PoseidonG.push([fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3]]);
+            required.PoseidonG.push([fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3], POSEIDONG_PERMUTATION3_ID]);
 
             if (isLogging) {
                 let mlog = "StorageExecutor iHash" + rom.line[l].iHashType + " hash=" + fea42String(fr, op) + " value=";

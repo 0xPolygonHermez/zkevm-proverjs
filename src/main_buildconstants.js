@@ -8,14 +8,12 @@ const { newConstantPolsArray, compile, newCommitPolsArray } = require("pilcom");
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
 const smBinary = require("./sm/sm_binary.js");
-const smByte4 = require("./sm/sm_byte4.js");
 const smGlobal = require("./sm/sm_global.js");
 const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
 const smNine2One = require("./sm/sm_nine2one.js");
-const smNormGate9 = require("./sm/sm_norm_gate9.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
@@ -30,6 +28,7 @@ const argv = require("yargs")
     .usage("main_buildconstants -r <rom.json> -o <constant.bin|json> [-p <main.pil>] [-P <pilconfig.json>] [-v]")
     .alias("r", "rom")
     .alias("o", "output")
+    .alias("t", "text")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("v", "verbose")
@@ -46,6 +45,7 @@ async function run() {
         throw new Error("A output file needs to be specified")
     }
     const outputFile = argv.output.trim();
+    const outputTextDir = argv.text ? (typeof argv.text == 'string' ? argv.text.trim() : ''):false;
 
     let pilFile = __dirname + "/../pil/main.pil";
     if (argv.pil) {
@@ -74,7 +74,7 @@ async function run() {
 
     // BREAK HERE TO DETECT N
 
-    const N = constPols.Main.STEP.length;
+    const N = constPols.Global.L1.length;
     console.log(`N = ${N}`);
 
     if (constPols.Arith) {
@@ -85,14 +85,12 @@ async function run() {
         console.log("Binary...");
         await smBinary.buildConstants(constPols.Binary);
     }
-    if (constPols.Byte4) {
-        console.log("Byte4...");
-        await smByte4.buildConstants(constPols.Byte4);
-    }
+
     if (constPols.Global) {
         console.log("Global...");
         await smGlobal.buildConstants(constPols.Global);
     }
+
     if (constPols.KeccakF) {
         console.log("KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
@@ -112,10 +110,6 @@ async function run() {
     if (constPols.Nine2One) {
         console.log("Nine2One...");
         await smNine2One.buildConstants(constPols.Nine2One);
-    }
-    if (constPols.NormGate9) {
-        console.log("NormGate9...");
-        await smNormGate9.buildConstants(constPols.NormGate9);
     }
     if (constPols.PaddingKK) {
         console.log("PaddingKK...");
@@ -140,6 +134,25 @@ async function run() {
     if (constPols.Storage) {
         console.log("Storage...");
         await smStorage.buildConstants(constPols.Storage);
+    }
+
+    if (typeof outputTextDir === 'string') {
+        let index = 0;
+        const pathSep = (outputTextDir.length > 0 & !outputTextDir.endsWith('/')) ? '/':'';
+        const blockSize = 16*1024;
+        for (cpol of constPols.$$defArray) {
+            const name = cpol.name + (typeof cpol.idx == 'undefined' ? '':('#'+cpol.idx));
+            const polfile = outputTextDir + pathSep + name + '.txt';
+            console.log(`saving constant ${name} on ${polfile}.... `);
+            let output = await fs.promises.open(polfile, 'w');
+            let from = 0;
+            while (from < constPols.$$array[index].length) {
+                res = await output.write(constPols.$$array[index].slice(from, from+blockSize).join("\n")+"\n");
+                from += blockSize;
+            }
+            await output.close();
+            ++index;
+        }
     }
 
     for (let i=0; i<constPols.$$array.length; i++) {

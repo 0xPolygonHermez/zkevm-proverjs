@@ -70,9 +70,10 @@ start:
         0x5E1268E5B2A8DC1D0BB047386FC227n :HASHK(E)
 
         271            :HASHKLEN(E)
-        $ => A         :HASHKDIGEST(E)
+        ; $ => A         :HASHKDIGEST(E)
 
-        5 => A
+        ; 5 => A
+        3 => A
         CNT_KECCAK_F   :ASSERT
 
 
@@ -95,10 +96,12 @@ start:
         16 => D
         0x5E1268E5B2A8DC1D0BB047386FC227FAn :HASHK(E)
 
-        272            :HASHKLEN(E)
-        $ => A         :HASHKDIGEST(E)
+        ; 272            :HASHKLEN(E)
+        ; $ => A         :HASHKDIGEST(E)
 
-        8 => A
+        ; 8 => A
+        ; 5 => A
+        3 => A
         CNT_KECCAK_F   :ASSERT
 
         ; to verify that there are no correlations between counters

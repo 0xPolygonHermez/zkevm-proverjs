@@ -10,14 +10,12 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 
 const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
-const smByte4 = require("../src/sm/sm_byte4.js");
 const smGlobal = require("../src/sm/sm_global.js");
 const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
 const smNine2One = require("../src/sm/sm_nine2one.js");
-const smNormGate9 = require("../src/sm/sm_norm_gate9.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
@@ -27,7 +25,7 @@ const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 const { index } = require("../src/sm/sm_main/test_tools.js");
 const { config } = require("yargs");
 
-module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pilConfig = {}, mainConfig = {}) {
+module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
 
     const Fr = new F1Field("0xFFFFFFFF00000001");
     const brief = false;
@@ -38,6 +36,8 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
           namespaces: ['Main','Global'] }
     */
 
+    const verifyPilFlag = pilVerification ? true: false;
+    let verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
     const pil = await compile(Fr, "pil/main.pil", null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
@@ -46,10 +46,17 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     const constPols =  newConstantPolsArray(pil);
     const cmPols =  newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
+    const N = polDeg;
     console.log('Pil N = 2 ** '+Math.log2(polDeg));
 
-    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "..", "tools", "build-genesis", "input_executor.json"), "utf8"));
-    const rom = await zkasm.compile(path.join(__dirname, "zkasm", zkasmFile));
+    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
+    const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
+    console.log(zkasmFinalFilename);
+    const rom = await zkasm.compile(zkasmFinalFilename);
+
+    if (mainConfig && mainConfig.romFilename) {
+        await fs.promises.writeFile(mainConfig.romFilename, JSON.stringify(rom, null, 1) + "\n");
+    }
 
     if (constPols.Global) {
         console.log("Const Global...");
@@ -62,10 +69,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     if (constPols.Rom) {
         console.log("Const Rom...");
         await smRom.buildConstants(constPols.Rom, rom);
-    }
-    if (constPols.Byte4) {
-        console.log("Const Byte4...");
-        await smByte4.buildConstants(constPols.Byte4);
     }
     if (constPols.PaddingKK) {
         console.log("Const PaddingKK...");
@@ -82,10 +85,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     if (constPols.KeccakF) {
         console.log("Const KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
-    }
-    if (constPols.NormGate9) {
-        console.log("Const NormGate9...");
-        await smNormGate9.buildConstants(constPols.NormGate9);
     }
     if (constPols.Mem) {
         console.log("Const Mem...");
@@ -116,12 +115,16 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         await smBinary.buildConstants(constPols.Binary);
     }
 
-    const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
-
-    if (cmPols.Byte4) {
-        console.log("Exec Byte4...");
-        await smByte4.execute(cmPols.Byte4, requiredMain.Byte4);
+    for (let i=0; i<constPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof constPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+            }
+        }
     }
+
+    console.log("Exec Main...");
+    const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
 
     if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
     const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
@@ -135,12 +138,6 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
     if (cmPols.KeccakF) console.log("Exec KeccakF...");
     const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : false;
 
-    if (cmPols.NormGate9) {
-        console.log("Exec NormGate9...");
-        await smNormGate9.execute(cmPols.NormGate9, requiredKeccakF.NormGate9);
-    } else if (verifyPilFlag && requiredMain.PaddingKK.length) {
-        console.log(`WARNING: Namespace PaddingKK isn't included, but there are ${requiredMain.PaddingKK.length} PaddingKK operations`);
-    }
     if (cmPols.MemAlign) {
         console.log("Exec MemAlign...");
         await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign || []);
@@ -190,14 +187,46 @@ module.exports.verifyZkasm = async function (zkasmFile, verifyPilFlag = true, pi
         console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
     }
 
-    const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols) : [];
-
-    if (res.length != 0) {
-        console.log("Pil does not pass");
-        for (let i=0; i<res.length; i++) {
-            console.log(res[i]);
+    for (let i=0; i<cmPols.$$array.length; i++) {
+        for (let j=0; j<N; j++) {
+            if (typeof cmPols.$$array[i][j] === "undefined") {
+                throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+            }
         }
-        assert(0);
+    }
+
+    if (mainConfig && mainConfig.constFilename) {
+        await constPols.saveToFile(mainConfig.constFilename);
+    }
+
+    if (mainConfig && mainConfig.commitFilename) {
+        await cmPols.saveToFile(mainConfig.commitFilename);
+    }
+
+    if (mainConfig && mainConfig.pilJsonFilename) {
+        fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+    }
+
+    if (mainConfig && mainConfig.externalPilVerification) {
+        console.log(`call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
+    } else {
+        if (verifyPilConfig.publics) {
+            console.log('A');
+            if (!(verifyPilConfig.publics instanceof Object)) {
+                console.log('B');
+                const publicsFilename = (typeof verifyPilConfig.public === 'string') ? verifyPilConfig.public : path.join(__dirname, "..", "tools", "build-genesis", "public.json");
+                verifyPilConfig.publics = JSON.parse(await fs.promises.readFile(publicsFilename, "utf8"));
+            }
+        }
+        const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
+
+        if (res.length != 0) {
+            console.log("Pil does not pass");
+            for (let i=0; i<res.length; i++) {
+                console.log(res[i]);
+            }
+            assert(0);
+        }
     }
 }
 

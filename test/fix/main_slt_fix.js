@@ -11,7 +11,7 @@ describe("Test Binary Counter", async function () {
     it("Verify Binary SLT Fix Test", async () => {
         await verifyZkasm("../zkasm/fix/main_slt_fix.zkasm", true,
                 { defines: {N: 2 ** 21},
-                  namespaces: ['Global', 'Main', 'Rom', 'Byte4', 'Binary'],
+                  namespaces: ['Global', 'Main', 'Rom', 'Binary'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});
