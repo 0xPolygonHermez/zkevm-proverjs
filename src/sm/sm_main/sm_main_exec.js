@@ -171,10 +171,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         // if (step%100000==0) console.log(`Step: ${step}`);
 
-        if (step==330) {
-             // console.log("### > "+l.fileName + ':' + l.line);
-        }
-
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
@@ -1972,6 +1968,7 @@ function checkFinalState(Fr, pols, ctx) {
         (pols.RR[0]) ||
         (pols.RCX[0])
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
     }
 
@@ -2029,6 +2026,7 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
         (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Assert Error: newStateRoot does not match");
     }
 
