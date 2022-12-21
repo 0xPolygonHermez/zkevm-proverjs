@@ -92,7 +92,7 @@ class FullTracer {
             if (this.finalTrace.responses[this.txCount]) {
                 this.finalTrace.responses[this.txCount].error = errorName;
             } else {
-                this.finalTrace.responses[this.txCount] = {error: errorName};
+                this.finalTrace.responses[this.txCount] = { error: errorName };
             }
             return;
         }
@@ -310,7 +310,8 @@ class FullTracer {
         for (const l of this.logs) {
             this.finalTrace.responses[this.txCount].logs = this.finalTrace.responses[this.txCount].logs.concat(Object.values(l));
         }
-
+        // clear logs array
+        this.logs = [];
         fs.writeFileSync(`${this.pathLogFile}_${this.txCount}.json`, JSON.stringify(this.finalTrace.responses[this.txCount], null, 2));
 
         this.verbose.printTx(`finish ${this.txCount}`);
@@ -355,6 +356,31 @@ class FullTracer {
             cnt_padding_pg: Number(ctx.cntPaddingPG),
             cnt_poseidon_g: Number(ctx.cntPoseidonG),
             cont_steps: Number(ctx.step),
+        }
+        try {
+            if (Number(ctx.cntArith) > getConstantFromCtx(ctx, "MAX_CNT_ARITH")) {
+                console.log("WARNING: max arith counters exceed")
+            }
+            if (Number(ctx.cntBinary) > getConstantFromCtx(ctx, "MAX_CNT_BINARY")) {
+                console.log("WARNING: max binary counters exceed")
+            }
+            if (Number(ctx.cntMemAlign) > getConstantFromCtx(ctx, "MAX_CNT_MEM_ALIGN")) {
+                console.log("WARNING: max mem align counters exceed")
+            }
+            if (Number(ctx.cntKeccakF) > getConstantFromCtx(ctx, "MAX_CNT_KECCAK_F")) {
+                console.log("WARNING: max keccack counters exceed")
+            }
+            if (Number(ctx.cntPaddingPG) > getConstantFromCtx(ctx, "MAX_CNT_PADDING_PG")) {
+                console.log("WARNING: max padding counters exceed")
+            }
+            if (Number(ctx.cntPoseidonG) > getConstantFromCtx(ctx, "MAX_CNT_POSEIDON_G")) {
+                console.log("WARNING: max poseidon counters exceed")
+            }
+            if (Number(ctx.step) > getConstantFromCtx(ctx, "MAX_CNT_STEPS")) {
+                console.log("WARNING: max steps counters exceed")
+            }
+        } catch (e) {
+
         }
         //If some counter exceed, notify
         //if(this.finalTrace.counters.cnt_arith > )
