@@ -1911,7 +1911,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     }
 
     required.logs = ctx.outLogs;
-
+    required.counters = {
+        cntArith: ctx.cntArith,
+        cntBinary: ctx.cntBinary,
+        cntKeccakF: ctx.cntKeccakF,
+        cntMemAlign: ctx.cntMemAlign,
+        cntPoseidonG: ctx.cntPoseidonG,
+        cntPaddingPG: ctx.cntPaddingPG,
+        cntSteps: ctx.step,
+    }
+    
     return required;
 }
 
