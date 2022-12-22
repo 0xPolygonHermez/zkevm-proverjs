@@ -2,13 +2,19 @@ const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
 
-const { calculateStarkInput, calculateBatchHashData } = require("@0xpolygonhermez/zkevm-commonjs").contractUtils;
-const { scalar2fea, fea2scalar, fe2n, scalar2h4, h4toString,
-    stringToH4, nodeIsEq, hashContractBytecode, fea2String } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const {
+    scalar2fea,
+    fea2scalar,
+    fe2n,
+    scalar2h4,
+    stringToH4,
+    nodeIsEq,
+    hashContractBytecode
+} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
 const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils;
+const { byteArray2HexString, hexString2byteArray } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
 const testTools = require("./test_tools");
 
@@ -70,7 +76,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
 
+    // load database
     const db = new MemDB(Fr, input.db);
+
+    // load programs into DB
+    for (const [key, value] of Object.entries(input.contractsBytecode)){
+        // filter smt smart contract hashes
+        if (key.length === 66) // "0x" + 32 bytes
+            await db.setProgram(stringToH4(key), hexString2byteArray(value));
+    }
+
+    // load smt
     const smt = new SMT(db, poseidon, Fr);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
@@ -169,7 +185,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let incHashPos = 0;
         let incCounter = 0;
 
-        // if (step%100000==0) console.log(`Step: ${step}`);
+        // if (step%250000==0) console.log(`Step: ${step}`);
 
         if (l.cmdBefore) {
             for (let j=0; j< l.cmdBefore.length; j++) {
@@ -1107,7 +1123,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
                 ctx.hashP[addr].digestCalled = false;
-                await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data)
+                await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);
             }
             if (ctx.hashP[addr].lenCalled) {
                 throw new Error(`Call HASHPLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
@@ -1128,7 +1144,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     data: data,
                     digest: dg,
                     lenCalled: false,
-                    sourceRef
+                    sourceRef,
+                    reads: {}
                 }
             }
             if (ctx.hashP[addr].digestCalled) {
