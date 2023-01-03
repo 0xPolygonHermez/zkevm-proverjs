@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const { fea2scalar, fea2String } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const { ethers } = require("ethers");
 const { Scalar } = require("ffjavascript");
 
@@ -23,10 +23,11 @@ class FullTracer {
     /**
      * Constructor, instantation of global vars
      * @param {String} logFileName Name of the output file
+     * @param {Object} smt state tree
      * @param {Object} options full-tracer options
-     * @param {Bool} options.verbose flag to print traces
-    */
-    constructor(logFileName, options) {
+     * @param {Bool} options.verbose verbose options
+     */
+    constructor(logFileName, smt, options) {
         // Opcode step traces of the all the processed tx
         this.info = [];
         // Stack of the transaction
@@ -50,7 +51,7 @@ class FullTracer {
         this.logs = [];
 
         // options
-        this.verbose = new Verbose(options.verbose);
+        this.verbose = new Verbose(options.verbose, smt, logFileName);
     }
 
     /**
@@ -58,7 +59,7 @@ class FullTracer {
      * @param {Object} ctx Current context object
      * @param {Object} tag to identify the event
      */
-    async handleEvent(ctx, tag) {
+    handleEvent(ctx, tag) {
         try {
             const func = this[tag.params[0].varName];
             if (func && typeof func === "function") {
@@ -67,11 +68,32 @@ class FullTracer {
                 this.onStoreLog(ctx, tag);
             } else if (tag.params[0].funcName === 'onOpcode') {
                 this.onOpcode(ctx, tag.params[0].params[0]);
+            } else if (tag.params[0].funcName === 'onTouchedAddress' || tag.params[0].funcName === 'onTouchedSlot') {
+                this.onTouched(ctx, tag.params[0].params);
             }
 
         } catch (e) {
             console.log(e);
         }
+    }
+
+    /**
+     * Handle async zkrom emitted events by name
+     * @param {Object} ctx Current context object
+     * @param {Object} tag to identify the event
+     */
+    async handleAsyncEvent(ctx, tag) {
+        try {
+            if (tag.params[0].varName == 'onFinishBatch') {
+                await this.printStates();
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    async printStates() {
+        await this.verbose.printPrePostState();
     }
 
     //////////
@@ -331,6 +353,7 @@ class FullTracer {
         this.finalTrace.responses = [];
         this.finalTrace.error = "";
         this.verbose.printBatch("start");
+        this.verbose.saveInitStateRoot(this.finalTrace.old_state_root);
     }
 
     /**
@@ -380,6 +403,7 @@ class FullTracer {
         this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
 
         this.verbose.printBatch("finish");
+        this.verbose.saveFinalStateRoot(this.finalTrace.new_state_root);
 
         // Create ouput files and dirs
         this.exportTrace();
@@ -536,6 +560,24 @@ class FullTracer {
         }
 
         this.verbose.printOpcode(opcode);
+    }
+
+    /**
+     * Triggered when any address or storage is added as warm
+     * @param {Object} ctx Current context object
+     * @param {Object} params Info address/slot touched
+     */
+    onTouched(ctx, params){
+        const address = fea2scalar(ctx.Fr, ctx[params[0].regName]);
+        const addressHex = `0x${Scalar.toString(address, 16).padStart(40, '0')}`;
+        let slotStorageHex = undefined;
+
+        if (params.length > 1){
+            const slotStorage = fea2scalar(ctx.Fr, ctx[params[1].regName]);
+            slotStorageHex = `0x${Scalar.toString(slotStorage, 16).padStart(64, '0')}`;
+        }
+
+        this.verbose.addTouchedAddress(addressHex, slotStorageHex);
     }
 
     /**

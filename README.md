@@ -27,9 +27,24 @@ Additional parameters:
 - `-p`: select pilprogram.pil
 - `-P`: load pilConfig.json file
 - `-u`: unsigned transactions mode
-- `-u`: unsigned transactions mode
 - `-e`: skip asserts `newStateRoot` and `newLocalExitRoot`
-- `-v`: verbode mode
+- `-v`: verbose mode PIL
+- `-T`: enable tracer
+- `-c`: disable zk-counters
+- `-N <number>`: override number of steps
+- `-V <verbose-config.json>`: verbode executor & full-tracer. Loads `verbose-config.json`
+- `-S <stats.json>`: save stats to a file
+
+## Verbose configuration
+- `fulltracer.enable`: prints events originated in the full tracer
+- `fulltracer.printOpcodes`: print opcodes
+- `fulltracer.filterOpcodes`: string filter when printing opcodes
+- `fulltracer.initFinalState`: print pre/post state of touched addresses
+- `fulltracer.bytecode`: add bytecode to pre/post state
+- `fulltracer.saveInitFinalState`: save file with pre/post state
+- `zkPC`: print info program counter
+- `batchL2Data`: print info about batch L2 data
+- `step`: print executor step
 
 ### Build prove
 ```sh
