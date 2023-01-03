@@ -10,7 +10,7 @@ const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const fileCachePil = path.join(__dirname, "../../cache-main-pil.json");
 
 const argv = require("yargs")
-    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> -e")
+    .usage("node run-inputs.js -i <input.json> -f <inputsFolderPath> -r <rom.json> -o <information output> -e -S")
     .help('h')
     .alias("i", "input")
     .alias("f", "folder")
@@ -18,6 +18,7 @@ const argv = require("yargs")
     .alias("o", "output")
     .alias("e", "exit")
     .alias("p", "pil")
+    .alias("S", "stats")
     .argv;
 
 // example: node run-inputs.js -f ../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/stMemoryTest -r ../../../zkevm-rom/build/rom.json
@@ -107,8 +108,10 @@ async function main(){
                     inputName: path.basename(fileName)
                 },
                 stepsN: 8388608,
-                tracer: true
+                tracer: true,
+                stats: (argv.stats === true)
             }
+
             await smMain.execute(cmPols.Main, input, rom, config);
             const stopTime = performance.now();
             info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime)/1000} s\n`)}`;

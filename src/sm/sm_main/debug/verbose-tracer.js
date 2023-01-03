@@ -24,8 +24,8 @@ class VerboseTracer {
         this.touched = {};
 
         // Logs init-final state path
-        this.folderLogs = path.join(__dirname, "../logs-state");
-        this.pathLogFile = `${this.folderLogs}/${fileName.split('.')[0]}`;
+        this.folderLogs = path.join(__dirname, "../logs-verbose");
+        this.pathLogFile = `${this.folderLogs}/${fileName.split('.')[0]}-verbose`;
     }
 
     saveInitStateRoot(initSR) {

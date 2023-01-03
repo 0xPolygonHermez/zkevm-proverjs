@@ -21,6 +21,7 @@ const testTools = require("./test_tools");
 
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
+const StatsTracer = require("./debug/stats-tracer");
 const { polMulAxi } = require("pil-stark/src/polutils");
 const { ftruncate, lchown } = require("fs");
 
@@ -32,6 +33,7 @@ const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8
 
 let fullTracer;
 let debug;
+let statsTracer;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
 
@@ -128,6 +130,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         );
     }
 
+    if (config.stats) {
+        statsTracer = new StatsTracer(config.debugInfo.inputName);
+    }
+
     const iPrint = new Prints(ctx, smt);
     let fastDebugExit = false;
 
@@ -176,6 +182,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         const l = rom.program[ ctx.zkPC ];
         if (config.stats) {
+            statsTracer.addZkPC(ctx.zkPC);
             metadata.stats.trace.push(ctx.zkPC);
             metadata.stats.lineTimes[ctx.zkPC] = (metadata.stats.lineTimes[ctx.zkPC] || 0) + 1;
         }
@@ -1880,6 +1887,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
             pendingCmds = l.cmdAfter;
         }
+    }
+
+    if (config.stats) {
+        statsTracer.saveStatsFile();
     }
 
     if (fastDebugExit){
