@@ -19,6 +19,8 @@ const argv = require("yargs")
     .alias("e", "exit")
     .alias("p", "pil")
     .alias("S", "stats")
+    .alias("c", "counters")
+    .alias("n", "noexec")
     .argv;
 
 // example: node run-inputs.js -f ../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/stMemoryTest -r ../../../zkevm-rom/build/rom.json
@@ -66,6 +68,15 @@ async function main(){
             process.exit(1);
         }
     }
+    let execSteps;
+    if(argv.n) {
+        try {
+            const noExecPath = argv.n.trim();
+            execSteps = require(noExecPath)["more-steps"]
+        } catch(e) {
+            console.log("no-exec file no exist")
+        }
+    }
 
     let romFile;
     helpers.checkParam(argv.rom, "Rom file");
@@ -95,7 +106,15 @@ async function main(){
     for(let i = 0; i < inputs.length; i++) {
         const fileName = inputs[i];
         const input = JSON.parse(await fs.promises.readFile(fileName, "utf8"));
-
+        const inputName = fileName.split("/")[fileName.split("/").length - 1].replace(".json","")
+        let stepsNexec;
+        if(execSteps) {
+            try {
+                stepsNexec = execSteps.filter((x) => x.name.includes(inputName))[0].stepsN;
+            } catch(e) {
+                stepsNexec = undefined;
+            }
+        }
         let info = "";
 
         info += "Input: " + fileName + "\n";
@@ -107,8 +126,9 @@ async function main(){
                 debugInfo: {
                     inputName: path.basename(fileName)
                 },
-                stepsN: 8388608,
+                stepsN: stepsNexec ? stepsNexec : 8388608,
                 tracer: true,
+                counters: (argv.counters === true),
                 stats: (argv.stats === true)
             }
 
