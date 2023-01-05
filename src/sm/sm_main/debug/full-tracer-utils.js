@@ -159,12 +159,23 @@ function getFromMemory(offset, length, ctx) {
     return finalMemory
 }
 
+/**
+ * Get constant from rom compilation
+ * @param {Object} ctx current context object
+ * @param {String} constantName name of the constant
+ * @returns {String} value of the constant
+ */
+function getConstantFromCtx(ctx, constantName) {
+    return ctx.rom.constants[constantName].value;
+}
+
 module.exports = {
     getTransactionHash,
     findOffsetLabel,
     getVarFromCtx,
     getCalldataFromStack,
     getRegFromCtx,
-    getFromMemory
+    getFromMemory,
+    getConstantFromCtx
 }
 
