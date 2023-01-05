@@ -1965,7 +1965,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntPaddingPG: ctx.cntPaddingPG,
         cntSteps: ctx.step,
     }
-    
+
     return required;
 }
 
@@ -2032,6 +2032,7 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.eq(pols.B6[0], feaOldStateRoot[6])) ||
         (!Fr.eq(pols.B7[0], feaOldStateRoot[7]))
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register B not terminetd equal as its initial value");
     }
 
@@ -2046,14 +2047,17 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
         (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register C not termined equal as its initial value");
     }
 
     if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register SP not termined equal as its initial value");
     }
 
     if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register GAS not termined equal as its initial value");
     }
 }
@@ -2075,7 +2079,6 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
         (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
     ) {
-        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Assert Error: newStateRoot does not match");
     }
 
