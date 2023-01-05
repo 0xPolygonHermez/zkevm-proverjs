@@ -42,7 +42,7 @@ const argv = require("yargs")
     .alias("T", "tracer")
     .alias("c", "counters")
     .alias("N", "stepsN")
-    .alias("V", "verboseFullTracer")
+    .alias("V", "verboseExecutor")
     .argv;
 
 async function run() {
@@ -104,6 +104,18 @@ async function run() {
     const stats = (argv.stats === true || typeof argv.stats === 'string');
     const statsFile = typeof argv.stats === 'string' ? argv.stats.trim() : 'program.stats';
 
+    const pathVerboseFile = typeof argv.verboseExecutor === 'string' ? argv.verboseExecutor.trim() : undefined;
+
+    let verboseOptions = {};
+
+    if (typeof pathVerboseFile !== 'undefined'){
+        if (!fs.existsSync(pathVerboseFile)) {
+            throw new Error("Cache pil file does not exist");
+        } else {
+            verboseOptions = JSON.parse(fs.readFileSync(pathVerboseFile));
+        }
+    }
+
     const config = {
         test: test,
         debug: (argv.debug === true),
@@ -116,8 +128,9 @@ async function run() {
         counters: (argv.counters === true),
         stats,
         stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN),
-        verboseFullTracer: (argv.verboseFullTracer === true)
+        verboseOptions: verboseOptions
     }
+
     let metadata = {};
     const N = cmPols.Main.PC.length;
 
