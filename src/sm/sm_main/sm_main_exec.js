@@ -35,6 +35,7 @@ let fullTracer;
 let debug;
 let statsTracer;
 let sourceRef;
+let nameRomErrors = [];
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
 
@@ -1975,6 +1976,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     }
 
     required.logs = ctx.outLogs;
+    required.errors = nameRomErrors;
     required.counters = {
         cntArith: ctx.cntArith,
         cntBinary: ctx.cntBinary,
@@ -2037,6 +2039,7 @@ function checkFinalState(Fr, pols, ctx) {
         (pols.RCX[0])
     ) {
         if(fullTracer) fullTracer.exportTrace();
+        if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution\n");
         throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
     }
 
@@ -2098,7 +2101,7 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
         (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
     ) {
-        throw new Error("Assert Error: newStateRoot does not match");
+        throw new Error(`Assert Error: newStateRoot does not match\nErrors: ${nameRomErrors.toString()}`);
     }
 
     const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
@@ -2590,8 +2593,10 @@ function eval_eventLog(ctx, tag) {
         if (fullTracer.options.verbose.enable)
             fullTracer.handleEventVerbose(ctx, tag);
     }
-    if (debug && tag.params[0].varName == 'onError')
+    if (debug && tag.params[0].varName == 'onError') {
+        nameRomErrors.push(tag.params[1].varName);
         console.log(`Error triggered zkrom: ${tag.params[1].varName}\nsource: ${ctx.sourceRef}`);
+    }
 }
 
 function eval_cond(ctx, tag) {
