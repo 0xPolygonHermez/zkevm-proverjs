@@ -6,6 +6,8 @@ proof.json
 logs.json
 logs-trace
 logs-full-trace
+logs-verbose
+logs-stats
 package-lock.json
 cache-main-pil.json
 testvectors/commit.bin
@@ -13,3 +15,5 @@ testvectors/constants.bin
 tmp
 pil-config.json
 parallel-tests
+verbose-config.json
+*.stats

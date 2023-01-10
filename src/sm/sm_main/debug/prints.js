@@ -26,7 +26,7 @@ class Prints {
 
             const hashBytecode = await stateUtils.getContractHashBytecode(address, this.smt, root);
             const hashBytecodeLength = await stateUtils.getContractBytecodeLength(address, this.smt, root);
-            const bytecode = this.ctx.input.contractsBytecode[hashBytecode];
+            const bytecode = this.smt.db.getProgram();
             const sto = await stateUtils.getContractStorage(address, this.smt, root, stoKeys);
 
             const infoAddress = {};

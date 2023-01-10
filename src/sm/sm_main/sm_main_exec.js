@@ -2,18 +2,26 @@ const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
 
-const { calculateStarkInput, calculateBatchHashData } = require("@0xpolygonhermez/zkevm-commonjs").contractUtils;
-const { scalar2fea, fea2scalar, fe2n, scalar2h4, h4toString,
-    stringToH4, nodeIsEq, hashContractBytecode, fea2String } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const {
+    scalar2fea,
+    fea2scalar,
+    fe2n,
+    scalar2h4,
+    stringToH4,
+    nodeIsEq,
+    hashContractBytecode
+} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
 const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { byteArray2HexString } = require("@0xpolygonhermez/zkevm-commonjs").utils;
+const { byteArray2HexString, hexString2byteArray } = require("@0xpolygonhermez/zkevm-commonjs").utils;
+const { encodedStringToArray, decodeCustomRawTxProverMethod} = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
 
 const testTools = require("./test_tools");
 
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
+const StatsTracer = require("./debug/stats-tracer");
 const { polMulAxi } = require("pil-stark/src/polutils");
 const { ftruncate, lchown } = require("fs");
 
@@ -25,6 +33,7 @@ const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8
 
 let fullTracer;
 let debug;
+let statsTracer;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
 
@@ -45,7 +54,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     debug = config && config.debug;
     const flagTracer = config && config.tracer;
-    const verboseFullTracer = config.verboseFullTracer;
+    const verboseOptions = typeof config.verboseOptions === 'undefined' ? {} : config.verboseOptions;
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
@@ -70,7 +79,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
 
+    // load database
     const db = new MemDB(Fr, input.db);
+
+    // load programs into DB
+    for (const [key, value] of Object.entries(input.contractsBytecode)){
+        // filter smt smart contract hashes
+        if (key.length === 66) // "0x" + 32 bytes
+            await db.setProgram(stringToH4(key), hexString2byteArray(value));
+    }
+
+    // load smt
     const smt = new SMT(db, poseidon, Fr);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
@@ -102,11 +121,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     initState(Fr, pols, ctx);
 
     if (debug && flagTracer) {
-        fullTracer = new FullTracer(config.debugInfo.inputName,
+        fullTracer = new FullTracer(
+            config.debugInfo.inputName,
+            smt,
             {
-                verbose: verboseFullTracer
+                verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer
             }
         );
+    }
+
+    if (config.stats) {
+        statsTracer = new StatsTracer(config.debugInfo.inputName);
     }
 
     const iPrint = new Prints(ctx, smt);
@@ -115,6 +140,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let pendingCmds = false;
     let previousRCX = 0n;
     let previousRCXInv = 0n;
+
+    if (verboseOptions.batchL2Data) {
+        await printBatchL2Data(ctx.input.batchL2Data);
+    }
 
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
@@ -145,11 +174,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         // evaluate commands "after" before start new line, but when new values of registers are ready.
         if (pendingCmds) {
             evalCommands(ctx, pendingCmds);
+            if (fullTracer){
+                await eventsAsyncTracer(ctx, pendingCmds);
+            }
             pendingCmds = false;
         }
 
         const l = rom.program[ ctx.zkPC ];
         if (config.stats) {
+            statsTracer.addZkPC(ctx.zkPC);
             metadata.stats.trace.push(ctx.zkPC);
             metadata.stats.lineTimes[ctx.zkPC] = (metadata.stats.lineTimes[ctx.zkPC] || 0) + 1;
         }
@@ -159,20 +192,27 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         const sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
 
+        if (verboseOptions.zkPC) {
+            console.log(sourceRef);
+        }
+
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
             fastDebugExit = true;
+            if (typeof verboseOptions.step === 'number') {
+                console.log("Total steps used: ", ctx.step);
+            }
             break;
         }
 
         let incHashPos = 0;
         let incCounter = 0;
 
-        // if (step%100000==0) console.log(`Step: ${step}`);
-
-        if (step==330) {
-             // console.log("### > "+l.fileName + ':' + l.line);
+        if (typeof verboseOptions.step === 'number') {
+            if (step % verboseOptions.step == 0){
+                console.log(`Step: ${step}`);
+            }
         }
 
         if (l.cmdBefore) {
@@ -1111,7 +1151,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
                 ctx.hashP[addr].digestCalled = false;
-                await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data)
+                await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);
             }
             if (ctx.hashP[addr].lenCalled) {
                 throw new Error(`Call HASHPLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
@@ -1132,7 +1172,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     data: data,
                     digest: dg,
                     lenCalled: false,
-                    sourceRef
+                    sourceRef,
+                    reads: {}
                 }
             }
             if (ctx.hashP[addr].digestCalled) {
@@ -1848,6 +1889,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
     }
 
+    if (config.stats) {
+        statsTracer.saveStatsFile();
+    }
+
     if (fastDebugExit){
         assertOutputs(ctx);
     }
@@ -1911,6 +1956,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     }
 
     required.logs = ctx.outLogs;
+    required.counters = {
+        cntArith: ctx.cntArith,
+        cntBinary: ctx.cntBinary,
+        cntKeccakF: ctx.cntKeccakF,
+        cntMemAlign: ctx.cntMemAlign,
+        cntPoseidonG: ctx.cntPoseidonG,
+        cntPaddingPG: ctx.cntPaddingPG,
+        cntSteps: ctx.step,
+    }
 
     return required;
 }
@@ -1963,6 +2017,7 @@ function checkFinalState(Fr, pols, ctx) {
         (pols.RR[0]) ||
         (pols.RCX[0])
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
     }
 
@@ -1977,6 +2032,7 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.eq(pols.B6[0], feaOldStateRoot[6])) ||
         (!Fr.eq(pols.B7[0], feaOldStateRoot[7]))
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register B not terminetd equal as its initial value");
     }
 
@@ -1991,14 +2047,17 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
         (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
     ) {
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register C not termined equal as its initial value");
     }
 
     if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register SP not termined equal as its initial value");
     }
 
     if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
+        if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register GAS not termined equal as its initial value");
     }
 }
@@ -2145,6 +2204,44 @@ function initState(Fr, pols, ctx) {
     pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
+}
+
+async function eventsAsyncTracer(ctx, cmds) {
+    for (let j = 0; j < cmds.length; j++) {
+        const tag = cmds[j];
+        if (tag.funcName == 'eventLog') {
+            await fullTracer.handleAsyncEvent(ctx, cmds[j]);
+        }
+    }
+}
+
+async function printBatchL2Data(batchL2Data) {
+    console.log("/////////////////////////////");
+    console.log("/////// BATCH L2 DATA ///////");
+    console.log("/////////////////////////////\n");
+
+    const txs = encodedStringToArray(batchL2Data);
+    console.log("Number of transactions: ", txs.length);
+
+    for (let i = 0; i < txs.length; i++){
+        console.log("\nTxNumber: ", i);
+        const rawTx = txs[i];
+        const infoTx = decodeCustomRawTxProverMethod(rawTx);
+
+        const digest = ethers.utils.keccak256(infoTx.rlpSignData);
+        const from = ethers.utils.recoverAddress(digest, {
+                    r: infoTx.txDecoded.r,
+                    s: infoTx.txDecoded.s,
+                    v: infoTx.txDecoded.v,
+        });
+
+        infoTx.txDecoded.from = from;
+
+        console.log(infoTx.txDecoded);
+    }
+
+    console.log("/////////////////////////////");
+    console.log("/////////////////////////////\n");
 }
 
 function evalCommands(ctx, cmds) {
@@ -2405,8 +2502,6 @@ function eval_functionCall(ctx, tag) {
         if (typeof testTools[method] === 'function') {
             return testTools[method](ctx, tag);
         }
-    } else if (tag.funcName == "getBytecode") { // Added by opcodes
-        return eval_getBytecode(ctx, tag);
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
     } else if (tag.funcName.includes("bitwise")) {
@@ -2431,8 +2526,6 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
-    } else if (tag.funcName == "saveContractBytecode") { // Added by opcodes
-        return eval_saveContractBytecode(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -2482,25 +2575,6 @@ function eval_cond(ctx, tag) {
         return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-function eval_getBytecode(ctx, tag) {
-    if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters ((2,3) != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
-    let hashcontract = evalCommand(ctx, tag.params[0]);
-    hashcontract = "0x" + hashcontract.toString(16).padStart(64, '0');
-    const bytecode = ctx.input.contractsBytecode[hashcontract] || ctx.input.contractsBytecode[hashcontract.slice(2)];
-    const offset = Number(evalCommand(ctx, tag.params[1]));
-    let len;
-    if (tag.params[2])
-        len = Number(evalCommand(ctx, tag.params[2]));
-    else
-        len = 1;
-    if (bytecode === undefined) return scalar2fea(ctx.Fr, Scalar.e(0));
-    const offset0x = bytecode.startsWith('0x') ? 2 : 0;
-    let d = "0x" + bytecode.slice(offset0x + offset * 2, offset0x + offset * 2 + len * 2);
-    if (d.length == 2) d = d + '0';
-    const ret = scalar2fea(ctx.Fr, Scalar.e(d));
-    return scalar2fea(ctx.Fr, Scalar.e(d));
 }
 
 function eval_exp(ctx, tag) {
@@ -2653,11 +2727,6 @@ function eval_memAlignWR8_W0(ctx, tag) {
 
     return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.sub(Mask256, Scalar.shl(0xFFn, bits))),
                         Scalar.shl(Scalar.band(0xFFn, value), bits)));
-}
-
-function eval_saveContractBytecode(ctx, tag) {
-    const addr = evalCommand(ctx, tag.params[0]);
-    ctx.input.contractsBytecode[ctx.hashP[addr].digest] = "0x"+byteArray2HexString(ctx.hashP[addr].data);
 }
 
 function checkParams(ctx, tag, expectedParams){
