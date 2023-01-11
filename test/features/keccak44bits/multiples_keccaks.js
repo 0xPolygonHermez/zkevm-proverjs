@@ -11,7 +11,7 @@ describe("Test Keccak (multiples keccaks)", async function () {
     it("Verify Keccak Zkasm Test", async () => {
         await verifyZkasm(__dirname + "/multiples_keccaks.zkasm", true,
                 { defines: {N: 2 ** 23},
-                  namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Nine2One'],
+                  namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Bits2Field'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true},
