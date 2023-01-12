@@ -16,6 +16,7 @@ const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").sm
  * @returns {String} - Hex string with the transaction hash
  */
 function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v) {
+
     const txu = {
         value: toHexStringRlp(value),
         nonce: toHexStringRlp(nonce),
@@ -117,7 +118,7 @@ function getFromMemory(offset, length, ctx) {
     addrMem += 0x20000;
 
     let finalMemory = "";
-    
+
     const init = addrMem + (Number(offset) / 32);
     const end = addrMem + ((Number(offset) + Number(length)) / 32);
     const initCeil = Math.ceil(init);
@@ -130,7 +131,7 @@ function getFromMemory(offset, length, ctx) {
         let memScalarStart = fea2scalar(ctx.Fr, memValueStart);
         let hexStringStart = memScalarStart.toString(16);
         hexStringStart = hexStringStart.padStart(64, "0");
-        const bytesToRetrieve = (init - Math.floor(init)) * 32; 
+        const bytesToRetrieve = (init - Math.floor(init)) * 32;
         hexStringStart = hexStringStart.slice(bytesToRetrieve * 2);
         finalMemory = finalMemory.concat(hexStringStart);
     }
@@ -152,7 +153,7 @@ function getFromMemory(offset, length, ctx) {
         memScalarEnd = fea2scalar(ctx.Fr, memValueEnd);
         hexStringEnd = memScalarEnd.toString(16);
         hexStringEnd = hexStringEnd.padStart(64, "0");
-        const bytesToKeep = (end - endFloor) * 32; 
+        const bytesToKeep = (end - endFloor) * 32;
         hexStringEnd = hexStringEnd.slice(0, bytesToKeep * 2);
         finalMemory = finalMemory.concat(hexStringEnd);
     }

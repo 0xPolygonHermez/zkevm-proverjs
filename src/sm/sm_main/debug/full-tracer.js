@@ -134,7 +134,6 @@ class FullTracer {
                 this.finalTrace.responses[this.txCount].error = errorName;
             } else {
                 this.finalTrace.responses[this.txCount] = { error: errorName };
-                this.finalTrace.error = errorName;
             }
             return;
         }
@@ -189,23 +188,25 @@ class FullTracer {
         context.type = (context.to === "0x0") ? "CREATE" : "CALL";
         context.to = (context.to === "0x0") ? "0x" : ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
-        context.gas = getVarFromCtx(ctx, false, "txGasLimit").toString();
+        context.gas = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txGasLimit"));
         context.value = getVarFromCtx(ctx, false, "txValue").toString();
         context.batch = "";
         context.output = ""
         context.gas_used = "";
         context.execution_time = ""
         context.old_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
-        context.gas_price = getVarFromCtx(ctx, false, "txGasPriceRLP").toString();
-
+        context.gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txGasPriceRLP"));
         //Fill response object
         const response = {};
         const r = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txR"));
         const s = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txS"));
         const v = Number(getVarFromCtx(ctx, false, "txV"));
         // Apply EIP-155 to v value
-        const vn = ethers.utils.hexlify(v - 27 + context.chainId * 2 + 35)
+        const chainId = Number(getVarFromCtx(ctx, false, "txChainId"));
+        let vn = ethers.utils.hexlify(v - 27 + chainId * 2 + 35)
         const nonce = Number(getVarFromCtx(ctx, false, "txNonce"));
+        // If legacy tx, user original v
+        if(!chainId) vn =  ethers.utils.hexlify(v)
         const { tx_hash, rlp_tx } = getTransactionHash(context.to, Number(context.value), nonce, context.gas, context.gas_price, context.data, r, s, vn);
         response.tx_hash = tx_hash;
         response.rlp_tx = rlp_tx;
