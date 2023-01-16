@@ -1235,13 +1235,20 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
                 let s;
                 if (dbl) {
-                    // TODO: y1 == 0 => division by zero ==> how manage?
-                    s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
+                    // Division by zero must be managed by ROM before call ARITH
+                    const divisor = Fec.add(y1, y1);
+                    if (Fec.isZero(divisor)) {
+                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
+                    }
+                    s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), divisor);
                 }
                 else {
-                    let deltaX = Fec.sub(x2, x1)
-                    // TODO: deltaX == 0 => division by zero ==> how manage?
-                    s = Fec.div(Fec.sub(y2, y1), deltaX );
+                    // Division by zero must be managed by ROM before call ARITH
+                    const deltaX = Fec.sub(x2, x1)
+                    if (Fec.isZero(deltaX)) {
+                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
+                    }
+                    s = Fec.div(Fec.sub(y2, y1), deltaX);
                 }
 
                 const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(x1, dbl ? x1 : x2));
@@ -2822,12 +2829,18 @@ function eval_AddPointEc(ctx, tag, dbl)
     const y2 = evalCommand(ctx, tag.params[dbl ? 1 : 3]);
 
     if (dbl) {
-        // TODO: y1 == 0 => division by zero ==> how manage?
-        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), ctx.Fec.add(y1, y1));
+        // Division by zero must be managed by ROM before call ARITH
+        const divisor = ctx.Fec.add(y1, y1)
+        if (ctx.Fec.isZero(divisor)) {
+            throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
+        }
+        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), );
     }
     else {
-        let deltaX = ctx.Fec.sub(x2, x1)
-        // TODO: deltaX == 0 => division by zero ==> how manage?
+        const deltaX = ctx.Fec.sub(x2, x1)
+        if (ctx.Fec.isZero(delta)) {
+            throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
+        }
         s = ctx.Fec.div(ctx.Fec.sub(y2, y1), deltaX );
     }
 
