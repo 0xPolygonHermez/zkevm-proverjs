@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { fea2scalar, fea2String } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const { Constants } = require("@0xpolygonhermez/zkevm-commonjs");
 const { ethers } = require("ethers");
 const { Scalar } = require("ffjavascript");
 
@@ -352,8 +353,9 @@ class FullTracer {
         }
         this.finalTrace.responses = [];
         this.finalTrace.error = "";
+        this.finalTrace.read_write_addresses = {};
         this.verbose.printBatch("start");
-        this.verbose.saveInitStateRoot(this.finalTrace.old_state_root);
+        this.verbose.saveInitStateRoot(fea2String(ctx.Fr, ctx.SR));
     }
 
     /**
@@ -578,6 +580,35 @@ class FullTracer {
         }
 
         this.verbose.addTouchedAddress(addressHex, slotStorageHex);
+    }
+
+    /**
+     * Add an address when it is either read/write in the state-tree
+     * @param {Field} _fieldElement - field Element
+     * @param {Array[Field]} _address - address accessed
+     * @param {Array[Field]} _keyType - Parameter accessed in the state-tree
+     * @param {Scalar} _value - value read/write
+     */
+    addReadWriteAddress(_fieldElement, _address, _keyType, _value) {
+        const address = fea2scalar(_fieldElement, _address);
+        const addressHex = `0x${Scalar.toString(address, 16).padStart(40, '0')}`;
+
+        const keyType = fea2scalar(_fieldElement, _keyType);
+
+        // create object if it does exist
+        if (Scalar.eq(keyType, Constants.SMT_KEY_BALANCE) || Scalar.eq(keyType, Constants.SMT_KEY_NONCE)) {
+            if (typeof this.finalTrace.read_write_addresses[addressHex] === 'undefined') {
+                this.finalTrace.read_write_addresses[addressHex] = {};
+            }
+        }
+
+        if (Scalar.eq(keyType, Constants.SMT_KEY_BALANCE)) {
+            this.finalTrace.read_write_addresses[addressHex].balance = Scalar.e(_value).toString();
+        }
+
+        if (Scalar.eq(keyType, Constants.SMT_KEY_NONCE)) {
+            this.finalTrace.read_write_addresses[addressHex].nonce = Number(Scalar.e(_value)).toString();
+        }
     }
 
     /**
