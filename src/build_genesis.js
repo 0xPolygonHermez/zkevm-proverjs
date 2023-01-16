@@ -25,7 +25,7 @@ async function run() {
     } else if (argv._.length == 1) {
         inputFile = argv._[0];
     } else  {
-        console.log("Only one input file at a time is permited");
+        console.log("Only one input file at a time is permitted");
         process.exit(1);
     }
 
