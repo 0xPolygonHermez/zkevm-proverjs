@@ -14,7 +14,7 @@ const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
-const smNine2One = require("./sm/sm_nine2one.js");
+const smBits2Field = require("./sm/sm_bits2field.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
@@ -165,12 +165,12 @@ async function run() {
         if (cmPols.PaddingKKBit) console.log("PaddingKKbit...");
         const requiredKKBit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit || []): false;
 
-        if (cmPols.Nine2One) console.log("Nine2One...");
-        const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKBit.Nine2One || []) : false;
+        if (cmPols.Bits2Field) console.log("Bits2Field...");
+        const requiredBits2Field = cmPols.Bits2Field ? await smBits2Field.execute(cmPols.Bits2Field, requiredKKBit.Bits2Field || []) : false;
 
         if (cmPols.KeccakF) {
             console.log("KeccakF...");
-            await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF || []);
+            await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF || []);
         }
 
         if (cmPols.PaddingPG) console.log("PaddingPG...");

@@ -11,7 +11,7 @@ describe("Test Keccak (one big keccak)", async function () {
     it("Verify Keccak Zkasm Test", async () => {
         await verifyZkasm(__dirname + "/one_big_keccak.zkasm", true,
                 { defines: {N: 2 ** 23},
-                  namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Nine2One'],
+                  namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Bits2Field'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true},

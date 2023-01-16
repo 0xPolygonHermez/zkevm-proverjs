@@ -15,7 +15,7 @@ const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
-const smNine2One = require("../src/sm/sm_nine2one.js");
+const smBits2Field = require("../src/sm/sm_bits2field.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
@@ -78,9 +78,9 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log("Const PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     }
-    if (constPols.Nine2One) {
-        console.log("Const Nine2One...");
-        await smNine2One.buildConstants(constPols.Nine2One);
+    if (constPols.Bits2Field) {
+        console.log("Const Bits2Field...");
+        await smBits2Field.buildConstants(constPols.Bits2Field);
     }
     if (constPols.KeccakF) {
         console.log("Const KeccakF...");
@@ -132,11 +132,11 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
     const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
 
-    if (cmPols.Nine2One) console.log("Exec Nine2One...");
-    const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One) : false;
+    if (cmPols.Bits2Field) console.log("Exec Bits2Field...");
+    const requiredBits2Field = cmPols.Bits2Field ? await smBits2Field.execute(cmPols.Bits2Field, requiredKKbit.Bits2Field) : false;
 
     if (cmPols.KeccakF) console.log("Exec KeccakF...");
-    const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : false;
+    const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF) : false;
 
     if (cmPols.MemAlign) {
         console.log("Exec MemAlign...");

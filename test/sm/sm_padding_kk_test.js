@@ -5,7 +5,7 @@ const F1Field = require("ffjavascript").F1Field;
 const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
 const smPaddingKK = require("../../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
-const smNine2one = require("../../src/sm/sm_nine2one.js");
+const smBits2Byte = require("../../src/sm/sm_bits2field.js");
 const smKeccakF = require("../../src/sm/sm_keccakf/sm_keccakf.js");
 const smGlobal = require("../../src/sm/sm_global.js");
 
@@ -46,14 +46,14 @@ describe("test padding keccak", async function () {
         const cmPols =  newCommitPolsArray(pil);
         await smPaddingKK.buildConstants(constPols.PaddingKK);
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
-        await smNine2one.buildConstants(constPols.Nine2One);
+        await smBits2field.buildConstants(constPols.Bits2Field);
         await smKeccakF.buildConstants(constPols.KeccakF);
         await smGlobal.buildConstants(constPols.Global);
 
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, input);
         const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit);
-        const requiredNine2One = await smNine2one.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
-        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
+        const requiredBits2Field = await smBits2field.execute(cmPols.Bits2Field, requiredKKbit.Bits2Field);
+        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF);
 
         const res = await verifyPil(Fr, pil, cmPols, constPols);
 
