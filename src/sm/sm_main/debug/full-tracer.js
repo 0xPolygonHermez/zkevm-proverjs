@@ -52,6 +52,7 @@ class FullTracer {
         this.logs = [];
 
         // options
+        this.options = options;
         this.verbose = new Verbose(options.verbose, smt, logFileName);
     }
 
@@ -79,7 +80,24 @@ class FullTracer {
     }
 
     /**
+     * Handle zkrom emitted events by name
+     * Only used in verbose mode
+     * @param {Object} ctx Current context object
+     * @param {Object} tag to identify the event
+     */
+     handleEventVerbose(ctx, tag) {
+        try {
+            if (tag.params[0].funcName === 'onTouchedAddress' || tag.params[0].funcName === 'onTouchedSlot') {
+                this.onTouched(ctx, tag.params[0].params);
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    /**
      * Handle async zkrom emitted events by name
+     * Only used in verbose mode
      * @param {Object} ctx Current context object
      * @param {Object} tag to identify the event
      */
@@ -566,6 +584,7 @@ class FullTracer {
 
     /**
      * Triggered when any address or storage is added as warm
+     * Only used in verbose mode
      * @param {Object} ctx Current context object
      * @param {Object} params Info address/slot touched
      */
@@ -595,10 +614,13 @@ class FullTracer {
 
         const keyType = fea2scalar(_fieldElement, _keyType);
 
-        // create object if it does exist
+        // create object if it does not exist
         if (Scalar.eq(keyType, Constants.SMT_KEY_BALANCE) || Scalar.eq(keyType, Constants.SMT_KEY_NONCE)) {
             if (typeof this.finalTrace.read_write_addresses[addressHex] === 'undefined') {
-                this.finalTrace.read_write_addresses[addressHex] = {};
+                this.finalTrace.read_write_addresses[addressHex] = {
+                    balance: "",
+                    nonce: "",
+                };
             }
         }
 

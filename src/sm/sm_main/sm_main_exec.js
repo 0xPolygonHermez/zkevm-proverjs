@@ -2580,8 +2580,14 @@ function eval_getTimestamp(ctx, tag) {
 
 function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    if (fullTracer)
+    if (fullTracer){
+        // handle full-tracer events
         fullTracer.handleEvent(ctx, tag);
+
+        // handle verbose full-tracer events
+        if (fullTracer.options.verbose.enable)
+            fullTracer.handleEventVerbose(ctx, tag);
+    }
     if (debug && tag.params[0].varName == 'onError')
         console.log(`Error triggered zkrom: ${tag.params[1].varName}\nsource: ${ctx.sourceRef}`);
 }
