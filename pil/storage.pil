@@ -217,6 +217,7 @@ namespace Storage(%N);
     opIsZero*op0 = 0;
     pol doJump = iJmp + iJmpz*opIsZero;
     pc' = doJump*(iAddress - pc - 1) + pc + 1;
+    pc * Global.L1 = 0;
 
     // Last pc' must return to be pc=0 in order to close the program loop
     // Once the work is done, the rest of instructions must be:
