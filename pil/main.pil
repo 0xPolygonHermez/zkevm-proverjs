@@ -335,7 +335,7 @@ namespace Main(%N);
     // if elseAddr wasn't specified on zkasm, compiler put current address + 1
     zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (finalElseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
-    zKPC * Global.L1 = 0;
+    zkPC * Global.L1 = 0;
 
     (A0-op0)*assert = 0;
     (A1-op1)*assert = 0;
