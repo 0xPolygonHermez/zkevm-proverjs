@@ -610,6 +610,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     // fi = scalar2fea(Fr, Scalar.e("0x" + ctx.sto[ keyS ]));
                     const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
                     incCounter = res.proofHashCounter + 2;
+
+                    // save readWriteAddress
+                    if (fullTracer){
+                        fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, res.value);
+                    }
+
                     fi = scalar2fea(Fr, Scalar.e(res.value));
                     nHits++;
                 }
@@ -652,6 +658,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
                     const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, fea2scalar(Fr, ctx.D));
                     incCounter = res.proofHashCounter + 2;
+
+                    // save readWriteAddress
+                    if (fullTracer){
+                        fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, fea2scalar(Fr, ctx.D));
+                    }
 
                     ctx.lastSWrite.newRoot = res.newRoot;
                     ctx.lastSWrite.res = res;
@@ -2569,8 +2580,14 @@ function eval_getTimestamp(ctx, tag) {
 
 function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    if (fullTracer)
+    if (fullTracer){
+        // handle full-tracer events
         fullTracer.handleEvent(ctx, tag);
+
+        // handle verbose full-tracer events
+        if (fullTracer.options.verbose.enable)
+            fullTracer.handleEventVerbose(ctx, tag);
+    }
     if (debug && tag.params[0].varName == 'onError')
         console.log(`Error triggered zkrom: ${tag.params[1].varName}\nsource: ${ctx.sourceRef}`);
 }
@@ -2834,11 +2851,11 @@ function eval_AddPointEc(ctx, tag, dbl)
         if (ctx.Fec.isZero(divisor)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
         }
-        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), );
+        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), divisor);
     }
     else {
         const deltaX = ctx.Fec.sub(x2, x1)
-        if (ctx.Fec.isZero(delta)) {
+        if (ctx.Fec.isZero(deltaX)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
         }
         s = ctx.Fec.div(ctx.Fec.sub(y2, y1), deltaX );
