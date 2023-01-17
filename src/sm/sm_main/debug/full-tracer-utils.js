@@ -159,6 +159,15 @@ function getFromMemory(offset, length, ctx) {
     }
     return finalMemory
 }
+/**
+ * Get range from memory
+ * @param {Object} ctx current context object
+ * @param {String} constantName constant name identifier
+ * @returns {Number} constant value
+ */
+function getConstantFromCtx(ctx, constantName) {
+    return Number(ctx.rom.constants[constantName].value)
+}
 
 /**
  * Get constant from rom compilation
