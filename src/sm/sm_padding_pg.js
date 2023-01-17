@@ -108,7 +108,6 @@ module.exports.execute = async function (pols, input) {
             pols.rem[p] = F.e(input[i].realLen - BigInt(j));
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
-            pols.firstHash[p] = j==0 ? 1n : 0n;
             const lastBlock = (p % BYTESPERBLOCK) == (BYTESPERBLOCK - 1);
             const lastHash = lastBlock && (pols.spare[p] || !pols.rem[p]);
 
@@ -249,7 +248,6 @@ module.exports.execute = async function (pols, input) {
             pols.rem[p] = F.e(-j);
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = j>0 ? 1n : 0n;
-            pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.lastHashLen[p] = 0n;
             pols.lastHashDigest[p] = 0n;
 

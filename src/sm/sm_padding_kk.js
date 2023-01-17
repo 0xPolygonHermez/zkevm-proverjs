@@ -87,7 +87,6 @@ module.exports.execute = async function (pols, input) {
             // spare means we are in padding zone (realLen < j < dataBytes.length )
             // check if pols.rem[p] was "negative"
             pols.spare[p] = pols.rem[p] > 0x7FFFFFFF80000000n ? 1n : 0n;
-            pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.incCounter[p] = BigInt(Math.floor(j / BYTESPERBLOCK) +1);
             const lastBlockLatch = (p % BYTESPERBLOCK) == (BYTESPERBLOCK - 1);
             const lastHashLatch = lastBlockLatch && (pols.spare[p] || !pols.rem[p]);
@@ -184,7 +183,6 @@ module.exports.execute = async function (pols, input) {
             // spare means we are in padding zone
             // check if pols.rem[p] was "negative"
             pols.spare[p] = pols.rem[p] > 0x7FFFFFFF80000000n ? 1n : 0n;
-            pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.connected[p] = 0n;
             pols.incCounter[p] = 1n;
             pols.lastHashLen[p] = 0n;
@@ -246,7 +244,6 @@ module.exports.execute = async function (pols, input) {
         pols.rem[p] = p==fp ? 0n : F.sub(pols.rem[p-1], F.one) ;
         pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
         pols.spare[p] =  p==fp ? 0n : 1n;
-        pols.firstHash[p] = p==fp ? 1n : 0n;
         pols.lastHashLen[p] = 0n;
         pols.lastHashDigest[p] = 0n;
 
