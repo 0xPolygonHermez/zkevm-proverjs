@@ -615,10 +615,13 @@ class FullTracer {
 
         const keyType = fea2scalar(_fieldElement, _keyType);
 
-        // create object if it does exist
+        // create object if it does not exist
         if (Scalar.eq(keyType, Constants.SMT_KEY_BALANCE) || Scalar.eq(keyType, Constants.SMT_KEY_NONCE)) {
             if (typeof this.finalTrace.read_write_addresses[addressHex] === 'undefined') {
-                this.finalTrace.read_write_addresses[addressHex] = {};
+                this.finalTrace.read_write_addresses[addressHex] = {
+                    balance: "",
+                    nonce: "",
+                };
             }
         }
 
