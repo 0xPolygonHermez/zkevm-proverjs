@@ -36,9 +36,6 @@ namespace PaddingPG(%N);
     lastHashLen * (1 - lastHash) = 0;
     lastHashDigest * (1 - lastHash) = 0;
 
-    pol commit firstHash;
-    firstHash' = lastHash;
-
     pol aFreeIn = (1 - (remIsZero + spare))*freeIn + remIsZero + lastHash*0x80;
 
     pol acc0C = acc[0] + F[0] * aFreeIn;
@@ -116,7 +113,7 @@ namespace PaddingPG(%N);
 
 
     pol commit len;
-    len * firstHash = rem * firstHash;
+    len' * lastHash = rem' * lastHash;
     len'*(1-lastHash) = len*(1-lastHash);
 
     (addr' -addr) * (1-lastHash) = 0;
