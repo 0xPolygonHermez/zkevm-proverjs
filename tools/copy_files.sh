@@ -1,8 +1,9 @@
 #!/bin/sh
 
-BDIR=build/v0.6.0.0-rc.1
+VERSION=v0.7.0.0-rc.1
+BDIR=build/$VERSION
 BASEDIR=.
-DST=/mnt/ofs/zkproverc/v0.6.0.0-rc.1
+DST=/mnt/ofs/zkproverc/$VERSION
 CPFLAGS=-v
 
 [ ! -d $DST/c_files ] && mkdir -p $DST/c_files

@@ -46,6 +46,10 @@ Additional parameters:
 - `batchL2Data`: print info about batch L2 data
 - `step`: print executor step
 
+### Build setup
+```sh
+npm run buildsetup --build=build/v0.7.0.0-rc.1 --bctree=../zkevm-prover/build/bctree
+```
 ### Build prove
 ```sh
 npm run buildall
@@ -61,19 +65,23 @@ npm run buildall --pilconfig=testvectors/pilconfig.pil --starkstruct=debug
 ### Build options
 **from**: syntax is --from=\<step\> to indicate step where start build/rebuild
 ```sh
-npm run buildall --from=c12setup
+npm run buildsetup --from=c12setup
 ```
 **continue**: this option hasn't additional argument. With this option buildall detected last step well done and continues from next step.
 ```sh
-npm run buildall --continue
+npm run buildsetup --continue
 ```
 **step**: syntax is --step=\<step\> to indicate step to execute (one step only)
 ```sh
-npm run buildall --step=c12setup
+npm run buildsetup --step=c12setup
+```
+**steps**: to show list of steps
+```sh
+npm run buildsetup --steps
 ```
 **pil**: syntax is --pil=\<main.pil\> where main.pil was name of pil to compile. For debugging could use basic_main.pil. See --starkstruct option
 ```sh
-npm run buildall --pil=pil/basic_main.pil --starkstruct=debug
+npm run buildsetup --pil=pil/basic_main.pil --starkstruct=debug
 ```
 **pilconfig**: syntax is --pilconfig=<pilconfig.json> where pilconfig.json was name of config used in pil compilation. See --starkstruct option
 ```sh
@@ -91,7 +99,10 @@ npm run buildall --build=build/basic_proof
 ```sh
 npm run buildall --input=test/myinputfile.json
 ```
-
+**bctree**: syntax is --bctree=\<bctree_exec\> specify an external binary (executable) to generate build constanttree
+```sh
+npm run buildall --bctree=../zkevm-prover/build/bctree
+```
 ### Memory
 
 | Region (base-to)| Size | Content |
