@@ -29,11 +29,11 @@ template Main() {
     signal input root3;
     signal input root4;
 
-    signal input evals[72][3];
+    signal input evals[70][3];
 
     signal input s0_vals1[32][12];
-    signal input s0_vals3[32][3];
-    signal input s0_vals4[32][36];
+    signal input s0_vals3[32][9];
+    signal input s0_vals4[32][24];
     signal input s0_valsC[32][34];
 
     signal input s0_siblings1[32][6][16];
