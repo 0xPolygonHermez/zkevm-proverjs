@@ -1340,7 +1340,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.binOpcode[i] = 3n;
                 pols.carry[i] = (signedA < signedB) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 3, type: 1});
-            } else if (l.binOpcode == 4) { // EQe(safeFea2scalar
+            } else if (l.binOpcode == 4) { // EQ
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
                 const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
