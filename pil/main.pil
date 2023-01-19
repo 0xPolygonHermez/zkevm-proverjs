@@ -721,7 +721,7 @@ namespace Main(%N);
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in
-    PaddingPG.crLatch {
+    PaddingPG.crLatch * PaddingPG.crValid {
         PaddingPG.addr,
         PaddingPG.len - PaddingPG.rem - PaddingPG.crLen + 1,
         PaddingPG.crLen,

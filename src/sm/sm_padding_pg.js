@@ -15,9 +15,13 @@ module.exports.buildConstants = async function (pols) {
     const nBlocks = Math.floor((N - 1)/BYTESPERBLOCK)+1;
 
     let p =0;
-
-    for (let i=0; i<nBlocks; i++) {
-        const bytesBlock = N-p > BYTESPERBLOCK ? BYTESPERBLOCK : N-p;
+    let bytesBlock = BYTESPERBLOCK;
+    let crValid = 1n;
+    while (p < N) {
+        if ((p + BYTESPERBLOCK) > N) {
+            crValid = 0n;
+            bytesBlock = N - p;
+        }
         for (let j=0; j<bytesBlock; j++) {
 
             let acci = Math.floor(j / BYTESPERELEMENT);
@@ -32,7 +36,7 @@ module.exports.buildConstants = async function (pols) {
                 pols.F[k][p] =(k == acci) ? (1n << sh) : 0n;
             }
             pols.lastBlock[p] = (j == bytesBlock-1) ? 1n : 0n;
-
+            pols.crValid[p] = crValid;
             p += 1;
         }
     }
@@ -299,6 +303,7 @@ function prepareInput(input) {
     }
 
     for (let i=0; i<input.length; i++) {
+        // TODO: check if test send information as string and order of bytes on data
         if (typeof input[i].data === 'string') {
             input[i].dataBytes = hexToBytes(input[i].data);
         } else {
