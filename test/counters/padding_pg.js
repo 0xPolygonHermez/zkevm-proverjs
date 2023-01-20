@@ -10,15 +10,18 @@ describe("Test PaddingPg Counter", async function () {
 
     it("Verify PaddingPG Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/padding_pg.zkasm", {continueOnError: true},
-                { defines: {N: 2 ** 18},
-                  namespaces: ['Global', 'Main', 'Rom', 'PaddingPG'],
-                  verbose: true,
-                  color: true,
-                  disableUnusedError: true}/*,
                 {
+                    defines: {N: 2 ** 23},
+                    namespaces: ['Global', 'Binary', 'Main', 'Rom', 'PaddingPG', 'PoseidonG'],
+                    verbose: true,
+                    color: true,
+                    disableUnusedError: true
+                },
+                {
+                    externalPilVerification: true,
                     commitFilename: 'build/commit.bin',
                     constFilename: 'build/const.bin',
                     pilJsonFilename: 'build/main.pil.json'
-                }*/);
+                });
     });
 });
