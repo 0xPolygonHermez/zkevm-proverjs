@@ -34,6 +34,7 @@ const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8
 let fullTracer;
 let debug;
 let statsTracer;
+let sourceRef;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
 
@@ -189,7 +190,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         ctx.fileName = l.fileName;
         ctx.line = l.line;
-        const sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
+        sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
 
         if (verboseOptions.zkPC) {
@@ -656,12 +657,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     // ctx.lastSWrite.keyS = ctx.lastSWrite.key.toString(16);
                     // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
 
-                    const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, fea2scalar(Fr, ctx.D));
+                    const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
                     incCounter = res.proofHashCounter + 2;
 
                     // save readWriteAddress
                     if (fullTracer){
-                        fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, fea2scalar(Fr, ctx.D));
+                        fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, safeFea2scalar(Fr, ctx.D));
                     }
 
                     ctx.lastSWrite.newRoot = res.newRoot;
@@ -723,52 +724,52 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 if (l.bin) {
                     if (l.binOpcode == 0) { // ADD
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(Scalar.add(a, b), Mask256);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 1) { // SUB
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 2) { // LT
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.lt(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 3) { // SLT
-                        let a = Scalar.e(fea2scalar(Fr, ctx.A));
+                        let a = safeFea2scalar(Fr, ctx.A);
                         if (Scalar.geq(a, twoTo255)) a = Scalar.sub(a, twoTo256);
-                        let b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        let b = safeFea2scalar(Fr, ctx.B);
                         if (Scalar.geq(b, twoTo255)) b = Scalar.sub(b, twoTo256);
                         const c = Scalar.lt(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 4) { // EQ
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.eq(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 5) { // AND
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 6) { // OR
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.bor(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 7) { // XOR
-                        const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                        const b = Scalar.e(fea2scalar(Fr, ctx.B));
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.bxor(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
@@ -778,11 +779,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
 
                 if (l.memAlignRD) {
-                    const m0 = fea2scalar(Fr, ctx.A);
-                    const m1 = fea2scalar(Fr, ctx.B);
+                    const m0 = safeFea2scalar(Fr, ctx.A);
+                    const m1 = safeFea2scalar(Fr, ctx.B);
                     const P2_256 = 2n ** 256n;
                     const MASK_256 = P2_256 - 1n;
-                    const offset = fea2scalar(Fr, ctx.C);
+                    const offset = safeFea2scalar(Fr, ctx.C);
                     if (offset < 0 || offset > 32) {
                         throw new Error(`MemAlign out of range (${offset})  ${sourceRef}`);
                     }
@@ -845,7 +846,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
+                throw new Error(`Assert does not match ${sourceRef} (op:${safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${safeFea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
         } else {
@@ -949,7 +950,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     value: res.value
                 }});
 
-            if (!Scalar.eq(res.value,fea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
+            if (!Scalar.eq(res.value,safeFea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
                 throw new Error(`Storage read does not match ${sourceRef}`);
             }
 
@@ -997,7 +998,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 // ctx.lastSWrite.keyS = Fr.toString(ctx.lastSWrite.key, 16).padStart(64, "0");
                 // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
 
-                const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, fea2scalar(Fr, ctx.D));
+                const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
                 incCounter = res.proofHashCounter + 2;
 
                 ctx.lastSWrite.res = res;
@@ -1049,7 +1050,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
-            const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
                 const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
@@ -1102,7 +1103,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashKDigest) {
             pols.hashKDigest[i] = 1n;
-            const dg = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             if (typeof ctx.hashK[addr].digest === "undefined") {
                 throw new Error(`HASHKDIGEST(${addr}) cannot load keccak from DB ${sourceRef}`);
             }
@@ -1125,7 +1126,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`HashP(${addr}) invalid size ${size} ${sourceRef}`);
-            const a = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
                 const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
@@ -1174,7 +1175,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashPDigest) {
             pols.hashPDigest[i] = 1n;
-            const dg = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             if (typeof ctx.hashP[addr] === "undefined") {
                 const k = scalar2h4(dg);
                 const data = await smt.db.getProgram(k);
@@ -1200,17 +1201,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.hashPDigest || l.sWR) {
-            const op = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
         }
 
         if (l.arithEq0 || l.arithEq1 || l.arithEq2) {
             if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2)) {
-                const A = fea2scalar(Fr, ctx.A);
-                const B = fea2scalar(Fr, ctx.B);
-                const C = fea2scalar(Fr, ctx.C);
-                const D = fea2scalar(Fr, ctx.D);
-                const op = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const A = safeFea2scalar(Fr, ctx.A);
+                const B = safeFea2scalar(Fr, ctx.B);
+                const C = safeFea2scalar(Fr, ctx.C);
+                const D = safeFea2scalar(Fr, ctx.D);
+                const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 if (! Scalar.eq(Scalar.add(Scalar.mul(A, B), C),  Scalar.add(Scalar.shl(D, 256), op))   ) {
                     console.log('A: '+A.toString()+' (0x'+A.toString(16)+')');
                     console.log('B: '+B.toString()+' (0x'+B.toString(16)+')');
@@ -1229,12 +1230,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0});
             }
             else {
-                const x1 = fea2scalar(Fr, ctx.A);
-                const y1 = fea2scalar(Fr, ctx.B);
-                const x2 = fea2scalar(Fr, ctx.C);
-                const y2 = fea2scalar(Fr, ctx.D);
-                const x3 = fea2scalar(Fr, ctx.E);
-                const y3 = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const x1 = safeFea2scalar(Fr, ctx.A);
+                const y1 = safeFea2scalar(Fr, ctx.B);
+                const x2 = safeFea2scalar(Fr, ctx.C);
+                const y2 = safeFea2scalar(Fr, ctx.D);
+                const x3 = safeFea2scalar(Fr, ctx.E);
+                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 let dbl = false;
                 if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2)) {
                     dbl = false;
@@ -1292,9 +1293,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.bin) {
             if (l.binOpcode == 0) { // ADD
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(Scalar.add(a, b), Mask256);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`ADD does not match (${expectedC} != ${c}) $${sourceRef}`);
@@ -1303,9 +1304,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = (((a + b) >> 256n) > 0n) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 0, type: 1});
             } else if (l.binOpcode == 1) { // SUB
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`SUB does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1314,9 +1315,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = ((a - b) < 0n) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 1, type: 1});
             } else if (l.binOpcode == 2) { // LT
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.lt(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`LT does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1325,9 +1326,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = (a < b) ? 1n: 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 2, type: 1});
             } else if (l.binOpcode == 3) { // SLT
-                const a = Scalar.e(fea2scalar(Fr, ctx.A));
-                const b = Scalar.e(fea2scalar(Fr, ctx.B));
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
 
                 const signedA = Scalar.geq(a, twoTo255) ? Scalar.sub(a, twoTo256): a;
                 const signedB = Scalar.geq(b, twoTo255) ? Scalar.sub(b, twoTo256): b;
@@ -1340,9 +1341,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = (signedA < signedB) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 3, type: 1});
             } else if (l.binOpcode == 4) { // EQ
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.eq(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`EQ does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1351,9 +1352,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = (a ==  b) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 4, type: 1});
             } else if (l.binOpcode == 5) { // AND
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`AND does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1362,9 +1363,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = Scalar.eq(c, Fr.zero) ? 0n:1n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 5, type: 1});
             } else if (l.binOpcode == 6) { // OR
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.bor(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`OR does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1373,9 +1374,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.carry[i] = 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 6, type: 1});
             } else if (l.binOpcode == 7) { // XOR
-                const a = fea2scalar(Fr, ctx.A);
-                const b = fea2scalar(Fr, ctx.B);
-                const c = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.bxor(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`XOR does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1394,20 +1395,20 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.memAlignRD || l.memAlignWR || l.memAlignWR8) {
-            const m0 = fea2scalar(Fr, ctx.A);
-            const v = fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const m0 = safeFea2scalar(Fr, ctx.A);
+            const v = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const P2_256 = 2n ** 256n;
             const MASK_256 = P2_256 - 1n;
-            const offset = fea2scalar(Fr, ctx.C);
+            const offset = safeFea2scalar(Fr, ctx.C);
 
             if (offset < 0 || offset >= 32) {
                 throw new Error(`MemAlign out of range (${offset}) ${sourceRef}`);
             }
 
             if (!l.memAlignRD && l.memAlignWR && !l.memAlignWR8) {
-                const m1 = fea2scalar(Fr, ctx.B);
-                const w0 = fea2scalar(Fr, ctx.D);
-                const w1 = fea2scalar(Fr, ctx.E);
+                const m1 = safeFea2scalar(Fr, ctx.B);
+                const w0 = safeFea2scalar(Fr, ctx.D);
+                const w1 = safeFea2scalar(Fr, ctx.E);
                 const _W0 = Scalar.bor(Scalar.band(m0, P2_256 - (2n ** (256n - (8n * offset)))), Scalar.shr(v, 8n * offset));
                 const _W1 = Scalar.bor(Scalar.band(m1, MASK_256 >> (offset * 8n)),
                                        Scalar.band(Scalar.shl(v, (256n - (offset * 8n))), MASK_256));
@@ -1421,7 +1422,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 required.MemAlign.push({m0: m0, m1: m1, v: v, w0: w0, w1: w1, offset: offset, wr256: 1n, wr8: 0n});
             }
             else if (!l.memAlignRD && !l.memAlignWR && l.memAlignWR8) {
-                const w0 = fea2scalar(Fr, ctx.D);
+                const w0 = safeFea2scalar(Fr, ctx.D);
                 const _W0 = Scalar.bor(Scalar.band(m0, Scalar.shr(byteMaskOn256, 8n * offset)), Scalar.shl(Scalar.band(v, 0xFF), 8n * (31n - offset)));
                 if (!Scalar.eq(w0, _W0)) {
                     throw new Error(`MemAlign w0 invalid (0x${w0.toString(16)}) vs (0x${_W0.toString(16)})`+
@@ -1432,7 +1433,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.memAlignWR8[i] = 1n;
                 required.MemAlign.push({m0: m0, m1: 0n, v: v, w0: w0, w1: 0n, offset: offset, wr256: 0n, wr8: 1n});
             } else if (l.memAlignRD && !l.memAlignWR && !l.memAlignWR8) {
-                const m1 = fea2scalar(Fr, ctx.B);
+                const m1 = safeFea2scalar(Fr, ctx.B);
                 const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
                 const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
                 const _V = Scalar.bor(leftV, rightV);
@@ -2350,17 +2351,17 @@ function eval_getVar(ctx, tag) {
 
 function eval_getReg(ctx, tag) {
     if (tag.regName == "A") {
-        return fea2scalar(ctx.Fr, ctx.A);
+        return safeFea2scalar(ctx.Fr, ctx.A);
     } else if (tag.regName == "B") {
-        return fea2scalar(ctx.Fr, ctx.B);
+        return safeFea2scalar(ctx.Fr, ctx.B);
     } else if (tag.regName == "C") {
-        return fea2scalar(ctx.Fr, ctx.C);
+        return safeFea2scalar(ctx.Fr, ctx.C);
     } else if (tag.regName == "D") {
-        return fea2scalar(ctx.Fr, ctx.D);
+        return safeFea2scalar(ctx.Fr, ctx.D);
     } else if (tag.regName == "E") {
-        return fea2scalar(ctx.Fr, ctx.E);
+        return safeFea2scalar(ctx.Fr, ctx.E);
     } else if (tag.regName == "SR") {
-        return fea2scalar(ctx.Fr, ctx.SR);
+        return safeFea2scalar(ctx.Fr, ctx.SR);
     } else if (tag.regName == "CTX") {
         return Scalar.e(ctx.CTX);
     } else if (tag.regName == "SP") {
@@ -2477,7 +2478,8 @@ function eval_logical_operation(ctx, tag)
 }
 
 function eval_getMemValue(ctx, tag) {
-    return fea2scalar(ctx.Fr, ctx.mem[tag.offset]);
+    // to be compatible with
+    return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset]);
 }
 
 function eval_functionCall(ctx, tag) {
@@ -2698,7 +2700,7 @@ function eval_log(ctx, tag) {
         let scalarLog;
         let hexLog;
         if (tag.params[0].regName !== "HASHPOS" && tag.params[0].regName !== "GAS"){
-            scalarLog = fea2scalar(ctx.Fr, frLog);
+            scalarLog = safeFea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;
         } else {
             scalarLog = Scalar.e(frLog);
@@ -2761,11 +2763,11 @@ function eval_dumpRegs(ctx, tag) {
 
     console.log(`dumpRegs ${ctx.fileName}:${ctx.line}`);
 
-    console.log(['A', fea2scalar(ctx.Fr, ctx.A)]);
-    console.log(['B', fea2scalar(ctx.Fr, ctx.B)]);
-    console.log(['C', fea2scalar(ctx.Fr, ctx.C)]);
-    console.log(['D', fea2scalar(ctx.Fr, ctx.D)]);
-    console.log(['E', fea2scalar(ctx.Fr, ctx.E)]);
+    console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
+    console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
+    console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
+    console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
+    console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
 
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
@@ -2975,4 +2977,14 @@ function sr4to8(F, r) {
     sr[6] = r[3] & 0xFFFFFFFFn;
     sr[7] = r[3] >> 32n;
     return sr;
+}
+
+function safeFea2scalar(Fr, arr) {
+    for (let index = 0; index < 8; ++index) {
+        const value = Fr.toObject(arr[index]);
+        if (value > 0xFFFFFFFFn) {
+            throw new Error(`Invalid value 0x${value.toString(16)} to convert to scalar on index ${index}: ${sourceRef}`);
+        }
+    }
+    return fea2scalar(Fr, arr);
 }
