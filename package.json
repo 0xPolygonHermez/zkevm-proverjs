@@ -40,7 +40,7 @@
     "buildpiltoolfiles": "tools/build_all.sh ${npm_package_config_steps_piltoolfiles}",
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
-    "buildrom": ". ./pre.sh && (cd node_modules/@0xpolygonhermez/zkevm-rom && npm run build) && cp node_modules/@0xpolygonhermez/zkevm-rom/build/rom.json $BDIR/rom.json",
+    "buildrom": ". ./pre.sh && ROM_DIR=node_modules/@0xpolygonhermez/zkevm-rom && (cd $ROM_DIR && npm run build) && cp $ROM_DIR/build/rom.json $ROM_DIR/build/metadata-rom.txt $BDIR/",
     "buildpil": ". ./pre.sh && mkdir -p $BDIR/pil/zkevm && node $NODE node_modules/.bin/pilcom $PIL -o $BDIR/pil/zkevm/$PIL_JSON -c $BDIR/pols_generated && for PF in `tools/included_pils.sh $BDIR/pil/zkevm/$PIL_JSON`; do cp -v $PIL_DIR/$PF $BDIR/pil/zkevm/$PF; done",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
