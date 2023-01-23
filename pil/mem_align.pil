@@ -101,7 +101,7 @@ namespace MemAlign(%N);
 
     (1 - wr8) * resultWr8 = 0;
     (1 - wr256) * resultWr256 = 0;
-    wr8 * wr256 = 0;
+    (wr8 + wr256) * resultRd = 0;
 
     // RangeCheck
     {inM[1], inM[0]} in {Global.BYTE_2A, Global.BYTE};
