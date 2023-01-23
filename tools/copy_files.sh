@@ -1,12 +1,23 @@
 #!/bin/sh
 
-VERSION=v0.7.0.0-rc.1
-BDIR=build/$VERSION
-BASEDIR=.
-DST=/mnt/ofs/zkproverc/$VERSION
-CPFLAGS=-v
+usage()
+{
+    echo "copy_files <build-dir> <destination>"
+    exit 1
+}
 
+[ -z $1 ] && usage
+[ -z $2 ] && usage
+
+# VERSION=v0.7.0.0-rc.3
+# BDIR=build/$VERSION
+BDIR=$1
+BASEDIR=.
+# DST=/mnt/ofs/zkproverc/$VERSION
+DST=$2
+CPFLAGS=-v
 [ ! -d $DST/c_files ] && mkdir -p $DST/c_files
+[ ! -d $DST/pil ] && mkdir -p $DST/pil
 
 CP_SCRIPTS=1
 CP_ZKEVM=1
@@ -16,7 +27,6 @@ CP_RECURSIVE2=1
 CP_RECURSIVEF=1
 CP_FINAL=1
 CP_CIRCOM=1
-CP_PIL=1
 
 CP="cp $CPFLAGS"
 
@@ -43,6 +53,7 @@ $CP $BDIR/zkevm.verkey.json        		                $FULLDST
 $CP -r $BDIR/pols_generated                             $DST/c_files
 $CP -r $BDIR/zkevm.verifier_cpp                         $DST/c_files
 $CP -r $BDIR/zkevm.chelpers                             $DST/c_files
+$CP -r $BDIR/pil/zkevm                                  $DST/pil/
 fi
 
 if [ $CP_C12A -eq 1 ]; then
@@ -54,6 +65,7 @@ $CP $BDIR/c12a.exec                     $FULLDST
 $CP $BDIR/c12a.consttree                $FULLDST
 $CP $BDIR/c12a.verkey.json              $FULLDST
 $CP $BDIR/c12a.starkinfo.json           $FULLDST
+$CP $BDIR/c12a.pil                      $DST/pil
 $CP -r $BDIR/c12a.chelpers              $DST/c_files
 fi
 
@@ -68,7 +80,7 @@ $CP $BDIR/recursive1.exec               $FULLDST
 $CP $BDIR/recursive.starkstruct.json    $FULLDST/recursive1.starkstruct.json
 $CP $BDIR/recursive1.starkinfo.json     $FULLDST
 $CP $BDIR/recursive1.verkey.json        $FULLDST
-$CP $BDIR/recursive1.pil                $FULLDST
+$CP $BDIR/recursive1.pil                $DST/pil
 $CP -r $BDIR/recursive1_cpp             $DST/c_files
 $CP -r $BDIR/recursive1.chelpers        $DST/c_files
 fi
@@ -79,12 +91,12 @@ FULLDST=$DST/config/recursive2
 [ ! -d $FULLDST ] && mkdir -p $FULLDST
 $CP $BDIR/recursive2.starkinfo.json     $FULLDST
 $CP $BDIR/recursive.starkstruct.json    $FULLDST/recursive2.starkstruct.json
-$CP $BDIR/recursive2.pil                $FULLDST
 $CP $BDIR/recursive2.exec               $FULLDST
 $CP $BDIR/recursive2_cpp/recursive2.dat $FULLDST/recursive2.verifier.dat
 $CP $BDIR/recursive2.verkey.json        $FULLDST
 $CP $BDIR/recursive2.consttree          $FULLDST
 $CP $BDIR/recursive2.const              $FULLDST
+$CP $BDIR/recursive2.pil                $DST/pil
 $CP -r $BDIR/recursive2_cpp             $DST/c_files
 $CP -r $BDIR/recursive2.chelpers        $DST/c_files
 fi
@@ -98,6 +110,7 @@ $CP $BDIR/recursivef.starkinfo.json     $FULLDST
 $CP $BDIR/recursivef.exec               $FULLDST
 $CP $BDIR/recursivef.const              $FULLDST
 $CP $BDIR/recursivef_cpp/recursivef.dat $FULLDST/recursivef.verifier.dat
+$CP $BDIR/recursivef.pil                $DST/pil
 $CP -r $BDIR/recursivef_cpp             $DST/c_files
 $CP -r $BDIR/recursivef.chelpers        $DST/c_files
 fi
@@ -117,11 +130,4 @@ if [ $CP_CIRCOM -eq 1 ]; then
 FULLDST=$DST/circom
 [ ! -d $FULLDST ] && mkdir -p $FULLDST
 $CP $BDIR/*.circom $FULLDST
-fi
-
-if [ $CP_PIL -eq 1 ]; then
-# pils
-FULLDST=$DST/pil
-[ ! -d $FULLDST ] && mkdir -p $FULLDST
-$CP $BDIR/*.pil $FULLDST
 fi
