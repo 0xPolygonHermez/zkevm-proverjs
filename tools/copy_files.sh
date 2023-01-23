@@ -25,6 +25,7 @@ if [ $CP_SCRIPTS -eq 1 ]; then
 FULLDST=$DST/config/scripts
 [ ! -d $FULLDST ] && mkdir -p $FULLDST
 $CP $BDIR/rom.json                                      $FULLDST
+$CP $BDIR/metadata-rom.txt                              $FULLDST
 $CP $BASEDIR/testvectors/storage_sm_rom.json            $FULLDST/storage_sm_rom.json
 $CP $BASEDIR/src/sm/sm_keccakf/keccak_script.json       $FULLDST/keccak_script.json
 $CP $BASEDIR/src/sm/sm_keccakf/keccak_connections.json  $FULLDST/keccak_connections.json
