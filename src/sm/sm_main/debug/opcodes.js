@@ -56,7 +56,6 @@ module.exports = {
     0x45: "opGASLIMIT",
     0x46: "opCHAINID",
     0x47: "opSELFBALANCE",
-    0x48: "opBASEFEE",
 
     0x50: "opPOP",
     0x51: "opMLOAD",
