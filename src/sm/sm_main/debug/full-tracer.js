@@ -80,22 +80,6 @@ class FullTracer {
     }
 
     /**
-     * Handle zkrom emitted events by name
-     * Only used in verbose mode
-     * @param {Object} ctx Current context object
-     * @param {Object} tag to identify the event
-     */
-     handleEventVerbose(ctx, tag) {
-        try {
-            if (tag.params[0].funcName === 'onTouchedAddress' || tag.params[0].funcName === 'onTouchedSlot') {
-                this.onTouched(ctx, tag.params[0].params);
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
-    /**
      * Handle async zkrom emitted events by name
      * Only used in verbose mode
      * @param {Object} ctx Current context object
@@ -584,22 +568,26 @@ class FullTracer {
     }
 
     /**
-     * Triggered when any address or storage is added as warm
+     * Triggered when any address or storage is accesed
      * Only used in verbose mode
-     * @param {Object} ctx Current context object
-     * @param {Object} params Info address/slot touched
+     * @param {Field} _fieldElement - field Element
+     * @param {Array[Field]} _address - address accessed
+     * @param {Array[Field]} _slot - slot accessed
+     * @param {Array[Field]} _keyType - Parameter accessed in the state-tree
      */
-    onTouched(ctx, params){
-        const address = fea2scalar(ctx.Fr, ctx[params[0].regName]);
+    onAccessed(_fieldElement, _address, _slot, _keyType){
+        const address = fea2scalar(_fieldElement, _address);
         const addressHex = `0x${Scalar.toString(address, 16).padStart(40, '0')}`;
         let slotStorageHex = undefined;
 
-        if (params.length > 1){
-            const slotStorage = fea2scalar(ctx.Fr, ctx[params[1].regName]);
+        const keyType = fea2scalar(_fieldElement, _keyType);
+
+        if (Scalar.eq(keyType, Constants.SMT_KEY_TOUCHED_SLOTS) || Scalar.eq(keyType, Constants.SMT_KEY_SC_STORAGE)){
+            const slotStorage = fea2scalar(_fieldElement, _slot);
             slotStorageHex = `0x${Scalar.toString(slotStorage, 16).padStart(64, '0')}`;
         }
 
-        this.verbose.addTouchedAddress(addressHex, slotStorageHex);
+        this.verbose.addAccessedAddress(addressHex, slotStorageHex);
     }
 
     /**
