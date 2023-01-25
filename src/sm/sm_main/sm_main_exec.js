@@ -664,6 +664,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     // save readWriteAddress
                     if (fullTracer){
                         fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, safeFea2scalar(Fr, ctx.D));
+
+                        // handle verbose full-tracer events
+                        if (fullTracer.options.verbose.enable)
+                            fullTracer.onAccessed(ctx.Fr, ctx.A, ctx.C, ctx.B);
                     }
 
                     ctx.lastSWrite.newRoot = res.newRoot;
@@ -2588,10 +2592,6 @@ function eval_eventLog(ctx, tag) {
     if (fullTracer){
         // handle full-tracer events
         fullTracer.handleEvent(ctx, tag);
-
-        // handle verbose full-tracer events
-        if (fullTracer.options.verbose.enable)
-            fullTracer.handleEventVerbose(ctx, tag);
     }
     if (debug && tag.params[0].varName == 'onError') {
         nameRomErrors.push(tag.params[1].varName);
