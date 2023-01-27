@@ -1088,6 +1088,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`HashK(${addr}) diferent read sizes (${ctx.hashK[addr].reads[pos]} != ${size}) in the same position ${pos} ${sourceRef}`)
             }
             ctx.hashK[addr].reads[pos] = size;
+            ctx.hashK[addr].sourceRef = sourceRef;
             incHashPos = size;
         } else {
             pols.hashK[i] = 0n;
@@ -1101,9 +1102,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             if(typeof ctx.hashK[addr] === "undefined") {
                 // len must be 0
                 if (lm != 0) throw new Error(`HashKLen(${addr}) length does not match is ${lm} and should be 0 ${sourceRef}`);
-                ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, sourceRef };
+                ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false};
                 ctx.hashK[addr].digest = ethers.utils.keccak256("0x");
             }
+            ctx.hashK[addr].sourceRef = sourceRef;
+
             if (ctx.hashK[addr].lenCalled) {
                 throw new Error(`Call HASHKLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
@@ -1164,6 +1167,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`HashP(${addr}) diferent read sizes in the same position ${pos} (${ctx.hashP[addr].reads[pos]} != ${size}) ${sourceRef}`);
             }
             ctx.hashP[addr].reads[pos] = size;
+            ctx.hashP[addr].sourceRef = sourceRef;
             incHashPos = size;
         } else {
             pols.hashP[i] = 0n;
@@ -1181,6 +1185,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ctx.hashP[addr].digestCalled = false;
                 await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);
             }
+            ctx.hashP[addr].sourceRef = sourceRef;
             if (ctx.hashP[addr].lenCalled) {
                 throw new Error(`Call HASHPLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
@@ -1922,6 +1927,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
             pendingCmds = l.cmdAfter;
         }
+        if (pols.zkPC[nexti] === 0n && nexti !== 0) {
+            throw new Error(`ERROR: Not final JMP to 0 (N=${N}) ${sourceRef}`);
+        }
     }
     } catch (error) {
         if (!error.message.includes(sourceRef)) {
@@ -1966,6 +1974,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (p!= ctx.hashK[i].data.length) {
             throw new Error(`Reading hashK(${i}) out of limits (${p} != ${ctx.hashK[i].data.length})`);
         }
+        if (!ctx.hashK[i].digestCalled) {
+            throw new Error(`Reading hashK(${i}) not call to hashKDigest, last access on ${ctx.hashK[i].sourceRef||''}`);
+        }
+
         required.PaddingKK.push(h);
     }
 
@@ -1992,6 +2004,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         if (p!= ctx.hashP[i].data.length) {
             throw new Error(`Reading hashP(${i}) out of limits (${p} != ${ctx.hashP[i].data.length})`);
+        }
+        if (!ctx.hashP[i].digestCalled) {
+            throw new Error(`Reading hashK(${i}) not call to hashKDigest, last access on ${ctx.hashP[i].sourceRef||''}`);
         }
         required.PaddingPG.push(h);
     }
