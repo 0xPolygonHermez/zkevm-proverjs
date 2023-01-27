@@ -219,6 +219,7 @@ module.exports.execute = async function (pols, input) {
         }
         addr += 1n;
     }
+    console.log(`PaddingPg-used-steps:${p} (${p/BYTESPERBLOCK}x${BYTESPERBLOCK})`);
 
     const nFullUnused = Math.floor((N -p - 1)/BYTESPERBLOCK)+1;
 

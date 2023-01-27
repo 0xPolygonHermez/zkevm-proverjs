@@ -146,6 +146,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await printBatchL2Data(ctx.input.batchL2Data);
     }
 
+    try {
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
@@ -846,7 +847,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                throw new Error(`Assert does not match ${sourceRef} (op:${safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${safeFea2scalar(Fr, ctx.A)})`);
+                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
         } else {
@@ -884,7 +885,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         (!Fr.eq(ctx.mem[addr][6],  op6)) ||
                         (!Fr.eq(ctx.mem[addr][7],  op7)))
                     {
-                        throw new Error(`Memory Read does not match ${sourceRef}`);
+                        const memdata = ctx.mem[addr].slice().reverse().join(',');
+                        const opdata = [op7,op6,op5,op4,op3,op2,op1,op0].join(',');
+                        throw new Error(`Memory Read does not match MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}`);
                     }
                 } else {
                     if ((!Fr.isZero(op0)) ||
@@ -896,7 +899,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         (!Fr.isZero(op6)) ||
                         (!Fr.isZero(op7)))
                     {
-                        throw new Error(`Memory Read does not match ${sourceRef}`);
+                        const memdata = ctx.mem[addr].slice().reverse().join(',');
+                        const opdata = [op7,op6,op5,op4,op3,op2,op1,op0].join(',');
+                        throw new Error(`Memory Read does not match with non-initialized MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}`);
                     }
                 }
 
@@ -1298,7 +1303,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.band(Scalar.add(a, b), Mask256);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error(`ADD does not match (${expectedC} != ${c}) $${sourceRef}`);
+                    throw new Error(`ADD does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 0n;
                 pols.carry[i] = (((a + b) >> 256n) > 0n) ? 1n : 0n;
@@ -1320,7 +1325,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.lt(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error(`LT does not match (${expectedC} != ${c}) ${sourceRef}`);
+                    throw new Error(`LT does not match (${expectedC?1n:0n} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 2n;
                 pols.carry[i] = (a < b) ? 1n: 0n;
@@ -1335,7 +1340,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const expectedC = Scalar.lt(signedA, signedB);
 
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error(`SLT does not match (${expectedC} != ${c}) ${sourceRef}`);
+                    throw new Error(`SLT does not match (${expectedC?1n:0n} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 3n;
                 pols.carry[i] = (signedA < signedB) ? 1n : 0n;
@@ -1346,7 +1351,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const expectedC = Scalar.eq(a, b);
                 if (!Scalar.eq(c, expectedC)) {
-                    throw new Error(`EQ does not match (${expectedC} != ${c}) ${sourceRef}`);
+                    throw new Error(`EQ does not match (${expectedC?1n:0n} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 4n;
                 pols.carry[i] = (a ==  b) ? 1n : 0n;
@@ -1906,6 +1911,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
             pendingCmds = l.cmdAfter;
         }
+    }
+    } catch (error) {
+        if (!error.message.includes(sourceRef)) {
+            error.message += ' '+sourceRef;
+        }
+        throw error;
     }
 
     if (config.stats) {
