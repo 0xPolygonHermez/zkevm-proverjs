@@ -601,9 +601,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ];
 
                     const keyI = poseidon(Kin0);
-                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
                     const key = poseidon(Kin1, keyI);
-                    required.PoseidonG.push([...Kin1, ...keyI,  ...key, POSEIDONG_PERMUTATION2_ID]);
 
                     // commented since readings are done directly in the smt
                     // const keyS = Fr.toString(key, 16).padStart(64, "0");
@@ -647,10 +645,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ];
 
                     const keyI = poseidon(Kin0);
-                    required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
                     const key = poseidon(Kin1, keyI);
-                    required.PoseidonG.push([...Kin1, ...keyI,  ...key, POSEIDONG_PERMUTATION2_ID]);
 
+                    ctx.lastSWrite.Kin0 = Kin0;
+                    ctx.lastSWrite.Kin1 = Kin1;
                     ctx.lastSWrite.keyI = keyI;
                     ctx.lastSWrite.key = key;
 
@@ -937,8 +935,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ctx.B[1]
             ];
 
+
             const keyI = poseidon(Kin0);
+            required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
+
             const key = poseidon(Kin1, keyI);
+            required.PoseidonG.push([...Kin1, ...keyI,  ...key, POSEIDONG_PERMUTATION2_ID]);
 
             const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
             incCounter = res.proofHashCounter + 2;
@@ -996,6 +998,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ctx.B[1]
                 ];
 
+                ctx.lastSWrite.Kin0 = Kin0;
+                ctx.lastSWrite.Kin1 = Kin1;
                 ctx.lastSWrite.keyI = poseidon(Kin0);
                 ctx.lastSWrite.key = poseidon(Kin1, ctx.lastSWrite.keyI);
 
@@ -1010,6 +1014,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ctx.lastSWrite.newRoot = res.newRoot;
                 ctx.lastSWrite.step = step;
             }
+            required.PoseidonG.push([...ctx.lastSWrite.Kin0, 0n, 0n, 0n, 0n, ...ctx.lastSWrite.keyI, POSEIDONG_PERMUTATION1_ID]);
+            required.PoseidonG.push([...ctx.lastSWrite.Kin1, ...ctx.lastSWrite.keyI,  ...ctx.lastSWrite.key, POSEIDONG_PERMUTATION2_ID]);
 
             required.Storage.push({
                 bIsSet: true,
