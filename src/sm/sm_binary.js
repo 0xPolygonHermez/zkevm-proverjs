@@ -239,7 +239,7 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                 pol_cout[i] = 0n;
                 pol_use_carry[i] = 0n;
                 break;
-            // NOP   (OPCODE = 0)
+            // NOP   (OPCODE = 8)
             default:
                 pol_c[i] = 0n;
                 pol_cout[i] = 0n;
@@ -462,8 +462,9 @@ module.exports.execute = async function (pols, input) {
             pols.resultValidRange [((i+1) * STEPS)%N] = 1n;
         }
     }
+    console.log(`Binary-used-steps:${input.length * STEPS} (${input.length}x32)`);
+
     for (let index = input.length * STEPS; index < N; index++) {
-        if (index % 10000 === 0) console.log(`Computing final binary pols ${index}/${N}`);
         const nextIndex = (index + 1) % N;
         const reset = (index % STEPS) == 0 ? 1n : 0n;
         pols.a[0][nextIndex] = pols.a[0][index] * (1n - reset) + pols.freeInA[0][index] * FACTOR[0][index] + 256n * pols.freeInA[1][index] * FACTOR[0][index];

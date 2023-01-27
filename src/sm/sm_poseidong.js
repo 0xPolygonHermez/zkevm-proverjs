@@ -224,6 +224,7 @@ module.exports.execute = async function (pols, input) {
             p+=1;
         }
     }
+    console.log(`Poseidon-used-steps:${p} (${p/31}x31)`);
 
     let st0 = [];
     st0[0] = [F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero, F.zero];
