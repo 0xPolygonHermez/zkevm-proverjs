@@ -82,7 +82,7 @@
     "recursivef_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursivef.r1cs -p $BDIR/recursivef.pil -c $BDIR/recursivef.const -e $BDIR/recursivef.exec",
     "recursivef_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -i $BDIR/recursivef.starkinfo.json",
     "recursivef_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -c $BDIR/recursivef.chelpers/recursivef.chelpers.cpp -C StarkRecursiveFSteps",
-    "recursivef_buildconstanttree": ". ./pre.sh && $PILSTARK/main_buildconsttree.js -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
+    "recursivef_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
     "recursivef_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -v $BDIR/recursivef.verkey.json -o $BDIR/recursivef.verifier.circom",
     "final_gencircom": ". ./pre.sh && cp recursive/final.circom $BDIR",
     "final_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/final.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits",
