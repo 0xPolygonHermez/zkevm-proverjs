@@ -386,6 +386,9 @@ namespace Main(%N);
     public chainId = GAS(0);
     Global.L1 * (GAS - :chainId) = 0;
 
+    public forkId = CTX(0);
+    Global.L1 * (CTX - :forkId) = 0;
+
     public newStateRoot0 = SR0(%N-1);
     public newStateRoot1 = SR1(%N-1);
     public newStateRoot2 = SR2(%N-1);

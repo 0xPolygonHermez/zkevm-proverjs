@@ -2103,6 +2103,11 @@ function checkFinalState(Fr, pols, ctx) {
         if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register GAS not termined equal as its initial value");
     }
+
+    if (!Fr.eq(pols.CTX[0], ctx.Fr.e(ctx.input.forkID))){
+        if(fullTracer) fullTracer.exportTrace();
+        throw new Error("Register GAS not termined equal as its initial value");
+    }
 }
 
 /**
@@ -2199,6 +2204,9 @@ function initState(Fr, pols, ctx) {
 
     // Set chainID to GAS register
     pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
+
+    // Set forkID to CTX register
+    pols.CTX[0] = ctx.Fr.e(ctx.input.forkID)
 
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;

@@ -6,12 +6,13 @@ oldStateRoot -> 256     -> 416
 oldAccInputHash -> 256  -> 672
 oldBathcNum -> 64       -> 736
 chainId -> 64           -> 800
-newStateRoot -> 256     -> 1056
-newAccInputHash -> 256  -> 1312
-newLocalExitRoot -> 256 -> 1568
-newBatchNum -> 64       -> 1632
+forkId -> 64            -> 864
+newStateRoot -> 256     -> 1120
+newAccInputHash -> 256  -> 1376
+newLocalExitRoot -> 256 -> 1632
+newBatchNum -> 64       -> 1696
 
-Total: 1632
+Total: 1696
 */
 
 include "sha256/sha256.circom";
@@ -23,7 +24,7 @@ template Main() {
 
     signal input aggregatorAddr;
 
-    signal input publics[43];
+    signal input publics[44];
     signal input root1;
     signal input root2;
     signal input root3;
@@ -99,7 +100,7 @@ template Main() {
 
     sv.finalPol <== finalPol;
 
-    component publicsHasher = Sha256(1632);
+    component publicsHasher = Sha256(1696);
 
     component n2bAggregatorAddr = Num2Bits(160);
     n2bAggregatorAddr.in <== aggregatorAddr;
@@ -140,39 +141,46 @@ template Main() {
     }
     publicsHasher.in[736] <== 0;
 
+    component n2bforkId = Num2Bits(63);
+    n2bforkId.in <== publics[18];
+    for (var i=0; i<63; i++) {
+        publicsHasher.in[800 + 64 - 1 -i] <== n2bforkId.out[i];
+    }
+    publicsHasher.in[800] <== 0;
+
     component n2bNewStateRoot[8];
     for (var i=0; i<8; i++) {
         n2bNewStateRoot[i] = Num2Bits(32);
-        n2bNewStateRoot[i].in <== publics[18+i];
+        n2bNewStateRoot[i].in <== publics[19+i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[800 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i].out[j];
+            publicsHasher.in[864 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i].out[j];
         }
     }
 
     component n2bNewAccInputHash[8];
     for (var i=0; i<8; i++) {
         n2bNewAccInputHash[i] = Num2Bits(32);
-        n2bNewAccInputHash[i].in <== publics[26+i];
+        n2bNewAccInputHash[i].in <== publics[27+i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1056 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i].out[j];
+            publicsHasher.in[1120 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i].out[j];
         }
     }
 
     component n2bNewLocalExitRoot[8];
     for (var i=0; i<8; i++) {
         n2bNewLocalExitRoot[i] = Num2Bits(32);
-        n2bNewLocalExitRoot[i].in <== publics[34+i];
+        n2bNewLocalExitRoot[i].in <== publics[35+i];
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1312 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i].out[j];
+            publicsHasher.in[1376 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i].out[j];
         }
     }
 
     component n2bNewBatchNum = Num2Bits(63);
-    n2bNewBatchNum.in <== publics[42];
+    n2bNewBatchNum.in <== publics[43];
     for (var i=0; i<63; i++) {
-        publicsHasher.in[1568 + 64 - 1 -i] <== n2bNewBatchNum.out[i];
+        publicsHasher.in[1632 + 64 - 1 -i] <== n2bNewBatchNum.out[i];
     }
-    publicsHasher.in[1568] <== 0;
+    publicsHasher.in[1632] <== 0;
 
     component b2nPublicsHash = Bits2Num(256);
     for (var i = 0; i < 256; i++) {
