@@ -2106,7 +2106,7 @@ function checkFinalState(Fr, pols, ctx) {
 
     if (!Fr.eq(pols.CTX[0], ctx.Fr.e(ctx.input.forkID))){
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register GAS not termined equal as its initial value");
+        throw new Error(`Register CTX not termined equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
     }
 }
 

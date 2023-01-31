@@ -141,10 +141,10 @@ template Main() {
     }
     publicsHasher.in[736] <== 0;
 
-    component n2bforkId = Num2Bits(63);
-    n2bforkId.in <== publics[18];
+    component n2bForkId = Num2Bits(63);
+    n2bForkId.in <== publics[18];
     for (var i=0; i<63; i++) {
-        publicsHasher.in[800 + 64 - 1 -i] <== n2bforkId.out[i];
+        publicsHasher.in[800 + 64 - 1 -i] <== n2bForkId.out[i];
     }
     publicsHasher.in[800] <== 0;
 
