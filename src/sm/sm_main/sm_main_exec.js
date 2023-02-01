@@ -2240,7 +2240,6 @@ function initState(Fr, pols, ctx) {
     pols.SR5[0] = Fr.zero;
     pols.SR6[0] = Fr.zero;
     pols.SR7[0] = Fr.zero;
-    pols.CTX[0] = 0n;
     pols.PC[0] = 0n;
     pols.MAXMEM[0] = 0n;
     pols.HASHPOS[0] = 0n;
