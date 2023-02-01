@@ -37,7 +37,6 @@ class VerboseTracer {
     }
 
     addAccessedAddress(address, slotStorage) {
-        console.log(address, slotStorage);
         if (typeof this.touched[address] === 'undefined')
             this.touched[address] = [];
 

@@ -1,4 +1,3 @@
-const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
 
@@ -22,8 +21,6 @@ const testTools = require("./test_tools");
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
-const { polMulAxi } = require("pil-stark/src/polutils");
-const { ftruncate, lchown } = require("fs");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -70,7 +67,18 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
     }
 
-    const skipAsserts = config.unsigned || config.execute;
+    // setup namespace depending on forkID input
+    let namespace = undefined;
+    if (typeof input.forkID !== 'undefined') {
+        namespace = `fork${input.forkID}`;
+    }
+
+    // setup labels used during execution
+    const debugLabels = {
+        finishExecution: typeof namespace === 'undefined' ? "finalizeExecution": `${namespace}.finalizeExecution`,
+        checkAndSaveFrom: typeof namespace === 'undefined' ? "checkAndSaveFrom": `${namespace}.checkAndSaveFrom`
+    };
+
     const skipCounters = config.counters;
 
     const poseidon = await buildPoseidon();
@@ -126,6 +134,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         fullTracer = new FullTracer(
             config.debugInfo.inputName,
             smt,
+            ctx.input.forkID,
             {
                 verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer
             }
@@ -201,7 +210,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
-        if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+        if (debug && Number(ctx.zkPC) === rom.labels[debugLabels.finishExecution]) {
             fastDebugExit = true;
             if (typeof verboseOptions.step === 'number') {
                 console.log("Total steps used: ", ctx.step);
@@ -836,11 +845,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 //////////
 
         if (l.assert) {
-            if ((Number(ctx.zkPC) === rom.labels.assertNewStateRoot) && skipAsserts){
-                console.log("Skip assert newStateRoot");
-            } else if ((Number(ctx.zkPC) === rom.labels.assertNewLocalExitRoot) && skipAsserts){
-                console.log("Skip assert newLocalExitRoot");
-            } else if (
+            if (
                     (!Fr.eq(ctx.A[0], op0)) ||
                     (!Fr.eq(ctx.A[1], op1)) ||
                     (!Fr.eq(ctx.A[2], op2)) ||
@@ -1515,7 +1520,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ];
 
             // Set A register with input.from to process unsigned transactions
-            if ((Number(ctx.zkPC) === rom.labels.checkAndSaveFrom) && config.unsigned){
+            if ((Number(ctx.zkPC) === rom.labels[debugLabels.checkAndSaveFrom]) && config.unsigned){
                 const feaFrom = scalar2fea(Fr, input.from);
                 [pols.A0[nexti],
                  pols.A1[nexti],
@@ -2111,7 +2116,7 @@ function checkFinalState(Fr, pols, ctx) {
 }
 
 /**
- * get output registers and assert them agaunst outputs provided
+ * get output registers and assert them against outputs provided
  * @param {Object} ctx - context
  */
 function assertOutputs(ctx){

@@ -7,7 +7,16 @@ const { Scalar } = require("ffjavascript");
 
 const codes = require("./opcodes");
 const Verbose = require("./verbose-tracer");
-const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx} = require("./full-tracer-utils");
+const {
+    getTransactionHash,
+    findOffsetLabel,
+    getVarFromCtx,
+    getCalldataFromStack,
+    getRegFromCtx,
+    getFromMemory,
+    getConstantFromCtx,
+    setNamespace
+} = require("./full-tracer-utils");
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_gas_overflow`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
@@ -25,10 +34,15 @@ class FullTracer {
      * Constructor, instantation of global vars
      * @param {String} logFileName Name of the output file
      * @param {Object} smt state tree
+     * @param {Number} forkID fork identifier
      * @param {Object} options full-tracer options
      * @param {Bool} options.verbose verbose options
      */
-    constructor(logFileName, smt, options) {
+    constructor(logFileName, smt, forkID, options) {
+        // Fork id
+        if (typeof forkID !== 'undefined') {
+            setNamespace(`fork${forkID}`);
+        }
         // Opcode step traces of the all the processed tx
         this.info = [];
         // Stack of the transaction

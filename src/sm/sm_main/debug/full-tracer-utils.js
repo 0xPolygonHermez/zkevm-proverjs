@@ -2,6 +2,16 @@ const { ethers } = require("ethers");
 const { toHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
 const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
+let namespace = undefined;
+
+/**
+ * Set namespace to build proper the labels
+ * @param {String} _namespace namespace
+ */
+function setNamespace(_namespace){
+    namespace = _namespace;
+}
+
 /**
  * Compute transaction hash from a transaction RLP enconding and hashing with keccak
  * @param {String} to - hex string
@@ -48,8 +58,10 @@ function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v)
  * @returns {String} label value or null if not found
  */
 function findOffsetLabel(program, label) {
+    const finalLabel = typeof namespace === 'undefined' ? label: `${namespace}.${label}`;
+
     for (let i = 0; i < program.length; i++) {
-        if (program[i].offsetLabel === label) {
+        if (program[i].offsetLabel === finalLabel) {
             return program[i].offset;
         }
     }
@@ -149,7 +161,7 @@ function getFromMemory(offset, length, ctx) {
     if (end != endFloor) {
         memValueEnd = ctx.mem[endFloor];
         if (typeof memValueEnd === "undefined")
-            memValueEnd = scalar2fea(ctx.Fr, 0);;
+            memValueEnd = scalar2fea(ctx.Fr, 0);
         memScalarEnd = fea2scalar(ctx.Fr, memValueEnd);
         hexStringEnd = memScalarEnd.toString(16);
         hexStringEnd = hexStringEnd.padStart(64, "0");
@@ -159,15 +171,6 @@ function getFromMemory(offset, length, ctx) {
     }
     return finalMemory
 }
-/**
- * Get range from memory
- * @param {Object} ctx current context object
- * @param {String} constantName constant name identifier
- * @returns {Number} constant value
- */
-function getConstantFromCtx(ctx, constantName) {
-    return Number(ctx.rom.constants[constantName].value)
-}
 
 /**
  * Get constant from rom compilation
@@ -176,7 +179,9 @@ function getConstantFromCtx(ctx, constantName) {
  * @returns {String} value of the constant
  */
 function getConstantFromCtx(ctx, constantName) {
-    return ctx.rom.constants[constantName].value;
+    const finalConstantName = typeof namespace === 'undefined' ? constantName: `${namespace}.${constantName}`;
+
+    return ctx.rom.constants[finalConstantName].value;
 }
 
 module.exports = {
@@ -186,6 +191,6 @@ module.exports = {
     getCalldataFromStack,
     getRegFromCtx,
     getFromMemory,
-    getConstantFromCtx
+    getConstantFromCtx,
+    setNamespace
 }
-
