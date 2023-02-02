@@ -1,5 +1,5 @@
 const { ethers } = require("ethers");
-const { toHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
+const { toHexStringRlp, addressToHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
 const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 /**
@@ -23,7 +23,7 @@ function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v)
         gasLimit: toHexStringRlp(gasLimit),
         gasPrice: toHexStringRlp(gasPrice),
         data: toHexStringRlp(data),
-        to: toHexStringRlp(to)
+        to: addressToHexStringRlp(to)
     }
 
     const sig = {
@@ -149,7 +149,7 @@ function getFromMemory(offset, length, ctx) {
     if (end != endFloor) {
         memValueEnd = ctx.mem[endFloor];
         if (typeof memValueEnd === "undefined")
-            memValueEnd = scalar2fea(ctx.Fr, 0);;
+            memValueEnd = scalar2fea(ctx.Fr, 0);
         memScalarEnd = fea2scalar(ctx.Fr, memValueEnd);
         hexStringEnd = memScalarEnd.toString(16);
         hexStringEnd = hexStringEnd.padStart(64, "0");
@@ -158,15 +158,6 @@ function getFromMemory(offset, length, ctx) {
         finalMemory = finalMemory.concat(hexStringEnd);
     }
     return finalMemory
-}
-/**
- * Get range from memory
- * @param {Object} ctx current context object
- * @param {String} constantName constant name identifier
- * @returns {Number} constant value
- */
-function getConstantFromCtx(ctx, constantName) {
-    return Number(ctx.rom.constants[constantName].value)
 }
 
 /**

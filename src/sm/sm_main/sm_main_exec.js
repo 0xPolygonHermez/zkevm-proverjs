@@ -2111,7 +2111,7 @@ function checkFinalState(Fr, pols, ctx) {
 }
 
 /**
- * get output registers and assert them agaunst outputs provided
+ * get output registers and assert them against outputs provided
  * @param {Object} ctx - context
  */
 function assertOutputs(ctx){

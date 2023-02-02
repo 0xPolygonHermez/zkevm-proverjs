@@ -53,7 +53,8 @@ async function main(){
         generateData.genesis,
         null,
         null,
-        generateData.chainID
+        generateData.chainID,
+        generateData.forkID
     );
 
     // start batch
