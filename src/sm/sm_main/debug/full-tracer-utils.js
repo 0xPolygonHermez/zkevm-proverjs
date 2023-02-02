@@ -1,5 +1,5 @@
 const { ethers } = require("ethers");
-const { toHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
+const { toHexStringRlp, addressToHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
 const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 let namespace = undefined;
@@ -33,7 +33,7 @@ function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v)
         gasLimit: toHexStringRlp(gasLimit),
         gasPrice: toHexStringRlp(gasPrice),
         data: toHexStringRlp(data),
-        to: toHexStringRlp(to)
+        to: addressToHexStringRlp(to)
     }
 
     const sig = {
