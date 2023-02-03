@@ -1,0 +1,24 @@
+VAR GLOBAL lastHashKId
+VAR GLOBAL lastHashPId
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        -1          :MSTORE(lastHashKId)
+        -1          :MSTORE(lastHashPId)
+
+INCLUDE "counters.zkasm"
+INCLUDE "operations.zkasm"
+INCLUDE "special.zkasm"
+
+        ${dump(STEP)}
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:

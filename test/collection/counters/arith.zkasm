@@ -1,0 +1,20 @@
+    :CALL(SaveCounters)
+
+    0 => A,B,C,D    :ARITH
+
+    CNT_ARITH - 1 :MLOAD(v_cnt_arith)
+
+    0x2000000000000000000000000000000000000000000000000000000000000001n => A
+    0x100    => B
+    0x73     => C
+    0x20     => D
+    0x173   :ARITH
+
+    CNT_ARITH - 2 :MLOAD(v_cnt_arith)
+
+    CNT_BINARY      :MLOAD(v_cnt_binary)
+    CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
+    CNT_POSEIDON_G  :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG  :MLOAD(v_cnt_padding_pg)
+
