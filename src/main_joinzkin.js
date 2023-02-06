@@ -35,23 +35,26 @@ async function run() {
 
     zkinOut.publics[17] = zkin1.publics[17];  // chainId
 
+    zkinOut.publics[18] = zkin1.publics[18];  // forkID
 
     if (zkin1.publics[17] != (zkin2.publics[17])) throw new Error("chainID doesn't match");
+
+    if (zkin1.publics[18] != (zkin2.publics[18])) throw new Error("forkID doesn't match");
     // midStateRoot
     for (let i=0; i<8; i++) {
-        if (zkin1.publics[18 + i] != (zkin2.publics[0 + i])) throw new Error("midStateRoot doesnt't match");
+        if (zkin1.publics[19 + i] != (zkin2.publics[0 + i])) throw new Error("midStateRoot doesnt't match");
     }
     // midAccInputHash0
     for (let i=0; i<8; i++) {
-        if (zkin1.publics[26 + i] != (zkin2.publics[8 + i])) throw new Error("midAccInputHash0 doesnt't match");
+        if (zkin1.publics[27 + i] != (zkin2.publics[8 + i])) throw new Error("midAccInputHash0 doesnt't match");
     }
-    if (zkin1.publics[42] != (zkin2.publics[16])) throw new Error("batchNum doesn't match");
+    if (zkin1.publics[43] != (zkin2.publics[16])) throw new Error("batchNum doesn't match");
 
-    for (let i=0; i<8; i++) zkinOut.publics[18+i] = zkin2.publics[18+i];  // newStateRoot
-    for (let i=0; i<8; i++) zkinOut.publics[26+i] = zkin2.publics[26+i];  // newAccInputHash0
-    for (let i=0; i<8; i++) zkinOut.publics[34+i] = zkin2.publics[34+i];  // newLocalExitRoot
+    for (let i=0; i<8; i++) zkinOut.publics[19+i] = zkin2.publics[19+i];  // newStateRoot
+    for (let i=0; i<8; i++) zkinOut.publics[27+i] = zkin2.publics[27+i];  // newAccInputHash0
+    for (let i=0; i<8; i++) zkinOut.publics[35+i] = zkin2.publics[35+i];  // newLocalExitRoot
 
-    zkinOut.publics[42] = zkin2.publics[42];  // oldBatchNum
+    zkinOut.publics[43] = zkin2.publics[43];  // oldBatchNum
 
     zkinOut.a_publics = zkin1.publics;
     zkinOut.a_root1 = zkin1.root1;

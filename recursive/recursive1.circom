@@ -5,7 +5,7 @@ include "c12a.verifier.circom";
 
 template Main() {
 
-    signal input publics[43];
+    signal input publics[44];
     signal input rootC[4];
 
     signal input root1[4];
