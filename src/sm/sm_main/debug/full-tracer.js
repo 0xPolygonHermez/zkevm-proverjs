@@ -169,7 +169,7 @@ class FullTracer {
         //Fill context object
         const context = {};
         context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
-        context.type = (context.to === "0x0") ? "CREATE" : "CALL";
+        context.type = Number(getVarFromCtx(ctx, false, "isCreateContract")) ? "CREATE" : "CALL";
         context.to = (context.to === "0x0") ? "0x" : ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txGasLimit"));
