@@ -2052,7 +2052,6 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.isZero(pols.SR5[0])) ||
         (!Fr.isZero(pols.SR6[0])) ||
         (!Fr.isZero(pols.SR7[0])) ||
-        (pols.CTX[0]) ||
         (pols.PC[0]) ||
         (pols.MAXMEM[0]) ||
         (pols.HASHPOS[0]) ||
@@ -2061,7 +2060,7 @@ function checkFinalState(Fr, pols, ctx) {
     ) {
         if(fullTracer) fullTracer.exportTrace();
         if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution\n");
-        throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
+        throw new Error("Program terminated with registers A, D, E, SR, PC, MAXMEM, HASHPOS, RR, RCX, zkPC not set to zero");
     }
 
     const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
