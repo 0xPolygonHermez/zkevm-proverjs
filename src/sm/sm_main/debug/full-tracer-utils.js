@@ -170,6 +170,16 @@ function getConstantFromCtx(ctx, constantName) {
     return ctx.rom.constants[constantName].value;
 }
 
+/**
+ * Get a padded hex string from its numeric value
+ * @param {BigInt} bn numeric value
+ * @param {Numver} paddingLength left padding size with zeros
+ * @returns {String} hex value of the bn left padded with zeros
+ */
+function bnToPaddedHex(bn, paddingLength) {
+    return  `0x${ethers.utils.hexlify(bn).slice(2).padStart(paddingLength,'0')}`
+}
+
 module.exports = {
     getTransactionHash,
     findOffsetLabel,
@@ -177,6 +187,7 @@ module.exports = {
     getCalldataFromStack,
     getRegFromCtx,
     getFromMemory,
-    getConstantFromCtx
+    getConstantFromCtx,
+    bnToPaddedHex
 }
 
