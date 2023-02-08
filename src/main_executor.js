@@ -44,8 +44,8 @@ const argv = require("yargs")
     .alias("N", "stepsN")
     .alias("V", "verboseExecutor")
     .alias("D", "databaseurl")
-    .alias("N", "dbnodestable")
-    .alias("G", "dbprogramtable")    
+    .alias("n", "dbnodestable")
+    .alias("G", "dbprogramtable")
     .argv;
 
 async function run() {
