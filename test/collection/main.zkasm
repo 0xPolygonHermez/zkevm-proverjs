@@ -16,6 +16,8 @@ start:
         STEP => A
         0 :ASSERT
 
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
+
         -1          :MSTORE(lastHashKId)
         -1          :MSTORE(lastHashPId)
 
@@ -23,7 +25,6 @@ INCLUDE "counters.zkasm"
 INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
 
-        ${dump(STEP)}
 end:
        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
 
@@ -33,6 +34,6 @@ finalizeExecution:
 
                          : JMP(start)
 opINVALID:
-; label checkAndSaveFromLabel needed by executor C++
-checkAndSaveFromLabel:
+; label checkAndSaveFrom needed by executor C++
+checkAndSaveFrom:
                          :JMP(opINVALID)

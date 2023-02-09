@@ -1,7 +1,5 @@
     :CALL(SaveCounters)
 
-    $${dump(STEP)}
-
     $ => E              :MLOAD(lastHashPId)
     E + 1 => E          :MSTORE(lastHashPId)
 

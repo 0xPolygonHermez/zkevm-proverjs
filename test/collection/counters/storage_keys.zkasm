@@ -1,5 +1,3 @@
-$${dump(STEP)}
-
 ; key bits with A,B = 0  C = #
 CONST %_0000101 = 8  ; 0000101....1010 #8
 CONST %_0000111 = 4  ; 0000111....0001 #4
@@ -67,7 +65,6 @@ CONST %_1111001 = 11 ; 1111001....0110 #11
 
     %_1111001 => A
     0n => D
-    ${dump(STEP)}
     $ => SR :SSTORE
 
     CNT_POSEIDON_G - 57     :MLOAD(v_cnt_poseidon_g)
@@ -76,8 +73,6 @@ CONST %_1111001 = 11 ; 1111001....0110 #11
     %_1101000 => A
     0n => D
     $ => SR :SSTORE
-
-    $${dump(STEP)}
 
     CNT_POSEIDON_G - 68     :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 5          :MLOAD(v_cnt_binary)
