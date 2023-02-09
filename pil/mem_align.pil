@@ -98,6 +98,9 @@ namespace MemAlign(%N);
     (1 - RESET) * resultRd = 0;
     (1 - RESET) * resultWr8 = 0;
     (1 - RESET) * resultWr256 = 0;
+    resultRd * (1 - resultRd) = 0;
+    resultWr8 * (1 - resultWr8) = 0;
+    resultWr256 * (1 - resultWr256) = 0;
 
     (1 - wr8) * resultWr8 = 0;
     (1 - wr256) * resultWr256 = 0;

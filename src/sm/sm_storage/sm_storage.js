@@ -55,6 +55,9 @@ module.exports.buildConstants = async function (pols) {
         pols.rInRkeyBit[i] = l.inRKEY_BIT ? BigInt(l.inRKEY_BIT):0n;
         pols.rInSiblingRkey[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
         pols.rInSiblingValueHash[i] = l.inSIBLING_VALUE_HASH ? BigInt(l.inSIBLING_VALUE_HASH):0n;
+        pols.rInValueLow[i] = l.inVALUE_LOW ? BigInt(l.inVALUE_LOW):0n;
+        pols.rInValueHigh[i] = l.inVALUE_HIGH ? BigInt(l.inVALUE_HIGH):0n;
+        pols.rInRotlVh[i] = l.inROTL_VH ? BigInt(l.inROTL_VH):0n;
 
         pols.rSetHashLeft[i] = l.setHASH_LEFT ? BigInt(l.setHASH_LEFT):0n;
         pols.rSetHashRight[i] = l.setHASH_RIGHT ? BigInt(l.setHASH_RIGHT):0n;

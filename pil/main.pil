@@ -77,7 +77,6 @@ namespace Main(%N);
     pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
-
 ///////////
 // Intermediary calculations and checks
 ///////////
@@ -208,6 +207,7 @@ namespace Main(%N);
 
     pol commit lJmpnCondValue;
     pol jmpnCondValue = JMPN*(isNeg*2**32 + op0);
+    isNeg * (1 - isNeg) = 0;
 
     lJmpnCondValue in Global.STEP;
 
@@ -227,6 +227,7 @@ namespace Main(%N);
                     2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
                     2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
 
+
     /// RCX check zero
     pol commit RCXInv;
     pol RCXIsZero = 1 - RCX*RCXInv;
@@ -242,6 +243,7 @@ namespace Main(%N);
     pol diffMem = isMaxMem* ( (maxMemRel - MAXMEM) -
                        (MAXMEM - maxMemRel) ) +
               (MAXMEM - maxMemRel);
+    isMaxMem * (1 - isMaxMem) = 0;
 
     diffMem in Global.BYTE2;
     pol maxMemCalculated = isMaxMem*(addrRel - MAXMEM) + MAXMEM;
