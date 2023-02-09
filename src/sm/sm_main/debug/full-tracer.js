@@ -113,7 +113,8 @@ class FullTracer {
         this.verbose.printError(errorName);
 
         // Intrinsic error should be set at tx level (not opcode)
-        if (responseErrors.includes(errorName)) {
+        // Error triggered with no previous opcode set at tx level
+        if (responseErrors.includes(errorName) || this.info.length === 0) {
             if (this.finalTrace.responses[this.txCount]) {
                 this.finalTrace.responses[this.txCount].error = errorName;
             } else {
@@ -121,6 +122,7 @@ class FullTracer {
             }
             return;
         }
+
         this.info[this.info.length - 1].error = errorName;
 
         // Revert logs

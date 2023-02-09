@@ -24,6 +24,7 @@ const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { polMulAxi } = require("pil-stark/src/polutils");
 const { ftruncate, lchown } = require("fs");
+const { fea2String } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -2126,7 +2127,11 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
         (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
     ) {
-        throw new Error(`Assert Error: newStateRoot does not match\nErrors: ${nameRomErrors.toString()}`);
+        let errorMsg = "Assert Error: newStateRoot does not match\n";
+        errorMsg += `   State root computed: ${fea2String(ctx.Fr, ctx.SR)}\n`;
+        errorMsg += `   State root expected: ${ctx.input.newStateRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
@@ -2141,7 +2146,11 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.D[6], feaNewAccInputHash[6])) ||
         (!ctx.Fr.eq(ctx.D[7], feaNewAccInputHash[7]))
     ) {
-        throw new Error("Assert Error: newAccInputHash does not match");
+        let errorMsg = "Assert Error: AccInputHash does not match\n";
+        errorMsg += `   AccInputHash computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
+        errorMsg += `   AccInputHash expected: ${ctx.input.newAccInputHash}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
@@ -2156,11 +2165,19 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.E[6], feaNewLocalExitRoot[6])) ||
         (!ctx.Fr.eq(ctx.E[7], feaNewLocalExitRoot[7]))
     ) {
-        throw new Error("Assert Error: newLocalExitRoot does not match");
+        let errorMsg = "Assert Error: NewLocalExitRoot does not match\n";
+        errorMsg += `   NewLocalExitRoot computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
+        errorMsg += `   NewLocalExitRoot expected: ${ctx.input.newLocalExitRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
-        throw new Error("Assert Error: newNumBatch does not match");
+        let errorMsg = "Assert Error: NewNumBatch does not match\n";
+        errorMsg += `   NewNumBatch computed: ${Number(ctx.PC)}\n`;
+        errorMsg += `   NewNumBatch expected: ${ctx.input.newNumBatch}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     console.log("Assert outputs run succesfully");
