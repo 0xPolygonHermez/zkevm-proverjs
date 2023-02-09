@@ -243,7 +243,6 @@ namespace Main(%N);
     pol diffMem = isMaxMem* ( (maxMemRel - MAXMEM) -
                        (MAXMEM - maxMemRel) ) +
               (MAXMEM - maxMemRel);
-    isNeg * (1 - isNeg) = 0;
     isMaxMem * (1 - isMaxMem) = 0;
 
     diffMem in Global.BYTE2;
