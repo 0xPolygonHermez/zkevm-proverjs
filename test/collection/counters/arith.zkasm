@@ -1,6 +1,7 @@
     :CALL(SaveCounters)
 
-    0 => A,B,C,D    :ARITH
+    0 => A,B,C,D
+    A    :ARITH
 
     CNT_ARITH - 1 :MLOAD(v_cnt_arith)
 

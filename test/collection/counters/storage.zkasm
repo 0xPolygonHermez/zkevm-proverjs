@@ -1,6 +1,5 @@
     :CALL(SaveCounters)
 
-    $${dump(STEP)}
 
     0 => SR
 

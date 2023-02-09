@@ -1,3 +1,13 @@
+; constants needed by executor C++
+CONST %N = 2**23
+CONST %MAX_CNT_STEPS_LIMIT = %N
+CONST %MAX_CNT_ARITH_LIMIT = %N
+CONST %MAX_CNT_BINARY_LIMIT = %N
+CONST %MAX_CNT_MEM_ALIGN_LIMIT = %N
+CONST %MAX_CNT_KECCAK_F_LIMIT = %N
+CONST %MAX_CNT_PADDING_PG_LIMIT = %N
+CONST %MAX_CNT_POSEIDON_G_LIMIT = %N
+
 VAR GLOBAL lastHashKId
 VAR GLOBAL lastHashPId
 
@@ -6,6 +16,8 @@ start:
         STEP => A
         0 :ASSERT
 
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
+
         -1          :MSTORE(lastHashKId)
         -1          :MSTORE(lastHashPId)
 
@@ -13,12 +25,15 @@ INCLUDE "counters.zkasm"
 INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
 
-        ${dump(STEP)}
 end:
        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
 
-finalWait:
-        ${beforeLast()}  : JMPN(finalWait)
+; label finalizeExecution needed by executor C++
+finalizeExecution:
+        ${beforeLast()}  : JMPN(finalizeExecution)
 
                          : JMP(start)
 opINVALID:
+; label checkAndSaveFrom needed by executor C++
+checkAndSaveFrom:
+                         :JMP(opINVALID)
