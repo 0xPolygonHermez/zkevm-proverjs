@@ -32,6 +32,8 @@ cpdir()
     cp -rv $1 $2
 }
 
+WAIT=0
+
 while [ $# -gt 0 ]; do
     if [ ${1:0:1} = '-' ]; then
         case $1 in
