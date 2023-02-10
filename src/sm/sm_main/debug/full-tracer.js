@@ -7,12 +7,11 @@ const { Scalar } = require("ffjavascript");
 
 const codes = require("./opcodes");
 const Verbose = require("./verbose-tracer");
-const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex} = require("./full-tracer-utils");
+const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex } = require("./full-tracer-utils");
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_gas_overflow`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
-const generate_call_trace = true;
-const generate_execute_trace = true;
+const { generate_call_trace, generate_execute_trace, disableStorage, disableStack, enableMemory, enableReturnData } = require('./full-tracer-config.json');
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
@@ -191,7 +190,7 @@ class FullTracer {
         let vn = ethers.utils.hexlify(v - 27 + chainId * 2 + 35)
         const nonce = Number(getVarFromCtx(ctx, false, "txNonce"));
         // If legacy tx, user original v
-        if(!chainId) vn =  ethers.utils.hexlify(v)
+        if (!chainId) vn = ethers.utils.hexlify(v)
         const { tx_hash, rlp_tx } = getTransactionHash(context.to, Number(context.value), nonce, context.gas, context.gas_price, context.data, r, s, vn);
         response.tx_hash = tx_hash;
         response.rlp_tx = rlp_tx;
@@ -234,11 +233,13 @@ class FullTracer {
     * @param {Object} ctx Current context object
     */
     onUpdateStorage(ctx) {
-        // The storage key is stored in C
-        const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "C")), 32).slice(2);
-        // The storage value is stored in D
-        const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "D")), 32).slice(2);
-        this.deltaStorage[this.depth][key] = value;
+        if (!disableStorage) {
+            // The storage key is stored in C
+            const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "C")), 32).slice(2);
+            // The storage value is stored in D
+            const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, "D")), 32).slice(2);
+            this.deltaStorage[this.depth][key] = value;
+        }
     }
 
     /**
@@ -270,14 +271,15 @@ class FullTracer {
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
-        // Set return data, in case of deploy, get return buffer from stack
-        if (response.call_trace.context.to === '0x') {
-            response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString());
-        } else {
-            response.return_value = getFromMemory(getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString(), ctx);
+        if (enableReturnData) {
+            // Set return data, in case of deploy, get return buffer from stack
+            if (response.call_trace.context.to === '0x') {
+                response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString());
+            } else {
+                response.return_value = getFromMemory(getVarFromCtx(ctx, false, "retDataOffset").toString(), getVarFromCtx(ctx, false, "retDataLength").toString(), ctx);
+            }
+            response.call_trace.context.output = response.return_value;
         }
-        response.call_trace.context.output = response.return_value;
-
         //Set create address in case of deploy
         if (response.call_trace.context.to === '0x') {
             response.create_address = bnToPaddedHex(getVarFromCtx(ctx, false, "txDestAddr"), 40);
@@ -400,10 +402,10 @@ class FullTracer {
         }
 
         this.finalTrace.new_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
-        this.finalTrace.new_acc_input_hash =  bnToPaddedHex(getVarFromCtx(ctx, true, "newAccInputHash"), 64);
+        this.finalTrace.new_acc_input_hash = bnToPaddedHex(getVarFromCtx(ctx, true, "newAccInputHash"), 64);
         this.finalTrace.responses.forEach(r => {
             r.call_trace.context.batch = this.finalTrace.new_acc_input_hash
-            r.logs.forEach(l => l.batch_hash = this.finalTrace.new_acc_input_hash )
+            r.logs.forEach(l => l.batch_hash = this.finalTrace.new_acc_input_hash)
         });
         this.finalTrace.new_local_exit_root = bnToPaddedHex(getVarFromCtx(ctx, true, "newLocalExitRoot"), 64);
         this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
@@ -442,22 +444,23 @@ class FullTracer {
         addrMem += 0x20000;
 
         const finalMemory = [];
-        const lengthMemOffset = findOffsetLabel(ctx.rom.program, "memLength");
-        const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
-        const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
+        if (enableMemory) {
+            const lengthMemOffset = findOffsetLabel(ctx.rom.program, "memLength");
+            const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
+            const lenMemValueFinal = typeof lenMemValue === "undefined" ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
 
-        for (let i = 0; i < lenMemValueFinal; i++) {
-            const memValue = ctx.mem[addrMem + i];
-            if (typeof memValue === "undefined") {
-                finalMemory.push("0".padStart(64, "0"))
-                continue;
+            for (let i = 0; i < lenMemValueFinal; i++) {
+                const memValue = ctx.mem[addrMem + i];
+                if (typeof memValue === "undefined") {
+                    finalMemory.push("0".padStart(64, "0"))
+                    continue;
+                }
+                let memScalar = fea2scalar(ctx.Fr, memValue);
+                let hexString = memScalar.toString(16);
+                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                finalMemory.push(hexString.padStart(64, "0"));
             }
-            let memScalar = fea2scalar(ctx.Fr, memValue);
-            let hexString = memScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalMemory.push(hexString.padStart(64, "0"));
         }
-
         // store stack
         let addr = 0;
         addr += offsetCtx;
@@ -465,16 +468,17 @@ class FullTracer {
 
         const finalStack = [];
 
-        for (let i = 0; i < ctx.SP; i++) {
-            const stack = ctx.mem[addr + i];
-            if (typeof stack === "undefined")
-                continue;
-            let stackScalar = fea2scalar(ctx.Fr, stack);
-            let hexString = stackScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalStack.push(`0x${hexString}`);
+        if (!disableStack) {
+            for (let i = 0; i < ctx.SP; i++) {
+                const stack = ctx.mem[addr + i];
+                if (typeof stack === "undefined")
+                    continue;
+                let stackScalar = fea2scalar(ctx.Fr, stack);
+                let hexString = stackScalar.toString(16);
+                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                finalStack.push(`0x${hexString}`);
+            }
         }
-
         // add info opcodes
         this.depth = Number(getVarFromCtx(ctx, true, "depth"));
         singleInfo.depth = this.depth + 1;
@@ -576,14 +580,14 @@ class FullTracer {
      * @param {Array[Field]} _slot - slot accessed
      * @param {Array[Field]} _keyType - Parameter accessed in the state-tree
      */
-    onAccessed(_fieldElement, _address, _slot, _keyType){
+    onAccessed(_fieldElement, _address, _slot, _keyType) {
         const address = fea2scalar(_fieldElement, _address);
         const addressHex = `0x${Scalar.toString(address, 16).padStart(40, '0')}`;
         let slotStorageHex = undefined;
 
         const keyType = fea2scalar(_fieldElement, _keyType);
 
-        if (Scalar.eq(keyType, Constants.SMT_KEY_TOUCHED_SLOTS) || Scalar.eq(keyType, Constants.SMT_KEY_SC_STORAGE)){
+        if (Scalar.eq(keyType, Constants.SMT_KEY_TOUCHED_SLOTS) || Scalar.eq(keyType, Constants.SMT_KEY_SC_STORAGE)) {
             const slotStorage = fea2scalar(_fieldElement, _slot);
             slotStorageHex = `0x${Scalar.toString(slotStorage, 16).padStart(64, '0')}`;
         }
