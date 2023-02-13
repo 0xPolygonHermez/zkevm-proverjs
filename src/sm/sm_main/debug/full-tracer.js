@@ -155,7 +155,7 @@ class FullTracer {
             this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(32, "0"));
         }
         //Add log info
-        this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, "txDestAddr"), 40);
+        this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, "storageAddr"), 40);
         this.logs[ctx.CTX][indexLog].batch_number = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
         this.logs[ctx.CTX][indexLog].tx_hash = this.finalTrace.responses[this.txCount].tx_hash;
         this.logs[ctx.CTX][indexLog].tx_index = this.txCount;

@@ -8,29 +8,29 @@
       "buildrom buildpil buildconstants exec"
     ],
     "steps": [
-        "buildrom buildpil buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
-        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom",
-        "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-        "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-        "recursive_pil_check recursive_verifier_check ",
-        "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-        "final_gencircom final_compile",
-        "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity"
+      "buildrom buildpil buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom",
+      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
+      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
+      "recursive_pil_check recursive_verifier_check ",
+      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
+      "final_gencircom final_compile",
+      "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity"
     ],
     "steps_setup": [
-        "buildrom buildpil buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
-        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
-        "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-        "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-        "recursive_pil_check recursive_verifier_check ",
-        "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-        "final_gencircom final_compile",
-        "g16setup g16contribute g16evk g16solidity"
+      "buildrom buildpil buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
+      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
+      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
+      "recursive_pil_check recursive_verifier_check ",
+      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
+      "final_gencircom final_compile",
+      "g16setup g16contribute g16evk g16solidity"
     ],
     "steps_proof": [
-        "exec pilverify prove verify",
-        "c12a_exec c12a_pilverify c12a_prove c12a_verify",
-        "g16wc g16prove g16verify"
+      "exec pilverify prove verify",
+      "c12a_exec c12a_pilverify c12a_prove c12a_verify",
+      "g16wc g16prove g16verify"
     ]
   },
   "scripts": {
@@ -117,7 +117,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#develop",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#develop",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v0.7.0.0-rc.1",
     "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#feature/address-ger-manager",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
