@@ -1065,10 +1065,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashK[i] = l.hashK ? 1n : 0n;
             pols.hashK1[i] = l.hashK1 ? 1n : 0n;
             const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
+            if (addr == 1) {
+                console.log("size: ", size);
+                console.log("pos", pos);
+                console.log("num: ", a.toString(16));
+            }
+
             for (let k=0; k<size; k++) {
                 const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
                 const bh = ctx.hashK[addr].data[pos + k];
@@ -1112,6 +1119,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const lh = ctx.hashK[addr].data.length;
             if (lm != lh) throw new Error(`HashKLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
             if (typeof ctx.hashK[addr].digest === "undefined") {
+                if (addr == 1){
+                    console.log(ethers.utils.hexlify(ctx.hashK[addr].data));
+                }
                 ctx.hashK[addr].digest = ethers.utils.keccak256(ethers.utils.hexlify(ctx.hashK[addr].data));
             }
         } else {
