@@ -313,6 +313,12 @@ class FullTracer {
             if (this.finalTrace.responses[this.finalTrace.responses.length - 1].error === "") {
                 this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcode.error;
             }
+
+            // If only opcode is STOP, remove redundancy
+            if(this.info.length === 1 && this.info[0].opcode === "STOP" && this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.context.data === '0x') {
+                this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = [];
+                this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = [];
+            }
             // Remove not requested data
             if (!generate_execute_trace) {
                 delete this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace
