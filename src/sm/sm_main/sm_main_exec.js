@@ -164,7 +164,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.PC = pols.PC[i];
         ctx.RR = pols.RR[i];
         ctx.HASHPOS = pols.HASHPOS[i];
-        ctx.MAXMEM = pols.MAXMEM[i];
         ctx.GAS = pols.GAS[i];
         ctx.zkPC = pols.zkPC[i];
         ctx.cntArith = pols.cntArith[i];
@@ -353,13 +352,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inGAS[i] = Fr.e(l.inGAS);
         } else {
             pols.inGAS[i] = Fr.zero;
-        }
-
-        if (l.inMAXMEM) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inMAXMEM), Fr.e(ctx.MAXMEM)));
-            pols.inMAXMEM[i] = Fr.e(l.inMAXMEM);
-        } else {
-            pols.inMAXMEM[i] = Fr.zero;
         }
 
         if (l.inSTEP) {
@@ -1843,29 +1835,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
-        let maxMemCalculated;
-        const mm = pols.MAXMEM[i];
-        if (l.isMem) {
-            if (addrRel>mm) {
-                pols.isMaxMem[i] = 1n;
-                maxMemCalculated = addrRel;
-            } else {
-                pols.isMaxMem[i] = 0n;
-                maxMemCalculated = mm;
-            }
-        } else {
-            pols.isMaxMem[i] = 0n;
-            maxMemCalculated = mm;
-        }
-
-        if (l.setMAXMEM) {
-            pols.setMAXMEM[i] = 1n;
-            pols.MAXMEM[nexti] = BigInt(fe2n(Fr, op0, ctx));
-        } else {
-            pols.setMAXMEM[i] = 0n;
-            pols.MAXMEM[nexti] = BigInt(maxMemCalculated);
-        }
-
         if (l.setGAS == 1) {
             pols.setGAS[i]=1n;
             pols.GAS[nexti] = BigInt(fe2n(Fr, op0, ctx));
@@ -2054,14 +2023,13 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.isZero(pols.SR6[0])) ||
         (!Fr.isZero(pols.SR7[0])) ||
         (pols.PC[0]) ||
-        (pols.MAXMEM[0]) ||
         (pols.HASHPOS[0]) ||
         (pols.RR[0]) ||
         (pols.RCX[0])
     ) {
         if(fullTracer) fullTracer.exportTrace();
         if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution\n");
-        throw new Error("Program terminated with registers A, D, E, SR, PC, MAXMEM, HASHPOS, RR, RCX, zkPC not set to zero");
+        throw new Error("Program terminated with registers A, D, E, SR, PC, HASHPOS, RR, RCX, zkPC not set to zero");
     }
 
     const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
@@ -2257,7 +2225,6 @@ function initState(Fr, pols, ctx) {
     pols.SR6[0] = Fr.zero;
     pols.SR7[0] = Fr.zero;
     pols.PC[0] = 0n;
-    pols.MAXMEM[0] = 0n;
     pols.HASHPOS[0] = 0n;
     pols.RR[0] = 0n;
     pols.zkPC[0] = 0n;
@@ -2415,8 +2382,6 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.SP);
     } else if (tag.regName == "PC") {
         return Scalar.e(ctx.PC);
-    } else if (tag.regName == "MAXMEM") {
-        return Scalar.e(ctx.MAXMEM);
     } else if (tag.regName == "GAS") {
         return Scalar.e(ctx.GAS);
     } else if (tag.regName == "zkPC") {
@@ -2924,7 +2889,6 @@ function printRegs(Fr, ctx) {
     printReg1("CTX", ctx.CTX);
     printReg1("SP", ctx.SP);
     printReg1("PC", ctx.PC);
-    printReg1("MAXMEM", ctx.MAXMEM);
     printReg1("GAS", ctx.GAS);
     printReg1("zkPC", ctx.zkPC);
     printReg1("RR", ctx.RR);

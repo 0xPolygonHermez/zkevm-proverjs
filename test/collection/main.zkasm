@@ -16,7 +16,7 @@ start:
         STEP => A
         0 :ASSERT
 
-        0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, RR, HASHPOS, RCX
 
         -1          :MSTORE(lastHashKId)
         -1          :MSTORE(lastHashPId)
@@ -26,7 +26,7 @@ INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RR, HASHPOS, RCX
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, RR, HASHPOS, RCX
 
 ; label finalizeExecution needed by executor C++
 finalizeExecution:
