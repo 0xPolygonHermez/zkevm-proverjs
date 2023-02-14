@@ -315,7 +315,7 @@ class FullTracer {
             }
 
             // If only opcode is STOP, remove redundancy
-            if(this.info.length === 1 && this.info[0].opcode === "STOP" && this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.context.data === '0x') {
+            if(this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.context.data === '0x') {
                 this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = [];
                 this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = [];
             }
