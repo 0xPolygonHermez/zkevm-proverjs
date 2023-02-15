@@ -22,14 +22,11 @@ const smPoseidonG = require("./sm/sm_poseidong.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
 
 
-const fileCachePil = path.join(__dirname, "../cache-main-pil.json");
-
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -t <test.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] -u -e -v -T -c")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] -u -e -v -T -c")
     .alias("o", "output")
     .alias("r", "rom")
-    .alias("t", "test")
     .alias("l", "logs")
     .alias("s", "skip")
     .alias("S", "stats")
@@ -41,6 +38,9 @@ const argv = require("yargs")
     .alias("v", "verbose")
     .alias("T", "tracer")
     .alias("c", "counters")
+    .alias("C", "config")
+    .options('t', { alias: 'set', type: 'array' })
+    .options('D', { alias: 'define', type: 'array' })
     .alias("N", "stepsN")
     .alias("V", "verboseExecutor")
     .argv;
@@ -50,86 +50,113 @@ async function run() {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
 
-    let inputFile;
+    let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : {};
+
     if (argv._.length == 0) {
-        console.log("You need to specify an input file file");
+        console.log("You need to specify an input file");
         process.exit(1);
     } else if (argv._.length == 1) {
-        inputFile = argv._[0];
+        config.inputFile = argv._[0];
     } else  {
         console.log("Only one input file at a time is permitted");
         process.exit(1);
     }
 
-    const romFile = typeof(argv.rom) === "string" ?  argv.rom.trim() : "rom.json";
-    const outputFile = typeof(argv.output) === "string" ?  argv.output.trim() : undefined;
-    const testFile = typeof(argv.test) === "string" ?  argv.test.trim() : false;
-    const logsFile = typeof(argv.logs) === "string" ?  argv.output.trim() : undefined;
+    // parse commandline config sets
 
-    const input = JSON.parse(await fs.promises.readFile(inputFile, "utf8"));
-    const rom = JSON.parse(await fs.promises.readFile(romFile, "utf8"));
+    for (set of (argv.set ?? [])) {
+        const index = set.indexOf('=');
+        const name = index < 0 ? set : set.substr(0, index);
+        let value = index < 0 ? true : set.substr(index+1);
+        if (!isNaN(value)) {
+            const numValue = parseInt(value);
+            const bigValue = BigInt(value);
+            if ( bigValue === BigInt(numValue)) value = numValue;
+            else value = BigInt(value);
+        }
+        config[name] = value;
+    }
+
+    const configFiles = {
+        rom: 'rom.json',
+        output: undefined,
+        logs: false,
+        stats: 'program.stats',
+        pil: path.join(__dirname, "/../pil/main.pil"),
+        pilConfig: false
+    };
+
+    for (let name in configFiles) {
+        const argname = name.toLowerCase();
+        const confname = name + 'File';
+        config[confname] = (typeof argv[argname] === 'string' ? argv[argname].trim() : (config[confname] ?? configFiles[name]));
+    }
+
+    if (argv.define) {
+        config.defines = config.defines ?? {};
+        for (define of argv.define) {
+            const index = define.indexOf('=');
+            const name = index < 0 ? define : define.substr(0, index);
+            let value = index < 0 ? true : define.substr(index+1);
+
+            config.defines[name] = value;
+        }
+    }
+
+    config.stats = ((argv.stats === true || typeof argv.stats === 'string') ? true : (config.stats ?? false));
+    config.stepsN = (typeof argv.stepsN !== 'undefined' ? argv.stepsN : (config.stepsN ?? undefined));
+    config.cachePilFile = config.cachePilFile ?? path.join(__dirname, "../cache-main-pil.json");
+
+    for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
+        config[value] = (argv[value] === true ? true : (config[value] ?? false));
+    }
+
+    const input = JSON.parse(await fs.promises.readFile(config.inputFile, "utf8"));
+    const rom = JSON.parse(await fs.promises.readFile(config.romFile, "utf8"));
 
     let pil;
-    if (argv.skip === true) {
-        if (fs.existsSync(fileCachePil)) {
-            pil = JSON.parse(await fs.promises.readFile(fileCachePil, "utf8"));
+    if (config.skip === true) {
+        if (fs.existsSync(config.cachePilFile )) {
+            pil = JSON.parse(await fs.promises.readFile(config.cachePilFile , "utf8"));
         } else {
             throw new Error("Cache pil file does not exist");
         }
     } else {
-        let pilFile = __dirname + "/../pil/main.pil";
-        if (argv.pil) {
-            if (typeof(argv.pil) !== "string") {
-                throw new Error("Pil file needs to be specified with pil option")
-            }
-            pilFile = argv.pil.trim();
-        }
-        console.log('compile PIL '+pilFile);
+        console.log('compile PIL '+config.pilFile);
 
-        const pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : {};
+        const pilConfig = config.pilConfigFile ? JSON.parse(fs.readFileSync(config.pilConfigFile)) : {};
 
-        if (argv.verbose) {
+        if (config.verbose) {
             pilConfig.verbose = true;
             if (typeof pilConfig.color === 'undefined') {
                 pilConfig.color = tty.isatty(process.stdout.fd);
             }
         }
+        if (config.defines) {
+            pilConfig.defines = pilConfig.defines ?? {};
+            for (let define in config.defines) {
+                pilConfig.defines[define] = config.defines[define];
+            }
+        }
 
-        pil = await compile(F, pilFile, null, pilConfig);
-        await fs.promises.writeFile(fileCachePil, JSON.stringify(pil, null, 1) + "\n", "utf8");
+        pil = await compile(F, config.pilFile, null, pilConfig);
+        await fs.promises.writeFile(config.cachePilFile, JSON.stringify(pil, null, 1) + "\n", "utf8");
     }
 
-    const test = testFile ? JSON.parse(await fs.promises.readFile(testFile, "utf8")) : false;
     const cmPols = newCommitPolsArray(pil);
-    const stats = (argv.stats === true || typeof argv.stats === 'string');
-    const statsFile = typeof argv.stats === 'string' ? argv.stats.trim() : 'program.stats';
 
-    const pathVerboseFile = typeof argv.verboseExecutor === 'string' ? argv.verboseExecutor.trim() : undefined;
+    config.pathVerboseFile = (typeof argv.verboseExecutor === 'string' ? argv.verboseExecutor.trim() : config.pathVerboseFile);
+    config.verboseOptions = config.verboseOptions ?? {};
 
-    let verboseOptions = {};
-
-    if (typeof pathVerboseFile !== 'undefined'){
-        if (!fs.existsSync(pathVerboseFile)) {
+    if (typeof config.pathVerboseFile !== 'undefined'){
+        if (!fs.existsSync(config.pathVerboseFile)) {
             throw new Error("Cache pil file does not exist");
         } else {
-            verboseOptions = JSON.parse(fs.readFileSync(pathVerboseFile));
+            config.verboseOptions = JSON.parse(fs.readFileSync(config.pathVerboseFile));
         }
     }
 
-    const config = {
-        test: test,
-        debug: (argv.debug === true),
-        debugInfo: {
-            inputName: path.basename(inputFile, ".json")
-        },
-        unsigned: (argv.unsigned === true),
-        execute: (argv.execute === true),
-        tracer: (argv.tracer === true),
-        counters: (argv.counters === true),
-        stats,
-        stepsN: (typeof argv.stepsN === 'undefined' ? undefined : argv.stepsN),
-        verboseOptions: verboseOptions
-    }
+    config.debugInfo = { inputName: path.basename(config.inputFile, ".json") };
 
     let metadata = {};
     const N = cmPols.Main.PC.length;
@@ -137,7 +164,7 @@ async function run() {
     console.log(`N = ${N}`);
     console.log("Main ...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, config, metadata);
-    if (typeof outputFile !== "undefined") {
+    if (typeof config.outputFile !== "undefined") {
         if (cmPols.Storage) {
             console.log("Storage...");
         }
@@ -191,11 +218,11 @@ async function run() {
         }
 
         console.log("Exporting Polynomials...");
-        await cmPols.saveToFile(outputFile);
+        await cmPols.saveToFile(config.outputFile);
     }
-    if (stats) {
-        console.log(`generating lines info .... ${outputFile}`);
-        let output = await fs.promises.open(statsFile, 'w');
+    if (config.stats) {
+        console.log(`generating lines info .... ${config.statsFile}`);
+        let output = await fs.promises.open(config.statsFile, 'w');
         let w = 0;
         const sep = '|';
         const content = ['w', 'zkPC', 'times', 'sourceFile', 'sourceLine', 'code'].join(sep) + "\n";
@@ -210,9 +237,9 @@ async function run() {
         await output.close();
     }
 
-    if (logsFile) {
+    if (config.logsFile) {
         console.log("Writing logs...");
-        fs.writeFileSync(logsFile, JSON.stringify(requiredMain.Logs, null, 2));
+        fs.writeFileSync(config.logsFile, JSON.stringify(requiredMain.Logs, null, 2));
     }
 
     console.log("Executor finished correctly");

@@ -304,7 +304,6 @@ function prepareInput(input) {
     }
 
     for (let i=0; i<input.length; i++) {
-        // TODO: check if test send information as string and order of bytes on data
         if (typeof input[i].data === 'string') {
             input[i].dataBytes = hexToBytes(input[i].data);
         } else {
