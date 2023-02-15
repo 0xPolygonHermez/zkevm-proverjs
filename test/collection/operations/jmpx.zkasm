@@ -1,0 +1,355 @@
+VAR GLOBAL OpJmpx_V1;VAR
+
+    STEP => RR
+
+    0 => A,B
+
+    3 => A
+    3       :ASSERT ; OK
+            :JMP(OpJmpx_DirectJmpOk)
+    0       :ASSERT ; FAIL
+OpJmpx_DirectJmpOk:
+    3       :ASSERT ; OK
+
+; ============== JMPN Tests ==================
+
+; JMPN condition values
+
+    0 => A
+    A      :JMPN(OpJmpx_JMPN_cond1_FAIL1)
+    A + 1  :JMPN(OpJmpx_JMPN_cond1_FAIL1)
+    A - 1  :JMPN(OpJmpx_JMPN_cond1_OK1)
+
+OpJmpx_JMPN_cond1_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPN_cond1_OK1:
+
+
+; JMPN Limit test
+
+    0xFFFFFFFFn => A
+    A      :JMPN(OpJmpx_JMPN_cond1_FAIL2)
+           :JMP(OpJmpx_JMPN_cond1_OK2)
+
+OpJmpx_JMPN_cond1_FAIL2:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPN_cond1_OK2:
+
+    0x100000000n => A   ; A0 = 0 (-1)
+                        ; A1 = 1
+                        ; A2..7 = 0
+
+    A - 1 => B          ; B0 = FFFFFFFF00000000 (-1)
+                        ; B1 = 1
+                        ; B2..7 = 0
+
+    B      :JMPN(OpJmpx_JMPN_cond1_OK3)
+
+OpJmpx_JMPN_cond1_FAIL3:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPN_cond1_OK3:
+
+
+; JMPN without ELSE label
+
+    4 => A
+    A - 5   :JMPN(OpJmpx_JmpNegativeWithoutElse_OK1)
+
+OpJmpx_JmpNegativeWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNegativeWithoutElse_OK1:
+
+    5 => A
+    A - 2   :JMPN(OpJmpx_JmpElseNegativeWithoutElse_FAIL1)
+            :JMP(OpJmpx_JmpElseNegativeWithoutElse_OK2)
+
+OpJmpx_JmpElseNegativeWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNegativeWithoutElse_OK2:
+
+
+; JMPN with ELSE label
+
+    6 => A
+    A - 7   :JMPN(OpJmpx_JmpNegative_OK1, OpJmpx_JmpNegative_FAIL1)
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNegative_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNegative_OK1:
+
+
+    7 => A
+    A - 2    :JMPN(OpJmpx_JmpElseNegative_FAIL2, OpJmpx_JmpElseNegative_OK2)
+    A + 1   :ASSERT ; ******* FAIL *******
+OpJmpx_JmpElseNegative_FAIL2:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNegative_OK2:
+
+
+; ============== JMPZ Tests ==================
+
+; JMPZ condition values
+
+    0 => A
+    A + 1  :JMPZ(OpJmpx_JMPZ_cond1_FAIL1)
+    A - 1  :JMPZ(OpJmpx_JMPZ_cond1_FAIL1)
+    A      :JMPZ(OpJmpx_JMPZ_cond1_OK1)
+
+OpJmpx_JMPZ_cond1_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPZ_cond1_OK1:
+
+
+; JMPZ Limit test
+
+    0x100000000n => A   ; A0 = 0 (-1)
+                        ; A1 = 1
+                        ; A2..7 = 0
+
+    A      :JMPZ(OpJmpx_JMPZ_cond2_OK1)
+
+OpJmpx_JMPZ_cond2_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPZ_cond2_OK1:
+
+
+; JMPZ without ELSE label
+
+    4 => A
+    A - 4   :JMPZ(OpJmpx_JmpZeroWithoutElse_OK1)
+
+OpJmpx_JmpZeroWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpZeroWithoutElse_OK1:
+
+    5 => A
+    A - 2   :JMPZ(OpJmpx_JmpElseZeroWithoutElse_FAIL1)
+            :JMP(OpJmpx_JmpElseZeroWithoutElse_OK2)
+
+OpJmpx_JmpElseZeroWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseZeroWithoutElse_OK2:
+
+
+; JMPZ with ELSE label
+
+    6 => A
+    A - 6   :JMPZ(OpJmpx_JmpZero_OK1, OpJmpx_JmpZero_FAIL1)
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpZero_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpZero_OK1:
+
+
+    7 => A
+    A - 2    :JMPZ(OpJmpx_JmpElseZero_FAIL2, OpJmpx_JmpElseZero_OK2)
+    A + 1    :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseZero_FAIL2:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseZero_OK2:
+
+
+; ============== JMPNZ Tests ==================
+
+; JMPNZ condition values
+
+    0 => A
+    A      :JMPNZ(OpJmpx_JMPNZ_cond1_FAIL1)
+    A + 1  :JMPNZ(OpJmpx_JMPNZ_cond1_OK1)
+
+OpJmpx_JMPNZ_cond1_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPNZ_cond1_OK1:
+    A - 1  :JMPNZ(OpJmpx_JMPNZ_cond1_OK2)
+
+OpJmpx_JMPNZ_cond1_FAIL2:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPNZ_cond1_OK2:
+
+
+; JMPNZ Limit test
+
+    0x100000000n => A   ; A0 = 0 (-1)
+                        ; A1 = 1
+                        ; A2..7 = 0
+
+    A      :JMPNZ(OpJmpx_JMPNZ_cond2_FAIL1)
+           :JMP(OpJmpx_JMPNZ_cond2_OK1)
+
+OpJmpx_JMPNZ_cond2_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPNZ_cond2_OK1:
+
+
+; JMPNZ without ELSE label
+
+    4 => A
+    A - 3   :JMPNZ(OpJmpx_JmpNoZeroWithoutElse_OK1)
+
+OpJmpx_JmpNoZeroWithoutElse_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNoZeroWithoutElse_OK1:
+
+    5 => A
+    A - 5   :JMPNZ(OpJmpx_JmpElseNoZeroWithoutElse_FAIL1)
+            :JMP(OpJmpx_JmpElseNoZeroWithoutElse_OK2)
+
+OpJmpx_JmpElseNoZeroWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNoZeroWithoutElse_OK2:
+
+
+; JMPNZ with ELSE label
+
+    6 => A
+    A - 5   :JMPNZ(OpJmpx_JmpNoZero_OK1, OpJmpx_JmpNoZero_FAIL1)
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNoZero_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNoZero_OK1:
+
+
+    7 => A
+    A - 7    :JMPNZ(OpJmpx_JmpElseNoZero_FAIL2, OpJmpx_JmpElseNoZero_OK2)
+    A + 1    :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNoZero_FAIL2:
+    A + 1    :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNoZero_OK2:
+
+
+
+; ============== JMPC Tests ==================
+
+; JMPC condition values
+
+    0 => A
+    1 => B
+    $      :EQ,JMPC(OpJmpx_JMPC_cond1_FAIL1)
+    0 => B
+    $      :EQ,JMPC(OpJmpx_JMPC_cond1_OK1)
+           :JMP(OpJmpx_JMPC_cond1_FAIL1)
+OpJmpx_JMPC_cond1_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPC_cond1_OK1:
+
+
+; JMPC without ELSE label
+
+    4 => A,B
+    $       :EQ,JMPC(OpJmpx_JmpCarryWithoutElse_OK1)
+
+OpJmpx_JmpCarryWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpCarryWithoutElse_OK1:
+
+    5 => A
+    $       :EQ,JMPC(OpJmpx_JmpElseCarryWithoutElse_FAIL1)
+            :JMP(OpJmpx_JmpElseCarryWithoutElse_OK2)
+
+OpJmpx_JmpElseCarryWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseCarryWithoutElse_OK2:
+
+
+; JMPC with ELSE label
+
+    6 => A,B
+    $       :EQ,JMPC(OpJmpx_JmpCarry_OK1, OpJmpx_JmpCarry_FAIL1)
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpCarry_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpCarry_OK1:
+
+
+    7 => A
+    $        :EQ,JMPC(OpJmpx_JmpElseCarry_FAIL2, OpJmpx_JmpElseCarry_OK2)
+    A + 1    :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseCarry_FAIL2:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseCarry_OK2:
+
+
+; ============== JMPNC Tests ==================
+
+; JMPNC condition values
+
+    0 => A,B
+    $      :EQ,JMPNC(OpJmpx_JMPNC_cond1_FAIL1)
+    $      :LT,JMPNC(OpJmpx_JMPNC_cond1_OK1)
+
+OpJmpx_JMPNC_cond1_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JMPNC_cond1_OK1:
+
+; JMPNC without ELSE label
+
+    4 => A,B
+    $       :LT,JMPNC(OpJmpx_JmpNoCarryWithoutElse_OK1)
+
+OpJmpx_JmpNoCarryWithoutElse_FAIL1:
+    A + 1  :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNoCarryWithoutElse_OK1:
+
+    $       :EQ,JMPNC(OpJmpx_JmpElseNoCarryWithoutElse_FAIL1)
+            :JMP(OpJmpx_JmpElseNoCarryWithoutElse_OK2)
+
+OpJmpx_JmpElseNoCarryWithoutElse_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNoCarryWithoutElse_OK2:
+
+
+; JMPNC with ELSE label
+
+    6 => A,B
+    $       :LT,JMPNC(OpJmpx_JmpNoCarry_OK1, OpJmpx_JmpNoCarry_FAIL1)
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNoCarry_FAIL1:
+    A + 1   :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpNoCarry_OK1:
+
+
+    7 => A,B
+    $        :EQ,JMPNC(OpJmpx_JmpElseNoCarry_FAIL2, OpJmpx_JmpElseNoCarry_OK2)
+    A + 1    :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNoCarry_FAIL2:
+    A + 1    :ASSERT ; ******* FAIL *******
+
+OpJmpx_JmpElseNoCarry_OK2:

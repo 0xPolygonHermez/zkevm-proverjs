@@ -7,7 +7,7 @@ const { Scalar } = require("ffjavascript");
 
 const codes = require("./opcodes");
 const Verbose = require("./verbose-tracer");
-const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx} = require("./full-tracer-utils");
+const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex} = require("./full-tracer-utils");
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_gas_overflow`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
@@ -113,7 +113,8 @@ class FullTracer {
         this.verbose.printError(errorName);
 
         // Intrinsic error should be set at tx level (not opcode)
-        if (responseErrors.includes(errorName)) {
+        // Error triggered with no previous opcode set at tx level
+        if (responseErrors.includes(errorName) || this.info.length === 0) {
             if (this.finalTrace.responses[this.txCount]) {
                 this.finalTrace.responses[this.txCount].error = errorName;
             } else {
@@ -121,6 +122,7 @@ class FullTracer {
             }
             return;
         }
+
         this.info[this.info.length - 1].error = errorName;
 
         // Revert logs
@@ -153,7 +155,7 @@ class FullTracer {
             this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(32, "0"));
         }
         //Add log info
-        this.logs[ctx.CTX][indexLog].address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
+        this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, "storageAddr"), 40);
         this.logs[ctx.CTX][indexLog].batch_number = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
         this.logs[ctx.CTX][indexLog].tx_hash = this.finalTrace.responses[this.txCount].tx_hash;
         this.logs[ctx.CTX][indexLog].tx_index = this.txCount;
@@ -168,9 +170,8 @@ class FullTracer {
 
         //Fill context object
         const context = {};
-        context.to = `0x${getVarFromCtx(ctx, false, "txDestAddr")}`;
-        context.type = (context.to === "0x0") ? "CREATE" : "CALL";
-        context.to = (context.to === "0x0") ? "0x" : ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
+        context.type = Number(getVarFromCtx(ctx, false, "isCreateContract")) ? "CREATE" : "CALL";
+        context.to = (context.type === "CREATE") ? "0x" : bnToPaddedHex(getVarFromCtx(ctx, false, "txDestAddr"), 40);
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, "txCalldataLen").toString());
         context.gas = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txGasLimit"));
         context.value = getVarFromCtx(ctx, false, "txValue").toString();
@@ -178,7 +179,7 @@ class FullTracer {
         context.output = ""
         context.gas_used = "";
         context.execution_time = ""
-        context.old_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
+        context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         context.gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txGasPriceRLP"));
         //Fill response object
         const response = {};
@@ -246,7 +247,7 @@ class FullTracer {
      */
     onFinishTx(ctx) {
         const response = this.finalTrace.responses[this.txCount];
-        response.call_trace.context.from = ethers.utils.hexlify(getVarFromCtx(ctx, true, "txSrcOriginAddr"));
+        response.call_trace.context.from = bnToPaddedHex(getVarFromCtx(ctx, true, "txSrcOriginAddr"), 40);
 
         // Update spent counters
         response.txCounters = {
@@ -279,7 +280,7 @@ class FullTracer {
 
         //Set create address in case of deploy
         if (response.call_trace.context.to === '0x') {
-            response.create_address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
+            response.create_address = bnToPaddedHex(getVarFromCtx(ctx, false, "txDestAddr"), 40);
         }
         //Set gas left
         response.gas_left = String(Number(response.gas_left) - Number(response.gas_used))
@@ -311,6 +312,12 @@ class FullTracer {
             this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = this.call_trace;
             if (this.finalTrace.responses[this.finalTrace.responses.length - 1].error === "") {
                 this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcode.error;
+            }
+
+            // If only opcode is STOP, remove redundancy
+            if(this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.context.data === '0x') {
+                this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = [];
+                this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = [];
             }
             // Remove not requested data
             if (!generate_execute_trace) {
@@ -398,13 +405,13 @@ class FullTracer {
             console.log("WARNING: max steps counters exceed")
         }
 
-        this.finalTrace.new_state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
-        this.finalTrace.new_acc_input_hash = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newAccInputHash"));
+        this.finalTrace.new_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
+        this.finalTrace.new_acc_input_hash =  bnToPaddedHex(getVarFromCtx(ctx, true, "newAccInputHash"), 64);
         this.finalTrace.responses.forEach(r => {
             r.call_trace.context.batch = this.finalTrace.new_acc_input_hash
             r.logs.forEach(l => l.batch_hash = this.finalTrace.new_acc_input_hash )
         });
-        this.finalTrace.new_local_exit_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newLocalExitRoot"));
+        this.finalTrace.new_local_exit_root = bnToPaddedHex(getVarFromCtx(ctx, true, "newLocalExitRoot"), 64);
         this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
 
         this.verbose.printBatch("finish");
@@ -505,12 +512,12 @@ class FullTracer {
         singleInfo.gas_refund = getVarFromCtx(ctx, false, "gasRefund").toString();
         singleInfo.op = ethers.utils.hexlify(codeId);
         singleInfo.error = "";
-        singleInfo.state_root = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
+        singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
 
         //Add contract info
         singleInfo.contract = {};
-        singleInfo.contract.address = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txDestAddr"));
-        singleInfo.contract.caller = ethers.utils.hexlify(getVarFromCtx(ctx, false, "txSrcAddr"));
+        singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, "txDestAddr"), 40);
+        singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, "txSrcAddr"), 40);
         singleInfo.contract.value = getVarFromCtx(ctx, false, "txValue").toString();
         singleInfo.contract.data = getCalldataFromStack(ctx);
         singleInfo.contract.gas = this.txGAS[this.depth];

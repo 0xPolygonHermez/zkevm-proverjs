@@ -2075,7 +2075,6 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.isZero(pols.SR5[0])) ||
         (!Fr.isZero(pols.SR6[0])) ||
         (!Fr.isZero(pols.SR7[0])) ||
-        (pols.CTX[0]) ||
         (pols.PC[0]) ||
         (pols.MAXMEM[0]) ||
         (pols.HASHPOS[0]) ||
@@ -2083,8 +2082,8 @@ function checkFinalState(Fr, pols, ctx) {
         (pols.RCX[0])
     ) {
         if(fullTracer) fullTracer.exportTrace();
-        if(ctx.step >= (ctx.stepsN - 1)) console.log(`Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n`);
-        throw new Error("Program terminated with registers A, D, E, SR, CTX, PC, MAXMEM, zkPC not set to zero");
+        if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n");
+        throw new Error("Program terminated with registers A, D, E, SR, PC, MAXMEM, HASHPOS, RR, RCX, zkPC not set to zero");
     }
 
     const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
@@ -2126,10 +2125,15 @@ function checkFinalState(Fr, pols, ctx) {
         if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register GAS not termined equal as its initial value");
     }
+
+    if (!Fr.eq(pols.CTX[0], ctx.Fr.e(ctx.input.forkID))){
+        if(fullTracer) fullTracer.exportTrace();
+        throw new Error(`Register CTX not termined equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
+    }
 }
 
 /**
- * get output registers and assert them agaunst outputs provided
+ * get output registers and assert them against outputs provided
  * @param {Object} ctx - context
  */
 function assertOutputs(ctx){
@@ -2145,7 +2149,11 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
         (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
     ) {
-        throw new Error(`Assert Error: newStateRoot does not match\nErrors: ${nameRomErrors.toString()}`);
+        let errorMsg = "Assert Error: newStateRoot does not match\n";
+        errorMsg += `   State root computed: ${fea2String(ctx.Fr, ctx.SR)}\n`;
+        errorMsg += `   State root expected: ${ctx.input.newStateRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
@@ -2160,7 +2168,11 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.D[6], feaNewAccInputHash[6])) ||
         (!ctx.Fr.eq(ctx.D[7], feaNewAccInputHash[7]))
     ) {
-        throw new Error("Assert Error: newAccInputHash does not match");
+        let errorMsg = "Assert Error: AccInputHash does not match\n";
+        errorMsg += `   AccInputHash computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
+        errorMsg += `   AccInputHash expected: ${ctx.input.newAccInputHash}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
@@ -2175,11 +2187,19 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.E[6], feaNewLocalExitRoot[6])) ||
         (!ctx.Fr.eq(ctx.E[7], feaNewLocalExitRoot[7]))
     ) {
-        throw new Error("Assert Error: newLocalExitRoot does not match");
+        let errorMsg = "Assert Error: NewLocalExitRoot does not match\n";
+        errorMsg += `   NewLocalExitRoot computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
+        errorMsg += `   NewLocalExitRoot expected: ${ctx.input.newLocalExitRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
-        throw new Error("Assert Error: newNumBatch does not match");
+        let errorMsg = "Assert Error: NewNumBatch does not match\n";
+        errorMsg += `   NewNumBatch computed: ${Number(ctx.PC)}\n`;
+        errorMsg += `   NewNumBatch expected: ${ctx.input.newNumBatch}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
     }
 
     console.log("Assert outputs run succesfully");
@@ -2223,6 +2243,9 @@ function initState(Fr, pols, ctx) {
     // Set chainID to GAS register
     pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
 
+    // Set forkID to CTX register
+    pols.CTX[0] = ctx.Fr.e(ctx.input.forkID)
+
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;
     pols.A2[0] = Fr.zero;
@@ -2255,7 +2278,6 @@ function initState(Fr, pols, ctx) {
     pols.SR5[0] = Fr.zero;
     pols.SR6[0] = Fr.zero;
     pols.SR7[0] = Fr.zero;
-    pols.CTX[0] = 0n;
     pols.PC[0] = 0n;
     pols.MAXMEM[0] = 0n;
     pols.HASHPOS[0] = 0n;

@@ -8,29 +8,29 @@
       "buildrom buildpil buildconstants exec"
     ],
     "steps": [
-        "buildrom buildpil buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
-        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom",
-        "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-        "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-        "recursive_pil_check recursive_verifier_check ",
-        "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-        "final_gencircom final_compile",
-        "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity"
+      "buildrom buildpil buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom",
+      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
+      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
+      "recursive_pil_check recursive_verifier_check ",
+      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
+      "final_gencircom final_compile",
+      "g16setup g16contribute g16evk g16wc g16prove g16verify g16solidity"
     ],
     "steps_setup": [
-        "buildrom buildpil buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
-        "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
-        "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-        "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-        "recursive_pil_check recursive_verifier_check ",
-        "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-        "final_gencircom final_compile",
-        "g16setup g16contribute g16evk g16solidity"
+      "buildrom buildpil buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
+      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
+      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
+      "recursive_pil_check recursive_verifier_check ",
+      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
+      "final_gencircom final_compile",
+      "g16setup g16contribute g16evk g16solidity"
     ],
     "steps_proof": [
-        "exec pilverify prove verify",
-        "c12a_exec c12a_pilverify c12a_prove c12a_verify",
-        "g16wc g16prove g16verify"
+      "exec pilverify prove verify",
+      "c12a_exec c12a_pilverify c12a_prove c12a_verify",
+      "g16wc g16prove g16verify"
     ]
   },
   "scripts": {
@@ -41,7 +41,7 @@
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
     "buildrom": ". ./pre.sh && ROM_DIR=node_modules/@0xpolygonhermez/zkevm-rom && (cd $ROM_DIR && npm run build) && cp $ROM_DIR/build/rom.json $ROM_DIR/build/metadata-rom.txt $BDIR/",
-    "buildpil": ". ./pre.sh && mkdir -p $BDIR/pil/zkevm && node $NODE node_modules/.bin/pilcom $PIL -o $BDIR/pil/zkevm/$PIL_JSON -c $BDIR/pols_generated && for PF in `tools/included_pils.sh $BDIR/pil/zkevm/$PIL_JSON`; do cp -v $PIL_DIR/$PF $BDIR/pil/zkevm/$PF; done",
+    "buildpil": ". ./pre.sh && mkdir -p $BDIR/pil/zkevm && node $NODE node_modules/.bin/pilcom $PIL -o $BDIR/pil/zkevm/$PIL_JSON -c $BDIR/pols_generated -n fork_1 && for PF in `tools/included_pils.sh $BDIR/pil/zkevm/$PIL_JSON`; do cp -v $PIL_DIR/$PF $BDIR/pil/zkevm/$PF; done",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const -p $PIL",
@@ -82,7 +82,7 @@
     "recursivef_setup": ". ./pre.sh && $PILSTARK/compressor12/main_compressor12_setup.js -r $BDIR/recursivef.r1cs -p $BDIR/recursivef.pil -c $BDIR/recursivef.const -e $BDIR/recursivef.exec",
     "recursivef_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -i $BDIR/recursivef.starkinfo.json",
     "recursivef_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -c $BDIR/recursivef.chelpers/recursivef.chelpers.cpp -C StarkRecursiveFSteps",
-    "recursivef_buildconstanttree": ". ./pre.sh && $PILSTARK/main_buildconsttree.js -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
+    "recursivef_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
     "recursivef_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -v $BDIR/recursivef.verkey.json -o $BDIR/recursivef.verifier.circom",
     "final_gencircom": ". ./pre.sh && cp recursive/final.circom $BDIR",
     "final_compile": ". ./pre.sh && circom --r1cs --sym --wasm --c --verbose $BDIR/final.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits",
@@ -116,9 +116,9 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v0.6.0.0-rc.1",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#develop",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#v0.7.0.0-rc.3",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#develop",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v0.7.0.0-rc.1",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xpolygonhermez/zkevm-rom.git#v0.7.0.0-rc.7-fork.1",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "^0.1.1",
@@ -127,8 +127,8 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
-    "pil-stark": "0.0.49",
-    "pilcom": "0.0.20",
+    "pil-stark": "0.0.52",
+    "pilcom": "0.0.21",
     "snarkjs": "0.4.27",
     "yargs": "^17.4.0"
   },
