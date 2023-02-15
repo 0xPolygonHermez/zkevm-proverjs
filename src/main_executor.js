@@ -53,7 +53,7 @@ async function run() {
     let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : {};
 
     if (argv._.length == 0) {
-        console.log("You need to specify an input file file");
+        console.log("You need to specify an input file");
         process.exit(1);
     } else if (argv._.length == 1) {
         config.inputFile = argv._[0];
