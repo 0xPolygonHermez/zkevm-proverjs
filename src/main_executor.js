@@ -92,7 +92,6 @@ async function run() {
         config[confname] = (typeof argv[argname] === 'string' ? argv[argname].trim() : (config[confname] ?? configFiles[name]));
     }
 
-    console.log(argv.define);
     if (argv.define) {
         config.defines = config.defines ?? {};
         for (define of argv.define) {
