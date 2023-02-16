@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const { SMT, MemDB, smtUtils, getPoseidon} = require("@0xpolygonhermez/zkevm-commonjs");
+const { SMT, Database, smtUtils, getPoseidon} = require("@0xpolygonhermez/zkevm-commonjs");
 const scalar2key = require("@0xpolygonhermez/zkevm-commonjs/test/helpers/test-utils.js").scalar2key;
 const Scalar = require("ffjavascript").Scalar;
 const chai = require("chai");
@@ -35,6 +35,10 @@ describe("Test storage operations", async function () {
         fr = poseidon.F;
 
         pil = await compile(fr, __dirname + "/storage_main.pil");
+
+        db = new Database(fr);
+        // await db.connect("postgresql://statedb:statedb@127.0.0.1:5432/testdb");
+        smt = new SMT(db, poseidon, fr);
     })
 
     function initContext () {
@@ -74,9 +78,6 @@ describe("Test storage operations", async function () {
             cmPols.Main.D6[index] = 0n;
             cmPols.Main.D7[index] = 0n;
         }
-
-        db = new MemDB(fr);
-        smt = new SMT(db, poseidon, fr);
     }
 
     async function smtSet (oldRoot, key, value) {

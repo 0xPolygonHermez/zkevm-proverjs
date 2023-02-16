@@ -24,7 +24,7 @@ const smStorage = require("./sm/sm_storage/sm_storage.js");
 
 const argv = require("yargs")
     .version(version)
-    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -l <logs.json> -s -d [-p <main.pil>] [-P <pilconfig.json>] -u -e -v -T -c")
+    .usage("main_executor <input.json> -r <rom.json> -o <proof.json> -l <logs.json> [-p <main.pil>] [-P <pilconfig.json>] [-B <databaseurl>] [-n <dbnodestable>] [-G <dbprogamtable>]  -u -e -v -T -c -s -d ")
     .alias("o", "output")
     .alias("r", "rom")
     .alias("l", "logs")
@@ -43,6 +43,9 @@ const argv = require("yargs")
     .options('D', { alias: 'define', type: 'array' })
     .alias("N", "stepsN")
     .alias("V", "verboseExecutor")
+    .alias("B", "databaseurl")
+    .alias("n", "dbnodestable")
+    .alias("G", "dbprogramtable")
     .argv;
 
 async function run() {
@@ -106,6 +109,9 @@ async function run() {
     config.stats = ((argv.stats === true || typeof argv.stats === 'string') ? true : (config.stats ?? false));
     config.stepsN = (typeof argv.stepsN !== 'undefined' ? argv.stepsN : (config.stepsN ?? undefined));
     config.cachePilFile = config.cachePilFile ?? path.join(__dirname, "../cache-main-pil.json");
+    config.databaseURL = typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local";
+    config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
+    config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";
 
     for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
         config[value] = (argv[value] === true ? true : (config[value] ?? false));
