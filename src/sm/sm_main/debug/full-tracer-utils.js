@@ -1,6 +1,7 @@
-const { ethers } = require("ethers");
-const { toHexStringRlp, addressToHexStringRlp } = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
-const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+/* eslint-disable default-param-last */
+const { ethers } = require('ethers');
+const { toHexStringRlp, addressToHexStringRlp } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
+const { scalar2fea, fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
 
 /**
  * Compute transaction hash from a transaction RLP enconding and hashing with keccak
@@ -16,29 +17,29 @@ const { scalar2fea, fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").sm
  * @returns {String} - Hex string with the transaction hash
  */
 function getTransactionHash(to, value, nonce, gasLimit, gasPrice, data, r, s, v) {
-
     const txu = {
         value: toHexStringRlp(value),
         nonce: toHexStringRlp(nonce),
         gasLimit: toHexStringRlp(gasLimit),
         gasPrice: toHexStringRlp(gasPrice),
         data: toHexStringRlp(data),
-        to: addressToHexStringRlp(to)
-    }
+        to: addressToHexStringRlp(to),
+    };
 
     const sig = {
         r: toHexStringRlp(r),
         s: toHexStringRlp(s),
-        v: toHexStringRlp(v)
-    }
+        v: toHexStringRlp(v),
+    };
 
     const fields = [txu.nonce, txu.gasPrice, txu.gasLimit, txu.to, txu.value, txu.data, sig.v, sig.r, sig.s];
     const rlp = ethers.utils.RLP.encode(fields);
     const kecc = ethers.utils.keccak256(rlp);
+
     return {
         tx_hash: kecc,
-        rlp_tx: rlp
-    }
+        rlp_tx: rlp,
+    };
 }
 
 /**
@@ -53,6 +54,7 @@ function findOffsetLabel(program, label) {
             return program[i].offset;
         }
     }
+
     return null;
 }
 
@@ -68,8 +70,9 @@ function getVarFromCtx(ctx, global, varLabel) {
     const offsetRelative = findOffsetLabel(ctx.rom.program, varLabel);
     const addressMem = offsetCtx + offsetRelative;
     const value = ctx.mem[addressMem];
-    const finalValue = typeof value === "undefined" ? 0 : value;
+    const finalValue = typeof value === 'undefined' ? 0 : value;
     if (!finalValue) return 0n;
+
     return fea2scalar(ctx.Fr, finalValue);
 }
 
@@ -82,7 +85,7 @@ function getVarFromCtx(ctx, global, varLabel) {
  */
 function getCalldataFromStack(ctx, offset = 0, length) {
     const addr = 0x10000 + 1024 + Number(ctx.CTX) * 0x40000;
-    let value = "0x";
+    let value = '0x';
     for (let i = addr + Number(offset); i < 0x20000 + Number(ctx.CTX) * 0x40000; i++) {
         const memVal = ctx.mem[i];
         if (!memVal) break;
@@ -91,6 +94,7 @@ function getCalldataFromStack(ctx, offset = 0, length) {
     if (length) {
         value = value.slice(0, 2 + length * 2);
     }
+
     return value;
 }
 
@@ -117,20 +121,19 @@ function getFromMemory(offset, length, ctx) {
     addrMem += offsetCtx;
     addrMem += 0x20000;
 
-    let finalMemory = "";
+    let finalMemory = '';
 
     const init = addrMem + (Number(offset) / 32);
     const end = addrMem + ((Number(offset) + Number(length)) / 32);
     const initCeil = Math.ceil(init);
     const endFloor = Math.floor(end);
 
-    if (init != initCeil) {
+    if (init !== initCeil) {
         let memValueStart = ctx.mem[Math.floor(init)];
-        if (typeof memValueStart === "undefined")
-            memValueStart = scalar2fea(ctx.Fr, 0);;
-        let memScalarStart = fea2scalar(ctx.Fr, memValueStart);
+        if (typeof memValueStart === 'undefined') { memValueStart = scalar2fea(ctx.Fr, 0); }
+        const memScalarStart = fea2scalar(ctx.Fr, memValueStart);
         let hexStringStart = memScalarStart.toString(16);
-        hexStringStart = hexStringStart.padStart(64, "0");
+        hexStringStart = hexStringStart.padStart(64, '0');
         const bytesToRetrieve = (init - Math.floor(init)) * 32;
         hexStringStart = hexStringStart.slice(bytesToRetrieve * 2);
         finalMemory = finalMemory.concat(hexStringStart);
@@ -138,26 +141,25 @@ function getFromMemory(offset, length, ctx) {
 
     for (let i = initCeil; i < endFloor; i++) {
         let memValue = ctx.mem[i];
-        if (typeof memValue === "undefined")
-            memValue = scalar2fea(ctx.Fr, 0);;
-        let memScalar = fea2scalar(ctx.Fr, memValue);
+        if (typeof memValue === 'undefined') { memValue = scalar2fea(ctx.Fr, 0); }
+        const memScalar = fea2scalar(ctx.Fr, memValue);
         let hexString = memScalar.toString(16);
-        hexString = hexString.padStart(64, "0");
+        hexString = hexString.padStart(64, '0');
         finalMemory = finalMemory.concat(hexString);
     }
 
-    if (end != endFloor) {
-        memValueEnd = ctx.mem[endFloor];
-        if (typeof memValueEnd === "undefined")
-            memValueEnd = scalar2fea(ctx.Fr, 0);
-        memScalarEnd = fea2scalar(ctx.Fr, memValueEnd);
-        hexStringEnd = memScalarEnd.toString(16);
-        hexStringEnd = hexStringEnd.padStart(64, "0");
+    if (end !== endFloor) {
+        let memValueEnd = ctx.mem[endFloor];
+        if (typeof memValueEnd === 'undefined') { memValueEnd = scalar2fea(ctx.Fr, 0); }
+        const memScalarEnd = fea2scalar(ctx.Fr, memValueEnd);
+        let hexStringEnd = memScalarEnd.toString(16);
+        hexStringEnd = hexStringEnd.padStart(64, '0');
         const bytesToKeep = (end - endFloor) * 32;
         hexStringEnd = hexStringEnd.slice(0, bytesToKeep * 2);
         finalMemory = finalMemory.concat(hexStringEnd);
     }
-    return finalMemory
+
+    return finalMemory;
 }
 
 /**
@@ -177,7 +179,7 @@ function getConstantFromCtx(ctx, constantName) {
  * @returns {String} hex value of the bn left padded with zeros
  */
 function bnToPaddedHex(bn, paddingLength) {
-    return  `0x${ethers.utils.hexlify(bn).slice(2).padStart(paddingLength,'0')}`
+    return `0x${ethers.utils.hexlify(bn).slice(2).padStart(paddingLength, '0')}`;
 }
 
 module.exports = {
@@ -188,6 +190,5 @@ module.exports = {
     getRegFromCtx,
     getFromMemory,
     getConstantFromCtx,
-    bnToPaddedHex
-}
-
+    bnToPaddedHex,
+};
