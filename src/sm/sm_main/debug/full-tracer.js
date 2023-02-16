@@ -7,7 +7,7 @@ const { Scalar } = require("ffjavascript");
 
 const codes = require("./opcodes");
 const Verbose = require("./verbose-tracer");
-const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex} = require("./full-tracer-utils");
+const { getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack, getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex } = require("./full-tracer-utils");
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', `intrinsic_invalid_gas_limit`, `intrinsic_invalid_gas_overflow`, `intrinsic_invalid_balance`, `intrinsic_invalid_batch_gas_limit`, `intrinsic_invalid_sender_code`];
@@ -191,7 +191,7 @@ class FullTracer {
         let vn = ethers.utils.hexlify(v - 27 + chainId * 2 + 35)
         const nonce = Number(getVarFromCtx(ctx, false, "txNonce"));
         // If legacy tx, user original v
-        if(!chainId) vn =  ethers.utils.hexlify(v)
+        if (!chainId) vn = ethers.utils.hexlify(v)
         const { tx_hash, rlp_tx } = getTransactionHash(context.to, Number(context.value), nonce, context.gas, context.gas_price, context.data, r, s, vn);
         response.tx_hash = tx_hash;
         response.rlp_tx = rlp_tx;
@@ -314,11 +314,6 @@ class FullTracer {
                 this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcode.error;
             }
 
-            // If only opcode is STOP, remove redundancy
-            if(this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.context.data === '0x') {
-                this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = [];
-                this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = [];
-            }
             // Remove not requested data
             if (!generate_execute_trace) {
                 delete this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace
@@ -406,10 +401,10 @@ class FullTracer {
         }
 
         this.finalTrace.new_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
-        this.finalTrace.new_acc_input_hash =  bnToPaddedHex(getVarFromCtx(ctx, true, "newAccInputHash"), 64);
+        this.finalTrace.new_acc_input_hash = bnToPaddedHex(getVarFromCtx(ctx, true, "newAccInputHash"), 64);
         this.finalTrace.responses.forEach(r => {
             r.call_trace.context.batch = this.finalTrace.new_acc_input_hash
-            r.logs.forEach(l => l.batch_hash = this.finalTrace.new_acc_input_hash )
+            r.logs.forEach(l => l.batch_hash = this.finalTrace.new_acc_input_hash)
         });
         this.finalTrace.new_local_exit_root = bnToPaddedHex(getVarFromCtx(ctx, true, "newLocalExitRoot"), 64);
         this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, "newNumBatch"));
@@ -566,6 +561,12 @@ class FullTracer {
                 singleInfo.contract.gas = this.txGAS[this.depth];
             }
         }
+        // If is an ether transfer, don't add stop opcode to trace
+        if (singleInfo.opcode === "STOP" &&
+            (typeof prevStep === "undefined" || opIncContext.includes(prevStep.opcode)) &&
+            Number(getVarFromCtx(ctx, false, "bytecodeLength")) === 0) {
+            this.info.pop()
+        }
 
         if (opIncContext.includes(singleInfo.opcode)) {
             this.deltaStorage[this.depth + 1] = {};
@@ -582,14 +583,14 @@ class FullTracer {
      * @param {Array[Field]} _slot - slot accessed
      * @param {Array[Field]} _keyType - Parameter accessed in the state-tree
      */
-    onAccessed(_fieldElement, _address, _slot, _keyType){
+    onAccessed(_fieldElement, _address, _slot, _keyType) {
         const address = fea2scalar(_fieldElement, _address);
         const addressHex = `0x${Scalar.toString(address, 16).padStart(40, '0')}`;
         let slotStorageHex = undefined;
 
         const keyType = fea2scalar(_fieldElement, _keyType);
 
-        if (Scalar.eq(keyType, Constants.SMT_KEY_TOUCHED_SLOTS) || Scalar.eq(keyType, Constants.SMT_KEY_SC_STORAGE)){
+        if (Scalar.eq(keyType, Constants.SMT_KEY_TOUCHED_SLOTS) || Scalar.eq(keyType, Constants.SMT_KEY_SC_STORAGE)) {
             const slotStorage = fea2scalar(_fieldElement, _slot);
             slotStorageHex = `0x${Scalar.toString(slotStorage, 16).padStart(64, '0')}`;
         }
