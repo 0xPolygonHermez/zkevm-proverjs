@@ -9,7 +9,8 @@ const {
     scalar2h4,
     stringToH4,
     nodeIsEq,
-    hashContractBytecode
+    hashContractBytecode,
+    fea2String
 } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
 const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
