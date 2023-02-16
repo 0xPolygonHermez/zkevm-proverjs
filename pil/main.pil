@@ -509,7 +509,6 @@ namespace Main(%N);
     (1 - hashK1) * hashK1 = 0;
     (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
-    (1 - useElseAddr) * useElseAddr = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
