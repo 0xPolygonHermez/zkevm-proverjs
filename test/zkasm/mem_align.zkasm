@@ -83,7 +83,7 @@ start:
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MEM_ALIGN_WR
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
 
 ;finalLoop:
 ;        STEP-0x10000+2  : JMPN(finalLoop) ; 2 ** 16

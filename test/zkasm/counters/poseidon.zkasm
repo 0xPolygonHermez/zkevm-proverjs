@@ -220,7 +220,7 @@ start:
         CNT_KECCAK_F :ASSERT
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, HASHPOS
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)

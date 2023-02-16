@@ -30,6 +30,7 @@ start:
         STEP => A
         0 :ASSERT
 
+
         A           :MSTORE(initial_A)
         B           :MSTORE(initial_B)
         C           :MSTORE(initial_C)
@@ -54,6 +55,7 @@ INCLUDE "special.zkasm"
 INCLUDE "fix.zkasm"
 
 end:
+
         $ => A           :MLOAD(initial_A)
         $ => B           :MLOAD(initial_B)
         $ => C           :MLOAD(initial_C)

@@ -1056,7 +1056,7 @@
    "setRCX": 1,
    "line": 217,
    "fileName": "alltests.zkasm",
-   "lineStr": "       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR, RCX"
+   "lineStr": "       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, HASHPOS, RR, RCX"
   },
   {
    "freeInTag": {
