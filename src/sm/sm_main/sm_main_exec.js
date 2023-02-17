@@ -2473,6 +2473,7 @@ function eval_eventLog(ctx, tag) {
         fullTracer.handleEvent(ctx, tag);
     if (debug && tag.params[0].varName == 'onError')
         console.log(`Error triggered zkrom: ${tag.params[1].varName}\nsource: ${ctx.sourceRef}`);
+    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_cond(ctx, tag) {
