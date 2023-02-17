@@ -13,7 +13,7 @@ module.exports.buildConstants = async function (pols) {
     const fr = poseidon.F;
 
     // Init rom from file
-    const rawdata = fs.readFileSync("testvectors/storage_sm_rom.json");
+    const rawdata = fs.readFileSync(__dirname + "/storage_sm_rom.json");
     const j = JSON.parse(rawdata);
     rom = new StorageRom;
     rom.load(j);
