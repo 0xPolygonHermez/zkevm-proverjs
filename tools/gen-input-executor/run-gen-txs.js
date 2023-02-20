@@ -57,7 +57,7 @@ async function main(){
 
         // Init SMT DB
         const arity = 4;
-        const db = new zkcommonjs.MemDB(F);
+        const db = new zkcommonjs.Database(F);
         const smt = new zkcommonjs.SMT(db, arity, poseidon, poseidon.F);
 
         // Build genesis

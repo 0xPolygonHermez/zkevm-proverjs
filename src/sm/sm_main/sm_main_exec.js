@@ -9,28 +9,27 @@ const {
     scalar2h4,
     stringToH4,
     nodeIsEq,
-    hashContractBytecode
+    hashContractBytecode,
+    fea2String
 } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
-const MemDB = require("@0xpolygonhermez/zkevm-commonjs").MemDB;
+const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { byteArray2HexString, hexString2byteArray } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 const { encodedStringToArray, decodeCustomRawTxProverMethod} = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
 
-const testTools = require("./test_tools");
-
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
-const { polMulAxi } = require("pil-stark/src/polutils");
-const { ftruncate, lchown } = require("fs");
-const { fea2String } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
 
 const Mask256 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
 const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8n));
+
+const WarningCheck = 1;
+const ErrorCheck = 2;
 
 let fullTracer;
 let debug;
@@ -39,7 +38,6 @@ let sourceRef;
 let nameRomErrors = [];
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
-
     const required = {
         Arith: [],
         Binary: [],
@@ -50,10 +48,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         MemAlign: [],
         Storage: []
     };
-
-    if (config && config.test) {
-        testTools.setup(config.test, evalCommand);
-    }
 
     debug = config && config.debug;
     const flagTracer = config && config.tracer;
@@ -83,7 +77,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const FrLast32Positive = 0xFFFFFFFFn;
 
     // load database
-    const db = new MemDB(Fr, input.db);
+    const db = new Database(Fr, input.db);
+    await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
 
     // load programs into DB
     for (const [key, value] of Object.entries(input.contractsBytecode)){
@@ -147,6 +142,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     if (verboseOptions.batchL2Data) {
         await printBatchL2Data(ctx.input.batchL2Data);
     }
+
+    const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
+    const checkHashNoDigest = config.checkHashNoDigest ? (config.checkHashNoDigest === "warning" ? WarningCheck:ErrorCheck) : false;
 
     try {
     for (let step = 0; step < stepsN; step++) {
@@ -1081,6 +1079,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`HashK(${addr}) diferent read sizes (${ctx.hashK[addr].reads[pos]} != ${size}) in the same position ${pos} ${sourceRef}`)
             }
             ctx.hashK[addr].reads[pos] = size;
+            ctx.hashK[addr].sourceRef = sourceRef;
             incHashPos = size;
         } else {
             pols.hashK[i] = 0n;
@@ -1094,9 +1093,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             if(typeof ctx.hashK[addr] === "undefined") {
                 // len must be 0
                 if (lm != 0) throw new Error(`HashKLen(${addr}) length does not match is ${lm} and should be 0 ${sourceRef}`);
-                ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, sourceRef };
+                ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false};
                 ctx.hashK[addr].digest = ethers.utils.keccak256("0x");
             }
+            ctx.hashK[addr].sourceRef = sourceRef;
+
             if (ctx.hashK[addr].lenCalled) {
                 throw new Error(`Call HASHKLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
@@ -1157,6 +1158,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`HashP(${addr}) diferent read sizes in the same position ${pos} (${ctx.hashP[addr].reads[pos]} != ${size}) ${sourceRef}`);
             }
             ctx.hashP[addr].reads[pos] = size;
+            ctx.hashP[addr].sourceRef = sourceRef;
             incHashPos = size;
         } else {
             pols.hashP[i] = 0n;
@@ -1174,6 +1176,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ctx.hashP[addr].digestCalled = false;
                 await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);
             }
+            ctx.hashP[addr].sourceRef = sourceRef;
             if (ctx.hashP[addr].lenCalled) {
                 throw new Error(`Call HASHPLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
             }
@@ -1892,6 +1895,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
             pendingCmds = l.cmdAfter;
         }
+        if (checkJmpZero && pols.zkPC[nexti] === 0n && nexti !== 0) {
+            if (checkJmpZero === ErrorCheck) {
+                throw new Error(`ERROR: Not final JMP to 0 (N=${N}) ${sourceRef}`);
+            }
+            console.log(`WARNING: Not final JMP to 0 (N=${N}) ${sourceRef}`);
+        }
     }
     } catch (error) {
         if (!error.message.includes(sourceRef)) {
@@ -1936,6 +1945,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (p!= ctx.hashK[i].data.length) {
             throw new Error(`Reading hashK(${i}) out of limits (${p} != ${ctx.hashK[i].data.length})`);
         }
+        if (checkHashNoDigest && !ctx.hashK[i].digestCalled) {
+            const msg = `Reading hashK(${i}) not call to hashKDigest, last access on ${ctx.hashK[i].sourceRef||''}`;
+            if (checkHashNoDigest === ErrorCheck) {
+                throw new Error('ERROR:'+msg);
+            }
+            console.log('WARNING:'+msg)
+        }
+
         required.PaddingKK.push(h);
     }
 
@@ -1962,6 +1979,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         if (p!= ctx.hashP[i].data.length) {
             throw new Error(`Reading hashP(${i}) out of limits (${p} != ${ctx.hashP[i].data.length})`);
+        }
+        if (checkHashNoDigest && !ctx.hashP[i].digestCalled) {
+            const msg = `Reading hashP(${i}) not call to hashPDigest, last access on ${ctx.hashP[i].sourceRef||''}`;
+            if (checkHashNoDigest === ErrorCheck) {
+                throw new Error('ERROR:'+msg);
+            }
+            console.log('WARNING:'+msg)
         }
         required.PaddingPG.push(h);
     }
@@ -2028,7 +2052,8 @@ function checkFinalState(Fr, pols, ctx) {
         (pols.RCX[0])
     ) {
         if(fullTracer) fullTracer.exportTrace();
-        if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution\n");
+
+        if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n");
         throw new Error("Program terminated with registers A, D, E, SR, PC, HASHPOS, RR, RCX, zkPC not set to zero");
     }
 
@@ -2529,11 +2554,6 @@ function eval_functionCall(ctx, tag) {
         return eval_xDblPointEc(ctx, tag);
     } else if (tag.funcName == "yDblPointEc") {
         return eval_yDblPointEc(ctx, tag);
-    } else if (tag.funcName.startsWith("test")) {
-        let method = tag.funcName.charAt(4).toLowerCase() + tag.funcName.slice(5);
-        if (typeof testTools[method] === 'function') {
-            return testTools[method](ctx, tag);
-        }
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
     } else if (tag.funcName.includes("bitwise")) {

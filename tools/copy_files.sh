@@ -185,3 +185,20 @@ for F in $BDIR/*.circom; do
     cpfile $F $FULLDST
 done
 fi
+
+if [ $CP_BUILDS -eq 1 ]; then
+# builds
+FULLDST=$DST/build
+[ ! -d $FULLDST ] && mkdir -p $FULLDST
+
+cpfile package.json $FULLDST
+
+NPMFILE=$BDIR/npm.txt
+[ ! -f $NPMFILE ] && npm ls > $NPMFILE
+cpfile $NPMFILE $FULLDST
+
+BUILDS="sha256.txt steps.log c12a.starkstruct.json final.g16.0000.zkey final.g16.verifier.sol final.r1cs final.sym recursive.starkstruct.json recursive1.r1cs recursive1.sym recursive2.r1cs recursive2.sym recursivef.r1cs recursivef.starkstruct.json recursivef.sym zkevm.starkstruct.json zkevm.verifier.r1cs zkevm.verifier.sym"
+for F in $BUILDS; do
+    cpfile $BDIR/$F $FULLDST
+done
+fi
