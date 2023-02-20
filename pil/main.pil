@@ -37,7 +37,6 @@ namespace Main(%N);
     pol commit SP;                     // Stack Pointer
     pol commit PC;                     // EVM Program counter
     pol commit GAS;
-    pol commit MAXMEM;
     pol commit zkPC;                   // Program Counter of current micro instruction
     pol commit RR;                     // Micro code return address (subroutines)
     pol commit HASHPOS;
@@ -46,8 +45,8 @@ namespace Main(%N);
     ///////  Instruction related polynomials
     pol commit CONST7, CONST6, CONST5, CONST4, CONST3, CONST2, CONST1, CONST0;
     pol commit FREE7, FREE6, FREE5, FREE4, FREE3, FREE2, FREE1, FREE0;
-    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inMAXMEM, inSTEP, inRR, inHASHPOS, inRCX;
-    pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setMAXMEM, setRR, setHASHPOS, setRCX;
+    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
+    pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setRR, setHASHPOS, setRCX;
     pol commit JMP, JMPN, JMPC, JMPZ, offset;
     pol commit incStack;
     pol commit isStack;
@@ -70,7 +69,6 @@ namespace Main(%N);
 
     ///////  Intermediary commit polynomials
     pol commit isNeg;
-    pol commit isMaxMem;
 
     /// Counters
     pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntPoseidonG, cntPaddingPG;
@@ -96,7 +94,6 @@ namespace Main(%N);
         SP * inSP +
         PC * inPC +
         GAS * inGAS +
-        MAXMEM * inMAXMEM +
         Global.STEP * inSTEP +
         RR * inRR +
         HASHPOS * inHASHPOS +
@@ -201,7 +198,6 @@ namespace Main(%N);
 
     pol addrRel = ind*E0 + indRR*RR + offset;
     pol addr = useCTX*CTX*2**18 + isStack*2**16 + isStack*SP + isMem*2**17+ addrRel;
-    pol maxMemRel = isMem * addrRel;
 
     /////// isNeg
 
@@ -237,16 +233,6 @@ namespace Main(%N);
     pol commit op0Inv;
     pol op0IsZero = 1 - op0*op0Inv;
     op0IsZero*op0 = 0;
-
-    /////// MAXMEM intermediary vals New State
-
-    pol diffMem = isMaxMem* ( (maxMemRel - MAXMEM) -
-                       (MAXMEM - maxMemRel) ) +
-              (MAXMEM - maxMemRel);
-    isMaxMem * (1 - isMaxMem) = 0;
-
-    diffMem in Global.BYTE2;
-    pol maxMemCalculated = isMaxMem*(addrRel - MAXMEM) + MAXMEM;
 
 ///////////
 // Calculate New State
@@ -316,8 +302,6 @@ namespace Main(%N);
 
     pol decRCX = repeat * (1-RCXIsZero);
     RCX' = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX);
-
-    MAXMEM' = setMAXMEM * (op0 - maxMemCalculated) + maxMemCalculated;
 
     HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP)*D0 + hashK1 + hashP1;
 
@@ -461,22 +445,22 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setMAXMEM,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -b
     */
 
     pol operations =
-          2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
-        + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
-        + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
-        + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
-        + 2**16 * JMPC          + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
-        + 2**20 * memAlignWR8   + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
-        + 2**24 * setA          + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
-        + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
-        + 2**32 * setMAXMEM     + 2**33 * setPC         + 2**34 * setRCX        + 2**35 * setRR
-        + 2**36 * setSP         + 2**37 * setSR         + 2**38 * sRD           + 2**39 * sWR
-        + 2**40 * useCTX        + 2**41 * useJmpAddr    + 2**42 * JMPZ          + 2**43 * call
-        + 2**44 * return        + 2**45 * hashK1        + 2**46 * hashP1        + 2**47 * useElseAddr;
+                  2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
+                + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
+                + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
+                + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
+                + 2**16 * JMPC          + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
+                + 2**20 * memAlignWR8   + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
+                + 2**24 * setA          + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
+                + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
+                + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
+                + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
+                + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
+                + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -510,7 +494,6 @@ namespace Main(%N);
     (1 - setE) * setE = 0;
     (1 - setGAS) * setGAS = 0;
     (1 - setHASHPOS) * setHASHPOS = 0;
-    (1 - setMAXMEM) * setMAXMEM = 0;
     (1 - setPC) * setPC = 0;
     (1 - setRCX) * setRCX = 0;
     (1 - setRR) * setRR = 0;
@@ -530,13 +513,13 @@ namespace Main(%N);
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
-        inCTX, inSP, inPC, inGAS, inMAXMEM, inHASHPOS, inSTEP, inRR, inRCX,
+        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
         inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
-        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inMAXMEM, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
