@@ -25,6 +25,7 @@ namespace PaddingKK(%N);
     pol lastHash = lastBlock*(spare + remIsZero);
     pol lastHashLatch = lastBlockLatch * (spare + remIsZero);
     spare' = (spare + remIsZero)*(1-lastHash);
+    spare * (1 - spare) = 0;
 
     pol commit lastHashLen;
     pol commit lastHashDigest;
