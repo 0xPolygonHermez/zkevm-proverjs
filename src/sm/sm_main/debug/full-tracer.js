@@ -67,6 +67,7 @@ class FullTracer {
     handleEvent(ctx, tag) {
         try {
             const func = this[tag.params[0].varName];
+
             if (func && typeof func === 'function') {
                 this[tag.params[0].varName](ctx, tag);
             } else if (tag.funcName === 'storeLog') {
@@ -75,6 +76,8 @@ class FullTracer {
                 this.onOpcode(ctx, tag.params[0].params[0]);
             } else if (tag.params[0].funcName === 'onTouchedAddress' || tag.params[0].funcName === 'onTouchedSlot') {
                 this.onTouched(ctx, tag.params[0].params);
+            } else if (tag.params[0].funcName === 'onUpdateStorage') {
+                this.onUpdateStorage(ctx, tag.params[0].params);
             }
         } catch (e) {
             console.log(e);
@@ -247,13 +250,14 @@ class FullTracer {
     /**
      * Triggered when storage is updated in opcode processing
      * @param {Object} ctx Current context object
+     * @param {Object} params event parameters. storage Key - value.
      */
-    onUpdateStorage(ctx) {
+    onUpdateStorage(ctx, params) {
         // TODO: disable storage flag
         // The storage key is stored in C
-        const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, 'C')), 32).slice(2);
+        const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[0].regName)), 32).slice(2);
         // The storage value is stored in D
-        const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, 'D')), 32).slice(2);
+        const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[1].regName)), 32).slice(2);
 
         // add key/value to deltaStorage
         this.deltaStorage[this.depth][key] = value;
