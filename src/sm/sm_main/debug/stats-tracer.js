@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 class StatsTracer {
     /**
@@ -7,7 +7,7 @@ class StatsTracer {
      */
     constructor(fileName) {
         // Logs stats path
-        this.folderLogs = path.join(__dirname, "../logs-stats");
+        this.folderLogs = path.join(__dirname, '../logs-stats');
         this.pathLogFile = `${this.folderLogs}/${fileName.split('.')[0]}-stats`;
 
         this.fullZkPC = [];
@@ -17,7 +17,7 @@ class StatsTracer {
         this.fullZkPC.push(Number(zkPC));
     }
 
-    saveStatsFile (){
+    saveStatsFile() {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }

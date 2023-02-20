@@ -1,9 +1,11 @@
-const fs = require("fs");
-const path = require("path");
-const chalk = require("chalk");
-const { Scalar } = require("ffjavascript");
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-console */
+const fs = require('fs');
+const path = require('path');
+const chalk = require('chalk');
+const { Scalar } = require('ffjavascript');
 
-const { smtUtils, stateUtils, utils } = require("@0xpolygonhermez/zkevm-commonjs");
+const { smtUtils, stateUtils, utils } = require('@0xpolygonhermez/zkevm-commonjs');
 
 class VerboseTracer {
     /**
@@ -14,8 +16,8 @@ class VerboseTracer {
      * @param {String} fileName Name of the output file
      */
     constructor(options, smt, fileName) {
-        this.enable = (options.enable == true);
-        this.enableOpcodes = (options.printOpcodes == true);
+        this.enable = (options.enable === true);
+        this.enableOpcodes = (options.printOpcodes === true);
         this.filterOpcodes = options.filterOpcodes;
         this.initFinalState = options.initFinalState;
         this.saveInitFinalState = options.saveInitFinalState;
@@ -25,7 +27,7 @@ class VerboseTracer {
         this.touched = {};
 
         // Logs init-final state path
-        this.folderLogs = path.join(__dirname, "../logs-verbose");
+        this.folderLogs = path.join(__dirname, '../logs-verbose');
         this.pathLogFile = `${this.folderLogs}/${fileName.split('.')[0]}-verbose`;
     }
 
@@ -38,10 +40,9 @@ class VerboseTracer {
     }
 
     addAccessedAddress(address, slotStorage) {
-        if (typeof this.touched[address] === 'undefined')
-            this.touched[address] = [];
+        if (typeof this.touched[address] === 'undefined') { this.touched[address] = []; }
 
-        if (typeof slotStorage !== 'undefined'){
+        if (typeof slotStorage !== 'undefined') {
             this.touched[address].push(slotStorage);
         }
     }
@@ -50,12 +51,12 @@ class VerboseTracer {
         if (this.enable !== true) return;
         if (this.enableOpcodes !== true) return;
 
-        let info = `${chalk.magenta("OPCODE".padEnd(7))} | `;
+        let info = `${chalk.magenta('OPCODE'.padEnd(7))} | `;
         info += `${message}`;
 
-        if (typeof this.filterOpcodes === 'undefined' || this.filterOpcodes.length === 0){
+        if (typeof this.filterOpcodes === 'undefined' || this.filterOpcodes.length === 0) {
             console.log(info);
-        } else if (this.filterOpcodes.includes(`${message}`)){
+        } else if (this.filterOpcodes.includes(`${message}`)) {
             console.log(info);
         }
     }
@@ -63,7 +64,7 @@ class VerboseTracer {
     printTx(message) {
         if (this.enable !== true) return;
 
-        let info = `${chalk.yellowBright("TX".padEnd(7))} | `;
+        let info = `${chalk.yellowBright('TX'.padEnd(7))} | `;
         info += `${message}`;
         console.log(info);
     }
@@ -71,7 +72,7 @@ class VerboseTracer {
     printBatch(message) {
         if (this.enable !== true) return;
 
-        let info = `${chalk.blue("BATCH".padEnd(7))} | `;
+        let info = `${chalk.blue('BATCH'.padEnd(7))} | `;
         info += `${message}`;
         console.log(info);
     }
@@ -79,22 +80,22 @@ class VerboseTracer {
     printError(message) {
         if (this.enable !== true) return;
 
-        let info = `${chalk.red("ERROR".padEnd(7))} | `;
+        let info = `${chalk.red('ERROR'.padEnd(7))} | `;
         info += `${message}`;
         console.log(info);
     }
 
-    async printPrePostState (){
+    async printPrePostState() {
         if (this.enable !== true) return;
         if (this.initFinalState !== true) return;
 
         const fullInfo = {
             pre: {},
-            post: {}
+            post: {},
         };
 
         // get all states pre/post processig the batch
-        for (const [key, value] of Object.entries(this.touched)){
+        for (const [key, value] of Object.entries(this.touched)) {
             const preInfo = await this.getInfoAddress(key, value, this.initSR);
             fullInfo.pre[key] = preInfo;
 
@@ -102,16 +103,16 @@ class VerboseTracer {
             fullInfo.post[key] = postInfo;
         }
 
-        let infoHeader = `${chalk.greenBright("/////////////////////////////\n")}`;
-        infoHeader += `${chalk.greenBright("//////////PRE STATE/////////\n")}`;
-        infoHeader += `${chalk.greenBright("///////////////////////////")}`;
+        let infoHeader = `${chalk.greenBright('/////////////////////////////\n')}`;
+        infoHeader += `${chalk.greenBright('//////////PRE STATE/////////\n')}`;
+        infoHeader += `${chalk.greenBright('///////////////////////////')}`;
 
         console.log(infoHeader);
         console.log(fullInfo.pre);
 
-        infoHeader = `${chalk.blueBright("/////////////////////////////\n")}`;
-        infoHeader += `${chalk.blueBright("//////////POST STATE////////\n")}`;
-        infoHeader += `${chalk.blueBright("///////////////////////////")}`;
+        infoHeader = `${chalk.blueBright('/////////////////////////////\n')}`;
+        infoHeader += `${chalk.blueBright('//////////POST STATE////////\n')}`;
+        infoHeader += `${chalk.blueBright('///////////////////////////')}`;
 
         console.log(infoHeader);
         console.log(fullInfo.post);
@@ -124,7 +125,7 @@ class VerboseTracer {
         }
     }
 
-    async getInfoAddress(address, storage, root){
+    async getInfoAddress(address, storage, root) {
         const info = {};
         const storageInfo = {};
 
@@ -144,12 +145,12 @@ class VerboseTracer {
         if (this.bytecode && bytecodeArray !== null) {
             info.bytecode = `0x${utils.byteArray2HexString(bytecodeArray)}`;
         } else {
-            info.bytecode = "none";
+            info.bytecode = 'none';
         }
 
         for (const key of Object.keys(sto)) {
-            const keyS = "0x" + Scalar.e(key).toString(16).padStart(64, '0');
-            storageInfo[keyS] = sto[key].toString(16).length%2 === 0 ? "0x" + sto[key].toString(16) : "0x0" + sto[key].toString(16);
+            const keyS = `0x${Scalar.e(key).toString(16).padStart(64, '0')}`;
+            storageInfo[keyS] = sto[key].toString(16).length % 2 === 0 ? `0x${sto[key].toString(16)}` : `0x0${sto[key].toString(16)}`;
         }
         info.storage = storageInfo;
 
