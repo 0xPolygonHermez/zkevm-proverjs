@@ -90,7 +90,7 @@
     "fflonk_setup": ". ./pre.sh && $SNARKJS pks $BDIR/final.r1cs build/powersOfTau28_hez_final.ptau $BDIR/final.fflonk.zkey --verbose",
     "fflonk_evk": ". ./pre.sh && $SNARKJS zkev $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verkey.json",
     "fflonk_solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verifier.sol",
-    "prefflonksetup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
+    "prefflonk_setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
     "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/c12a.pil -s $BDIR/c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR/c12a.starkstruct.json; fi",
     "buildarith": "node tools/arith/parse tools/arith/arith.ejs.pil -o pil/arith.pil && node tools/arith/arith_eq_gen tools/arith/arith.ejs.pil -o src/sm/sm_arith/sm_arith_##.js",
