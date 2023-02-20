@@ -28,6 +28,7 @@ namespace PaddingPG(%N);
     pol commit spare;
     pol lastHash = lastBlock*(spare + remIsZero);
     spare' = (spare + remIsZero)*(1-lastHash);
+    spare * (1 - spare) = 0;
 
     pol commit lastHashLen;
     pol commit lastHashDigest;
