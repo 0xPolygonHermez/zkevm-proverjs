@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
+const { Scalar } = require("ffjavascript");
 
 const { smtUtils, stateUtils, utils } = require("@0xpolygonhermez/zkevm-commonjs");
 

@@ -316,11 +316,6 @@ class FullTracer {
                 this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcode.error;
             }
 
-            // If only opcode is STOP, remove redundancy
-            if(this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.context.data === '0x') {
-                this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = [];
-                this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = [];
-            }
             // Remove not requested data
             if (!generate_execute_trace) {
                 delete this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace
@@ -569,6 +564,12 @@ class FullTracer {
             if (generate_call_trace) {
                 singleInfo.contract.gas = this.txGAS[this.depth];
             }
+        }
+        // If is an ether transfer, don't add stop opcode to trace
+        if (singleInfo.opcode === "STOP" &&
+            (typeof prevStep === "undefined" || opIncContext.includes(prevStep.opcode)) &&
+            Number(getVarFromCtx(ctx, false, "bytecodeLength")) === 0) {
+            this.info.pop()
         }
 
         if (opIncContext.includes(singleInfo.opcode)) {
