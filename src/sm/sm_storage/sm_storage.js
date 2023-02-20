@@ -7,13 +7,14 @@ const { isLogging, logger, fea42String, scalar2fea4, fea4IsEq }  = require("./sm
 const SmtActionContext = require("./smt_action_context.js");
 const { StorageRomLine } = require("./sm_storage_rom.js");
 const StorageRom = require("./sm_storage_rom.js").StorageRom;
+const StorageRomFile = __dirname + "/storage_sm_rom.json";
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
 
     // Init rom from file
-    const rawdata = fs.readFileSync("testvectors/storage_sm_rom.json");
+    const rawdata = fs.readFileSync(StorageRomFile);
     const j = JSON.parse(rawdata);
     rom = new StorageRom;
     rom.load(j);
@@ -81,7 +82,7 @@ module.exports.execute = async function (pols, action) {
     const POSEIDONG_PERMUTATION3_ID = 3;
 
     // Init rom from file
-    const rawdata = fs.readFileSync("testvectors/storage_sm_rom.json");
+    const rawdata = fs.readFileSync(StorageRomFile);
     const j = JSON.parse(rawdata);
     rom = new StorageRom;
     rom.load(j);

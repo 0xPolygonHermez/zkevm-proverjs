@@ -78,6 +78,7 @@ CP_RECURSIVE2=1
 CP_RECURSIVEF=1
 CP_FINAL=1
 CP_CIRCOM=1
+CP_BUILDS=1
 
 CP="cp $CPFLAGS"
 
@@ -87,7 +88,7 @@ FULLDST=$DST/config/scripts
 [ ! -d $FULLDST ] && mkdir -p $FULLDST
 cpfile $BDIR/rom.json                                      $FULLDST
 cpfile $BDIR/metadata-rom.txt                              $FULLDST
-cpfile $BASEDIR/testvectors/storage_sm_rom.json            $FULLDST/storage_sm_rom.json
+cpfile $BDIR/storage_sm_rom.json                           $FULLDST
 cpfile $BASEDIR/src/sm/sm_keccakf/keccak_script.json       $FULLDST/keccak_script.json
 cpfile $BASEDIR/src/sm/sm_keccakf/keccak_connections.json  $FULLDST/keccak_connections.json
 fi
