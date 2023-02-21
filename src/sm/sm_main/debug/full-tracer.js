@@ -18,8 +18,7 @@ const {
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', 'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance', 'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code'];
-const generate_call_trace = true;
-const generate_execute_trace = true;
+const configGenTracer = require('./full-tracer-config.json');
 
 // TODO: gas cost of last opcode should be fixed
 /**
@@ -242,7 +241,10 @@ class FullTracer {
         // Reset values
         this.depth = 0;
         this.deltaStorage = { 0: {} };
-        this.txGAS[this.depth] = context.gas;
+        this.txGAS[this.depth] = {
+            forwarded: Scalar.fromString(context.gas, 16).toString(),
+            remaining: '0',
+        };
 
         this.verbose.printTx(`start ${this.txCount}`);
     }
@@ -341,20 +343,20 @@ class FullTracer {
             }
 
             // TODO: use thix.txCount better ?
-            this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace = this.execution_trace;
-            this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace.steps = this.call_trace;
-            if (this.finalTrace.responses[this.finalTrace.responses.length - 1].error === '') {
-                this.finalTrace.responses[this.finalTrace.responses.length - 1].error = lastOpcodeExecution.error;
+            response.execution_trace = this.execution_trace;
+            response.call_trace.steps = this.call_trace;
+            if (response.error === '') {
+                response.error = lastOpcodeExecution.error;
             }
 
             // Remove not requested data
             // TODO: not store data on onOpcodeLog
-            if (!generate_execute_trace) {
-                delete this.finalTrace.responses[this.finalTrace.responses.length - 1].execution_trace;
-            }
-            if (!generate_call_trace) {
-                delete this.finalTrace.responses[this.finalTrace.responses.length - 1].call_trace;
-            }
+            // if (!generate_execute_trace) {
+            //     delete response.execution_trace;
+            // }
+            // if (!generate_call_trace) {
+            //     delete response.call_trace;
+            // }
         }
 
         // Append logs correctly formatted to response logs
@@ -472,6 +474,19 @@ class FullTracer {
         }
         const opcode = codes[codeId].slice(2);
 
+        // get previous opcode processed
+        const numOpcodes = this.call_trace.length;
+
+        const prevTraceCall = numOpcodes ? this.call_trace[numOpcodes - 1] : undefined;
+        const prevTraceExecution = numOpcodes ? this.execution_trace[numOpcodes - 1] : undefined;
+
+        // If it is an ether transfer, do not add stop opcode to trace
+        if (singleInfo.opcode === 'STOP'
+            && (typeof prevTraceCall === 'undefined' || opIncContext.includes(prevTraceCall.opcode))
+            && Number(getVarFromCtx(ctx, false, 'bytecodeLength')) === 0) {
+            return;
+        }
+
         // TODO: use flag 'enableMemory'
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
@@ -514,18 +529,50 @@ class FullTracer {
             hexString = hexString.length % 2 ? `0${hexString}` : hexString;
             finalStack.push(`0x${hexString}`);
         }
+
         // add info opcodes
         this.depth = Number(getVarFromCtx(ctx, true, 'depth'));
         singleInfo.depth = this.depth + 1;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.gas = ctx.GAS.toString();
 
-        // compute: gas spent & zk-counters in previous opcode
-        if (this.call_trace.length) {
-            // get last opcode processed
-            const prevTraceCall = this.call_trace[this.call_trace.length - 1];
-            const prevTraceExecution = this.execution_trace[this.execution_trace.length - 1];
+        singleInfo.opcode = opcode;
+        singleInfo.gas_refund = getVarFromCtx(ctx, false, 'gasRefund').toString();
+        singleInfo.op = ethers.utils.hexlify(codeId);
+        singleInfo.error = '';
+        singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
 
+        // Set gas forwarded to a new context and save gas left in previous context
+        if (prevTraceCall && opIncContext.includes(prevTraceCall.opcode)) {
+            // get gas forwarded to current ctx
+            const gasForwarded = Scalar.e(ctx.GAS).toString();
+
+            // get gas remaining in origin context
+            const originCTX = Number(getVarFromCtx(ctx, false, 'originCTX'));
+            const ctxTmp = {
+                rom: ctx.rom,
+                mem: ctx.mem,
+                CTX: originCTX,
+                Fr: ctx.Fr,
+            };
+            const gasRemaining = Number(getVarFromCtx(ctxTmp, false, 'gasCTX')).toString();
+
+            this.txGAS[this.depth] = {
+                forwarded: gasForwarded,
+                remaining: gasRemaining,
+            };
+        }
+
+        // Add contract info
+        singleInfo.contract = {};
+        singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
+        singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'txSrcAddr'), 40);
+        singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
+        singleInfo.contract.data = getCalldataFromStack(ctx);
+        singleInfo.contract.gas = this.txGAS[this.depth].forwarded;
+
+        // update previous opcode: gas spent & zk-counters
+        if (numOpcodes) {
             // update gas spent: (gas before - gas after)
             const gasCost = Number(prevTraceCall.gas) - Number(ctx.GAS);
             prevTraceCall.gas_cost = String(gasCost);
@@ -543,27 +590,21 @@ class FullTracer {
             };
 
             // If gas cost is negative means gas has been added from a deeper context, it should be recalculated
+            // going to previous depth
             if (prevTraceCall.gas_cost < 0) {
-                const beforePrevTrace = this.call_trace[this.call_trace.length - 2];
-                prevTraceCall.gas_cost = String(Number(beforePrevTrace.gas) - Number(prevTraceCall.gas));
-                prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
+                // get gas cost consumed by current ctx except last opcode: gasForwarded - gasSecondLast
+                const gasConsumedExceptLastOpcode = Number(this.txGAS[this.depth + 1].forwarded) - Number(prevTraceCall.gas);
+                // get gas remaining at the end of the previous context
+                const gasEndPreviousCtx = Number(singleInfo.gas) - Number(this.txGAS[this.depth + 1].remaining);
+                // get gas spend by previous ctx
+                const gasSpendPreviousCtx = Number(this.txGAS[this.depth + 1].forwarded) - gasEndPreviousCtx;
+                // compute gas spend by the last opcode
+                const gasLastOpcode = gasSpendPreviousCtx - gasConsumedExceptLastOpcode;
+                // set opcode gas cost to traces
+                prevTraceCall.gas_cost = gasLastOpcode.toString();
+                prevTraceExecution.gas_cost = gasLastOpcode.toString();
             }
-            // TODO: "gas_cost": "NaN"
         }
-
-        singleInfo.opcode = opcode;
-        singleInfo.gas_refund = getVarFromCtx(ctx, false, 'gasRefund').toString();
-        singleInfo.op = ethers.utils.hexlify(codeId);
-        singleInfo.error = '';
-        singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
-
-        // Add contract info
-        singleInfo.contract = {};
-        singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
-        singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'txSrcAddr'), 40);
-        singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
-        singleInfo.contract.data = getCalldataFromStack(ctx);
-        singleInfo.contract.gas = this.txGAS[this.depth];
 
         // Round up to next multiple of 32
         singleInfo.memory_size = String(Math.ceil(Number(getVarFromCtx(ctx, false, 'memLength')) / 32) * 32);
@@ -579,6 +620,14 @@ class FullTracer {
 
         singleInfo.stack = finalStack;
         singleInfo.memory = finalMemory;
+
+        // Return data
+        // TODO: Why ?
+        singleInfo.return_data = []; // TODO: check proto and data to be returned here
+
+        if (opIncContext.includes(singleInfo.opcode)) {
+            this.deltaStorage[this.depth + 1] = {};
+        }
 
         // Clone object
         const singleCallTrace = JSON.parse(JSON.stringify(singleInfo));
@@ -596,34 +645,7 @@ class FullTracer {
         this.call_trace.push(singleCallTrace);
         this.execution_trace.push(singleExecuteTrace);
 
-        // Return data
-        // TODO: Why ?
-        singleInfo.return_data = []; // TODO: check proto and data to be returned here
-
-        // Check previous step
-        const prevStep = this.execution_trace[this.execution_trace.length - 2];
-        if (prevStep && opIncContext.includes(prevStep.opcode)) {
-            // Set 'gasCall' when depth has changed
-            this.txGAS[this.depth] = getVarFromCtx(ctx, true, 'gasCall').toString();
-            if (generate_call_trace) { // TODO: why ?
-                // TODO: Why ?
-                singleInfo.contract.gas = this.txGAS[this.depth]; // execute_trace does not hace contracts property
-                // take gas when a new context is created
-            }
-        }
-
-        // If is an ether transfer, don't add stop opcode to trace
-        if (singleInfo.opcode === 'STOP'
-            && (typeof prevStep === 'undefined' || opIncContext.includes(prevStep.opcode))
-            && Number(getVarFromCtx(ctx, false, 'bytecodeLength')) === 0) {
-            this.call_trace.pop();
-            this.execution_trace.pop();
-        }
-
-        if (opIncContext.includes(singleInfo.opcode)) {
-            this.deltaStorage[this.depth + 1] = {};
-        }
-
+        // verbose options
         this.verbose.printOpcode(opcode);
     }
 
