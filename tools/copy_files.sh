@@ -183,6 +183,20 @@ if [ $CP_CIRCOM -eq 1 ]; then
     done
 fi
 
+if [ $GENERATE_HASH -eq 1 ]; then
+    HASHFILE=$BDIR/sha256.txt
+    if [ ! -f $HASHFILE ]; then
+        TMPHASHFILE=$HASHFILE".tmp"
+        [ -f $TMPHASHFILE ] && rm -f $TMPHASHFILE
+        echo "calculating sha256 ...."
+        for F in `LC_ALL=C; cd $BDIR; find * -type f ! -name "steps.log" !  -path "steps*" ! -name "sha256.txt*" ! -name "last_step.txt"|sort`; do
+            echo " sha256($F) ...."
+            (cd $BDIR; sha256sum $F) >> $TMPHASHFILE
+        done
+        mv $TMPHASHFILE $HASHFILE
+    fi
+fi
+
 if [ $CP_BUILDS -eq 1 ]; then
     # builds
     FULLDST=$DST/build
@@ -195,18 +209,7 @@ if [ $CP_BUILDS -eq 1 ]; then
     cpdir  $BDIR/steps $FULLDST
 
     BUILDS=""
-    if [ $GENERATE_HASH -eq 1 ]; then
-        HASHFILE=$BDIR/sha256.txt
-        if [ ! -f $HASHFILE ]; then
-            TMPHASHFILE=$HASHFILE".tmp"
-            [ -f $TMPHASHFILE ] && rm -f $TMPHASHFILE
-            echo "calculating sha256 ...."
-            for F in `find $BDIR/* -type f`; do
-                echo " sha256($F) ...."
-                sha256sum $F >> $TMPHASHFILE
-            done
-            mv $TMPHASHFILE $HASHFILE
-        fi
+    if [ -f $HASHFILE ]; then
         BUILDS=`basename $HASHFILE`" "
     fi
 
