@@ -4,23 +4,21 @@
 /* eslint-disable camelcase */
 const fs = require('fs');
 const path = require('path');
-const { fea2scalar, fea2String } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
-const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 const { ethers } = require('ethers');
 const { Scalar } = require('ffjavascript');
+const { fea2scalar, fea2String } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
+const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 
-const codes = require('./opcodes');
-const Verbose = require('./verbose-tracer');
 const {
     getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack,
     getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex,
 } = require('./full-tracer-utils');
+const { responseErrors } = require('./constants-full-tracer');
+const codes = require('./opcodes');
+const Verbose = require('./verbose-tracer');
 
-const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
-const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', 'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance', 'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code'];
-const configGenTracer = require('./full-tracer-config.json');
+const configTraces = require('./full-tracer-config.json');
 
-// TODO: gas cost of last opcode should be fixed
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
  * for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
@@ -252,10 +250,13 @@ class FullTracer {
     /**
      * Triggered when storage is updated in opcode processing
      * @param {Object} ctx Current context object
-     * @param {Object} params event parameters. storage Key - value.
+     * @param {Object} params event parameters. storage Key - value
      */
     onUpdateStorage(ctx, params) {
-        // TODO: disable storage flag
+        if (configTraces.disable_storage === true || configTraces.tx_hash_to_generate_execute_trace === false) {
+            return;
+        }
+
         // The storage key is stored in C
         const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[0].regName)), 32).slice(2);
         // The storage value is stored in D
@@ -277,6 +278,7 @@ class FullTracer {
      */
     onFinishTx(ctx) {
         const response = this.finalTrace.responses[this.txCount];
+
         response.call_trace.context.from = bnToPaddedHex(getVarFromCtx(ctx, true, 'txSrcOriginAddr'), 40);
 
         // Update spent counters
@@ -300,7 +302,6 @@ class FullTracer {
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
-        // TODO: use 'enableReturnData' falg
         // Set return data, in case of deploy, get return buffer from stack
         if (response.call_trace.context.to === '0x') {
             response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString());
@@ -320,43 +321,49 @@ class FullTracer {
         // Set gas left
         response.gas_left = String(Number(response.gas_left) - Number(response.gas_used));
 
-        // if there is any processed opcode
-        if (this.execution_trace.length) {
-            const lastOpcodeExecution = this.execution_trace[this.execution_trace.length - 1];
-            const lastOpcodeCall = this.call_trace[this.call_trace.length - 1];
-            // TODO: only execution trace is being updated (lastOpcode)
+        // if there is any processed opcode in execution trace
+        if (configTraces.tx_hash_to_generate_execute_trace) {
+            if (this.execution_trace.length) {
+                const lastOpcodeExecution = this.execution_trace[this.execution_trace.length - 1];
 
-            // set refunded gas
-            response.gas_refunded = lastOpcodeExecution.gas_refund;
+                // set refunded gas
+                response.gas_refunded = lastOpcodeExecution.gas_refund;
 
-            // Set counters of last opcode to zero
-            Object.keys(lastOpcodeCall.counters).forEach((key) => {
-                lastOpcodeCall.counters[key] = 0;
-            });
+                //  Set gas price of last opcode
+                if (lastOpcodeExecution) {
+                    lastOpcodeExecution.gas_cost = String(Number(lastOpcodeExecution.gas) - Number(response.gas_left));
+                }
 
-            // get before last opcode
-            const beforeLastOpcode = this.execution_trace[this.execution_trace.length - 2];
-            //  Set gas price of last opcode
-            if (beforeLastOpcode) {
-                lastOpcodeExecution.gas_cost = String(Number(beforeLastOpcode.gas) - Number(lastOpcodeExecution.gas));
-                lastOpcodeCall.gas_cost = lastOpcodeExecution.gas_cost;
+                response.execution_trace = this.execution_trace;
+
+                if (response.error === '') {
+                    response.error = lastOpcodeExecution.error;
+                }
             }
+        }
 
-            // TODO: use thix.txCount better ?
-            response.execution_trace = this.execution_trace;
-            response.call_trace.steps = this.call_trace;
-            if (response.error === '') {
-                response.error = lastOpcodeExecution.error;
+        if (configTraces.tx_hash_to_generate_call_trace) {
+            if (this.call_trace.length) {
+                const lastOpcodeCall = this.call_trace[this.call_trace.length - 1];
+
+                // set refunded gas
+                response.gas_refunded = lastOpcodeCall.gas_refund;
+
+                // Set counters of last opcode to zero
+                Object.keys(lastOpcodeCall.counters).forEach((key) => {
+                    lastOpcodeCall.counters[key] = 0;
+                });
+
+                //  Set gas price of last opcode
+                if (lastOpcodeCall) {
+                    lastOpcodeCall.gas_cost = String(Number(lastOpcodeCall.gas) - Number(response.gas_left));
+                }
+
+                response.call_trace.steps = this.call_trace;
+                if (response.error === '') {
+                    response.error = lastOpcodeCall.error;
+                }
             }
-
-            // Remove not requested data
-            // TODO: not store data on onOpcodeLog
-            // if (!generate_execute_trace) {
-            //     delete response.execution_trace;
-            // }
-            // if (!generate_call_trace) {
-            //     delete response.call_trace;
-            // }
         }
 
         // Append logs correctly formatted to response logs
@@ -474,6 +481,14 @@ class FullTracer {
         }
         const opcode = codes[codeId].slice(2);
 
+        // Check depth changes and update depth
+        const newDepth = Number(getVarFromCtx(ctx, true, 'depth'));
+        const decreaseDepth = (newDepth < this.depth);
+        const increaseDepth = (newDepth > this.depth);
+        if (decreaseDepth || increaseDepth) {
+            this.depth = newDepth;
+        }
+
         // get previous opcode processed
         const numOpcodes = this.call_trace.length;
 
@@ -482,56 +497,64 @@ class FullTracer {
 
         // If it is an ether transfer, do not add stop opcode to trace
         if (singleInfo.opcode === 'STOP'
-            && (typeof prevTraceCall === 'undefined' || opIncContext.includes(prevTraceCall.opcode))
+            && (typeof prevTraceCall === 'undefined' || increaseDepth)
             && Number(getVarFromCtx(ctx, false, 'bytecodeLength')) === 0) {
             return;
         }
 
-        // TODO: use flag 'enableMemory'
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
-        let addrMem = 0;
-        addrMem += offsetCtx;
-        addrMem += 0x20000;
 
-        const finalMemory = [];
-        const lengthMemOffset = findOffsetLabel(ctx.rom.program, 'memLength');
-        const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
-        const lenMemValueFinal = typeof lenMemValue === 'undefined' ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
+        if (configTraces.enable_memory === true) {
+            let addrMem = 0;
+            addrMem += offsetCtx;
+            addrMem += 0x20000;
 
-        for (let i = 0; i < lenMemValueFinal; i++) {
-            const memValue = ctx.mem[addrMem + i];
-            if (typeof memValue === 'undefined') {
-                finalMemory.push('0'.padStart(64, '0'));
-                continue;
+            const finalMemory = [];
+            const lengthMemOffset = findOffsetLabel(ctx.rom.program, 'memLength');
+            const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
+            const lenMemValueFinal = typeof lenMemValue === 'undefined' ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
+
+            for (let i = 0; i < lenMemValueFinal; i++) {
+                const memValue = ctx.mem[addrMem + i];
+                if (typeof memValue === 'undefined') {
+                    finalMemory.push('0'.padStart(64, '0'));
+                    continue;
+                }
+                const memScalar = fea2scalar(ctx.Fr, memValue);
+                let hexString = memScalar.toString(16);
+                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                finalMemory.push(hexString.padStart(64, '0'));
             }
-            const memScalar = fea2scalar(ctx.Fr, memValue);
-            let hexString = memScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalMemory.push(hexString.padStart(64, '0'));
+
+            singleInfo.memory = finalMemory;
         }
 
-        // TODO: use flag disable stack
         // store stack
-        let addr = 0;
-        addr += offsetCtx;
-        addr += 0x10000;
+        if (configTraces.disable_stack === false) {
+            const finalStack = [];
 
-        const finalStack = [];
+            let addr = 0;
+            addr += offsetCtx;
+            addr += 0x10000;
 
-        for (let i = 0; i < ctx.SP; i++) {
-            const stack = ctx.mem[addr + i];
-            if (typeof stack === 'undefined') {
-                continue;
+            // read stack
+            for (let i = 0; i < ctx.SP; i++) {
+                const stack = ctx.mem[addr + i];
+                if (typeof stack === 'undefined') {
+                    continue;
+                }
+                const stackScalar = fea2scalar(ctx.Fr, stack);
+                let hexString = stackScalar.toString(16);
+                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                finalStack.push(`0x${hexString}`);
             }
-            const stackScalar = fea2scalar(ctx.Fr, stack);
-            let hexString = stackScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalStack.push(`0x${hexString}`);
+
+            // save stack to opcode trace
+            singleInfo.stack = finalStack;
         }
 
         // add info opcodes
-        this.depth = Number(getVarFromCtx(ctx, true, 'depth'));
         singleInfo.depth = this.depth + 1;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.gas = ctx.GAS.toString();
@@ -543,7 +566,7 @@ class FullTracer {
         singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
 
         // Set gas forwarded to a new context and save gas left in previous context
-        if (prevTraceCall && opIncContext.includes(prevTraceCall.opcode)) {
+        if (increaseDepth) {
             // get gas forwarded to current ctx
             const gasForwarded = Scalar.e(ctx.GAS).toString();
 
@@ -591,7 +614,7 @@ class FullTracer {
 
             // If gas cost is negative means gas has been added from a deeper context, it should be recalculated
             // going to previous depth
-            if (prevTraceCall.gas_cost < 0) {
+            if (decreaseDepth) {
                 // get gas cost consumed by current ctx except last opcode: gasForwarded - gasSecondLast
                 const gasConsumedExceptLastOpcode = Number(this.txGAS[this.depth + 1].forwarded) - Number(prevTraceCall.gas);
                 // get gas remaining at the end of the previous context
@@ -618,32 +641,40 @@ class FullTracer {
             cont_steps: Number(ctx.step),
         };
 
-        singleInfo.stack = finalStack;
-        singleInfo.memory = finalMemory;
-
-        // Return data
-        // TODO: Why ?
-        singleInfo.return_data = []; // TODO: check proto and data to be returned here
-
-        if (opIncContext.includes(singleInfo.opcode)) {
+        if (increaseDepth) {
             this.deltaStorage[this.depth + 1] = {};
         }
 
-        // Clone object
-        const singleCallTrace = JSON.parse(JSON.stringify(singleInfo));
-        const singleExecuteTrace = JSON.parse(JSON.stringify(singleCallTrace));
+        // Return data
+        if (configTraces.enable_return_data === true) {
+            // TODO: add data of return previous call
+            singleInfo.return_data = [];
+        }
 
-        // delete unnecesary keys in `call_trace`
-        delete singleCallTrace.memory_size;
+        // save call trace
+        if (configTraces.tx_hash_to_generate_call_trace) {
+            const singleCallTrace = JSON.parse(JSON.stringify(singleInfo));
 
-        // delete unnecesary keys in `execution_trace`
-        delete singleExecuteTrace.contract;
-        delete singleExecuteTrace.state_root;
-        delete singleExecuteTrace.counters;
+            // delete unnecesary keys in `call_trace`
+            delete singleCallTrace.memory_size;
 
-        // save output traces
-        this.call_trace.push(singleCallTrace);
-        this.execution_trace.push(singleExecuteTrace);
+            // save call traces
+            this.call_trace.push(singleCallTrace);
+        }
+
+        // execution trace
+        if (configTraces.tx_hash_to_generate_execute_trace) {
+            const singleExecuteTrace = JSON.parse(JSON.stringify(singleInfo));
+
+            // delete unnecesary keys in `execution_trace`
+            delete singleExecuteTrace.memory_size;
+            delete singleExecuteTrace.contract;
+            delete singleExecuteTrace.state_root;
+            delete singleExecuteTrace.counters;
+
+            // save execution traces
+            this.execution_trace.push(singleExecuteTrace);
+        }
 
         // verbose options
         this.verbose.printOpcode(opcode);

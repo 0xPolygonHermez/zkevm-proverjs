@@ -1,6 +1,6 @@
 {
-    "disable_storage": true,
-    "disable_stack": true,
+    "disable_storage": false,
+    "disable_stack": false,
     "enable_memory": true,
     "enable_return_data": true,
     "tx_hash_to_generate_execute_trace": true,
