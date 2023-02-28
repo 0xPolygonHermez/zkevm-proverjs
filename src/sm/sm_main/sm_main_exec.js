@@ -24,6 +24,7 @@ const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { polMulAxi } = require("pil-stark/src/polutils");
 const { ftruncate, lchown } = require("fs");
+const { config } = require("yargs");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -143,7 +144,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let previousRCXInv = 0n;
 
     if (verboseOptions.batchL2Data) {
-        await printBatchL2Data(ctx.input.batchL2Data);
+        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
     }
 
     for (let step = 0; step < stepsN; step++) {
@@ -2234,7 +2235,7 @@ async function eventsAsyncTracer(ctx, cmds) {
     }
 }
 
-async function printBatchL2Data(batchL2Data) {
+async function printBatchL2Data(batchL2Data, getNameSelector) {
     console.log("/////////////////////////////");
     console.log("/////// BATCH L2 DATA ///////");
     console.log("/////////////////////////////\n");
@@ -2255,6 +2256,10 @@ async function printBatchL2Data(batchL2Data) {
         });
 
         infoTx.txDecoded.from = from;
+
+        if (getNameSelector) {
+            infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+        }
 
         console.log(infoTx.txDecoded);
     }
@@ -2546,8 +2551,18 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
+    }  else if (tag.funcName == "getBytecode") { // Added by opcodes
+        return eval_getBytecode(ctx, tag);
+    } else if (tag.funcName == "saveContractBytecode") { // Added by opcodes
+        return eval_saveContractBytecode(ctx, tag);
     }
+
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
+}
+
+function eval_saveContractBytecode(ctx, tag) {
+    const addr = evalCommand(ctx, tag.params[0]);
+    ctx.input.contractsBytecode[ctx.hashP[addr].digest] = "0x"+byteArray2HexString(ctx.hashP[addr].data);
 }
 
 function eval_getSequencerAddr(ctx, tag) {
@@ -2601,6 +2616,25 @@ function eval_cond(ctx, tag) {
         return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
+function eval_getBytecode(ctx, tag) {
+    if (tag.params.length != 2 && tag.params.length != 3) throw new Error(`Invalid number of parameters ((2,3) != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
+    let hashcontract = evalCommand(ctx, tag.params[0]);
+    hashcontract = "0x" + hashcontract.toString(16).padStart(64, '0');
+    const bytecode = ctx.input.contractsBytecode[hashcontract] || ctx.input.contractsBytecode[hashcontract.slice(2)];
+    const offset = Number(evalCommand(ctx, tag.params[1]));
+    let len;
+    if (tag.params[2])
+        len = Number(evalCommand(ctx, tag.params[2]));
+    else
+        len = 1;
+    if (bytecode === undefined) return scalar2fea(ctx.Fr, Scalar.e(0));
+    const offset0x = bytecode.startsWith('0x') ? 2 : 0;
+    let d = "0x" + bytecode.slice(offset0x + offset * 2, offset0x + offset * 2 + len * 2);
+    if (d.length == 2) d = d + '0';
+    const ret = scalar2fea(ctx.Fr, Scalar.e(d));
+    return scalar2fea(ctx.Fr, Scalar.e(d));
 }
 
 function eval_exp(ctx, tag) {
@@ -2700,7 +2734,7 @@ function eval_log(ctx, tag) {
         let scalarLog;
         let hexLog;
         if (tag.params[0].regName !== "HASHPOS" && tag.params[0].regName !== "GAS"){
-            scalarLog = safeFea2scalar(ctx.Fr, frLog);
+            scalarLog = fea2scalar(ctx.Fr, frLog);
             hexLog = `0x${scalarLog.toString(16)}`;
         } else {
             scalarLog = Scalar.e(frLog);
