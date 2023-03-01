@@ -2928,16 +2928,6 @@ function printReg4(Fr, name, V) {
     console.log("");
 }
 
-
-function printReg4(Fr, name, V) {
-
-    printReg(Fr, name+"3", V[3], true);
-    printReg(Fr, name+"2", V[2], true);
-    printReg(Fr, name+"1", V[1], true);
-    printReg(Fr, name+"0", V[0]);
-    console.log("");
-}
-
 function printReg(Fr, name, V, h, short) {
     const maxInt = Scalar.e("0x7FFFFFFF");
     const minInt = Scalar.sub(Fr.p, Scalar.e("0x80000000"));
