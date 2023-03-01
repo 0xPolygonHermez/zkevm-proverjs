@@ -212,7 +212,7 @@ MSTOREX:
         0x1F => B
         $ => C          :AND,MSTORE(MSTOREX_offset)                        ; offset
         ${E / 32} => E  :MSTORE(MSTOREX_M0_addr),JMPN(ERROR)               ; address (ASSERT E is 32-bit value) 4G x 32 bytes = 128GB
-        E * 32 + C      :ASSERT                                            ; 32 bits * 32 (5 bits) + 4 bits = 41 bits is secure for FF
+        E * 32 + C      :ASSERT                                            ; 32 bits * 32 (5 bits) = 37 bits is secure for FF
 
         ; if length is 32 then apply direct MEM_ALIGN_WR
         $ => A          :MLOAD(MSTOREX_length)
