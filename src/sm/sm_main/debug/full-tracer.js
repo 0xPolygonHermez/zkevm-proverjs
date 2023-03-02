@@ -299,9 +299,14 @@ class FullTracer {
         this.accBatchGas += Number(response.gas_used);
 
         // TODO: use 'enableReturnData' falg
-        // Set return data, in case of deploy, get return buffer from stack
+        // Set return data, in case of deploy, get return buffer from stack if there is no error, otherwise get it from memory
         if (response.call_trace.context.to === '0x') {
-            response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString());
+            // check if there has been any error
+            if (this.execution_trace.length > 0 && this.execution_trace[this.execution_trace.length - 1].error !== '') {
+                response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
+            } else {
+                response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString());
+            }
         } else {
             response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
         }
