@@ -19,6 +19,19 @@ include "sha256/sha256.circom";
 include "bitify.circom";
 include "recursivef.verifier.circom";
 
+template LessThanGoldilocks() {
+    var n = 64;
+    var p = 0xFFFFFFFF00000001;
+    signal input in;
+    signal output out;
+
+    component n2b = Num2Bits(n+1);
+
+    n2b.in <== in + (1<<n) - p;
+
+    out <== 1-n2b.out[n];
+}
+
 template Main() {
     signal output publicsHash;
 
@@ -102,83 +115,85 @@ template Main() {
 
     component publicsHasher = Sha256(1696);
 
-    component n2bAggregatorAddr = Num2Bits(160);
-    n2bAggregatorAddr.in <== aggregatorAddr;
+    signal n2bAggregatorAddr[160] <== Num2Bits(160)(aggregatorAddr);
     for (var i=0; i<160; i++) {
-        publicsHasher.in[0 + 160 - 1 -i] <== n2bAggregatorAddr.out[i];
+        publicsHasher.in[0 + 160 - 1 -i] <== n2bAggregatorAddr[i];
     }
 
-    component n2bOldStateRoot[8];
+    signal n2bOldStateRoot[8][32];
     for (var i=0; i<8; i++) {
-        n2bOldStateRoot[i] = Num2Bits(32);
-        n2bOldStateRoot[i].in <== publics[0 + i];
+        n2bOldStateRoot[i] <== Num2Bits(32)(publics[0 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[160 + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i].out[j];
+            publicsHasher.in[160 + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i][j];
         }
     }
 
-    component n2bOldAccInputHash[8];
+    signal isValidOldStateRoot[4];
+    for (var i = 0; i < 4; i++) {
+        isValidOldStateRoot[i] <== LessThanGoldilocks()(publics[0 + 2*i] + (1 << 32) * publics[0 + 2*i + 1]);
+        isValidOldStateRoot[i] === 1;
+    }
+
+    signal n2bOldAccInputHash[8][32];
     for (var i=0; i<8; i++) {
-        n2bOldAccInputHash[i] = Num2Bits(32);
-        n2bOldAccInputHash[i].in <== publics[8 + i];
+        n2bOldAccInputHash[i] <== Num2Bits(32)(publics[8 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[416 + 32*(8-i) - 1 -j] <== n2bOldAccInputHash[i].out[j];
+            publicsHasher.in[416 + 32*(8-i) - 1 -j] <== n2bOldAccInputHash[i][j];
         }
     }
 
     // Do 63 bits to avoid aliasing
-    component n2bOldBatchNum = Num2Bits(63);
-    n2bOldBatchNum.in <== publics[16];
+    signal n2bOldBatchNum[63] <== Num2Bits(63)(publics[16]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[672 + 64 - 1 -i] <== n2bOldBatchNum.out[i];
+        publicsHasher.in[672 + 64 - 1 -i] <== n2bOldBatchNum[i];
     }
     publicsHasher.in[672] <== 0;
 
-    component n2bChainId = Num2Bits(63);
-    n2bChainId.in <== publics[17];
+    signal n2bChainId[63] <== Num2Bits(63)(publics[17]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[736 + 64 - 1 -i] <== n2bChainId.out[i];
+        publicsHasher.in[736 + 64 - 1 -i] <== n2bChainId[i];
     }
     publicsHasher.in[736] <== 0;
 
-    component n2bForkId = Num2Bits(63);
-    n2bForkId.in <== publics[18];
+    signal n2bForkId[63] <== Num2Bits(63)(publics[18]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[800 + 64 - 1 -i] <== n2bForkId.out[i];
+        publicsHasher.in[800 + 64 - 1 -i] <== n2bForkId[i];
     }
     publicsHasher.in[800] <== 0;
 
-    component n2bNewStateRoot[8];
+    signal n2bNewStateRoot[8][32];
     for (var i=0; i<8; i++) {
-        n2bNewStateRoot[i] = Num2Bits(32);
-        n2bNewStateRoot[i].in <== publics[19+i];
+        n2bNewStateRoot[i] <== Num2Bits(32)(publics[19 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[864 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i].out[j];
+            publicsHasher.in[864 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i][j];
         }
     }
 
-    component n2bNewAccInputHash[8];
+    signal isValidNewStateRoot[4];
+    for (var i = 0; i < 4; i++) {
+        isValidNewStateRoot[i] <== LessThanGoldilocks()(publics[19 + 2*i] + (1 << 32)*publics[19 + 2*i + 1]);
+        isValidNewStateRoot[i] === 1;
+    }
+
+    signal n2bNewAccInputHash[8][32];
     for (var i=0; i<8; i++) {
-        n2bNewAccInputHash[i] = Num2Bits(32);
-        n2bNewAccInputHash[i].in <== publics[27+i];
+        n2bNewAccInputHash[i] <== Num2Bits(32)(publics[27+i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1120 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i].out[j];
+            publicsHasher.in[1120 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i][j];
         }
     }
 
-    component n2bNewLocalExitRoot[8];
+    signal n2bNewLocalExitRoot[8][32];
     for (var i=0; i<8; i++) {
-        n2bNewLocalExitRoot[i] = Num2Bits(32);
-        n2bNewLocalExitRoot[i].in <== publics[35+i];
+        n2bNewLocalExitRoot[i] <== Num2Bits(32)(publics[35 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1376 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i].out[j];
+            publicsHasher.in[1376 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i][j];
         }
     }
 
-    component n2bNewBatchNum = Num2Bits(63);
-    n2bNewBatchNum.in <== publics[43];
+    signal n2bNewBatchNum[63] <== Num2Bits(63)(publics[43]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[1632 + 64 - 1 -i] <== n2bNewBatchNum.out[i];
+        publicsHasher.in[1632 + 64 - 1 -i] <== n2bNewBatchNum[i];
     }
     publicsHasher.in[1632] <== 0;
 
