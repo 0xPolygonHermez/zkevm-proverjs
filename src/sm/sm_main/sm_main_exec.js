@@ -140,7 +140,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let previousRCXInv = 0n;
 
     if (verboseOptions.batchL2Data) {
-        await printBatchL2Data(ctx.input.batchL2Data);
+        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
     }
 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
@@ -2273,7 +2273,7 @@ async function eventsAsyncTracer(ctx, cmds) {
     }
 }
 
-async function printBatchL2Data(batchL2Data) {
+async function printBatchL2Data(batchL2Data, getNameSelector) {
     console.log("/////////////////////////////");
     console.log("/////// BATCH L2 DATA ///////");
     console.log("/////////////////////////////\n");
@@ -2294,6 +2294,10 @@ async function printBatchL2Data(batchL2Data) {
         });
 
         infoTx.txDecoded.from = from;
+
+        if (getNameSelector) {
+            infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+        }
 
         console.log(infoTx.txDecoded);
     }
