@@ -159,6 +159,7 @@ namespace Storage(%N);
     siblingRkey3' = setSiblingRkey*(op3-siblingRkey3) + iClimbSiblingRkey*(climbedSiblingKey3-siblingRkey3) + iClimbSiblingRkeyN*(climbedSiblingKeyN3-siblingRkey3) + siblingRkey3;
 
     rkeyBit' = setRkeyBit*(op0-rkeyBit) + rkeyBit;
+    rkeyBit * (1 - rkeyBit) = 0;
 
     level0' = setLevel*(op0-level0) + iRotateLevel*(rotatedLevel0-level0) + level0;
     level1' = setLevel*(op1-level1) + iRotateLevel*(rotatedLevel1-level1) + level1;
