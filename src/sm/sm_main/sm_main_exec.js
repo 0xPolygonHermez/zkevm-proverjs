@@ -1280,7 +1280,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
 
-                if (!x3eq || !x3eq) {
+                if (!x3eq || !y3eq) {
                     console.log('x1,y1: ('+x1.toString()+', '+y1.toString()+')');
                     if (!dbl) {
                         console.log('x2,y2: ('+x2.toString()+', '+y2.toString()+')');
