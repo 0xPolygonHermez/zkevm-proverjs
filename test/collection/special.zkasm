@@ -1,1 +1,2 @@
 INCLUDE "special/sp_offset.zkasm"
+INCLUDE "special/hash_zero_bytes.zkasm"

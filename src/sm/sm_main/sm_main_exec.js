@@ -880,8 +880,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         (!Fr.eq(ctx.mem[addr][7],  op7)))
                     {
                         const memdata = ctx.mem[addr].slice().reverse().join(',');
+                        const hmemdata = ctx.mem[addr].slice().reverse().map((x)=>x.toString(16).padStart(8,'0')).join('');
                         const opdata = [op7,op6,op5,op4,op3,op2,op1,op0].join(',');
-                        throw new Error(`Memory Read does not match MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}`);
+                        const hopdata = [op7,op6,op5,op4,op3,op2,op1,op0].map((x)=>x.toString(16).padStart(8,'0')).join('');
+                        throw new Error(`Memory Read does not match MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}\n${hmemdata}\n${hopdata}`);
                     }
                 } else {
                     if ((!Fr.isZero(op0)) ||
@@ -1167,8 +1169,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashPLen) {
             pols.hashPLen[i] = 1n;
-            const lm = fe2n(Fr, op0, ctx);
+            if (typeof ctx.hashP[addr] === "undefined") {
+                ctx.hashP[addr] = { data: [], reads: {} , digestCalled: false};
+            }
             const lh = ctx.hashP[addr].data.length;
+            const lm = fe2n(Fr, op0, ctx);
             if (lm != lh) throw new Error(`HashPLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
             if (typeof ctx.hashP[addr].digest === "undefined") {
                 // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
