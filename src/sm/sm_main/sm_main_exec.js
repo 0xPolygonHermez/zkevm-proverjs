@@ -21,6 +21,7 @@ const { encodedStringToArray, decodeCustomRawTxProverMethod} = require("@0xpolyg
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
+const { lstat } = require("fs");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -908,6 +909,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.mWR[i] = 0n;
         }
 
+        if (l.SRD || l.sWR) {
+            if (!Fr.isZero(ctx.A[7]) || !Fr.isZero(ctx.A[6]) || !Fr.isZero(ctx.A[5])) {
+                const values = '0x' + ([ctx.A[7], ctx.A[6], ctx.A[5]].map(x => x.toString(16)).join(',0x'));
+                throw new Error(`Storage invalid key (address) [A7..A5] = [${values}] on ${sourceRef}`);
+            }
+
+            if (!Fr.isZero(ctx.B[7]) || !Fr.isZero(ctx.B[6]) || !Fr.isZero(ctx.B[5]) ||
+                !Fr.isZero(ctx.B[4]) || !Fr.isZero(ctx.B[3]) || !Fr.isZero(ctx.B[2])) {
+                const values = '0x' + [ctx.B[7], ctx.B[6], ctx.B[5], ctx.B[4], ctx.B[3], ctx.B[2] ].map(x => x.toString(16)).join(',0x');
+                throw new Error(`Storage invalid key (type) [B7..B2] = [${values}] on ${sourceRef}`);
+            }
+        }
+
         if (l.sRD) {
             pols.sRD[i] = 1n;
 
@@ -932,7 +946,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ctx.B[0],
                 ctx.B[1]
             ];
-
 
             const keyI = poseidon(Kin0);
             required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
@@ -1012,6 +1025,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ctx.lastSWrite.newRoot = res.newRoot;
                 ctx.lastSWrite.step = step;
             }
+
             required.PoseidonG.push([...ctx.lastSWrite.Kin0, 0n, 0n, 0n, 0n, ...ctx.lastSWrite.keyI, POSEIDONG_PERMUTATION1_ID]);
             required.PoseidonG.push([...ctx.lastSWrite.Kin1, ...ctx.lastSWrite.keyI,  ...ctx.lastSWrite.key, POSEIDONG_PERMUTATION2_ID]);
 
