@@ -59,7 +59,7 @@ namespace Main(%N);
     pol commit mOp, mWR;
     pol commit sWR, sRD;
     pol commit arithEq0, arithEq1, arithEq2;
-    pol commit memAlignRD, memAlignWR, memAlignWR8;
+    pol commit memAlignRD, memAlignWR, memAlignVarLen, memAlignLbes;
     pol commit hashK, hashK1, hashKLen, hashKDigest;
     pol commit hashP, hashP1, hashPLen, hashPDigest;
     pol commit bin;
@@ -449,18 +449,18 @@ namespace Main(%N);
     */
 
     pol operations =
-                  2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
-                + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
-                + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
-                + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
-                + 2**16 * JMPC          + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
-                + 2**20 * memAlignWR8   + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
-                + 2**24 * setA          + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
-                + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
-                + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
-                + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
-                + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-                + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr;
+                  2**0  * arithEq0       + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
+                + 2**4  * bin            + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
+                + 2**8  * hashP          + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
+                + 2**12 * indRR          + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
+                + 2**16 * JMPC           + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
+                + 2**20 * memAlignVarLen + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
+                + 2**24 * setA           + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
+                + 2**28 * setD           + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
+                + 2**32 * setPC          + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
+                + 2**36 * setSR          + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
+                + 2**40 * useJmpAddr     + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
+                + 2**44 * hashK1         + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * memAlignLbes;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -482,7 +482,7 @@ namespace Main(%N);
     (1 - JMPN) * JMPN = 0;
     (1 - memAlignRD) * memAlignRD = 0;
     (1 - memAlignWR) * memAlignWR = 0;
-    (1 - memAlignWR8) * memAlignWR8 = 0;
+    (1 - memAlignVarLen) * memAlignVarLen = 0;
     (1 - mOp) * mOp = 0;
     (1 - mWR) * mWR = 0;
     (1 - repeat) * repeat = 0;
@@ -509,6 +509,7 @@ namespace Main(%N);
     (1 - hashK1) * hashK1 = 0;
     (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
+    (1 - memAlignLbes) * memAlignLbes = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
@@ -862,78 +863,54 @@ namespace Main(%N);
 
     // memAlign RD
     memAlignRD {
-        0, 0,
+        0,
         A0, A1, A2, A3,
         A4, A5, A6, A7,
         B0, B1, B2, B3,
         B4, B5, B6, B7,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
-        C0
+        C0, 32 + (RCX - 32) * memAlignVarLen, memAlignLbes
     } is
     MemAlign.resultRd {
-        MemAlign.wr256,
-        MemAlign.wr8,
+        MemAlign.wr,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
         MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
         MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
         MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
         MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
         MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset
+        MemAlign.offset, MemAlign.len, MemAlign.lbes
     };
 
     memAlignWR {
-        1, 0,
+        1,
         A0, A1, A2, A3,
         A4, A5, A6, A7,
         B0, B1, B2, B3,
         B4, B5, B6, B7,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
-        C0,
+        C0, 32 + (RCX - 32) * memAlignVarLen, memAlignLbes,
         D0, D1, D2, D3,
         D4, D5, D6, D7,
         E0, E1, E2, E3,
         E4, E5, E6, E7
     } is
-    MemAlign.resultWr256 {
-        MemAlign.wr256,
-        MemAlign.wr8,
+    MemAlign.resultWr {
+        MemAlign.wr,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
         MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
         MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
         MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
         MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
         MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset,
+        MemAlign.offset, MemAlign.len, MemAlign.lbes,
         MemAlign.w0[0], MemAlign.w0[1], MemAlign.w0[2], MemAlign.w0[3],
         MemAlign.w0[4], MemAlign.w0[5], MemAlign.w0[6], MemAlign.w0[7],
         MemAlign.w1[0], MemAlign.w1[1], MemAlign.w1[2], MemAlign.w1[3],
         MemAlign.w1[4], MemAlign.w1[5], MemAlign.w1[6], MemAlign.w1[7]
     };
 
-    memAlignWR8 {
-        0, 1,
-        A0, A1, A2, A3,
-        A4, A5, A6, A7,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7,
-        C0,
-        D0, D1, D2, D3,
-        D4, D5, D6, D7
-    } is
-    MemAlign.resultWr8 {
-        MemAlign.wr256,
-        MemAlign.wr8,
-        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
-        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
-        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
-        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset,
-        MemAlign.w0[0], MemAlign.w0[1], MemAlign.w0[2], MemAlign.w0[3],
-        MemAlign.w0[4], MemAlign.w0[5], MemAlign.w0[6], MemAlign.w0[7]
-    };
-
-    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR + memAlignWR8;
+    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR;
 

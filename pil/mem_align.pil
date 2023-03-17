@@ -18,15 +18,16 @@ namespace MemAlign(%N);
     // 32 bytes of M0, M1 ordered from HSB to LSB (32, 31, 30, ... == M[7].3, M[7].2, M[7].1, M[7].0, M[6].3, ..)
     pol commit inM[2];
 
-    // 32 bytes of V
+    // 32 bytes of V non-ordered
+    // In a particular order depending on how to apply to M0, M1 that have a predetermined order
+    // One particular byte only was on M0, M1 or nowhere.
     pol commit inV;
 
-    // write 32 bytes (256 bits)
-    pol commit wr256;
+    // Little Big Enddian Selector  lbes = 0 big enddian, lebs = 1 little enddian
+    pol commit lbes;
 
-    // write 1 byte (8 bits), its special case because need to ignore
-    // the rest of bytes, only LSB of V was stored (on w0 with offset)
-    pol commit wr8;
+    // write
+    pol commit wr;
 
     pol commit m0[8];
     pol commit m1[8];
@@ -34,8 +35,9 @@ namespace MemAlign(%N);
     pol commit w1[8];
     pol commit v[8];
 
-    // when m1 is "active", means aligned with inV
-    // also when wr8 = 1, used to indicate when store the LSB
+    // when m0 is "active", means aligned with inV an must be read/write from/to M0
+    // when m1 is "active", means aligned with inV an must be read/write from/to M1
+    pol commit selM0;
     pol commit selM1;
 
     // factors to build V[] in correct way, because order of V bytes
@@ -43,9 +45,10 @@ namespace MemAlign(%N);
     pol commit factorV[8];
 
     pol commit offset;
+    pol commit len;
 
-    // BYTE_C4096 = 0 (x4096), 1 (x4096), ... , 31 (x4096), 32 (x4096), 0 (x4096), 1 (x4096), ...
-    pol constant BYTE_C4096; // [0:4096..255:4096]
+    // BYTE_C8192 = 0 (x8192), 1 (x8192), ... , 31 (x8192), 32 (x8192), 0 (x8192), 1 (x8192), ...
+    pol constant BYTE_C8192; // [0:8192..255:8192]
 
     // FACTOR was same for all combinations of offset, wr8, wr256 is a f(step)
     // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x28)
@@ -55,7 +58,7 @@ namespace MemAlign(%N);
     // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1
     pol constant FACTOR[8];
 
-    // FACTOR change according the combinations of offset, wr8, wr256 and step.
+    // FACTOR change according the combinations of offset, be, len and step.
     pol constant FACTORV[8];
 
     // STEP32
@@ -63,58 +66,61 @@ namespace MemAlign(%N);
     // 1024 - 2047  WR256 = 0 WR8 = 0
     // 2048 - 3071  WR256 = 1 WR8 = 0
     // 3072 - 4096  WR256 = 0 WR8 = 1
-    pol constant WR256; // [0:2048,1:1024:0:1024]
-    pol constant WR8;   // [0:3072,1:1024]
+    pol constant WR; // [0:2048,1:1024:0:1024]
+    pol constant LEN;   // [0:3072,1:1024]
+    pol constant LBES;
 
     // OFFSET = 0 (x32), 1 (x32), ... , 31 (x32), 32 (x32), 0 (x32), 1 (x32), ...
     pol constant OFFSET; // [0:32..31:32]
 
+    pol constant SELM0;
     pol constant SELM1;
 
     pol RESET = Global.CLK32[0];
 
     //              RangeCheck                  Latch   Clock
     // factorV      Plookup (FACTORV)           no      yes
-    // wr256        Plookup (WR256)             yes     no
-    // wr8          Plookup (WR8)               yes     no
+    // wr           Binary constraint           yes     no
+    // len          Plookup (LEN)               yes     no
+    // lbes         Plookup (LBES)              yes     no
     // offset       Plookup (OFFSET)            yes     no
-    // inV          RangeCheck (BYTE_C4096)     no      yes
+    // inV          RangeCheck (BYTE_C8192)     no      yes
     // inM[0..1]    RangeCheck (BYTE2A,BYTE2)   no      yes
     // m0[0..7]     Built                       no      yes
     // m1[0..7]     Built                       no      yes
     // w0[0..7]     Built                       no      yes
     // w1[0..7]     Built                       no      yes
     // v[0..7]      Built                       no      yes
+    // selM0        Plookup (SELM0)             no      yes
     // selM1        Plookup (SELM1)             no      yes
 
     // Latchs
-    (1 - RESET) * wr256' = (1 - RESET) * wr256;
+    (1 - RESET) * wr' = (1 - RESET) * wr;
     (1 - RESET) * offset' = (1 - RESET) * offset;
-    (1 - RESET) * wr8' = (1 - RESET) * wr8;
+    (1 - RESET) * len' = (1 - RESET) * len;
+    (1 - RESET) * lbes' = (1 - RESET) * lbes;
 
     pol commit resultRd;
-    pol commit resultWr8;
-    pol commit resultWr256;
+    pol commit resultWr;
     (1 - RESET) * resultRd = 0;
-    (1 - RESET) * resultWr8 = 0;
-    (1 - RESET) * resultWr256 = 0;
+    (1 - RESET) * resultWr = 0;
     resultRd * (1 - resultRd) = 0;
-    resultWr8 * (1 - resultWr8) = 0;
-    resultWr256 * (1 - resultWr256) = 0;
+    resultWr * (1 - resultWr) = 0;
 
-    (1 - wr8) * resultWr8 = 0;
-    (1 - wr256) * resultWr256 = 0;
-    (wr8 + wr256) * resultRd = 0;
+    wr  * ( 1 - wr ) = 0;
+    (1 - wr) * resultWr = 0;
 
     // RangeCheck
     {inM[1], inM[0]} in {Global.BYTE_2A, Global.BYTE};
 
     // Plookup
     {
-        Global.STEP32, offset', wr256', wr8', selM1, inV,
+        offset', lbes', len', Global.STEP32, inV,           // selectors 5 + 1 + 5 + 4 + 8 = 23 bits
+        selM0, selM1,
         factorV[0], factorV[1], factorV[2], factorV[3], factorV[4], factorV[5], factorV[6], factorV[7]
     } in {
-        Global.STEP32, OFFSET, WR256, WR8, SELM1, BYTE_C4096,
+        OFFSET, LBES, LEN, Global.STEP32, BYTE_C8192,
+        SELM0, SELM1,
         FACTORV[0], FACTORV[1], FACTORV[2], FACTORV[3], FACTORV[4], FACTORV[5], FACTORV[6], FACTORV[7]
     };
 
@@ -136,29 +142,11 @@ namespace MemAlign(%N);
     m1[6]' = (1-RESET) * m1[6] + FACTOR[6] * inM[1];
     m1[7]' = (1-RESET) * m1[7] + FACTOR[7] * inM[1];
 
-    // selW0 contains data to be store in w0, must be 0 in "reading mode"
-    // in "writting mode", in particular with wr8 only on byte must be
-    // stored, for this reason use selM1 that was active only one clock (in wr8 mode)
-    pol selW0 = (1 - selM1) * wr256' + selM1 * wr8';
-
-    // selW1 contains data to be store in w1, must be 0 in "reading mode"
-    pol selW1 = selM1 * wr256';
-
-    // NOTE: when wr8 = 1 implies wr256 = 0, check in this situations where use selM1
-    // to verify that non exists collateral effects
-    //
-    // pol selW0 = selM1 (because wr256 = 0 and wr8 = 1)
-    //
-    // selM1 used in pol _inM, but _inM is only used on dataV
-    // pol dataV = (1 - wr256' - wr8') * _inM + (wr256' + wr8') * inV;
-    // pol dataV = inV (because wr256 = 0 and wr8 = 1)
-    //
-    // CONCLUSION: it's safe reuse selM1 to indicate when store byte
-
     // data to "write" on w, if current byte must be override by V contains inV
-    // if not contains inM "in reading mode" must be 0.
-    pol dataW0 = (wr8' + wr256') * inM[0] + selW0 * (inV - inM[0]);
-    pol dataW1 = (wr8' + wr256') * inM[1] + selW1 * (inV - inM[1]);
+    // if not contains inM "in reading mode" value don't matter
+    // because there are two permutation checks, one for read and other for write.
+    pol dataW0 = inM[0] + selM0 * (inV - inM[0]);
+    pol dataW1 = inM[1] + selM1 * (inV - inM[1]);
 
     w0[0]' = (1-RESET) * w0[0] + FACTOR[0] * dataW0;
     w0[1]' = (1-RESET) * w0[1] + FACTOR[1] * dataW0;
@@ -178,11 +166,7 @@ namespace MemAlign(%N);
     w1[6]' = (1-RESET) * w1[6] + FACTOR[6] * dataW1;
     w1[7]' = (1-RESET) * w1[7] + FACTOR[7] * dataW1;
 
-    // _inM contains "active" value of inM
-    pol _inM = (1 - selM1) * inM[0] + selM1 * inM[1];
-
-    // contains data to store in V, could be one of inM if was reading or inV if was writting
-    pol dataV = (1 - wr256' - wr8') * _inM + (wr256' + wr8') * inV;
+    pol dataV = inV + selM0 * (inM[0] - inV) + selM1 * (inM[1] - inV);
 
     // factorV = f(STEP, offset, wr8)
     v[0]' = (1-RESET) * v[0] + factorV[0] * dataV;
