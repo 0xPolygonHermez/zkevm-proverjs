@@ -77,7 +77,6 @@ CP_CIRCOM=1
 CP_BUILDS=1
 GENERATE_HASH=1
 
-
 if [ $CP_SCRIPTS -eq 1 ]; then
     # scripts
     FULLDST=$DST/config/scripts
@@ -98,7 +97,6 @@ if [ $CP_ZKEVM -eq 1 ]; then
     cpfile $BDIR/zkevm.consttree                               $FULLDST
     cpfile $BDIR/zkevm.starkinfo.json                          $FULLDST
     cpfile $BDIR/zkevm.verkey.json        		                $FULLDST
-    cpdir $BDIR/pols_generated                             $DST/c_files
     cpdir $BDIR/zkevm.verifier_cpp                         $DST/c_files
     cpdir $BDIR/zkevm.chelpers                             $DST/c_files
     cpdir $BDIR/pil/zkevm                                  $DST/pil/
