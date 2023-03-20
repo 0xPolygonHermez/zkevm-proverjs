@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-continue */
 /* eslint-disable multiline-comment-style */
 /* eslint-disable no-console */
@@ -134,7 +135,11 @@ class FullTracer {
         this.execution_trace[this.execution_trace.length - 1].error = errorName;
 
         // Revert logs
-        this.logs[ctx.CTX] = null;
+        for (const [key] of Object.entries(this.logs)) {
+            if (Number(key) >= ctx.CTX) {
+                delete this.logs[key];
+            }
+        }
     }
 
     /**
