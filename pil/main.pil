@@ -861,6 +861,16 @@ namespace Main(%N);
 // MemAlign Plookpups
 /////////
 
+    //                      memAlignRD  memAlignWR  memAlignVarLen  memAlignLbes
+    // MEM_ALIGN_RD              1           0            1              0
+    // MEM_ALIGN_RD32            1           0            0              0
+    // MEM_ALIGN_RD_LE           1           0            1              1
+    // MEM_ALIGN_RD32_LE         1           0            0              1
+    // MEM_ALIGN_WR              0           1            1              0
+    // MEM_ALIGN_WR32            0           1            0              0
+    // MEM_ALIGN_WR_LE           0           1            1              1
+    // MEM_ALIGN_WR32_LE         0           1            0              1
+
     // memAlign RD
     memAlignRD {
         0,

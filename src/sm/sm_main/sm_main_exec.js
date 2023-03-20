@@ -1425,19 +1425,26 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.carry[i] = 0n;
         }
 
-        if (l.memAlignRD || l.memAlignWR || l.memAlignWR8) {
+        if (l.memAlignRD || l.memAlignWR) {
             const m0 = safeFea2scalar(Fr, ctx.A);
+            const m1 = safeFea2scalar(Fr, ctx.B);
             const v = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const P2_256 = 2n ** 256n;
             const MASK_256 = P2_256 - 1n;
             const offset = safeFea2scalar(Fr, ctx.C);
 
+            const len = l.memAlignVarLen ? safeFea2scalar(Fr, ctx.CTX): 32n;
+            const lbes = l.memAlignLbes ? 1n : 0n;
+
             if (offset < 0 || offset >= 32) {
-                throw new Error(`MemAlign out of range (${offset}) ${sourceRef}`);
+                throw new Error(`MemAlign offset out of range (${offset}) ${sourceRef}`);
             }
 
-            if (!l.memAlignRD && l.memAlignWR && !l.memAlignWR8) {
-                const m1 = safeFea2scalar(Fr, ctx.B);
+            if (len < 0 || len >= 32) {
+                throw new Error(`MemAlign length out of range (${len}) ${sourceRef}`);
+            }
+
+            if (!l.memAlignRD && l.memAlignWR) {
                 const w0 = safeFea2scalar(Fr, ctx.D);
                 const w1 = safeFea2scalar(Fr, ctx.E);
                 const _W0 = Scalar.bor(Scalar.band(m0, P2_256 - (2n ** (256n - (8n * offset)))), Scalar.shr(v, 8n * offset));
@@ -1449,22 +1456,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 pols.memAlignRD[i] = 0n;
                 pols.memAlignWR[i] = 1n;
-                pols.memAlignWR8[i] = 0n;
-                required.MemAlign.push({m0: m0, m1: m1, v: v, w0: w0, w1: w1, offset: offset, wr256: 1n, wr8: 0n});
-            }
-            else if (!l.memAlignRD && !l.memAlignWR && l.memAlignWR8) {
-                const w0 = safeFea2scalar(Fr, ctx.D);
-                const _W0 = Scalar.bor(Scalar.band(m0, Scalar.shr(byteMaskOn256, 8n * offset)), Scalar.shl(Scalar.band(v, 0xFF), 8n * (31n - offset)));
-                if (!Scalar.eq(w0, _W0)) {
-                    throw new Error(`MemAlign w0 invalid (0x${w0.toString(16)}) vs (0x${_W0.toString(16)})`+
-                                    `[m0:${m0.toString(16)}, v:${v.toString(16)}, offset:${offset}] ${sourceRef}`);
-                }
-                pols.memAlignRD[i] = 0n;
-                pols.memAlignWR[i] = 0n;
-                pols.memAlignWR8[i] = 1n;
-                required.MemAlign.push({m0: m0, m1: 0n, v: v, w0: w0, w1: 0n, offset: offset, wr256: 0n, wr8: 1n});
-            } else if (l.memAlignRD && !l.memAlignWR && !l.memAlignWR8) {
-                const m1 = safeFea2scalar(Fr, ctx.B);
+                required.MemAlign.push({m0, m1, v, w0, w1, offset, wr: 1n, lbes, len});
+            } else if (l.memAlignRD && !l.memAlignWR) {
                 const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
                 const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
                 const _V = Scalar.bor(leftV, rightV);
@@ -1474,11 +1467,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 pols.memAlignRD[i] = 1n;
                 pols.memAlignWR[i] = 0n;
-                pols.memAlignWR8[i] = 0n;
-                required.MemAlign.push({m0: m0, m1: m1, v: v, w0: Fr.zero, w1: Fr.zero, offset: offset, wr256: 0n, wr8: 0n});
+                required.MemAlign.push({m0, m1, v, w0, w1, offset, wr: 0n, lbes, len});
             } else {
                 throw new Error(`Invalid operation (rd: ${l.memAlignRD} wr: ${l.memAlignWR}, wr8: ${l.memAlignWR8}) ${sourceRef}`);
             }
+            pols.memAlignAlignVarLen[i] = l.memAlignVarLen ? 1n : 0n;
+            pols.memAlignLbes[i] = l.memAlignLbes ? 1n : 0n;
         } else {
             pols.memAlignRD[i] = 0n;
             pols.memAlignWR[i] = 0n;

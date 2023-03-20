@@ -15,13 +15,19 @@ namespace MemAlign(%N);
     *  inM (8 bits, 32 steps)
     */
 
+    /*
+     * memAlign (cherry) A   pol_ids:631  [cm1_2ns:665 cm2_2ns:128 cm3_2ns:371 q_2ns:3 tot:1167]
+     * memAlign (varlen) A   pol_ids:631  [cm1_2ns:668 cm2_2ns:128 cm3_2ns:362 q_2ns:3 tot:1161]
+    */
+
     // 32 bytes of M0, M1 ordered from HSB to LSB (32, 31, 30, ... == M[7].3, M[7].2, M[7].1, M[7].0, M[6].3, ..)
     pol commit inM[2];
 
     // 32 bytes of V non-ordered
     // In a particular order depending on how to apply to M0, M1 that have a predetermined order
     // One particular byte only was on M0, M1 or nowhere.
-    pol commit inV;
+    pol commit inV7;
+    pol commit inV06;
 
     // Little Big Enddian Selector  lbes = 0 big enddian, lebs = 1 little enddian
     pol commit lbes;
@@ -47,31 +53,25 @@ namespace MemAlign(%N);
     pol commit offset;
     pol commit len;
 
-    // BYTE_C8192 = 0 (x8192), 1 (x8192), ... , 31 (x8192), 32 (x8192), 0 (x8192), 1 (x8192), ...
-    pol constant BYTE_C8192; // [0:8192..255:8192]
-
     // FACTOR was same for all combinations of offset, wr8, wr256 is a f(step)
     // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x28)
     // FACTOR[6] = 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x24)
     // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x20)
     // :
     // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1
-    pol constant FACTOR[8];
+    pol constant FACTOR[8];     // [0:4*(7-i),2**24, 2**16, 2**8, 1, 0:4*i]
 
     // FACTOR change according the combinations of offset, be, len and step.
     pol constant FACTORV[8];
 
-    // STEP32
-    //    0 - 1023  WR256 = 0 WR8 = 0
-    // 1024 - 2047  WR256 = 0 WR8 = 0
-    // 2048 - 3071  WR256 = 1 WR8 = 0
-    // 3072 - 4096  WR256 = 0 WR8 = 1
-    pol constant WR; // [0:2048,1:1024:0:1024]
-    pol constant LEN;   // [0:3072,1:1024]
-    pol constant LBES;
+    // offset', lbes', len', Global.STEP32,
 
-    // OFFSET = 0 (x32), 1 (x32), ... , 31 (x32), 32 (x32), 0 (x32), 1 (x32), ...
-    pol constant OFFSET; // [0:32..31:32]
+                            // STEP [0..31]
+    pol constant OFFSET;    // [0:32..31:32]
+    pol constant LBES;      // [0:1024,1:1024]
+    pol constant LEN;       // [0:2048..31:2048]
+
+    pol constant BIT7_C64K; // [0:65536..127:65536];
 
     pol constant SELM0;
     pol constant SELM1;
@@ -84,7 +84,8 @@ namespace MemAlign(%N);
     // len          Plookup (LEN)               yes     no
     // lbes         Plookup (LBES)              yes     no
     // offset       Plookup (OFFSET)            yes     no
-    // inV          RangeCheck (BYTE_C8192)     no      yes
+    // inV7         RangeCheck (BYTE_C8192)     no      yes
+    // inV06        RangeCheck (BYTE_C8192)     no      yes
     // inM[0..1]    RangeCheck (BYTE2A,BYTE2)   no      yes
     // m0[0..7]     Built                       no      yes
     // m1[0..7]     Built                       no      yes
@@ -110,16 +111,19 @@ namespace MemAlign(%N);
     wr  * ( 1 - wr ) = 0;
     (1 - wr) * resultWr = 0;
 
+    inV7 * ( 1 - inV7 ) = 0;
+    pol inV = inV7 * 128 + inV06;
+
     // RangeCheck
-    {inM[1], inM[0]} in {Global.BYTE_2A, Global.BYTE};
+    {inM[1], inM[0], inV06} in {Global.BYTE_2A, Global.BYTE, BIT7_C64K};
 
     // Plookup
     {
-        offset', lbes', len', Global.STEP32, inV,           // selectors 5 + 1 + 5 + 4 + 8 = 23 bits
+        Global.STEP32, offset', len', lbes',            // selectors 5 + 5 + 1 + 5 = 16 bits
         selM0, selM1,
         factorV[0], factorV[1], factorV[2], factorV[3], factorV[4], factorV[5], factorV[6], factorV[7]
     } in {
-        OFFSET, LBES, LEN, Global.STEP32, BYTE_C8192,
+        Global.STEP32, OFFSET, LEN, LBES,
         SELM0, SELM1,
         FACTORV[0], FACTORV[1], FACTORV[2], FACTORV[3], FACTORV[4], FACTORV[5], FACTORV[6], FACTORV[7]
     };
