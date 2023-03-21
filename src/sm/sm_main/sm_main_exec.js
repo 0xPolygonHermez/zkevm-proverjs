@@ -1932,7 +1932,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         statsTracer.saveStatsFile();
     }
 
-    if (fastDebugExit){
+    if (fastDebugExit && config.assertOutputs){
         assertOutputs(ctx);
     }
 

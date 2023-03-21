@@ -141,6 +141,7 @@ async function main(){
             first += info;
             countOK += 1;
         } catch(err) {
+            console.log(err)
             countErrors += 1;
             info += `${chalk.red('Error')}\n`
             info += `${chalk.yellow(`${err}\n`)}`;
