@@ -277,7 +277,7 @@ start:
         ; CNT_BINARY :ASSERT
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, RR
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)

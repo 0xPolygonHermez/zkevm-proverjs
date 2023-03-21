@@ -15,9 +15,13 @@ module.exports.buildConstants = async function (pols) {
     const nBlocks = Math.floor((N - 1)/BYTESPERBLOCK)+1;
 
     let p =0;
-
-    for (let i=0; i<nBlocks; i++) {
-        const bytesBlock = N-p > BYTESPERBLOCK ? BYTESPERBLOCK : N-p;
+    let bytesBlock = BYTESPERBLOCK;
+    let crValid = 1n;
+    while (p < N) {
+        if ((p + BYTESPERBLOCK) > N) {
+            crValid = 0n;
+            bytesBlock = N - p;
+        }
         for (let j=0; j<bytesBlock; j++) {
 
             let acci = Math.floor(j / BYTESPERELEMENT);
@@ -32,7 +36,7 @@ module.exports.buildConstants = async function (pols) {
                 pols.F[k][p] =(k == acci) ? (1n << sh) : 0n;
             }
             pols.lastBlock[p] = (j == bytesBlock-1) ? 1n : 0n;
-
+            pols.crValid[p] = crValid;
             p += 1;
         }
     }
@@ -108,7 +112,6 @@ module.exports.execute = async function (pols, input) {
             pols.rem[p] = F.e(input[i].realLen - BigInt(j));
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = pols.rem[p] > 0xFFFFn ? 1n : 0n;
-            pols.firstHash[p] = j==0 ? 1n : 0n;
             const lastBlock = (p % BYTESPERBLOCK) == (BYTESPERBLOCK - 1);
             const lastHash = lastBlock && (pols.spare[p] || !pols.rem[p]);
 
@@ -216,6 +219,7 @@ module.exports.execute = async function (pols, input) {
         }
         addr += 1n;
     }
+    console.log(`PaddingPg-used-steps:${p} (${p/BYTESPERBLOCK}x${BYTESPERBLOCK})`);
 
     const nFullUnused = Math.floor((N -p - 1)/BYTESPERBLOCK)+1;
 
@@ -249,7 +253,6 @@ module.exports.execute = async function (pols, input) {
             pols.rem[p] = F.e(-j);
             pols.remInv[p] = pols.rem[p] == 0n ? 0n : F.inv(pols.rem[p]);
             pols.spare[p] = j>0 ? 1n : 0n;
-            pols.firstHash[p] = j==0 ? 1n : 0n;
             pols.lastHashLen[p] = 0n;
             pols.lastHashDigest[p] = 0n;
 
@@ -301,7 +304,6 @@ function prepareInput(input) {
     }
 
     for (let i=0; i<input.length; i++) {
-        // TODO: check if test send information as string and order of bytes on data
         if (typeof input[i].data === 'string') {
             input[i].dataBytes = hexToBytes(input[i].data);
         } else {

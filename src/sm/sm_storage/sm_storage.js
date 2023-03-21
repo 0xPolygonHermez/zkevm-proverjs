@@ -7,13 +7,14 @@ const { isLogging, logger, fea42String, scalar2fea4, fea4IsEq }  = require("./sm
 const SmtActionContext = require("./smt_action_context.js");
 const { StorageRomLine } = require("./sm_storage_rom.js");
 const StorageRom = require("./sm_storage_rom.js").StorageRom;
+const StorageRomFile = __dirname + "/storage_sm_rom.json";
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
 
     // Init rom from file
-    const rawdata = fs.readFileSync("testvectors/storage_sm_rom.json");
+    const rawdata = fs.readFileSync(StorageRomFile);
     const j = JSON.parse(rawdata);
     rom = new StorageRom;
     rom.load(j);
@@ -21,7 +22,6 @@ module.exports.buildConstants = async function (pols) {
     const polSize = pols.rLine.length;
 
     for (let i=0; i<polSize; i++) {
-        // TODO: REVIEW Jordi
         const romLine = i % rom.line.length;
         const l = rom.line[romLine];
 
@@ -56,6 +56,9 @@ module.exports.buildConstants = async function (pols) {
         pols.rInRkeyBit[i] = l.inRKEY_BIT ? BigInt(l.inRKEY_BIT):0n;
         pols.rInSiblingRkey[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
         pols.rInSiblingValueHash[i] = l.inSIBLING_VALUE_HASH ? BigInt(l.inSIBLING_VALUE_HASH):0n;
+        pols.rInValueLow[i] = l.inVALUE_LOW ? BigInt(l.inVALUE_LOW):0n;
+        pols.rInValueHigh[i] = l.inVALUE_HIGH ? BigInt(l.inVALUE_HIGH):0n;
+        pols.rInRotlVh[i] = l.inROTL_VH ? BigInt(l.inROTL_VH):0n;
 
         pols.rSetHashLeft[i] = l.setHASH_LEFT ? BigInt(l.setHASH_LEFT):0n;
         pols.rSetHashRight[i] = l.setHASH_RIGHT ? BigInt(l.setHASH_RIGHT):0n;
@@ -79,7 +82,7 @@ module.exports.execute = async function (pols, action) {
     const POSEIDONG_PERMUTATION3_ID = 3;
 
     // Init rom from file
-    const rawdata = fs.readFileSync("testvectors/storage_sm_rom.json");
+    const rawdata = fs.readFileSync(StorageRomFile);
     const j = JSON.parse(rawdata);
     rom = new StorageRom;
     rom.load(j);

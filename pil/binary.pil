@@ -77,8 +77,8 @@ namespace Binary(%N);
     resultValidRange * resultBinOp = 0;
 
     (opcode' - opcode) * ( 1 - RESET' ) = 0;
-    (cOut - cIn') * (1 - RESET') = 0;
-    cIn * RESET = 0;
+
+    cIn' = cOut * ( 1 - RESET' );
 
     lCout' = cOut;
     lOpcode' = opcode;

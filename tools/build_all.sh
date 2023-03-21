@@ -19,7 +19,7 @@ while [ $# -gt 0 ]; do
     [ ! -z "$PREV_STEP" ] && [ "$PREV_STEP" = "$LAST_STEP" ] && SKIP=0
     [ $SKIP -eq 1 ] && continue
     mkdir -p $BDIR/steps
-    touch $BDIR/steps/$STEP
+    (circom --version && npm ls) | tee $BDIR/dependencies.txt > $BDIR/steps/$STEP
     echo "\e[35;1m####### $STEP #######\e[0m"
     START_STEP_TIME=$(date +%s)
     npm run $STEP

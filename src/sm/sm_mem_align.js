@@ -6,7 +6,7 @@ mapRange = (value, fromValue, mappings, elseValue = 0) =>
 const CONST_F = {
 
     // 0 (x4096), 1 (x4096), ..., 255 (x4096), 0 (x4096), ...
-    BYTE_C4096: (i) => (i >> 12), // [0:4096..255:4096]
+    BYTE_C4096: (i) => (i >> 12) & 0xFF, // [0:4096..255:4096]
 
     //    0 - 1023  WR256 = 0 WR8 = 0  i & 0xC00 = 0x000
     // 1024 - 2047  WR256 = 0 WR8 = 0  i & 0xC00 = 0x400

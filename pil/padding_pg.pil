@@ -11,7 +11,9 @@ namespace PaddingPG(%N);
     freeIn in Global.BYTE;
 
     pol constant F[8];
-    pol constant lastBlock;
+    pol constant lastBlock; // [0:55 1] + [0:N-1 1] blocks of 56 steps, 0 in the first 55 steps and 1 in the last step of the block.
+                            // Also the last global step was 1 to close the global cycle (allowing addr change from step N-1 to 0)
+    pol constant crValid;   // 1 for valid/complete 56 steps blocks, 0 for last smaller/incomplete block
 
     // rem: It can be different only the first byte of a new Hash.
     pol commit rem;
@@ -26,6 +28,7 @@ namespace PaddingPG(%N);
     pol commit spare;
     pol lastHash = lastBlock*(spare + remIsZero);
     spare' = (spare + remIsZero)*(1-lastHash);
+    spare * (1 - spare) = 0;
 
     pol commit lastHashLen;
     pol commit lastHashDigest;
@@ -35,9 +38,6 @@ namespace PaddingPG(%N);
 
     lastHashLen * (1 - lastHash) = 0;
     lastHashDigest * (1 - lastHash) = 0;
-
-    pol commit firstHash;
-    firstHash' = lastHash;
 
     pol aFreeIn = (1 - (remIsZero + spare))*freeIn + remIsZero + lastHash*0x80;
 
@@ -116,7 +116,7 @@ namespace PaddingPG(%N);
 
 
     pol commit len;
-    len * firstHash = rem * firstHash;
+    len' * lastHash = rem' * lastHash;
     len'*(1-lastHash) = len*(1-lastHash);
 
     (addr' -addr) * (1-lastHash) = 0;
@@ -165,11 +165,11 @@ namespace PaddingPG(%N);
     crV6' = crV6C*(1-crLatch);
     crV7' = crV7C*(1-crLatch);
 
-    (1-crLatch) * lastHash = 0;  // Ensure qhen a hash ends it resets the address.
+    (1-crLatch) * lastHash = 0;  // Ensure when a hash ends it resets the address.
 
 
     /* Read Data output
-        crLatch [hash0, hash1, hash2, hash3, hash4, hash5, hash6, hash7, crOffset - crLen -1, crLen, crV0C, crV1C, crV2C, crV3C, crV4C, crV5C, crV6C, crV7C]
+        crLatch * crValid [hash0, hash1, hash2, hash3, hash4, hash5, hash6, hash7, crOffset - crLen -1, crLen, crV0C, crV1C, crV2C, crV3C, crV4C, crV5C, crV6C, crV7C]
     */
 
     /* Read Len output

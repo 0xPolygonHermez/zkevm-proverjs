@@ -13,21 +13,21 @@ template Main() {
     rootCSingle[2] = <%- constRoot[2] %>;
     rootCSingle[3] = <%- constRoot[3] %>;
 
-    signal input publics[43];
+    signal input publics[44];
     signal input rootC[4];
 
-    signal input a_publics[43];
+    signal input a_publics[44];
 
     signal input a_root1[4];
     signal input a_root2[4];
     signal input a_root3[4];
     signal input a_root4[4];
 
-    signal input a_evals[72][3];
+    signal input a_evals[70][3];
 
     signal input a_s0_vals1[32][12];
-    signal input a_s0_vals3[32][3];
-    signal input a_s0_vals4[32][36];
+    signal input a_s0_vals3[32][9];
+    signal input a_s0_vals4[32][24];
     signal input a_s0_valsC[32][34];
     signal input a_s0_siblings1[32][24][4];
     signal input a_s0_siblings3[32][24][4];
@@ -52,17 +52,17 @@ template Main() {
 
 
 
-    signal input b_publics[43];
+    signal input b_publics[44];
 
     signal input b_root1[4];
     signal input b_root2[4];
     signal input b_root3[4];
     signal input b_root4[4];
-    signal input b_evals[72][3];
+    signal input b_evals[70][3];
 
     signal input b_s0_vals1[32][12];
-    signal input b_s0_vals3[32][3];
-    signal input b_s0_vals4[32][36];
+    signal input b_s0_vals3[32][9];
+    signal input b_s0_vals4[32][24];
     signal input b_s0_valsC[32][34];
     signal input b_s0_siblings1[32][24][4];
     signal input b_s0_siblings3[32][24][4];
@@ -87,7 +87,7 @@ template Main() {
 
     component vA = StarkVerifier();
 
-    for (var i=0; i<43; i++) {
+    for (var i=0; i<44; i++) {
         vA.publics[i] <== a_publics[i];
     }
     vA.root1 <== a_root1;
@@ -118,20 +118,20 @@ template Main() {
     vA.finalPol <== a_finalPol;
 
     component isOneBatchA = IsZero();
-    isOneBatchA.in  <== a_publics[42] - a_publics[16] - 1;
+    isOneBatchA.in  <== a_publics[43] - a_publics[16] - 1;
     component a_muxRootC = MultiMux1(4);
     a_muxRootC.c[0] <== rootC;
     a_muxRootC.c[1] <== rootCSingle;
     a_muxRootC.s <== isOneBatchA.out;
 
     for (var i=0; i<4; i++) {
-        vA.publics[43+i] <== rootC[i];
+        vA.publics[44+i] <== rootC[i];
     }
     vA.rootC <== a_muxRootC.out;
 
     component vB = StarkVerifier();
 
-    for (var i=0; i<43; i++) {
+    for (var i=0; i<44; i++) {
         vB.publics[i] <== b_publics[i];
     }
     vB.root1 <== b_root1;
@@ -163,14 +163,14 @@ template Main() {
 
 
     component isOneBatchB = IsZero();
-    isOneBatchB.in <== b_publics[42] - b_publics[16] - 1;
+    isOneBatchB.in <== b_publics[43] - b_publics[16] - 1;
     component b_muxRootC = MultiMux1(4);
     b_muxRootC.c[0] <== rootC;
     b_muxRootC.c[1] <== rootCSingle;
     b_muxRootC.s <== isOneBatchB.out;
 
     for (var i=0; i<4; i++) {
-        vB.publics[43+i] <== rootC[i];
+        vB.publics[44+i] <== rootC[i];
     }
     vB.rootC <== b_muxRootC.out;
 
@@ -190,40 +190,46 @@ template Main() {
     // chainId
     a_publics[17] === publics[17];
 
+    // forkId
+    a_publics[18] === publics[18];
+
     // midStateRoot
     for (var i=0; i<8; i++) {
-        b_publics[i] === a_publics[18+i];
+        b_publics[i] === a_publics[19+i];
     }
 
     // midAccInputHash
     for (var i=8; i<16; i++) {
-        b_publics[i] === a_publics[18+i];
+        b_publics[i] === a_publics[19+i];
     }
 
     // midBatchNum
-    b_publics[16] === a_publics[18+24];
+    b_publics[16] === a_publics[19+24];
 
     // chainId
     b_publics[17] === publics[17];
 
+    // forkId
+    b_publics[18] === publics[18];
+
 
     // newStateRoot
     for (var i=0; i<8; i++) {
-        publics[18+i] === b_publics[18+i];
+        publics[19+i] === b_publics[19+i];
     }
 
     // newAccInputHash
     for (var i=8; i<16; i++) {
-        publics[18+i] === b_publics[18+i];
+        publics[19+i] === b_publics[19+i];
     }
 
     // localExitRoot
     for (var i=16; i<24; i++) {
-        publics[18+i] === b_publics[18+i];
+        publics[19+i] === b_publics[19+i];
     }
 
     // newBatchNum
-    publics[18+24] === b_publics[18+24];
+    publics[19+24] === b_publics[19+24];
 
 }
 

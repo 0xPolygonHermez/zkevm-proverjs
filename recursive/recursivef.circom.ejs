@@ -6,18 +6,18 @@ include "mux1.circom";
 include "iszero.circom";
 
 template Main() {
-    signal input publics[43];
+    signal input publics[44];
 
     signal input root1[4];
     signal input root2[4];
     signal input root3[4];
     signal input root4[4];
 
-    signal input evals[72][3];
+    signal input evals[70][3];
 
     signal input s0_vals1[32][12];
-    signal input s0_vals3[32][3];
-    signal input s0_vals4[32][36];
+    signal input s0_vals3[32][9];
+    signal input s0_vals4[32][24];
     signal input s0_valsC[32][34];
     signal input s0_siblings1[32][24][4];
     signal input s0_siblings3[32][24][4];
@@ -42,7 +42,7 @@ template Main() {
 
     component sv = StarkVerifier();
 
-    for (var i=0; i<43; i++) {
+    for (var i=0; i<44; i++) {
         sv.publics[i] <== publics[i];
     }
     sv.root1 <== root1;
@@ -73,7 +73,7 @@ template Main() {
     sv.finalPol <== finalPol;
 
     component isOne = IsZero();
-    isOne.in <== publics[42] -publics[16] -1;
+    isOne.in <== publics[43] -publics[16] -1;
     component muxKey = MultiMux1(4);
     muxKey.s <== isOne.out;
     muxKey.c[0][0] <== <%- constRoot2[0] %>;
@@ -85,10 +85,10 @@ template Main() {
     muxKey.c[1][2] <== <%- constRoot1[2] %>;
     muxKey.c[1][3] <== <%- constRoot1[3] %>;
 
-    sv.publics[43] <== <%- constRoot2[0] %>;
-    sv.publics[44] <== <%- constRoot2[1] %>;
-    sv.publics[45] <== <%- constRoot2[2] %>;
-    sv.publics[46] <== <%- constRoot2[3] %>;
+    sv.publics[44] <== <%- constRoot2[0] %>;
+    sv.publics[45] <== <%- constRoot2[1] %>;
+    sv.publics[46] <== <%- constRoot2[2] %>;
+    sv.publics[47] <== <%- constRoot2[3] %>;
 
     sv.rootC[0] <== muxKey.out[0];
     sv.rootC[1] <== muxKey.out[1];

@@ -15,7 +15,7 @@ const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
-const smNine2One = require("../src/sm/sm_nine2one.js");
+const smBits2Field = require("../src/sm/sm_bits2field.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
@@ -47,8 +47,8 @@ describe("test main sm", async function () {
         await smPaddingKK.buildConstants(constPols.PaddingKK);
         console.log("Const PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
-        console.log("Const Nine2One...");
-        await smNine2One.buildConstants(constPols.Nine2One);
+        console.log("Const Bits2Field...");
+        await smBits2Field.buildConstants(constPols.Bits2Field);
         console.log("Const KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
         console.log("Const Mem...");
@@ -71,10 +71,10 @@ describe("test main sm", async function () {
         const requiredKK = await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK);
         console.log("Exec PaddingKKbit...");
         const requiredKKbit = await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit);
-        console.log("Exec Nine2One...");
-        const requiredNine2One = await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One);
+        console.log("Exec Bits2Field...");
+        const requiredBits2Field = await smBits2Field.execute(cmPols.Bits2Field, requiredKKbit.Bits2Field);
         console.log("Exec KeccakF...");
-        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF);
+        const requiredKeccakF = await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF);
         console.log("Exec MemAlign...");
         await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign);
 

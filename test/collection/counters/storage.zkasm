@@ -1,0 +1,154 @@
+    :CALL(SaveCounters)
+
+
+    0 => SR
+
+    0x23 => A
+    0 => B,C
+    $ => A                  :SLOAD
+    0                       :ASSERT
+
+    CNT_POSEIDON_G - 2      :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY              :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    0x2025 => D
+    $ => SR                 :SSTORE
+
+    CNT_POSEIDON_G - 6      :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 1          :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    0 => B,C
+    $ => A                  :SLOAD
+    0x2025                  :ASSERT
+
+    CNT_POSEIDON_G - 10     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 1          :MLOAD(v_cnt_binary)
+
+    0x23 => A
+    0x8026000000000000000000000000000000000000000000000000000000000000n => D
+    ; 0x8026n => D
+    $ => SR                 :SSTORE
+
+    CNT_POSEIDON_G - 20     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 2          :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    0 => B,C
+    $ => A                  :SLOAD
+    0x2025                  :ASSERT
+
+    CNT_POSEIDON_G - 27     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 2          :MLOAD(v_cnt_binary)
+
+    0x23 => A
+    0 => B,C
+    $ => A  :SLOAD
+    0x8026000000000000000000000000000000000000000000000000000000000000n :ASSERT
+    ; 0x8026n :ASSERT
+
+    CNT_POSEIDON_G - 34     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 2          :MLOAD(v_cnt_binary)
+
+    0 => SR
+
+    0x23 => A
+    0 => B,C
+    $ => A                  :SLOAD
+    0                       :ASSERT
+
+    CNT_POSEIDON_G - 36     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 2          :MLOAD(v_cnt_binary)
+
+    0x23 => A
+    2022 => D
+    $ => SR                 :SSTORE
+
+    CNT_POSEIDON_G - 40     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 3          :MLOAD(v_cnt_binary)
+
+    0x03 => A
+    2021 => D
+    $ => SR                 :SSTORE
+
+    CNT_POSEIDON_G - 49     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 4          :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    2020 => D
+    $ => SR :SSTORE
+
+    CNT_POSEIDON_G - 61     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 5          :MLOAD(v_cnt_binary)
+
+    0x23 => A
+    0 => B,C
+    $ => A  :SLOAD
+    2022    :ASSERT
+
+    CNT_POSEIDON_G - 68     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 5          :MLOAD(v_cnt_binary)
+
+    0x03 => A
+    0 => B,C
+    $ => A  :SLOAD
+    2021    :ASSERT
+
+    CNT_POSEIDON_G - 74     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 5          :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    0 => B,C
+    $ => A  :SLOAD
+    2020    :ASSERT
+
+    CNT_POSEIDON_G - 81     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 5          :MLOAD(v_cnt_binary)
+
+    0x33 => A
+    0 => B,C
+    $ => A  :SLOAD
+    0       :ASSERT
+
+    CNT_POSEIDON_G - 87     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 5          :MLOAD(v_cnt_binary)
+
+    0x30 => A
+    0 => B,C
+    $ => A  :SLOAD
+    0       :ASSERT
+
+    CNT_POSEIDON_G - 90     :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 5          :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    0 => B,C
+    12020 => D
+    $ => SR :SSTORE
+
+    CNT_POSEIDON_G - 102    :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 6          :MLOAD(v_cnt_binary)
+
+    0x73 => A
+    0 => B,C
+    0 => D
+    $ => SR :SSTORE
+
+    CNT_POSEIDON_G - 112    :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 7          :MLOAD(v_cnt_binary)
+
+    0x13 => A
+    0 => D
+    0 => B,C
+    $ => SR                 :SSTORE
+
+    CNT_POSEIDON_G - 124    :MLOAD(v_cnt_poseidon_g)
+    CNT_BINARY - 8          :MLOAD(v_cnt_binary)
+
+    ; to verify that there are no correlations between counters
+
+    CNT_ARITH               :MLOAD(v_cnt_arith)
+    CNT_KECCAK_F            :MLOAD(v_cnt_keccak_f)
+    CNT_MEM_ALIGN           :MLOAD(v_cnt_mem_align)
+    CNT_PADDING_PG          :MLOAD(v_cnt_padding_pg)

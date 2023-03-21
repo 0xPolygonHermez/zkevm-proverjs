@@ -15,14 +15,13 @@ const smKeccakF = require("../src/sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("../src/sm/sm_main/sm_main.js");
 const smMemAlign = require("../src/sm/sm_mem_align.js");
 const smMem = require("../src/sm/sm_mem.js");
-const smNine2One = require("../src/sm/sm_nine2one.js");
+const smBits2Field = require("../src/sm/sm_bits2field.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
 const smStorage = require("../src/sm/sm_storage/sm_storage.js");
-const { index } = require("../src/sm/sm_main/test_tools.js");
 const { config } = require("yargs");
 
 module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
@@ -43,7 +42,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
     }
 
-    const constPols =  newConstantPolsArray(pil);
+    const constPols =  (mainConfig && mainConfig.constants === false) ? false : newConstantPolsArray(pil);
     const cmPols =  newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
     const N = polDeg;
@@ -78,9 +77,9 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log("Const PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     }
-    if (constPols.Nine2One) {
-        console.log("Const Nine2One...");
-        await smNine2One.buildConstants(constPols.Nine2One);
+    if (constPols.Bits2Field) {
+        console.log("Const Bits2Field...");
+        await smBits2Field.buildConstants(constPols.Bits2Field);
     }
     if (constPols.KeccakF) {
         console.log("Const KeccakF...");
@@ -115,105 +114,109 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.buildConstants(constPols.Binary);
     }
 
-    for (let i=0; i<constPols.$$array.length; i++) {
-        for (let j=0; j<N; j++) {
-            if (typeof constPols.$$array[i][j] === "undefined") {
-                throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+    if (constPols !== false) {
+        for (let i=0; i<constPols.$$array.length; i++) {
+            for (let j=0; j<N; j++) {
+                if (typeof constPols.$$array[i][j] === "undefined") {
+                    throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+                }
             }
         }
     }
 
     console.log("Exec Main...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
+    console.log(requiredMain.counters);
 
-    if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
-    const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
+    if (!mainConfig || !mainConfig.fastDebugExit) {
+        if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
+        const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
 
-    if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
-    const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
+        if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
+        const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
 
-    if (cmPols.Nine2One) console.log("Exec Nine2One...");
-    const requiredNine2One = cmPols.Nine2One ? await smNine2One.execute(cmPols.Nine2One, requiredKKbit.Nine2One) : false;
+        if (cmPols.Bits2Field) console.log("Exec Bits2Field...");
+        const requiredBits2Field = cmPols.Bits2Field ? await smBits2Field.execute(cmPols.Bits2Field, requiredKKbit.Bits2Field) : false;
 
-    if (cmPols.KeccakF) console.log("Exec KeccakF...");
-    const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredNine2One.KeccakF) : false;
+        if (cmPols.KeccakF) console.log("Exec KeccakF...");
+        const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF) : false;
 
-    if (cmPols.MemAlign) {
-        console.log("Exec MemAlign...");
-        await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign || []);
-    } else if (verifyPilFlag && requiredMain.MemAlign && requiredMain.MemAlign.length) {
-        console.log(`WARNING: Namespace MemAlign isn't included, but there are ${requiredMain.MemAlign.length} MemAlign operations`);
-    }
+        if (cmPols.MemAlign) {
+            console.log("Exec MemAlign...");
+            await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign || []);
+        } else if (verifyPilFlag && requiredMain.MemAlign && requiredMain.MemAlign.length) {
+            console.log(`WARNING: Namespace MemAlign isn't included, but there are ${requiredMain.MemAlign.length} MemAlign operations`);
+        }
 
-    if (cmPols.Mem) {
-        console.log("Exec Mem...");
-        await smMem.execute(cmPols.Mem, requiredMain.Mem || []);
-    } else if (verifyPilFlag && requiredMain.Mem && requiredMain.Mem.length) {
-        console.log(`WARNING: Namespace Mem isn't included, but there are ${requiredMain.Mem.length} Mem operations`);
-    }
+        if (cmPols.Mem) {
+            console.log("Exec Mem...");
+            await smMem.execute(cmPols.Mem, requiredMain.Mem || []);
+        } else if (verifyPilFlag && requiredMain.Mem && requiredMain.Mem.length) {
+            console.log(`WARNING: Namespace Mem isn't included, but there are ${requiredMain.Mem.length} Mem operations`);
+        }
 
-    if (cmPols.Storage) console.log("Exec Storage...");
-    const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage || []) : false;
-
-
-    if (!cmPols.Storage && verifyPilFlag && requiredMain.Storage && requiredMain.Storage.length) {
-        console.log(`WARNING: Namespace Storage isn't included, but there are ${requiredMain.Storage.length} Storage operations`);
-    }
+        if (cmPols.Storage) console.log("Exec Storage...");
+        const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage || []) : false;
 
 
-    if (cmPols.PaddingPG) console.log("Exec PaddingPG...");
-    const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG,  requiredMain.PaddingPG || []) : false;
+        if (!cmPols.Storage && verifyPilFlag && requiredMain.Storage && requiredMain.Storage.length) {
+            console.log(`WARNING: Namespace Storage isn't included, but there are ${requiredMain.Storage.length} Storage operations`);
+        }
 
-    const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
-    if (cmPols.PoseidonG) {
-        console.log("Exec PoseidonG...");
-        await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
-    } else if (verifyPilFlag && allPoseidonG.length) {
-        console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations `+
-                        `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
-    }
 
-    if (cmPols.Arith) {
-        console.log("Exec Arith...");
-        await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
-    } else if (verifyPilFlag && requiredMain.Arith && requiredMain.Arith.length) {
-        console.log(`WARNING: Namespace Arith isn't included, but there are ${requiredMain.Arith.length} Arith operations`);
-    }
+        if (cmPols.PaddingPG) console.log("Exec PaddingPG...");
+        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG,  requiredMain.PaddingPG || []) : false;
 
-    if (cmPols.Binary) {
-        console.log("Exec Binary...");
-        await smBinary.execute(cmPols.Binary, requiredMain.Binary || []);
-    } else if (verifyPilFlag && requiredMain.Binary && requiredMain.Binary.length) {
-        console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
-    }
+        const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
+        console.log('POSEIDONS='+allPoseidonG.length);
+        if (cmPols.PoseidonG) {
+            console.log("Exec PoseidonG...");
+            await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
+        } else if (verifyPilFlag && allPoseidonG.length) {
+            console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations `+
+                            `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
+        }
 
-    for (let i=0; i<cmPols.$$array.length; i++) {
-        for (let j=0; j<N; j++) {
-            if (typeof cmPols.$$array[i][j] === "undefined") {
-                throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+        if (cmPols.Arith) {
+            console.log("Exec Arith...");
+            await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
+        } else if (verifyPilFlag && requiredMain.Arith && requiredMain.Arith.length) {
+            console.log(`WARNING: Namespace Arith isn't included, but there are ${requiredMain.Arith.length} Arith operations`);
+        }
+
+        if (cmPols.Binary) {
+            console.log("Exec Binary...");
+            await smBinary.execute(cmPols.Binary, requiredMain.Binary || []);
+        } else if (verifyPilFlag && requiredMain.Binary && requiredMain.Binary.length) {
+            console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
+        }
+
+        for (let i=0; i<cmPols.$$array.length; i++) {
+            for (let j=0; j<N; j++) {
+                if (typeof cmPols.$$array[i][j] === "undefined") {
+                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                }
             }
         }
-    }
 
-    if (mainConfig && mainConfig.constFilename) {
-        await constPols.saveToFile(mainConfig.constFilename);
-    }
+        if (mainConfig && mainConfig.constFilename) {
+            await constPols.saveToFile(mainConfig.constFilename);
+        }
 
-    if (mainConfig && mainConfig.commitFilename) {
-        await cmPols.saveToFile(mainConfig.commitFilename);
-    }
+        if (mainConfig && mainConfig.commitFilename) {
+            await cmPols.saveToFile(mainConfig.commitFilename);
+        }
 
-    if (mainConfig && mainConfig.pilJsonFilename) {
-        fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+        if (mainConfig && mainConfig.pilJsonFilename) {
+            fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+        }
     }
 
     if (mainConfig && mainConfig.externalPilVerification) {
         console.log(`call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
-    } else {
+    } else if (constPols !== false) {
         if (verifyPilConfig.publics) {
-            console.log('A');
             if (!(verifyPilConfig.publics instanceof Object)) {
-                console.log('B');
                 const publicsFilename = (typeof verifyPilConfig.public === 'string') ? verifyPilConfig.public : path.join(__dirname, "..", "tools", "build-genesis", "public.json");
                 verifyPilConfig.publics = JSON.parse(await fs.promises.readFile(publicsFilename, "utf8"));
             }

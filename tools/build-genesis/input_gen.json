@@ -30,9 +30,10 @@
   "numBatch": 1,
   "timestamp": 1944498031,
   "chainID": 1000,
+  "forkID": 3,
   "contractsBytecode": {},
   "expectedLeafs": {
-    "0xae4bb80be56b819606589de61d5ec3b522eeb032": {
+    "0xa40d5f56745a118d0906a34e69aec8c0db1cb8fa": {
       "balance": "0",
       "nonce": "0",
       "storage": {
@@ -57,7 +58,7 @@
       "nonce": "0",
       "storage": {
         "0x0000000000000000000000000000000000000000000000000000000000000000": "0x01",
-        "0xcc69885fda6bcc1a4ace058b4a62bf5e179ea78fd58a1ccd71c22cc9b688792f": "0x8d0ba1a82671b774f69fa1147cc9b96dffb7052dcc754512cecb4aacfdb085ce"
+        "0xcc69885fda6bcc1a4ace058b4a62bf5e179ea78fd58a1ccd71c22cc9b688792f": "0x1b2ec5ea0b764a4ad513da1c363a2a13b76d2205f0a31e387cc86d3bf5c1a674"
       },
       "hashBytecode": "0x0000000000000000000000000000000000000000000000000000000000000000"
     }

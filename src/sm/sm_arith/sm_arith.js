@@ -16,13 +16,24 @@ module.exports.buildConstants = async function (pols) {
 }
 
 function buildByte2Bits16(pols, N) {
-    const modB1 = (2 ** 16);
-    const modB2 = (2 ** 19);
-    const modBase = modB1 + modB2
-    for (let i = 0; i < N; i++) {
-        const value = i % modBase;
-        pols.SEL_BYTE2_BIT19[i] = (i < modB1 ? 0n:1n);
-        pols.BYTE2_BIT19[i] = BigInt(value);
+    let p = 0;
+    // when SEL_BYTE2_BIT19 is zero, only values from 0 to (2**16)-1 are included
+    for (let i = 0; i < 2**16; ++i) {
+        pols.SEL_BYTE2_BIT19[p] = 0n;
+        pols.BYTE2_BIT19[p] = BigInt(i);
+        ++p;
+    }
+
+    // when SEL_BYTE2_BIT19 is one, only values from 0 to (2**19)-1 are included
+    for (let i = 0; i < 2**19; ++i) {
+        pols.SEL_BYTE2_BIT19[p] = 1n;
+        pols.BYTE2_BIT19[p] = BigInt(i);
+        ++p;
+    }
+    // fill to end with zero and zero, a valid combination
+    for (let i = p; i < N; ++i) {
+        pols.SEL_BYTE2_BIT19[i] = 0n;
+        pols.BYTE2_BIT19[i] = 0n;
     }
 }
 
@@ -82,7 +93,6 @@ module.exports.execute = async function (pols, input) {
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
-        // TODO: if not have x1, need to componse it
         let x1 = BigInt(input[i]["x1"]);
         let y1 = BigInt(input[i]["y1"]);
         let x2 = BigInt(input[i]["x2"]);

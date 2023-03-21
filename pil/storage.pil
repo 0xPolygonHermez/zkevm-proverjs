@@ -159,6 +159,7 @@ namespace Storage(%N);
     siblingRkey3' = setSiblingRkey*(op3-siblingRkey3) + iClimbSiblingRkey*(climbedSiblingKey3-siblingRkey3) + iClimbSiblingRkeyN*(climbedSiblingKeyN3-siblingRkey3) + siblingRkey3;
 
     rkeyBit' = setRkeyBit*(op0-rkeyBit) + rkeyBit;
+    rkeyBit * (1 - rkeyBit) = 0;
 
     level0' = setLevel*(op0-level0) + iRotateLevel*(rotatedLevel0-level0) + level0;
     level1' = setLevel*(op1-level1) + iRotateLevel*(rotatedLevel1-level1) + level1;
@@ -217,6 +218,7 @@ namespace Storage(%N);
     opIsZero*op0 = 0;
     pol doJump = iJmp + iJmpz*opIsZero;
     pc' = doJump*(iAddress - pc - 1) + pc + 1;
+    pc * Global.L1 = 0;
 
     // Last pc' must return to be pc=0 in order to close the program loop
     // Once the work is done, the rest of instructions must be:
@@ -245,6 +247,9 @@ namespace Storage(%N);
     pol constant rInRkeyBit;
     pol constant rInSiblingRkey;
     pol constant rInSiblingValueHash;
+    pol constant rInValueLow;
+    pol constant rInValueHigh;
+    pol constant rInRotlVh;
     pol constant rSetHashLeft;
     pol constant rSetHashRight;
     pol constant rSetLevel;
@@ -261,6 +266,7 @@ namespace Storage(%N);
         iHash, iHashType, iLatchGet, iLatchSet, iClimbRkey, iClimbSiblingRkey, iClimbSiblingRkeyN,
         iRotateLevel, iJmpz, iJmp, iConst0, iConst1, iConst2, iConst3, iAddress, pc,
         inFree, inNewRoot, inOldRoot, inRkey, inRkeyBit, inSiblingRkey, inSiblingValueHash,
+        inValueLow, inValueHigh, inRotlVh,
         setHashLeft, setHashRight, setLevel, setNewRoot, setOldRoot, setRkey,
         setRkeyBit, setSiblingRkey, setSiblingValueHash, setValueHigh, setValueLow
     }
@@ -269,6 +275,7 @@ namespace Storage(%N);
         rHash, rHashType, rLatchGet, rLatchSet, rClimbRkey, rClimbSiblingRkey, rClimbSiblingRkeyN,
         rRotateLevel, rJmpz, rJmp, rConst0, rConst1, rConst2, rConst3, rAddress, rLine,
         rInFree, rInNewRoot, rInOldRoot, rInRkey, rInRkeyBit, rInSiblingRkey, rInSiblingValueHash,
+        rInValueLow, rInValueHigh, rInRotlVh,
         rSetHashLeft, rSetHashRight, rSetLevel, rSetNewRoot, rSetOldRoot, rSetRkey,
         rSetRkeyBit, rSetSiblingRkey, rSetSiblingValueHash, rSetValueHigh, rSetValueLow
     }

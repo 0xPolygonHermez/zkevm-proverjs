@@ -9,7 +9,7 @@ start:
         B :ASSERT
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, RCX, HASHPOS
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, RCX, HASHPOS
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)

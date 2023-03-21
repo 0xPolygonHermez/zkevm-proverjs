@@ -17,8 +17,8 @@
             ●                     ●          ●
             ●                     ●          ●
             ●                     ●          ●              ┌─────────────────┐
-            ●                     ●          ●              │r8 calcuulations │
-            ●                     ●          ●              │  9*136 = 1467   │
+            ●                     ●          ●              │ r8 calculations │
+            ●                     ●          ●              │  9*136 = 1224   │
             ●                     ●          ●              │                 │
             ●                     ●          ●              └─────────────────┘
             ●                     ●          ●
@@ -70,7 +70,7 @@
 
 */
 
-include "nine2one.pil";
+include "bits2field.pil";
 
 namespace PaddingKKBit(%N);
     pol commit rBit, sOutBit;
@@ -125,7 +125,7 @@ namespace PaddingKKBit(%N);
     pol aux_sInBit = (sOutBit - 2*sOutBit*rBit);
     pol sInBit = connected * aux_sInBit + rBit;
 
-    pol constant ConnSOutBit, ConnSInBit, ConnNine2OneBit;
+    pol constant ConnSOutBit, ConnSInBit, ConnBits2FieldBit;
 
-    {sOutBit, sInBit, Nine2One.bit} connect {ConnSOutBit, ConnSInBit, ConnNine2OneBit}
+    {sOutBit, sInBit, Bits2Field.bit} connect {ConnSOutBit, ConnSInBit, ConnBits2FieldBit}
 

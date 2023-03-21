@@ -16,7 +16,7 @@ check_assert:
         2 :ASSERT
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)

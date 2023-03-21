@@ -5,7 +5,7 @@ const { connect } = require("http2");
 const path = require("path");
 const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 const { F1Field } = require("ffjavascript");
-const getKs = require("pilcom").getKs;
+const { getKs, getRoots } = require("pilcom");
 
 const SlotSize = 155286;
 const chunks = 4;
@@ -28,13 +28,15 @@ module.exports.buildConstants = async function (pols) {
     assert(1<<pow == N);
 
     const ks = getKs(F, 2);
+    const roots = getRoots(F);
+    const wi = roots[pow];
 
     let w = F.one;
     for (let i=0; i<N; i++) {
         pols.ConnA[i] = w;
         pols.ConnB[i] = F.mul(w, ks[0]);
         pols.ConnC[i] = F.mul(w, ks[1]);
-        w = F.mul(w, F.FFT.w[pow]);
+        w = F.mul(w, wi);
     }
 
     pols.GateType[0] = 0n

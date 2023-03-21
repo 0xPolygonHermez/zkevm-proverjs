@@ -13,7 +13,7 @@ const smKeccakF = require("./sm/sm_keccakf/sm_keccakf.js");
 const smMain = require("./sm/sm_main/sm_main.js");
 const smMemAlign = require("./sm/sm_mem_align.js");
 const smMem = require("./sm/sm_mem.js");
-const smNine2One = require("./sm/sm_nine2one.js");
+const smBits2Field = require("./sm/sm_bits2field.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
@@ -107,9 +107,9 @@ async function run() {
         console.log("Mem...");
         await smMem.buildConstants(constPols.Mem);
     }
-    if (constPols.Nine2One) {
-        console.log("Nine2One...");
-        await smNine2One.buildConstants(constPols.Nine2One);
+    if (constPols.Bits2Field) {
+        console.log("Bits2Field...");
+        await smBits2Field.buildConstants(constPols.Bits2Field);
     }
     if (constPols.PaddingKK) {
         console.log("PaddingKK...");

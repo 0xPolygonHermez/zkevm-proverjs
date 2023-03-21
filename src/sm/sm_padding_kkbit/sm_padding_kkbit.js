@@ -5,7 +5,7 @@ const keccakF = require("./keccak.js").keccakF;
 const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
 const { F1Field } = require("ffjavascript");
-const getKs = require("pilcom").getKs;
+const { getKs, getRoots } = require("pilcom");
 
 
 const SlotSize = 155286;
@@ -23,13 +23,14 @@ module.exports.buildConstants = async function (pols) {
     assert(1<<pow == N);
 
     const ks = getKs(F, 2);
-
+    const roots = getRoots(F);
+    const wi = roots[pow];
     let w = F.one;
     for (let i=0; i<N; i++) {
         pols.ConnSOutBit[i] = w;
         pols.ConnSInBit[i] = F.mul(w, ks[0]);
-        pols.ConnNine2OneBit[i] = F.mul(w, ks[1]);
-        w = F.mul(w, F.FFT.w[pow]);
+        pols.ConnBits2FieldBit[i] = F.mul(w, ks[1]);
+        w = F.mul(w, wi);
     }
 
     function connect(p1, i1, p2, i2) {
@@ -58,8 +59,8 @@ module.exports.buildConstants = async function (pols) {
                 pols.FSOut6[p] = F.zero;
                 pols.FSOut7[p] = F.zero;
 
-                connect(pols.ConnSOutBit, p, pols.ConnNine2OneBit, nine2onebit(lasti, true, j*8+k) );
-                connect(pols.ConnSInBit, p, pols.ConnNine2OneBit, nine2onebit(i, false, j*8+k) );
+                connect(pols.ConnSOutBit, p, pols.ConnBits2FieldBit, bits2fieldbit(lasti, true, j*8+k) );
+                connect(pols.ConnSInBit, p, pols.ConnBits2FieldBit, bits2fieldbit(i, false, j*8+k) );
 
                 p += 1;
             }
@@ -97,8 +98,8 @@ module.exports.buildConstants = async function (pols) {
             pols.FSOut6[p] = F.zero;
             pols.FSOut7[p] = F.zero;
 
-            connect(pols.ConnSOutBit, p, pols.ConnNine2OneBit, nine2onebit(lasti, true, 1088 +k) );
-            connect(pols.ConnSInBit, p, pols.ConnNine2OneBit, nine2onebit(i, false, 1088 +k) )
+            connect(pols.ConnSOutBit, p, pols.ConnBits2FieldBit, bits2fieldbit(lasti, true, 1088 +k) );
+            connect(pols.ConnSInBit, p, pols.ConnBits2FieldBit, bits2fieldbit(i, false, 1088 +k) )
 
             p += 1;
         }
@@ -125,7 +126,7 @@ module.exports.buildConstants = async function (pols) {
             pols.FSOut6[p] = (chunk == 6) ? F.e(1n << BigInt( byteInChunk*8 +bit)) : F.zero;
             pols.FSOut7[p] = (chunk == 7) ? F.e(1n << BigInt( byteInChunk*8 +bit)) : F.zero;
 
-            connect(pols.ConnSOutBit, p, pols.ConnNine2OneBit, nine2onebit(i, true, k) );
+            connect(pols.ConnSOutBit, p, pols.ConnBits2FieldBit, bits2fieldbit(i, true, k) );
 
             p += 1;
         }
@@ -167,7 +168,7 @@ module.exports.buildConstants = async function (pols) {
     }
 
 
-    function nine2onebit(block, out, bit) {
+    function bits2fieldbit(block, out, bit) {
         let o = 1;
         o += Math.floor(block / 44 ) * SlotSize;
         if (out) o += 1600*44;
@@ -183,7 +184,7 @@ module.exports.buildConstants = async function (pols) {
 module.exports.execute = async function (pols, input) {
 
     const required = {
-        Nine2One: []
+        Bits2Field: []
     }
 
     const N = pols.r8.length;
@@ -252,7 +253,7 @@ module.exports.execute = async function (pols, input) {
             p += 1;
         }
         curState = keccakF(stateWithR);
-        required.Nine2One.push([stateWithR, curState]);
+        required.Bits2Field.push([stateWithR, curState]);
 
         for (let k=0; k<8; k++) pols.sOut[k][p] = 0n;
         for (let j=0; j<256; j++) {

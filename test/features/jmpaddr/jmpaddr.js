@@ -19,7 +19,7 @@ describe("Test JmpAddr Instruction", async function () {
     it("Test HashX1 Instruction (basic test)", async () => {
         await verifyZkasm(__dirname + "/hash1.zkasm", true,
                 { defines: {N: 2 ** 18},
-                  namespaces: ['Global', 'Main', 'Rom', 'PaddingPG', 'PoseidonG' ,'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Nine2One'],
+                  namespaces: ['Global', 'Main', 'Rom', 'PaddingPG', 'PoseidonG' ,'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Bits2Field'],
                   verbose: true,
                   color: true,
                   disableUnusedError: true});

@@ -25,7 +25,7 @@ myfunc:
         A * 2 + 3 => A :MSTORE(v2),RETURN
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, MAXMEM, SR, HASHPOS, RR, RCX
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, HASHPOS, RR, RCX
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)

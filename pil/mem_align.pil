@@ -48,11 +48,11 @@ namespace MemAlign(%N);
     pol constant BYTE_C4096; // [0:4096..255:4096]
 
     // FACTOR was same for all combinations of offset, wr8, wr256 is a f(step)
-    // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x60)
-    // FACTOR[6] = 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x56)
-    // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x52)
+    // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x28)
+    // FACTOR[6] = 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x24)
+    // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x20)
     // :
-    // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1, 0 (x32)
+    // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1
     pol constant FACTOR[8];
 
     // FACTOR change according the combinations of offset, wr8, wr256 and step.
@@ -98,10 +98,13 @@ namespace MemAlign(%N);
     (1 - RESET) * resultRd = 0;
     (1 - RESET) * resultWr8 = 0;
     (1 - RESET) * resultWr256 = 0;
+    resultRd * (1 - resultRd) = 0;
+    resultWr8 * (1 - resultWr8) = 0;
+    resultWr256 * (1 - resultWr256) = 0;
 
     (1 - wr8) * resultWr8 = 0;
     (1 - wr256) * resultWr256 = 0;
-    wr8 * wr256 = 0;
+    (wr8 + wr256) * resultRd = 0;
 
     // RangeCheck
     {inM[1], inM[0]} in {Global.BYTE_2A, Global.BYTE};
