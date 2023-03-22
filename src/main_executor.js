@@ -113,7 +113,7 @@ async function run() {
     config.databaseURL = typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local";
     config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
     config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";
-    config.assertOutputs = !(argv.assertOutputs === false);
+    config.assertOutputs = !(argv.assertOutputs === "false");
     for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
         config[value] = (argv[value] === true ? true : (config[value] ?? false));
     }
