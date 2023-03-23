@@ -185,14 +185,14 @@ class FullTracer {
         context.type = Number(getVarFromCtx(ctx, false, 'isCreateContract')) ? 'CREATE' : 'CALL';
         context.to = (context.type === 'CREATE') ? '0x' : bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
-        context.gas = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txGasLimit'));
+        context.gas = Number(getVarFromCtx(ctx, false, 'txGasLimit'));
         context.value = getVarFromCtx(ctx, false, 'txValue').toString();
         context.batch = '';
         context.output = '';
         context.gas_used = '';
         context.execution_time = '';
         context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
-        context.gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
+        context.gas_price = Number(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
         // Fill response object
         const response = {};
         const r = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txR'));

@@ -8,8 +8,8 @@ const { scalar2fea, fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs').sm
  * @param {String} to - hex string
  * @param {Number} value - int number
  * @param {Number} nonce - int number
- * @param {String} gasLimit - hex string
- * @param {String} gasPrice - hex string
+ * @param {Number} gasLimit - int number
+ * @param {Number} gasPrice - int number
  * @param {String} data - hex string of the data
  * @param {String} r - hex string of r signature
  * @param {String} s - hex string of s signature
@@ -89,7 +89,7 @@ function getCalldataFromStack(ctx, offset = 0, length) {
     for (let i = addr + Number(offset); i < 0x20000 + Number(ctx.CTX) * 0x40000; i++) {
         const memVal = ctx.mem[i];
         if (!memVal) break;
-        value += ethers.utils.hexlify(fea2scalar(ctx.Fr, memVal)).slice(2);
+        value += ethers.utils.hexZeroPad(ethers.utils.hexlify(fea2scalar(ctx.Fr, memVal)), 32).slice(2);
     }
     if (length) {
         value = value.slice(0, 2 + length * 2);
