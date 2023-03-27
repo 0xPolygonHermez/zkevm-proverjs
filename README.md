@@ -118,12 +118,3 @@ npm run buildall --bctree=../zkevm-prover/build/bctree
 | CTX.base + [0x000000 - 0x00FFFF] | 2MiB | Context specific variables
 | CTX.base + [0x010000 - 0x01FFFF] | 2MiB | EVM Stack
 | CTX.base + [0x020000 - 0x03FFFF] | 4MiB | EVM Memory
-
-
-## License
-
-### Copyright
-Polygon `zkevm-proverjs` was developed by Polygon. While we plan to adopt an open source license, we haven’t selected one yet, so all rights are reserved for the time being. Please reach out to us if you have thoughts on licensing.
-
-### Disclaimer
-This code has not yet been audited, and should not be used in any production systems.ode has not yet been audited, and should not be used in any production systems.
