@@ -113,8 +113,8 @@ async function run() {
     config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
     config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";
 
-    for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
-        config[value] = (argv[value] === true ? true : (config[value] ?? false));
+    for (const value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
+        config[value] ||= argv[value] === true;
     }
 
     const input = JSON.parse(await fs.promises.readFile(config.inputFile, "utf8"));
