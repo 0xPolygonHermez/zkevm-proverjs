@@ -139,6 +139,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let pendingCmds = false;
     let previousRCX = 0n;
     let previousRCXInv = 0n;
+    let auxNewStateRoot;
 
     if (verboseOptions.batchL2Data) {
         await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
@@ -198,6 +199,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             console.log(sourceRef);
         }
 
+        // Store SR before set it to 0 at finalizeExecution
+        if(Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+            auxNewStateRoot = fea2String(Fr, ctx.SR);
+        }
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
@@ -1932,7 +1937,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         statsTracer.saveStatsFile();
     }
 
-    if (fastDebugExit){
+    if (fastDebugExit && config.assertOutputs){
         assertOutputs(ctx);
     }
 
@@ -2019,6 +2024,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntPoseidonG: ctx.cntPoseidonG,
         cntPaddingPG: ctx.cntPaddingPG,
         cntSteps: ctx.step,
+    }
+    required.output = {
+        newStateRoot: auxNewStateRoot,
+        newAccInputHash: fea2String(Fr, ctx.D),
+        newLocalExitRoot: fea2String(Fr, ctx.E),
+        newNumBatch: ctx.PC,
     }
 
     return required;

@@ -9,7 +9,9 @@ const { fea2scalar, fea2String } = require('@0xpolygonhermez/zkevm-commonjs').sm
 const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 const { ethers } = require('ethers');
 const { Scalar } = require('ffjavascript');
-
+const {
+    enableMemory, enableReturnData, disableStorage, disableStack, generate_call_trace, generate_execute_trace,
+} = require('./full-tracer-config.json');
 const codes = require('./opcodes');
 const Verbose = require('./verbose-tracer');
 const {
@@ -19,8 +21,6 @@ const {
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', 'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance', 'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code'];
-const generate_call_trace = true;
-const generate_execute_trace = true;
 
 // TODO: gas cost of last opcode should be fixed
 /**
@@ -185,14 +185,14 @@ class FullTracer {
         context.type = Number(getVarFromCtx(ctx, false, 'isCreateContract')) ? 'CREATE' : 'CALL';
         context.to = (context.type === 'CREATE') ? '0x' : bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
-        context.gas = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txGasLimit'));
+        context.gas = Number(getVarFromCtx(ctx, false, 'txGasLimit'));
         context.value = getVarFromCtx(ctx, false, 'txValue').toString();
         context.batch = '';
         context.output = '';
         context.gas_used = '';
         context.execution_time = '';
         context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
-        context.gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
+        context.gas_price = Number(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
         // Fill response object
         const response = {};
         const r = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txR'));
@@ -258,7 +258,7 @@ class FullTracer {
      * @param {Object} params event parameters. storage Key - value.
      */
     onUpdateStorage(ctx, params) {
-        // TODO: disable storage flag
+        if (disableStorage) return;
         // The storage key is stored in C
         const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[0].regName)), 32).slice(2);
         // The storage value is stored in D
@@ -303,20 +303,20 @@ class FullTracer {
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
-        // TODO: use 'enableReturnData' falg
-        // Set return data, in case of deploy, get return buffer from stack if there is no error, otherwise get it from memory
-        if (response.call_trace.context.to === '0x') {
-            // check if there has been any error
-            if (this.execution_trace.length > 0 && this.execution_trace[this.execution_trace.length - 1].error !== '') {
-                response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
+        if (enableReturnData) {
+            // Set return data, in case of deploy, get return buffer from stack if there is no error, otherwise get it from memory
+            if (response.call_trace.context.to === '0x') {
+                // check if there has been any error
+                if (this.execution_trace.length > 0 && this.execution_trace[this.execution_trace.length - 1].error !== '') {
+                    response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
+                } else {
+                    response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString());
+                }
             } else {
-                response.return_value = getCalldataFromStack(ctx, getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString());
+                response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
             }
-        } else {
-            response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
+            response.call_trace.context.output = response.return_value;
         }
-        response.call_trace.context.output = response.return_value;
-
         // Set create address in case of deploy
         if (response.call_trace.context.to === '0x') {
             response.create_address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
@@ -482,7 +482,6 @@ class FullTracer {
         }
         const opcode = codes[codeId].slice(2);
 
-        // TODO: use flag 'enableMemory'
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
         let addrMem = 0;
@@ -494,19 +493,19 @@ class FullTracer {
         const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
         const lenMemValueFinal = typeof lenMemValue === 'undefined' ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
 
-        for (let i = 0; i < lenMemValueFinal; i++) {
-            const memValue = ctx.mem[addrMem + i];
-            if (typeof memValue === 'undefined') {
-                finalMemory.push('0'.padStart(64, '0'));
-                continue;
+        if (enableMemory) {
+            for (let i = 0; i < lenMemValueFinal; i++) {
+                const memValue = ctx.mem[addrMem + i];
+                if (typeof memValue === 'undefined') {
+                    finalMemory.push('0'.padStart(64, '0'));
+                    continue;
+                }
+                const memScalar = fea2scalar(ctx.Fr, memValue);
+                let hexString = memScalar.toString(16);
+                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                finalMemory.push(hexString.padStart(64, '0'));
             }
-            const memScalar = fea2scalar(ctx.Fr, memValue);
-            let hexString = memScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalMemory.push(hexString.padStart(64, '0'));
         }
-
-        // TODO: use flag disable stack
         // store stack
         let addr = 0;
         addr += offsetCtx;
@@ -514,15 +513,17 @@ class FullTracer {
 
         const finalStack = [];
 
-        for (let i = 0; i < ctx.SP; i++) {
-            const stack = ctx.mem[addr + i];
-            if (typeof stack === 'undefined') {
-                continue;
+        if (!disableStack) {
+            for (let i = 0; i < ctx.SP; i++) {
+                const stack = ctx.mem[addr + i];
+                if (typeof stack === 'undefined') {
+                    continue;
+                }
+                const stackScalar = fea2scalar(ctx.Fr, stack);
+                let hexString = stackScalar.toString(16);
+                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                finalStack.push(`0x${hexString}`);
             }
-            const stackScalar = fea2scalar(ctx.Fr, stack);
-            let hexString = stackScalar.toString(16);
-            hexString = hexString.length % 2 ? `0${hexString}` : hexString;
-            finalStack.push(`0x${hexString}`);
         }
         // add info opcodes
         this.depth = Number(getVarFromCtx(ctx, true, 'depth'));
@@ -617,7 +618,7 @@ class FullTracer {
             this.txGAS[this.depth] = getVarFromCtx(ctx, true, 'gasCall').toString();
             if (generate_call_trace) { // TODO: why ?
                 // TODO: Why ?
-                singleInfo.contract.gas = this.txGAS[this.depth]; // execute_trace does not hace contracts property
+                singleInfo.contract.gas = this.txGAS[this.depth]; // execute_trace does not have contracts property
                 // take gas when a new context is created
             }
         }

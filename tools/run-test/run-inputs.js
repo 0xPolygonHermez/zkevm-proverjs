@@ -132,7 +132,8 @@ async function main(){
                 stepsN: stepsNexec ? stepsNexec : 8388608,
                 tracer: (argv.tracer === true),
                 counters: (argv.counters === true),
-                stats: (argv.stats === true)
+                stats: (argv.stats === true),
+                assertOutputs: true
             }
 
             await smMain.execute(cmPols.Main, input, rom, config);
@@ -141,6 +142,7 @@ async function main(){
             first += info;
             countOK += 1;
         } catch(err) {
+            console.log(err)
             countErrors += 1;
             info += `${chalk.red('Error')}\n`
             info += `${chalk.yellow(`${err}\n`)}`;
