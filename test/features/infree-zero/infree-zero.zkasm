@@ -1,0 +1,21 @@
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        ; to verify that there are no correlations between counters
+        ${0xFFFFFFFFFFFFFFFF} => A
+        0xFFFFFFFFFFFFFFFFn :ASSERT
+
+        $0{0xFFFFFFFFFFFFFFFF} => A
+        0xFFFFFFFFn :ASSERT
+
+end:
+       0 => A,B,C,D,E, SP, PC, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
+

@@ -45,7 +45,7 @@ namespace Main(%N);
     ///////  Instruction related polynomials
     pol commit CONST7, CONST6, CONST5, CONST4, CONST3, CONST2, CONST1, CONST0;
     pol commit FREE7, FREE6, FREE5, FREE4, FREE3, FREE2, FREE1, FREE0;
-    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
+    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
     pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setRR, setHASHPOS, setRCX;
     pol commit JMP, JMPN, JMPC, JMPZ, offset;
     pol commit incStack;
@@ -88,7 +88,7 @@ namespace Main(%N);
         C7 * inROTL_C +
         D0 * inD +
         E0 * inE +
-        FREE0 * inFREE +
+        FREE0 * (inFREE + inFREE0) +
         SR0 * inSR +
         CTX * inCTX +
         SP * inSP +
@@ -445,7 +445,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,inFREE,inFREE0" -b
     */
 
     pol operations =
@@ -460,7 +460,8 @@ namespace Main(%N);
                 + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
                 + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
                 + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-                + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr;
+                + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * inFREE
+                + 2**48 * inFREE0;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -509,16 +510,18 @@ namespace Main(%N);
     (1 - hashK1) * hashK1 = 0;
     (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
+    (1 - inFREE) * inFREE = 0;
+    (1 - inFREE0) * inFREE0 = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
+        inA, inB, inC, inROTL_C, inD, inE, inSR,
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
         inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line

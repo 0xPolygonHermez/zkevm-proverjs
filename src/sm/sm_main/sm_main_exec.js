@@ -148,6 +148,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
     const checkHashNoDigest = config.checkHashNoDigest ? (config.checkHashNoDigest === "warning" ? WarningCheck:ErrorCheck) : false;
 
+    const configFreeIn0 = config.checkFreeIn0 ?? "warning";
+    const checkFreeIn0 = configFreeIn0 ? (configFreeIn0 === "warning" ? WarningCheck:ErrorCheck) : false;
+
     try {
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
@@ -558,7 +561,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 // CALCULATE AND LOAD FREE INPUT
 //////
 
-        if (l.inFREE) {
+        if (l.inFREE || l.inFREE0) {
 
             if (!l.freeInTag) {
                 throw new Error(`Instruction with freeIn without freeInTag ${sourceRef}`);
@@ -806,7 +809,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 if (!Array.isArray(fi)) fi = scalar2fea(Fr, fi);
             }
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = fi;
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            if (l.inFREE0) {
+                [op0, op1, op2, op3, op4, op5, op6, op7] = [Fr.add( Fr.mul(Fr.e(l.inFREE0), fi[0]), op0 ), Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+                pols.inFREE[i] = Fr.zero;
+                pols.inFREE0[i] = Fr.e(l.inFREE0);
+                if (checkFreeIn0 && (!Fr.isZero(pols.FREE1[i]) || !Fr.isZero(pols.FREE2[i]) || !Fr.isZero(pols.FREE3[i]) ||
+                                     !Fr.isZero(pols.FREE4[i]) || !Fr.isZero(pols.FREE5[i]) || !Fr.isZero(pols.FREE6[i]) || !Fr.isZero(pols.FREE7[i]))) {
+                    const hopdata = '0x' + [pols.FREE7[i],pols.FREE6[i],pols.FREE5[i],pols.FREE4[i],pols.FREE3[i],pols.FREE2[i],pols.FREE1[i]].map((x)=>x.toString(16)).join(',0x');
+                    const msg = `With INFREE0 found non zero FREE[7..1]=[${hopdata}] on ${sourceRef}`;
+                    if (checkFreeIn0 === ErrorCheck) {
+                        throw new Error('ERROR:'+msg);
+                    }
+                    console.log('WARNING:'+msg)
+                }
+            } else {
+                [op0, op1, op2, op3, op4, op5, op6, op7] =
                 [Fr.add( Fr.mul(Fr.e(l.inFREE), fi[0]), op0 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[1]), op1 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[2]), op2 ),
@@ -816,10 +833,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[6]), op6 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[7]), op7 )
                 ];
-            pols.inFREE[i] = Fr.e(l.inFREE);
+                pols.inFREE[i] = Fr.e(l.inFREE);
+                pols.inFREE0[i] = Fr.zero;
+            }
         } else {
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
             pols.inFREE[i] = Fr.zero;
+            pols.inFREE0[i] = Fr.zero;
         }
 
         if (Fr.isZero(op0)) {
