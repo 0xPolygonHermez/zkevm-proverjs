@@ -1800,7 +1800,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         const finalJmpAddr = l.useJmpAddr ? l.jmpAddr : addr;
         const nextNoJmpZkPC = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
 
-        const elseAddr = l.useElseAddr ? BigInt(l.elseAddr) : nextNoJmpZkPC;
+        let elseAddr = l.useElseAddr ? BigInt(l.elseAddr) : nextNoJmpZkPC;
+        // modify JMP 'elseAddr' to continue execution in case of an unsigned transaction
+        if (config.unsigned && l.elseAddrLabel === 'invalidIntrinsicTxSenderCode') {
+            elseAddr = BigInt(finalJmpAddr);
+        }
+
         pols.elseAddr[i] = l.elseAddr ? BigInt(l.elseAddr) : 0n;
         pols.useElseAddr[i] = l.useElseAddr ? 1n: 0n;
 

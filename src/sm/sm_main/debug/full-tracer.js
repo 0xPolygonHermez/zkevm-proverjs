@@ -582,6 +582,20 @@ class FullTracer {
         singleInfo.stack = finalStack;
         singleInfo.memory = finalMemory;
 
+        // Return data
+        if (enableReturnData) {
+            const retDataCTX = getVarFromCtx(ctx, false, 'retDataCTX');
+            if (Scalar.neq(retDataCTX, 0)) {
+                const ctxTmp = {
+                    rom: ctx.rom,
+                    mem: ctx.mem,
+                    CTX: retDataCTX,
+                    Fr: ctx.Fr,
+                };
+                singleInfo.return_data = getFromMemory(getVarFromCtx(ctxTmp, false, 'retDataOffset').toString(), getVarFromCtx(ctxTmp, false, 'retDataLength').toString(), ctxTmp);
+            }
+        }
+
         // Clone object
         const singleCallTrace = JSON.parse(JSON.stringify(singleInfo));
         const singleExecuteTrace = JSON.parse(JSON.stringify(singleCallTrace));
@@ -597,10 +611,6 @@ class FullTracer {
         // save output traces
         this.call_trace.push(singleCallTrace);
         this.execution_trace.push(singleExecuteTrace);
-
-        // Return data
-        // TODO: Why ?
-        singleInfo.return_data = []; // TODO: check proto and data to be returned here
 
         // Check previous step
         const prevStep = this.execution_trace[this.execution_trace.length - 2];
