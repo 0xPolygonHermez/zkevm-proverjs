@@ -55,6 +55,9 @@ class FullTracer {
         this.accBatchGas = 0;
         this.logs = [];
 
+        // handle return from create/create2
+        this.returnFromCreate = null;
+
         // options
         this.options = options;
         this.verbose = new Verbose(options.verbose, smt, logFileName);
@@ -303,10 +306,8 @@ class FullTracer {
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
-        if (enableReturnData) {
-            response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
-            response.call_trace.context.output = response.return_value;
-        }
+        response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
+        response.call_trace.context.output = response.return_value;
 
         // Set create address in case of deploy
         if (response.call_trace.context.to === '0x') {
@@ -582,17 +583,51 @@ class FullTracer {
         singleInfo.stack = finalStack;
         singleInfo.memory = finalMemory;
 
-        // Return data
+        // Handle return data
         if (enableReturnData) {
-            const retDataCTX = getVarFromCtx(ctx, false, 'retDataCTX');
-            if (Scalar.neq(retDataCTX, 0)) {
-                const ctxTmp = {
-                    rom: ctx.rom,
-                    mem: ctx.mem,
-                    CTX: retDataCTX,
-                    Fr: ctx.Fr,
-                };
-                singleInfo.return_data = getFromMemory(getVarFromCtx(ctxTmp, false, 'retDataOffset').toString(), getVarFromCtx(ctxTmp, false, 'retDataLength').toString(), ctxTmp);
+            // write return data from create/create2 until CTX changes
+            if (this.returnFromCreate !== null) {
+                if (typeof this.returnFromCreate.returnValue === 'undefined') {
+                    const ctxTmp = {
+                        rom: ctx.rom,
+                        mem: ctx.mem,
+                        CTX: this.returnFromCreate.createCTX,
+                        Fr: ctx.Fr,
+                    };
+
+                    this.returnFromCreate.returnValue = getFromMemory(getVarFromCtx(ctxTmp, false, 'retDataOffset').toString(), getVarFromCtx(ctxTmp, false, 'retDataLength').toString(), ctxTmp);
+                }
+
+                const currentCTX = Number(getVarFromCtx(ctx, true, 'currentCTX'));
+                if (this.returnFromCreate.originCTX === currentCTX) {
+                    singleInfo.return_data = this.returnFromCreate.returnValue;
+                } else {
+                    this.returnFromCreate = null;
+                }
+            }
+
+            // Check if return is called from CREATE/CREATE2
+            const isCreate = Number(getVarFromCtx(ctx, false, 'isCreate'));
+
+            if (isCreate) {
+                if (singleInfo.opcode === 'RETURN') {
+                    this.returnFromCreate = {
+                        originCTX: Number(getVarFromCtx(ctx, false, 'originCTX')),
+                        createCTX: Number(ctx.CTX),
+                    };
+                }
+            } else {
+                const retDataCTX = getVarFromCtx(ctx, false, 'retDataCTX');
+
+                if (Scalar.neq(retDataCTX, 0)) {
+                    const ctxTmp = {
+                        rom: ctx.rom,
+                        mem: ctx.mem,
+                        CTX: retDataCTX,
+                        Fr: ctx.Fr,
+                    };
+                    singleInfo.return_data = getFromMemory(getVarFromCtx(ctxTmp, false, 'retDataOffset').toString(), getVarFromCtx(ctxTmp, false, 'retDataLength').toString(), ctxTmp);
+                }
             }
         }
 
