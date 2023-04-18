@@ -565,7 +565,7 @@ class FullTracer {
         singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'txSrcAddr'), 40);
         singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
-        singleInfo.contract.data = getCalldataFromStack(ctx);
+        singleInfo.contract.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
         singleInfo.contract.gas = this.txGAS[this.depth];
 
         // Round up to next multiple of 32
