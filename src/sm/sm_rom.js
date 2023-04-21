@@ -79,7 +79,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
@@ -129,7 +129,8 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         + (rom.program[pIndex].return ? (2n**43n * BigInt(rom.program[pIndex].return)) : 0n)
         + (rom.program[pIndex].hashK1 ? (2n**44n * BigInt(rom.program[pIndex].hashK1)) : 0n)
         + (rom.program[pIndex].hashP1 ? (2n**45n * BigInt(rom.program[pIndex].hashP1)) : 0n)
-        + (rom.program[pIndex].useElseAddr ? (2n**46n * BigInt(rom.program[pIndex].useElseAddr)) : 0n);
+        + (rom.program[pIndex].useElseAddr ? (2n**46n * BigInt(rom.program[pIndex].useElseAddr)) : 0n)
+        + (rom.program[pIndex].arithEq3 ? (2n**47n * BigInt(rom.program[pIndex].arithEq3)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;
 
