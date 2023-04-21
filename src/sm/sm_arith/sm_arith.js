@@ -95,7 +95,8 @@ module.exports.execute = async function (pols, input) {
 
     // Split the input in little-endian bytes
     prepareInput256bits(input, N);
-    let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate];
+    let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
+                        arithEq5.calculate, arithEq6.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -263,7 +264,7 @@ module.exports.execute = async function (pols, input) {
         }
         let carry = [0n, 0n, 0n];
         const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2];
-        let eq = [0n, 0n , 0n, 0n, 0n]
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n]
 
         let eqIndexes = [];
         if (pols.selEq[0][offset]) eqIndexes.push(0);
