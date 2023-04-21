@@ -75,8 +75,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
     // Field Complex Multiplication
-    let pFcmul = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const Fcmul = new F1Field(pFcmul);
+    let pFpc = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const Fpc = new F1Field(pFpc);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -107,7 +107,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fr: Fr,
         Fec: Fec,
         Fnec: Fnec,
-        Fcmul:  Fcmul,
+        Fpc,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -1280,8 +1280,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 // EQ5:  x1 * x2 - y1 * y2 = x3
                 // EQ6:  y1 * x2 + x1 * y2 = y3
 
-                const _x3 = Fcmul.sub(Fcmul.mul(x1, x2), Fcmul.mul(y1, y2));
-                const _y3 = Fcmul.add(Fcmul.mul(y2, x2), Fcmul.mul(x1, y2));
+                const _x3 = Fpc.sub(Fpc.mul(x1, x2), Fpc.mul(y1, y2));
+                const _y3 = Fpc.add(Fpc.mul(y1, x2), Fpc.mul(x1, y2));
 
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
@@ -2649,6 +2649,10 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
+    } else if (tag.funcName == "fpComplexMul_R") {
+        return eval_fpComplexMul_R(ctx, tag);
+    } else if (tag.funcName == "fpComplexMul_i") {
+        return eval_fpComplexMul_i(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -2900,6 +2904,7 @@ function eval_dumphex(ctx, tag) {
 
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
+
 function eval_inverseFpEc(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
     if (ctx.Fec.isZero(a)) {
@@ -2948,6 +2953,7 @@ function eval_AddPointEc(ctx, tag, dbl)
     const x2 = evalCommand(ctx, tag.params[dbl ? 0 : 2]);
     const y2 = evalCommand(ctx, tag.params[dbl ? 1 : 3]);
 
+    let s;
     if (dbl) {
         // Division by zero must be managed by ROM before call ARITH
         const divisor = ctx.Fec.add(y1, y1)
@@ -2968,6 +2974,26 @@ function eval_AddPointEc(ctx, tag, dbl)
     const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
 
     return [x3, y3];
+}
+
+function eval_fpComplexMul_R(ctx, tag)
+{
+    const x1 = evalCommand(ctx, tag.params[0]);
+    const y1 = evalCommand(ctx, tag.params[1]);
+    const x2 = evalCommand(ctx, tag.params[2]);
+    const y2 = evalCommand(ctx, tag.params[3]);
+
+    return ctx.Fpc.sub(ctx.Fpc.mul(x1,x2), ctx.Fpc.mul(y1, y2));
+}
+
+function eval_fpComplexMul_i(ctx, tag)
+{
+    const x1 = evalCommand(ctx, tag.params[0]);
+    const y1 = evalCommand(ctx, tag.params[1]);
+    const x2 = evalCommand(ctx, tag.params[2]);
+    const y2 = evalCommand(ctx, tag.params[3]);
+
+    return ctx.Fpc.add(ctx.Fpc.mul(x1,y2), ctx.Fpc.mul(x2, y1));
 }
 
 function printRegs(Fr, ctx) {
