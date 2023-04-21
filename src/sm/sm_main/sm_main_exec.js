@@ -74,6 +74,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
+    // Field Complex Multiplication
+    let pFcmul = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const Fcmul = new F1Field(pFcmul);
+
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
 
@@ -103,6 +107,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fr: Fr,
         Fec: Fec,
         Fnec: Fnec,
+        Fcmul:  Fcmul,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -1241,8 +1246,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
         }
 
-        if (l.arithEq0 || l.arithEq1 || l.arithEq2) {
-            if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2)) {
+        if (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3) {
+            if (l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3) {
                 const A = safeFea2scalar(Fr, ctx.A);
                 const B = safeFea2scalar(Fr, ctx.B);
                 const C = safeFea2scalar(Fr, ctx.C);
@@ -1261,9 +1266,38 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic(Eq0) does not match ${sourceRef}`);
                 }
                 pols.arithEq0[i] = 1n;
-                pols.arithEq1[i] = 0n;
-                pols.arithEq2[i] = 0n;
-                required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0});
+                pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = 0n;
+                required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0});
+            }
+            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && l.arithEq3) {
+                const x1 = safeFea2scalar(Fr, ctx.A);
+                const y1 = safeFea2scalar(Fr, ctx.B);
+                const x2 = safeFea2scalar(Fr, ctx.C);
+                const y2 = safeFea2scalar(Fr, ctx.D);
+                const x3 = safeFea2scalar(Fr, ctx.E);
+                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+
+                // EQ5:  x1 * x2 - y1 * y2 = x3
+                // EQ6:  y1 * x2 + x1 * y2 = y3
+
+                const _x3 = Fcmul.sub(Fcmul.mul(x1, x2), Fcmul.mul(y1, y2));
+                const _y3 = Fcmul.add(Fcmul.mul(y2, x2), Fcmul.mul(x1, y2));
+
+                const x3eq = Scalar.eq(x3, _x3);
+                const y3eq = Scalar.eq(y3, _y3);
+
+                if (!x3eq || !y3eq) {
+                    console.log(`(${x1.toString()} + ${y1.toString()}i) * (${x1.toString()} + ${y1.toString()}i)`);
+
+                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
+                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
+
+                    throw new Error(`Arithmetic complex multiplication point does not match: ${sourceRef}`);
+                }
+
+                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq2[i] = 0n;
+                pols.arithEq3[i] = 1n;
+                required.Arith.push({x1, y1, x2, y2, x3, y3, selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 1});
             }
             else {
                 const x1 = safeFea2scalar(Fr, ctx.A);
@@ -1319,12 +1353,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.arithEq0[i] = 0n;
                 pols.arithEq1[i] = dbl ? 0n : 1n;
                 pols.arithEq2[i] = dbl ? 1n : 0n;
-                required.Arith.push({x1: x1, y1: y1, x2: dbl ? x1:x2, y2: dbl? y1:y2, x3: x3, y3: y3, selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1});
+                pols.arithEq3[i] = 0n;
+                required.Arith.push({x1: x1, y1: y1, x2: dbl ? x1:x2, y2: dbl? y1:y2, x3: x3, y3: y3,
+                                     selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1, selEq4: 0});
             }
         } else {
             pols.arithEq0[i] = 0n;
             pols.arithEq1[i] = 0n;
             pols.arithEq2[i] = 0n;
+            pols.arithEq3[i] = 0n;
         }
 
         if (l.bin) {
@@ -1747,7 +1784,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
         }
 
-        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2)) {
+        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3)) {
             pols.cntArith[nexti] = pols.cntArith[i] + 1n;
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
