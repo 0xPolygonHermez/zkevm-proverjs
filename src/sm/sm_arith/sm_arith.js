@@ -5,6 +5,8 @@ const arithEq1 = require('./sm_arith_eq1');
 const arithEq2 = require('./sm_arith_eq2');
 const arithEq3 = require('./sm_arith_eq3');
 const arithEq4 = require('./sm_arith_eq4');
+const arithEq5 = require('./sm_arith_eq5');
+const arithEq6 = require('./sm_arith_eq6');
 
 const F1Field = require("ffjavascript").F1Field;
 
@@ -65,7 +67,13 @@ module.exports.execute = async function (pols, input) {
     // Field Elliptic Curve
     let pFec = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
     const Fec = new F1Field(pFec);
+
+    // Field Complex Multiplication
+    let pFcmul = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const Fcmul = new F1Field(pFcmul);
+
     const Fr = new F1Field(0xffffffff00000001n);
+
 
     // Split the input in little-endian bytes
     prepareInput256bits(input, N);
@@ -90,6 +98,7 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq0[i] = 0n;
         pols.resultEq1[i] = 0n;
         pols.resultEq2[i] = 0n;
+        pols.resultEq3[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
@@ -138,6 +147,25 @@ module.exports.execute = async function (pols, input) {
             }
             q2 += 2n ** 258n;
         }
+        else if (input[i].selEq4) {
+            // EQ5:  x1 * x2 - y1 * y2 - x3  + (q0 * p)
+            let pq1 = x1 * x2 - y1 * y2 - x3;
+            q1 = -(pq1/pFcmul);
+            if ((pq1 + pFcmul*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+            // offset
+            q1 += 2n ** 258n;
+
+            // EQ6:  y1 * x2 + x1 * y2 - y3 + (q1 * p)
+            let pq2 = y1 * x2 - x1 * y2 - y3;
+            q2 = -(pq2/pFcmul);
+            if ((pq2 + pFcmul*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+            // offset
+            q2 += 2n ** 258n;
+        }
         else {
             q1 = 0n;
             q2 = 0n;
@@ -167,9 +195,10 @@ module.exports.execute = async function (pols, input) {
             pols.selEq[1][offset + step] = BigInt(input[i].selEq1);
             pols.selEq[2][offset + step] = BigInt(input[i].selEq2);
             pols.selEq[3][offset + step] = BigInt(input[i].selEq3);
+            pols.selEq[4][offset + step] = BigInt(input[i].selEq4);
         }
         let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2];
+        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2];
         let eq = [0n, 0n , 0n, 0n, 0n]
 
         let eqIndexes = [];
@@ -177,6 +206,7 @@ module.exports.execute = async function (pols, input) {
         if (pols.selEq[1][offset]) eqIndexes.push(1);
         if (pols.selEq[2][offset]) eqIndexes.push(2);
         if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([3, 4]);
+        if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([5, 6]);
 
         for (let step = 0; step < 32; ++step) {
             eqIndexes.forEach((eqIndex) => {
@@ -189,6 +219,7 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
         pols.resultEq1[offset + 31] = pols.selEq[1][offset] ? 1n : 0n;
         pols.resultEq2[offset + 31] = pols.selEq[2][offset] ? 1n : 0n;
+        pols.resultEq3[offset + 31] = pols.selEq[4][offset] ? 1n : 0n;
     }
 }
 
