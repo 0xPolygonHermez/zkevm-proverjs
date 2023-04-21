@@ -87,8 +87,8 @@ module.exports.execute = async function (pols, input) {
     const Fec = new F1Field(pFec);
 
     // Field Complex Multiplication
-    let pFcmul = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const Fcmul = new F1Field(pFcmul);
+    let pFpc = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const Fpc = new F1Field(pFpc);
 
     const Fr = new F1Field(0xffffffff00000001n);
 
@@ -180,17 +180,17 @@ module.exports.execute = async function (pols, input) {
         else if (input[i].selEq4) {
             // EQ5:  x1 * x2 - y1 * y2 - x3  + (q0 * p)
             let pq1 = x1 * x2 - y1 * y2 - x3;
-            q1 = -(pq1/pFcmul);
-            if ((pq1 + pFcmul*q1) != 0n) {
+            q1 = -(pq1/pFpc);
+            if ((pq1 + pFpc*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
             // offset
             q1 += 2n ** 258n;
 
             // EQ6:  y1 * x2 + x1 * y2 - y3 + (q1 * p)
-            let pq2 = y1 * x2 - x1 * y2 - y3;
-            q2 = -(pq2/pFcmul);
-            if ((pq2 + pFcmul*q2) != 0n) {
+            let pq2 = y1 * x2 + x1 * y2 - y3;
+            q2 = -(pq2/pFpc);
+            if ((pq2 + pFpc*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
             // offset
