@@ -56,6 +56,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
+    let helpers = (config && config.helpers) ? config.helpers : false;
 
     const POSEIDONG_PERMUTATION1_ID = 1;
     const POSEIDONG_PERMUTATION2_ID = 2;
@@ -112,7 +113,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         rom: rom,
         outLogs: {},
         N,
-        stepsN
+        stepsN,
+        helpers
     }
 
     if (config.stats) {
@@ -152,6 +154,35 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
     const checkHashNoDigest = config.checkHashNoDigest ? (config.checkHashNoDigest === "warning" ? WarningCheck:ErrorCheck) : false;
+
+
+    if (helpers) {
+        console.log('USING custom helpers ....');
+        if (!Array.isArray(helpers)) {
+            helpers = [helpers];
+        }
+        for (const helper of helpers) {
+            if (typeof helper.setup !== 'function') {
+                throw new Error('Helpers must be an instance with at least setup method');
+            }
+            helper.setup({
+                evalCommand,
+                safeFea2scalar,
+                scalar2fea,
+                Scalar,
+                fullTracer,
+                nameRomErrors,
+                checkParams,
+                sr8to4,
+                sr4to8
+            });
+            for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
+                if (!method.startsWith('eval_')) continue;
+                console.log(`  found helper ${method.charAt(5).toLowerCase()}${method.substring(6)} => ${method}`);
+            }
+        }
+        ctx.helpers = helpers;
+    }
 
     try {
     for (let step = 0; step < stepsN; step++) {
@@ -2416,7 +2447,6 @@ function evalCommand(ctx, tag) {
     } else {
         throw new Error(`Invalid operation ${tag.op} ${ctx.sourceRef}`);
     }
-
 }
 
 function eval_number(ctx, tag) {
@@ -2591,6 +2621,17 @@ function eval_getMemValue(ctx, tag) {
 }
 
 function eval_functionCall(ctx, tag) {
+    if (ctx.helpers) {
+        const method = 'eval_'+ tag.funcName.charAt(0).toUpperCase() + tag.funcName.slice(1)
+        for (const helper of ctx.helpers) {
+            if (typeof helper[method] !== 'function') continue;
+            const res = helper[method](ctx, tag);
+            if (res !== null) {
+                return res;
+            }
+        }
+    }
+
     if (tag.funcName == "getSequencerAddr") {
         return eval_getSequencerAddr(ctx, tag);
     } else if (tag.funcName == "getTimestamp") {
