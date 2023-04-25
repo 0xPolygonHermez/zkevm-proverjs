@@ -75,9 +75,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
-    // Field Complex Multiplication
-    let pFpc = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const Fpc = new F1Field(pFpc);
+    // Field2
+    const Fp2 = new F1Field(21888242871839275222246405745257275088696311157297823662689037894645226208583n);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -108,7 +107,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fr: Fr,
         Fec: Fec,
         Fnec: Fnec,
-        Fpc,
+        Fp2,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -1311,8 +1310,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 // EQ5:  x1 * x2 - y1 * y2 = x3
                 // EQ6:  y1 * x2 + x1 * y2 = y3
 
-                const _x3 = Fpc.sub(Fpc.mul(x1, x2), Fpc.mul(y1, y2));
-                const _y3 = Fpc.add(Fpc.mul(y1, x2), Fpc.mul(x1, y2));
+                const _x3 = Fp2.sub(Fp2.mul(x1, x2), Fp2.mul(y1, y2));
+                const _y3 = Fp2.add(Fp2.mul(y1, x2), Fp2.mul(x1, y2));
 
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
@@ -3069,7 +3068,7 @@ function eval_fpComplexMul_R(ctx, tag)
     const x2 = evalCommand(ctx, tag.params[2]);
     const y2 = evalCommand(ctx, tag.params[3]);
 
-    return ctx.Fpc.sub(ctx.Fpc.mul(x1,x2), ctx.Fpc.mul(y1, y2));
+    return ctx.Fp2.sub(ctx.Fp2.mul(x1,x2), ctx.Fp2.mul(y1, y2));
 }
 
 function eval_fpComplexMul_i(ctx, tag)
@@ -3079,7 +3078,7 @@ function eval_fpComplexMul_i(ctx, tag)
     const x2 = evalCommand(ctx, tag.params[2]);
     const y2 = evalCommand(ctx, tag.params[3]);
 
-    return ctx.Fpc.add(ctx.Fpc.mul(x1,y2), ctx.Fpc.mul(x2, y1));
+    return ctx.Fp2.add(ctx.Fp2.mul(x1,y2), ctx.Fp2.mul(x2, y1));
 }
 
 function printRegs(Fr, ctx) {
