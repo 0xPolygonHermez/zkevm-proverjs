@@ -65,6 +65,8 @@ redundantCheck:
 init:
         ${dump(CNT_ARITH)}
 
+
+        ; (A + Bi)*(C + Di) = (E + OPi)
         0 => A,B,C,D,E  :ARITH_FP_CMUL
 
                         :CALL(redundantCheck)
@@ -237,6 +239,7 @@ init:
         2n :ARITH_FP_CMUL
 
 
+        ${dumpRegs()}
         ${dump(CNT_ARITH)}
 
 end:
