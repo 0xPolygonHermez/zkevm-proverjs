@@ -178,7 +178,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             });
             for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
                 if (!method.startsWith('eval_')) continue;
-                console.log(`  found helper ${method.charAt(5).toLowerCase()}${method.substring(6)} => ${method}`);
+                console.log(`  found helper ${method.substring(5)} => ${method}`);
             }
         }
         ctx.helpers = helpers;
@@ -2622,7 +2622,7 @@ function eval_getMemValue(ctx, tag) {
 
 function eval_functionCall(ctx, tag) {
     if (ctx.helpers) {
-        const method = 'eval_'+ tag.funcName.charAt(0).toUpperCase() + tag.funcName.slice(1)
+        const method = 'eval_'+ tag.funcName;
         for (const helper of ctx.helpers) {
             if (typeof helper[method] !== 'function') continue;
             const res = helper[method](ctx, tag);
