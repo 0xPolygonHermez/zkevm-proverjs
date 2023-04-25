@@ -4,7 +4,7 @@ module.exports = class myHelper {
             this[name] = props[name];
         }
     }
-    eval_Hello(ctx, tag) {
+    eval_hello(ctx, tag) {
         const a = this.evalCommand(ctx, tag.params[0]);
         const b = this.evalCommand(ctx, tag.params[1]);
         return a + 3n*b;
