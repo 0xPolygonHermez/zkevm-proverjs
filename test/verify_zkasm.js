@@ -37,7 +37,9 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
     const verifyPilFlag = pilVerification ? true: false;
     let verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
-    const pil = await compile(Fr, "pil/main.pil", null,  pilConfig);
+    const pilFile = verifyPilConfig.pilFile || "pil/main.pil"
+
+    const pil = await compile(Fr, pilFile, null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
     }
@@ -191,10 +193,12 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
         }
 
-        for (let i=0; i<cmPols.$$array.length; i++) {
-            for (let j=0; j<N; j++) {
-                if (typeof cmPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+        if (!mainConfig.debug) {
+            for (let i=0; i<cmPols.$$array.length; i++) {
+                for (let j=0; j<N; j++) {
+                    if (typeof cmPols.$$array[i][j] === "undefined") {
+                        throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                    }
                 }
             }
         }
