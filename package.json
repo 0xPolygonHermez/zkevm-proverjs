@@ -74,7 +74,7 @@
     "recursive2_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -i $BDIR/recursive2.starkinfo.json",
     "recursive2_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursive2.pil -s $BDIR/recursive2.starkinfo.json -c $BDIR/recursive2.chelpers/recursive2.chelpers.cpp -C Recursive2Steps",
     "recursive2_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursive2.const -p $BDIR/recursive2.pil -s $BDIR/recursive.starkstruct.json -t $BDIR/recursive2.consttree -v $BDIR/recursive2.verkey.json",
-    "recursive2_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive2.pil -s $BDIR/recursive2.starkinfo.json -v $BDIR/recursive2.verkey.json -o $BDIR/recursive2.verifier.circom --cols=12",
+    "recursive2_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain --verkeyInput -p $BDIR/recursive2.pil -s $BDIR/recursive2.starkinfo.json -v $BDIR/recursive2.verkey.json -o $BDIR/recursive2.verifier.circom --cols=24",
     "recursive_pil_check": ". ./pre.sh && F1=$BDIR/recursive1.pil && F2=$BDIR/recursive2.pil && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
     "recursive_verifier_check": ". ./pre.sh && F1=$BDIR/recursive1.verifier.circom && F2=$BDIR/recursive2.verifier.circom && diff $F1 $F2 || (echo \"ERROR: $F1 $F2 are different\"; exit 1)",
     "recursivef_gencircom": ". ./pre.sh && node $NODE src/main_genrecursivef.js --verkey1 $BDIR/recursive1.verkey.json --verkey2 $BDIR/recursive2.verkey.json -o $BDIR/recursivef.circom",
