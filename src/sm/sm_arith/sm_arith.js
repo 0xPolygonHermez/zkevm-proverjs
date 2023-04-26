@@ -90,11 +90,10 @@ module.exports.execute = async function (pols, input) {
     const Fec = new F1Field(pFec);
 
     // Field Complex Multiplication
-    let pFp2 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const Fp2 = new F1Field(pFp2);
+    let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const FpBN254 = new F1Field(pBN254);
 
     const Fr = new F1Field(0xffffffff00000001n);
-
 
     // Split the input in little-endian words
     // prepareInput256bits(input, N);
@@ -186,8 +185,8 @@ module.exports.execute = async function (pols, input) {
         else if (input[i].selEq4) {
             // EQ5:  x1 * x2 - y1 * y2 - x3  + (q0 * p)
             let pq1 = x1 * x2 - y1 * y2 - x3;
-            q1 = -(pq1/pFp2);
-            if ((pq1 + pFp2*q1) != 0n) {
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
             // offset
@@ -195,8 +194,8 @@ module.exports.execute = async function (pols, input) {
 
             // EQ6:  y1 * x2 + x1 * y2 - y3 + (q1 * p)
             let pq2 = y1 * x2 + x1 * y2 - y3;
-            q2 = -(pq2/pFp2);
-            if ((pq2 + pFp2*q2) != 0n) {
+            q2 = -(pq2/pBN254);
+            if ((pq2 + pBN254*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
             // offset

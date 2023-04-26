@@ -75,8 +75,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
-    // Field2
-    const Fp2 = new F1Field(21888242871839275222246405745257275088696311157297823662689037894645226208583n);
+    let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const FpBN254 = new F1Field(pBN254);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -107,7 +107,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fr: Fr,
         Fec: Fec,
         Fnec: Fnec,
-        Fp2,
+        FpBN254,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -1316,8 +1316,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 // EQ5:  x1 * x2 - y1 * y2 = x3
                 // EQ6:  y1 * x2 + x1 * y2 = y3
 
-                const _x3 = Fp2.sub(Fp2.mul(x1, x2), Fp2.mul(y1, y2));
-                const _y3 = Fp2.add(Fp2.mul(y1, x2), Fp2.mul(x1, y2));
+                const _x3 = FpBN254.sub(FpBN254.mul(x1, x2), FpBN254.mul(y1, y2));
+                const _y3 = FpBN254.add(FpBN254.mul(y1, x2), FpBN254.mul(x1, y2));
 
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
@@ -2725,10 +2725,10 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
-    } else if (tag.funcName == "fp2Mul_x") {
-        return eval_fp2Mul_x(ctx, tag);
-    } else if (tag.funcName == "fp2Mul_y") {
-        return eval_fp2Mul_y(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_MULFP2_X") {
+        return eval_ARITH_BN254_MULFP2_X(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_MULFP2_Y") {
+        return eval_ARITH_BN254_MULFP2_Y(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -3083,7 +3083,7 @@ function eval_AddPointEc(ctx, tag, dbl)
     return [x3, y3];
 }
 
-function eval_fp2Mul_x(ctx, tag)
+function eval_ARITH_BN254_MULFP2_X(ctx, tag)
 {
     const ctxFullFe = {...ctx, fullFe: true};
     const x1 = evalCommand(ctxFullFe, tag.params[0]);
@@ -3091,10 +3091,10 @@ function eval_fp2Mul_x(ctx, tag)
     const x2 = evalCommand(ctxFullFe, tag.params[2]);
     const y2 = evalCommand(ctxFullFe, tag.params[3]);
 
-    return ctx.Fp2.sub(ctx.Fp2.mul(x1,x2), ctx.Fp2.mul(y1, y2));
+    return ctx.FpBN254.sub(ctx.FpBN254.mul(x1,x2), ctx.FpBN254.mul(y1, y2));
 }
 
-function eval_fp2Mul_y(ctx, tag)
+function eval_ARITH_BN254_MULFP2_Y(ctx, tag)
 {
     const ctxFullFe = {...ctx, fullFe: true};
     const x1 = evalCommand(ctxFullFe, tag.params[0]);
@@ -3102,7 +3102,7 @@ function eval_fp2Mul_y(ctx, tag)
     const x2 = evalCommand(ctxFullFe, tag.params[2]);
     const y2 = evalCommand(ctxFullFe, tag.params[3]);
 
-    return ctx.Fp2.add(ctx.Fp2.mul(x1,y2), ctx.Fp2.mul(x2, y1));
+    return ctx.FpBN254.add(ctx.FpBN254.mul(x1,y2), ctx.FpBN254.mul(x2, y1));
 }
 
 function printRegs(Fr, ctx) {
