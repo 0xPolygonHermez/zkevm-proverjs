@@ -1,4 +1,7 @@
+const {fea2scalar} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+
 // all arith sources and tools on https://github.com/hermeznetwork/sm_arith.git
+
 
 const arithEq0 = require('./sm_arith_eq0');
 const arithEq1 = require('./sm_arith_eq1');
@@ -87,14 +90,15 @@ module.exports.execute = async function (pols, input) {
     const Fec = new F1Field(pFec);
 
     // Field Complex Multiplication
-    let pFpc = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const Fpc = new F1Field(pFpc);
+    let pFp2 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const Fp2 = new F1Field(pFp2);
 
     const Fr = new F1Field(0xffffffff00000001n);
 
 
-    // Split the input in little-endian bytes
-    prepareInput256bits(input, N);
+    // Split the input in little-endian words
+    // prepareInput256bits(input, N);
+    inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
                         arithEq5.calculate, arithEq6.calculate];
 
@@ -127,12 +131,14 @@ module.exports.execute = async function (pols, input) {
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
-        let x1 = BigInt(input[i]["x1"]);
-        let y1 = BigInt(input[i]["y1"]);
-        let x2 = BigInt(input[i]["x2"]);
-        let y2 = BigInt(input[i]["y2"]);
-        let x3 = BigInt(input[i]["x3"]);
-        let y3 = BigInt(input[i]["y3"]);
+        console.log(i);
+        console.log(input[i]["x1"]);
+        let x1 = fea2scalar(Fr, input[i]["x1"]);
+        let y1 = fea2scalar(Fr, input[i]["y1"]);
+        let x2 = fea2scalar(Fr, input[i]["x2"]);
+        let y2 = fea2scalar(Fr, input[i]["y2"]);
+        let x3 = fea2scalar(Fr, input[i]["x3"]);
+        let y3 = fea2scalar(Fr, input[i]["y3"]);
 
         if (input[i].selEq1) {
             let pq0;
@@ -180,8 +186,8 @@ module.exports.execute = async function (pols, input) {
         else if (input[i].selEq4) {
             // EQ5:  x1 * x2 - y1 * y2 - x3  + (q0 * p)
             let pq1 = x1 * x2 - y1 * y2 - x3;
-            q1 = -(pq1/pFpc);
-            if ((pq1 + pFpc*q1) != 0n) {
+            q1 = -(pq1/pFp2);
+            if ((pq1 + pFp2*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
             // offset
@@ -189,8 +195,8 @@ module.exports.execute = async function (pols, input) {
 
             // EQ6:  y1 * x2 + x1 * y2 - y3 + (q1 * p)
             let pq2 = y1 * x2 + x1 * y2 - y3;
-            q2 = -(pq2/pFpc);
-            if ((pq2 + pFpc*q2) != 0n) {
+            q2 = -(pq2/pFp2);
+            if ((pq2 + pFp2*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
             // offset
@@ -286,6 +292,24 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq2[offset + 31] = pols.selEq[2][offset] ? 1n : 0n;
         pols.resultEq3[offset + 31] = pols.selEq[4][offset] ? 1n : 0n;
     }
+}
+
+function inputFeaTo16bits(input, N, names) {
+    for (let i = 0; i < input.length; i++) {
+        for (const name of names) {
+            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
+        }
+    }
+}
+
+function splitFeaTo16bits(chunks) {
+    let res = [];
+    for(const chunk of chunks) {
+        res.push(chunk % 2n**16n);
+        res.push((chunk / 2n**16n) >> 0n);
+    }
+    console.log(res);
+    return res;
 }
 
 function prepareInput256bits(input, N) {
