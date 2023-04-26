@@ -96,7 +96,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const smt = new SMT(db, poseidon, Fr);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
-
+    const Fr8zero = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
     const ctx = {
         mem: [],
         hashK: [],
@@ -1297,13 +1297,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 pols.arithEq0[i] = 1n;
                 pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = 0n;
-                required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0});
+                required.Arith.push({ x1: ctx.A, y1: ctx.B,
+                                      x2: ctx.C, y2: ctx.D,
+                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
+                                      selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0});
             }
             else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && l.arithEq3) {
-                const x1 = safeFea2scalar(Fr, ctx.A);
-                const y1 = safeFea2scalar(Fr, ctx.B);
-                const x2 = safeFea2scalar(Fr, ctx.C);
-                const y2 = safeFea2scalar(Fr, ctx.D);
+                // fields could be bigger than 32 bits
+                const x1 = fea2scalar(Fr, ctx.A);
+                const y1 = fea2scalar(Fr, ctx.B);
+                const x2 = fea2scalar(Fr, ctx.C);
+                const y2 = fea2scalar(Fr, ctx.D);
+
+                // fields output must be less than 32 bits
                 const x3 = safeFea2scalar(Fr, ctx.E);
                 const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
 
@@ -1322,12 +1328,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
                     console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
 
-                    throw new Error(`Arithmetic complex multiplication point does not match: ${sourceRef}`);
+                    throw new Error(`Arithmetic FP2 multiplication point does not match: ${sourceRef}`);
                 }
 
                 pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq2[i] = 0n;
                 pols.arithEq3[i] = 1n;
-                required.Arith.push({x1, y1, x2, y2, x3, y3, selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 1});
+                required.Arith.push({x1:ctx.A, y1:ctx.B,
+                                     x2:ctx.C, y2:ctx.D,
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
+                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 1});
             }
             else {
                 const x1 = safeFea2scalar(Fr, ctx.A);
@@ -1384,7 +1393,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.arithEq1[i] = dbl ? 0n : 1n;
                 pols.arithEq2[i] = dbl ? 1n : 0n;
                 pols.arithEq3[i] = 0n;
-                required.Arith.push({x1: x1, y1: y1, x2: dbl ? x1:x2, y2: dbl? y1:y2, x3: x3, y3: y3,
+                required.Arith.push({x1: ctx.A, y1: ctx.B,
+                                     x2: dbl ? ctx.A:ctx.C, y2: dbl? ctx.B:ctx.D,
+                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
                                      selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1, selEq4: 0});
             }
         } else {
@@ -2490,17 +2501,17 @@ function eval_getVar(ctx, tag) {
 
 function eval_getReg(ctx, tag) {
     if (tag.regName == "A") {
-        return safeFea2scalar(ctx.Fr, ctx.A);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.A) : safeFea2scalar(ctx.Fr, ctx.A);
     } else if (tag.regName == "B") {
-        return safeFea2scalar(ctx.Fr, ctx.B);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.B) : safeFea2scalar(ctx.Fr, ctx.B);
     } else if (tag.regName == "C") {
-        return safeFea2scalar(ctx.Fr, ctx.C);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.C) : safeFea2scalar(ctx.Fr, ctx.C);
     } else if (tag.regName == "D") {
-        return safeFea2scalar(ctx.Fr, ctx.D);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.D) : safeFea2scalar(ctx.Fr, ctx.D);
     } else if (tag.regName == "E") {
-        return safeFea2scalar(ctx.Fr, ctx.E);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.E) : safeFea2scalar(ctx.Fr, ctx.E);
     } else if (tag.regName == "SR") {
-        return safeFea2scalar(ctx.Fr, ctx.SR);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.SR) : safeFea2scalar(ctx.Fr, ctx.SR);
     } else if (tag.regName == "CTX") {
         return Scalar.e(ctx.CTX);
     } else if (tag.regName == "SP") {
@@ -2616,6 +2627,9 @@ function eval_logical_operation(ctx, tag)
 
 function eval_getMemValue(ctx, tag) {
     // to be compatible with
+    if (ctx.fullFe) {
+        return fea2scalar(ctx.Fr, ctx.mem[tag.offset])
+    }
     return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset]);
 }
 
@@ -2689,10 +2703,10 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
-    } else if (tag.funcName == "fpComplexMul_R") {
-        return eval_fpComplexMul_R(ctx, tag);
-    } else if (tag.funcName == "fpComplexMul_i") {
-        return eval_fpComplexMul_i(ctx, tag);
+    } else if (tag.funcName == "fp2Mul_x") {
+        return eval_fp2Mul_x(ctx, tag);
+    } else if (tag.funcName == "fp2Mul_y") {
+        return eval_fp2Mul_y(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -2908,11 +2922,19 @@ function eval_dumpRegs(ctx, tag) {
 
     console.log(`dumpRegs ${ctx.fileName}:${ctx.line}`);
 
-    console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
-    console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
-    console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
-    console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
-    console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
+    if (ctx.fullFe) {
+        console.log(['A', fea2scalar(ctx.Fr, ctx.A)]);
+        console.log(['B', fea2scalar(ctx.Fr, ctx.B)]);
+        console.log(['C', fea2scalar(ctx.Fr, ctx.C)]);
+        console.log(['D', fea2scalar(ctx.Fr, ctx.D)]);
+        console.log(['E', fea2scalar(ctx.Fr, ctx.E)]);
+    } else {
+        console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
+        console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
+        console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
+        console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
+        console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
+    }
 
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
@@ -3016,22 +3038,24 @@ function eval_AddPointEc(ctx, tag, dbl)
     return [x3, y3];
 }
 
-function eval_fpComplexMul_R(ctx, tag)
+function eval_fp2Mul_x(ctx, tag)
 {
-    const x1 = evalCommand(ctx, tag.params[0]);
-    const y1 = evalCommand(ctx, tag.params[1]);
-    const x2 = evalCommand(ctx, tag.params[2]);
-    const y2 = evalCommand(ctx, tag.params[3]);
+    const ctxFullFe = {...ctx, fullFe: true};
+    const x1 = evalCommand(ctxFullFe, tag.params[0]);
+    const y1 = evalCommand(ctxFullFe, tag.params[1]);
+    const x2 = evalCommand(ctxFullFe, tag.params[2]);
+    const y2 = evalCommand(ctxFullFe, tag.params[3]);
 
     return ctx.Fp2.sub(ctx.Fp2.mul(x1,x2), ctx.Fp2.mul(y1, y2));
 }
 
-function eval_fpComplexMul_i(ctx, tag)
+function eval_fp2Mul_y(ctx, tag)
 {
-    const x1 = evalCommand(ctx, tag.params[0]);
-    const y1 = evalCommand(ctx, tag.params[1]);
-    const x2 = evalCommand(ctx, tag.params[2]);
-    const y2 = evalCommand(ctx, tag.params[3]);
+    const ctxFullFe = {...ctx, fullFe: true};
+    const x1 = evalCommand(ctxFullFe, tag.params[0]);
+    const y1 = evalCommand(ctxFullFe, tag.params[1]);
+    const x2 = evalCommand(ctxFullFe, tag.params[2]);
+    const y2 = evalCommand(ctxFullFe, tag.params[3]);
 
     return ctx.Fp2.add(ctx.Fp2.mul(x1,y2), ctx.Fp2.mul(x2, y1));
 }
