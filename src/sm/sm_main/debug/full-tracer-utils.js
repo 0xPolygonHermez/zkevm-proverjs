@@ -121,7 +121,7 @@ function getFromMemory(offset, length, ctx) {
     addrMem += offsetCtx;
     addrMem += 0x20000;
 
-    let finalMemory = '';
+    let finalMemory = '0x';
 
     const init = addrMem + (Number(offset) / 32);
     const end = addrMem + ((Number(offset) + Number(length)) / 32);
