@@ -81,6 +81,7 @@ template Main() {
     sv.root2 <== root2;
     sv.root3 <== root3;
     sv.root4 <== root4;
+    sv.root5 <== root5;
 
     sv.evals <== evals;
 
@@ -107,6 +108,8 @@ template Main() {
     sv.s3_siblings <== s3_siblings;
     sv.s4_vals <== s4_vals;
     sv.s4_siblings <== s4_siblings;
+    sv.s5_vals <== s5_vals;
+    sv.s5_siblings <== s5_siblings;
 
     sv.finalPol <== finalPol;
 
