@@ -5,10 +5,10 @@
     "verificationHashType": "BN128",
     "steps": [
         {"nBits": 22},
-        {"nBits": 18},
-        {"nBits": 14},
-        {"nBits": 10},
-        {"nBits": 7},
+        {"nBits": 19},
+        {"nBits": 16},
+        {"nBits": 12},
+        {"nBits": 8},
         {"nBits": 4}
     ]
 }
