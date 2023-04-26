@@ -1,13 +1,13 @@
 {
-    "nBits": 22,
-    "nBitsExt": 24,
+    "nBits": 20,
+    "nBitsExt": 22,
     "nQueries": 64,
     "verificationHashType": "GL",
     "steps": [
-        {"nBits": 24},
-        {"nBits": 20},
-        {"nBits": 15},
+        {"nBits": 22},
+        {"nBits": 18},
+        {"nBits": 14},
         {"nBits": 10},
-        {"nBits": 5}
+        {"nBits": 6}
     ]
 }
