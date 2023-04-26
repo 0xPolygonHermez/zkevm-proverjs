@@ -9,4 +9,15 @@ module.exports = class myHelper {
         const b = this.evalCommand(ctx, tag.params[1]);
         return a + 3n*b;
     }
+    eval_dumpFe(ctx, tag) {
+        for (let index = 0; index < tag.params.length; ++index) {
+            const param = tag.params[index];
+            if (param.op !== 'getReg') {
+                console.log(`Ignore invalid operation ${param.op} on param #${index}`);
+                continue;
+            }
+            console.log(`${param.regName}: [${ctx[param.regName].join(',')}]`);
+        }
+        return 0n;
+    }
 }
