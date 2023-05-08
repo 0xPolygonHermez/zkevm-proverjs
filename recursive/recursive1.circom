@@ -12,16 +12,18 @@ template Main() {
     signal input root2[4];
     signal input root3[4];
     signal input root4[4];
-    signal input evals[94][3];
+    signal input evals[146][3]; // Evaluations of the set polynomials at a challenge value z and gz
 
-    signal input s0_vals1[64][12];
-    signal input s0_vals3[64][41];
+    // Leaves values of the merkle tree used to check all the queries
+    signal input s0_vals1[64][18];
+    signal input s0_vals3[64][78];
     signal input s0_vals4[64][12];
-    signal input s0_valsC[64][34];
-    signal input s0_siblings1[64][24][4];
-    signal input s0_siblings3[64][24][4];
-    signal input s0_siblings4[64][24][4];
-    signal input s0_siblingsC[64][24][4];
+    signal input s0_valsC[64][52];
+
+    signal input s0_siblings1[64][22][4];
+    signal input s0_siblings3[64][22][4];
+    signal input s0_siblings4[64][22][4];
+    signal input s0_siblingsC[64][22][4];
 
     signal input s1_root[4];
     signal input s2_root[4];
@@ -29,15 +31,15 @@ template Main() {
     signal input s4_root[4];
 
     signal input s1_vals[64][48];
-    signal input s1_siblings[64][20][4];
-    signal input s2_vals[64][96];
-    signal input s2_siblings[64][15][4];
-    signal input s3_vals[64][96];
+    signal input s1_siblings[64][18][4];
+    signal input s2_vals[64][48];
+    signal input s2_siblings[64][14][4];
+    signal input s3_vals[64][48];
     signal input s3_siblings[64][10][4];
-    signal input s4_vals[64][96];
-    signal input s4_siblings[64][5][4];
+    signal input s4_vals[64][48];
+    signal input s4_siblings[64][6][4];
 
-    signal input finalPol[32][3];
+    signal input finalPol[64][3];
 
 
 
