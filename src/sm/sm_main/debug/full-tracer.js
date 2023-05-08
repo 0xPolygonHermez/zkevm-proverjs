@@ -345,9 +345,9 @@ class FullTracer {
 
             // get before last opcode
             const beforeLastOpcode = this.execution_trace[this.execution_trace.length - 2];
-            //  Set gas price of last opcode if no error
-            if (beforeLastOpcode && typeof lastOpcodeExecution.error === 'undefined') {
-                lastOpcodeExecution.gas_cost = String(Number(beforeLastOpcode.gas) - Number(lastOpcodeExecution.gas) - Number(beforeLastOpcode.gas_cost));
+            //  Set gas price of last opcode if no error and is not a deploy and is not STOP (RETURN + REVERT)
+            if (beforeLastOpcode && lastOpcodeExecution.opcode !== 'STOP' && lastOpcodeExecution.error === '' && response.call_trace.context.to !== '0x') {
+                lastOpcodeExecution.gas_cost = String(Number(lastOpcodeExecution.gas) - Number(ctx.GAS));
                 lastOpcodeCall.gas_cost = lastOpcodeExecution.gas_cost;
             }
 
@@ -541,20 +541,27 @@ class FullTracer {
 
             // update gas spent: (gas before - gas after)
             const gasCost = Number(prevTraceCall.gas) - Number(ctx.GAS);
+
             // If is a zero cost opcode, set gasCost to 0
             if (zeroCostOp.includes(prevTraceCall.opcode)) {
                 prevTraceCall.gas_cost = String(0);
                 prevTraceExecution.gas_cost = String(0);
             } else if (opCreate.includes(prevTraceCall.opcode)) {
+                // In case of error at create, we can't get the gas cost from next opcodes, so we have to use rom variables
+                if (prevTraceExecution.error !== '') {
+                    const gasCall = getVarFromCtx(ctx, true, 'gasCall');
+                    prevTraceCall.gas_cost = String(gasCost - Number(gasCall) + Number(ctx.GAS));
+                } else {
                 // If is a create opcode, set gas cost as currentGas - gasCall
-                const ctxTmp = {
-                    rom: ctx.rom,
-                    mem: ctx.mem,
-                    CTX: Number(getVarFromCtx(ctx, false, 'originCTX')),
-                    Fr: ctx.Fr,
-                };
-                const gasCTX = Number(getVarFromCtx(ctxTmp, false, 'gasCTX'));
-                prevTraceCall.gas_cost = String(gasCost - Number(gasCTX));
+                    const ctxTmp = {
+                        rom: ctx.rom,
+                        mem: ctx.mem,
+                        CTX: Number(getVarFromCtx(ctx, false, 'originCTX')),
+                        Fr: ctx.Fr,
+                    };
+                    const gasCTX = Number(getVarFromCtx(ctxTmp, false, 'gasCTX'));
+                    prevTraceCall.gas_cost = String(gasCost - Number(gasCTX));
+                }
                 prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
             } else if (opCall.includes(prevTraceCall.opcode) && prevTraceCall.depth !== singleInfo.depth) {
                 // Only check if different depth because we are removing STOP from trace in case the call is empty (CALL-STOP)
@@ -589,11 +596,17 @@ class FullTracer {
                 prevTraceCall.gas_cost = String(Number(beforePrevTrace.gas) - Number(prevTraceCall.gas));
                 prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
             }
-            // TODO: "gas_cost": "NaN"
+            // Set gas refund for sstore opcode
+            if (Number(getVarFromCtx(ctx, false, 'gasRefund')) > 0) {
+                singleInfo.gas_refund = getVarFromCtx(ctx, false, 'gasRefund').toString();
+                if (prevTraceCall.opcode === 'SSTORE') {
+                    prevTraceCall.gas_refund = getVarFromCtx(ctx, false, 'gasRefund').toString();
+                    prevTraceExecution.gas_refund = prevTraceCall.gas_refund;
+                }
+            }
         }
 
         singleInfo.opcode = opcode;
-        singleInfo.gas_refund = getVarFromCtx(ctx, false, 'gasRefund').toString();
         singleInfo.op = ethers.utils.hexlify(codeId);
         singleInfo.error = '';
         singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);

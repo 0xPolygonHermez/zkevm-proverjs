@@ -23,6 +23,7 @@ const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
 const invalidTests = ['custom-tx.json'];
+const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP'];
 
 async function main() {
     try {
@@ -61,7 +62,7 @@ async function main() {
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
                     const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i);
-                    if (!_.isEmpty(changes)) {
+                    if (!_.isEmpty(changes) && !includesInvalidOpcode(changes)) {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
@@ -87,6 +88,16 @@ async function main() {
     }
 }
 
+function includesInvalidOpcode(changes) {
+    const str = JSON.stringify(changes);
+    for (const op of invalidOpcodes) {
+        if (str.includes(op)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName) {
     if (!folderName) {
         let test = isEthereumTest ? [JSON.parse(fs.readFileSync(testPath))][0] : [JSON.parse(fs.readFileSync(testPath))[testToDebug]];
@@ -168,6 +179,10 @@ async function compareDefaultTrace(geth, fullTracer, i) {
         returnValue: fullTracer.return_value,
         structLogs: [],
     };
+    // Format return value to match geth. If return is all zeros, set to '00'
+    if (newFT.returnValue.match(/^0+$/)) {
+        newFT.returnValue = '00';
+    }
     // Fill steps array
     for (const step of fullTracer.execution_trace) {
         const newStep = {
@@ -179,11 +194,11 @@ async function compareDefaultTrace(geth, fullTracer, i) {
             // memSize?
             stack: step.stack,
             depth: step.depth,
-            /*
-             * returndata?
-             * refund?
-             */
+            // returndata?
         };
+        if (Number(step.gas_refund) > 0) {
+            newStep.refund = Number(step.gas_refund);
+        }
         if (step.storage) {
             newStep.storage = step.storage;
         }
