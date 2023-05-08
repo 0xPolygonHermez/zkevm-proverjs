@@ -68,6 +68,7 @@ module.exports = {
     0x5a: 'opGAS',
     0x5b: 'opJUMPDEST',
 
+    0x5f: 'opPUSH0',
     0x60: 'opPUSH1',
     0x61: 'opPUSH2',
     0x62: 'opPUSH3',
