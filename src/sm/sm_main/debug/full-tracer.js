@@ -1,3 +1,5 @@
+/* eslint-disable prefer-destructuring */
+/* eslint-disable max-len */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-continue */
 /* eslint-disable multiline-comment-style */
@@ -20,6 +22,9 @@ const {
 } = require('./full-tracer-utils');
 
 const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE', 'CREATE2'];
+const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
+const opCreate = ['CREATE', 'CREATE2'];
+const zeroCostOp = ['STOP', 'REVERT', 'RETURN'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', 'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance', 'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code'];
 
 // TODO: gas cost of last opcode should be fixed
@@ -49,7 +54,7 @@ class FullTracer {
         this.depth = 0;
         this.initGas = 0;
         this.txCount = 0;
-        this.deltaStorage = { 0: {} };
+        this.deltaStorage = {};
         this.txTime = 0;
         this.txGAS = {};
         this.accBatchGas = 0;
@@ -249,7 +254,7 @@ class FullTracer {
 
         // Reset values
         this.depth = 0;
-        this.deltaStorage = { 0: {} };
+        this.deltaStorage = {};
         this.txGAS[this.depth] = context.gas;
 
         this.verbose.printTx(`start ${this.txCount}`);
@@ -262,12 +267,16 @@ class FullTracer {
      */
     onUpdateStorage(ctx, params) {
         if (disableStorage) return;
+
         // The storage key is stored in C
         const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[0].regName)), 32).slice(2);
         // The storage value is stored in D
         const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[1].regName)), 32).slice(2);
 
-        // add key/value to deltaStorage
+        // add key/value to deltaStorage, if undefined, create object
+        if (typeof this.deltaStorage[this.depth] === 'undefined') {
+            this.deltaStorage[this.depth] = {};
+        }
         this.deltaStorage[this.depth][key] = value;
 
         // add deltaStorage to current execution_trace opcode info
@@ -306,7 +315,7 @@ class FullTracer {
         response.call_trace.context.gas_used = response.gas_used;
         this.accBatchGas += Number(response.gas_used);
 
-        response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx);
+        response.return_value = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset').toString(), getVarFromCtx(ctx, false, 'retDataLength').toString(), ctx).slice(2);
         response.call_trace.context.output = response.return_value;
 
         // Set create address in case of deploy
@@ -336,9 +345,9 @@ class FullTracer {
 
             // get before last opcode
             const beforeLastOpcode = this.execution_trace[this.execution_trace.length - 2];
-            //  Set gas price of last opcode
-            if (beforeLastOpcode) {
-                lastOpcodeExecution.gas_cost = String(Number(beforeLastOpcode.gas) - Number(lastOpcodeExecution.gas));
+            //  Set gas price of last opcode if no error
+            if (beforeLastOpcode && typeof lastOpcodeExecution.error === 'undefined') {
+                lastOpcodeExecution.gas_cost = String(Number(beforeLastOpcode.gas) - Number(lastOpcodeExecution.gas) - Number(beforeLastOpcode.gas_cost));
                 lastOpcodeCall.gas_cost = lastOpcodeExecution.gas_cost;
             }
 
@@ -472,7 +481,7 @@ class FullTracer {
         if (typeof codes[codeId] === 'undefined') {
             codeId = 0xfe;
         }
-        const opcode = codes[codeId].slice(2);
+        const opcode = codes[codeId][0];
 
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
@@ -512,8 +521,8 @@ class FullTracer {
                     continue;
                 }
                 const stackScalar = fea2scalar(ctx.Fr, stack);
-                let hexString = stackScalar.toString(16);
-                hexString = hexString.length % 2 ? `0${hexString}` : hexString;
+                const hexString = stackScalar.toString(16);
+                // hexString = hexString.length % 2 ? `0${hexString}` : hexString;
                 finalStack.push(`0x${hexString}`);
             }
         }
@@ -522,6 +531,7 @@ class FullTracer {
         singleInfo.depth = this.depth + 1;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.gas = ctx.GAS.toString();
+        singleInfo.gas_cost = codes[codeId][1];
 
         // compute: gas spent & zk-counters in previous opcode
         if (this.call_trace.length) {
@@ -531,9 +541,37 @@ class FullTracer {
 
             // update gas spent: (gas before - gas after)
             const gasCost = Number(prevTraceCall.gas) - Number(ctx.GAS);
-            prevTraceCall.gas_cost = String(gasCost);
-            prevTraceExecution.gas_cost = String(gasCost);
-
+            // If is a zero cost opcode, set gasCost to 0
+            if (zeroCostOp.includes(prevTraceCall.opcode)) {
+                prevTraceCall.gas_cost = String(0);
+                prevTraceExecution.gas_cost = String(0);
+            } else if (opCreate.includes(prevTraceCall.opcode)) {
+                // If is a create opcode, set gas cost as currentGas - gasCall
+                const ctxTmp = {
+                    rom: ctx.rom,
+                    mem: ctx.mem,
+                    CTX: Number(getVarFromCtx(ctx, false, 'originCTX')),
+                    Fr: ctx.Fr,
+                };
+                const gasCTX = Number(getVarFromCtx(ctxTmp, false, 'gasCTX'));
+                prevTraceCall.gas_cost = String(gasCost - Number(gasCTX));
+                prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
+            } else if (opCall.includes(prevTraceCall.opcode) && prevTraceCall.depth !== singleInfo.depth) {
+                // Only check if different depth because we are removing STOP from trace in case the call is empty (CALL-STOP)
+                // Get gas CTX from origin ctx
+                const ctxTmp = {
+                    rom: ctx.rom,
+                    mem: ctx.mem,
+                    CTX: Number(getVarFromCtx(ctx, false, 'originCTX')),
+                    Fr: ctx.Fr,
+                };
+                const gasCTX = Number(getVarFromCtx(ctxTmp, false, 'gasCTX'));
+                prevTraceCall.gas_cost = String(Number(prevTraceCall.gas) - Number(gasCTX));
+                prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
+            } else {
+                prevTraceCall.gas_cost = String(gasCost);
+                prevTraceExecution.gas_cost = String(gasCost);
+            }
             // update counters spent
             prevTraceCall.counters = {
                 cnt_arith: Number(ctx.cntArith) - prevTraceCall.counters.cnt_arith,
@@ -661,14 +699,10 @@ class FullTracer {
 
         // If is an ether transfer, don't add stop opcode to trace
         if (singleInfo.opcode === 'STOP'
-            && (typeof prevStep === 'undefined' || opIncContext.includes(prevStep.opcode))
+            && (typeof prevStep === 'undefined' || opCall.includes(prevStep.opcode) || (opCreate.includes(prevStep.opcode) && Number(prevStep.gas_cost) <= 32000))
             && Number(getVarFromCtx(ctx, false, 'bytecodeLength')) === 0) {
             this.call_trace.pop();
             this.execution_trace.pop();
-        }
-
-        if (opIncContext.includes(singleInfo.opcode)) {
-            this.deltaStorage[this.depth + 1] = {};
         }
 
         this.verbose.printOpcode(opcode);

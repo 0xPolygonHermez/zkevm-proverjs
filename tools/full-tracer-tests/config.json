@@ -1,0 +1,54 @@
+[
+    {
+        "folderName":"stArgsZeroOneBalance",
+        "traceMethod": "defaultTrace",
+        "isEthereumTest": true,
+        "disable": true
+    },
+    {
+        "folderName": "calldata",
+        "traceMethod": "defaultTrace",
+        "isEthereumTest": false
+    },
+    {
+        "testName":"op-call",
+        "testToDebug": 14,
+        "traceMethod": "defaultTrace"
+    },
+    {
+        "testName":"op-invalid",
+        "testToDebug": 0,
+        "traceMethod": "defaultTrace"
+    },
+    {
+        "testName":"stArgsZeroOneBalance/addmodNonConst",
+        "testToDebug": 1,
+        "traceMethod": "defaultTrace",
+        "isEthereumTest": true
+    },
+    {
+        "testName":"erc20",
+        "testToDebug": 0,
+        "traceMethod": "defaultTrace"
+    },
+    {
+        "testName":"op-call-revert",
+        "testToDebug": 0,
+        "traceMethod": "defaultTrace"
+    },
+    {
+        "testName":"test-deploy",
+        "testToDebug": 3,
+        "traceMethod": "defaultTrace"
+    },
+    {
+        "testName":"uniswapv2-benchmark",
+        "testToDebug": 0,
+        "traceMethod": "defaultTrace"
+    },
+    {
+        "testName":"mynft",
+        "testToDebug": 0,
+        "traceMethod": "defaultTrace"
+    }
+]

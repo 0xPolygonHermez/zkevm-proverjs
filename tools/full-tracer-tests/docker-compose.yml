@@ -1,0 +1,10 @@
+
+version: '3.7'
+
+services:
+  geth-bootnode:
+    hostname: geth-bootnode
+    image: geth-client
+    build: .
+    ports:
+      - "8545:8545"

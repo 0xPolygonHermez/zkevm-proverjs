@@ -111,6 +111,7 @@
     "test:counters:poseidon": "mocha test/counters/poseidon.js",
     "test:counters:storage": "mocha test/counters/storage.js",
     "test:all-inputs": "mocha --timeout 0 --max-old-space-size=8000 tools/run-test/run-inputs-mocha.test.js",
+    "test:full-tracer": "node --max-old-space-size=16000 tools/full-tracer-tests/full-tracer-tests.js",
     "eslint:tracer": "npx eslint src/sm/sm_main/debug/**.js"
   },
   "author": "Jordi Baylina",
@@ -123,12 +124,14 @@
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "^0.1.1",
+    "docker-compose": "^0.23.19",
     "ejs": "^3.1.6",
     "ethers": "^5.4.7",
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#develop",
+    "lodash": "^4.17.21",
     "pilcom": "0.0.23",
     "snarkjs": "0.6.9",
     "yargs": "^17.4.0"
