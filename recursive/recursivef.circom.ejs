@@ -13,30 +13,33 @@ template Main() {
     signal input root3[4];
     signal input root4[4];
 
-    signal input evals[70][3];
+    signal input evals[118][3];
 
-    signal input s0_vals1[32][12];
-    signal input s0_vals3[32][9];
-    signal input s0_vals4[32][24];
-    signal input s0_valsC[32][34];
-    signal input s0_siblings1[32][24][4];
-    signal input s0_siblings3[32][24][4];
-    signal input s0_siblings4[32][24][4];
-    signal input s0_siblingsC[32][24][4];
+    signal input s0_vals1[43][18];
+    signal input s0_vals3[43][39];
+    signal input s0_vals4[43][21];
+    signal input s0_valsC[43][52];
+    signal input s0_siblings1[43][20][4];
+    signal input s0_siblings3[43][20][4];
+    signal input s0_siblings4[43][20][4];
+    signal input s0_siblingsC[43][20][4];
 
     signal input s1_root[4];
     signal input s2_root[4];
     signal input s3_root[4];
     signal input s4_root[4];
+    signal input s5_root[4];
 
-    signal input s1_vals[32][96];
-    signal input s1_siblings[32][19][4];
-    signal input s2_vals[32][96];
-    signal input s2_siblings[32][14][4];
-    signal input s3_vals[32][96];
-    signal input s3_siblings[32][9][4];
-    signal input s4_vals[32][48];
-    signal input s4_siblings[32][5][4];
+    signal input s1_vals[43][24];
+    signal input s1_siblings[43][17][4];
+    signal input s2_vals[43][24];
+    signal input s2_siblings[43][14][4];
+    signal input s3_vals[43][24];
+    signal input s3_siblings[43][11][4];
+    signal input s4_vals[43][24];
+    signal input s4_siblings[43][8][4];
+    signal input s5_vals[43][24];
+    signal input s5_siblings[43][5][4];
 
     signal input finalPol[32][3];
 
@@ -62,6 +65,7 @@ template Main() {
     sv.s2_root <== s2_root;
     sv.s3_root <== s3_root;
     sv.s4_root <== s4_root;
+    sv.s5_root <== s5_root;
     sv.s1_vals <== s1_vals;
     sv.s1_siblings <== s1_siblings;
     sv.s2_vals <== s2_vals;
@@ -70,6 +74,8 @@ template Main() {
     sv.s3_siblings <== s3_siblings;
     sv.s4_vals <== s4_vals;
     sv.s4_siblings <== s4_siblings;
+    sv.s5_vals <== s5_vals;
+    sv.s5_siblings <== s5_siblings;
     sv.finalPol <== finalPol;
 
     component isOne = IsZero();
