@@ -46,3 +46,7 @@ In case is a Ethereum test suite folder
         "isEthereumTest": true
    }
 ```
+
+### Known differences:
+
+In case of a failing opcode runing in a depth > 1, for example out of gas or doing a sstore in a static call the gas cost is computed differently. In geth, the gas cost is shown as the cost of the correct opcode execution. In case of full tracer, the gas cost is shown as the gas cost of the error, the remaining gas of the call.

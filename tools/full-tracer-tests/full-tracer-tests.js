@@ -23,12 +23,14 @@ const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
 const invalidTests = ['custom-tx.json'];
-const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP'];
+const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT'];
+const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
 
 async function main() {
     try {
         console.log('Starting traces comparator');
         const failedTests = [];
+        const noExecTests = noExec['breaks-computation'].concat(noExec['not-supported']);
         for (const configTest of config) {
             const {
                 testName, testToDebug, traceMethod, isEthereumTest, folderName, disable,
@@ -43,6 +45,11 @@ async function main() {
             const tests = createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName);
             for (let j = 0; j < tests.length; j++) {
                 const test = tests[j];
+                // Skip tests from no exec file
+                if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
+                || t.name === `${test.folderName}/${test.testName}`).length > 0) {
+                    continue;
+                }
                 // Configure genesis for test
                 await configureGenesis(test, isEthereumTest);
 
@@ -62,7 +69,7 @@ async function main() {
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
                     const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i);
-                    if (!_.isEmpty(changes) && !includesInvalidOpcode(changes)) {
+                    if (!_.isEmpty(changes) && !includesInvalidOpcode(gethTraces[i].structLogs)) {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);

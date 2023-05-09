@@ -575,6 +575,10 @@ class FullTracer {
                 const gasCTX = Number(getVarFromCtx(ctxTmp, false, 'gasCTX'));
                 prevTraceCall.gas_cost = String(Number(prevTraceCall.gas) - Number(gasCTX));
                 prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
+            } else if (prevTraceCall.depth !== singleInfo.depth) {
+                // Means opcode failed with error (ex: oog, invalidStaticTx...)
+                prevTraceCall.gas_cost = prevTraceCall.gas;
+                prevTraceExecution.gas_cost = prevTraceCall.gas_cost;
             } else {
                 prevTraceCall.gas_cost = String(gasCost);
                 prevTraceExecution.gas_cost = String(gasCost);

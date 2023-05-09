@@ -1,16 +1,5 @@
 [
     {
-        "folderName":"stArgsZeroOneBalance",
-        "traceMethod": "defaultTrace",
-        "isEthereumTest": true,
-        "disable": true
-    },
-    {
-        "folderName": "calldata",
-        "traceMethod": "defaultTrace",
-        "isEthereumTest": false
-    },
-    {
         "testName":"op-call",
         "testToDebug": 14,
         "traceMethod": "defaultTrace"
