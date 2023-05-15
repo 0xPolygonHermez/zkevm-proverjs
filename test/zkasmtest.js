@@ -13,7 +13,8 @@ const argv = require("yargs")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("c", "config")
-    .alias("N", "evaluations")
+    .alias("N", "stepsN")
+    .alias("R", "rows")
     .alias("n", "ns")
     .alias("v", "verbose")
     .alias("e", "externalpil")
@@ -40,13 +41,13 @@ async function main(){
     let ns = argv.ns ? argv.ns : ['Global', 'Main'];
     let namespaceDefined = argv.ns ? true : false;
 
-    // evaluations
-    const evaluationsDefined = typeof(argv.evaluations) !== 'undefined';
-    let evaluations = evaluationsDefined ?  argv.evaluations : 2**17;
-    if (typeof evaluations === 'string' && evaluations.startsWith('2**')) {
-        evaluations = 2 ** Number(evaluations.substring(3).trim());
+    // rows
+    const rowsDefined = typeof(argv.rows) !== 'undefined';
+    let rows = rowsDefined ?  argv.rows : 2**17;
+    if (typeof rows === 'string' && rows.startsWith('2**')) {
+        rows = 2 ** Number(rows.substring(3).trim());
     }
-    if ((2 ** Math.trunc(Math.log2(evaluations))) != evaluations) {
+    if ((2 ** Math.trunc(Math.log2(rows))) != rows) {
         console.log("N must be a power of 2. You could use -N 2**<bits>");
         process.exit(1);
     }
@@ -71,16 +72,27 @@ async function main(){
     }
 
     let defaultPilConfig = {
-        defines: {N: evaluations},
+        defines: {N: rows},
         namespaces,
         verbose,
         color: true,
         disableUnusedError: true
     }
+
     let defaultConfig = {
         constants,
         debug,
         externalPilVerification
+    }
+    if (typeof argv.stepsN !== 'undefined') {
+        let steps = argv.stepsN;
+        if (typeof steps === 'string' && steps.startsWith('2**')) {
+            steps = 2 ** Number(steps.substring(3).trim());
+        }
+        defaultConfig.stepsN = steps;
+        defaultConfig.debug = true;
+        defaultPilConfig.defines.N = 2 ** 16;
+        console.log(`setting steps upto ${steps} vs rows upto ${rows} (debug: active)`);
     }
 
     const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : (__dirname + "/../pil/main.pil");
