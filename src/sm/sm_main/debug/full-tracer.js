@@ -59,7 +59,7 @@ class FullTracer {
         this.txGAS = {};
         this.accBatchGas = 0;
         this.logs = [];
-
+        this.callData = [];
         // handle return from create/create2
         this.returnFromCreate = null;
 
@@ -201,6 +201,7 @@ class FullTracer {
         context.execution_time = '';
         context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         context.gas_price = Number(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
+        this.callData[ctx.CTX] = { type: 'CALL' };
         // Fill response object
         const response = {};
         const r = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txR'));
@@ -272,17 +273,18 @@ class FullTracer {
         const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[0].regName)), 32).slice(2);
         // The storage value is stored in D
         const value = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[1].regName)), 32).slice(2);
-
+        // Delta storage is computed for the affected contract address
+        const storageAddress = ethers.utils.hexZeroPad(ethers.utils.hexlify(getVarFromCtx(ctx, false, 'storageAddr'), 64));
         // add key/value to deltaStorage, if undefined, create object
-        if (typeof this.deltaStorage[this.depth] === 'undefined') {
-            this.deltaStorage[this.depth] = {};
+        if (typeof this.deltaStorage[storageAddress] === 'undefined') {
+            this.deltaStorage[storageAddress] = {};
         }
-        this.deltaStorage[this.depth][key] = value;
+        this.deltaStorage[storageAddress][key] = value;
 
         // add deltaStorage to current execution_trace opcode info
         if (this.execution_trace.length > 0) {
             const singleExecuteTrace = this.execution_trace[this.execution_trace.length - 1];
-            singleExecuteTrace.storage = JSON.parse(JSON.stringify(this.deltaStorage[this.depth]));
+            singleExecuteTrace.storage = JSON.parse(JSON.stringify(this.deltaStorage[storageAddress]));
         }
     }
 
@@ -389,7 +391,7 @@ class FullTracer {
         this.call_trace = [];
         this.execution_trace = [];
         this.logs = [];
-
+        this.callData = [];
         // verbose
         this.verbose.printTx(`finish ${this.txCount}`);
     }
@@ -449,8 +451,12 @@ class FullTracer {
         this.finalTrace.new_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         this.finalTrace.new_acc_input_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'newAccInputHash'), 64);
         this.finalTrace.responses.forEach((r) => {
-            r.call_trace.context.batch = this.finalTrace.new_acc_input_hash;
-            r.logs.forEach((l) => l.batch_hash = this.finalTrace.new_acc_input_hash);
+            if (typeof r.call_trace !== 'undefined') {
+                r.call_trace.context.batch = this.finalTrace.new_acc_input_hash;
+            }
+            if (typeof r.logs !== 'undefined') {
+                r.logs.forEach((l) => l.batch_hash = this.finalTrace.new_acc_input_hash);
+            }
         });
         this.finalTrace.new_local_exit_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'newLocalExitRoot'), 64);
         this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'newNumBatch'));
@@ -622,6 +628,7 @@ class FullTracer {
         singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
         singleInfo.contract.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
         singleInfo.contract.gas = this.txGAS[this.depth];
+        singleInfo.contract.type = 'CALL';
 
         // Round up to next multiple of 32
         singleInfo.memory_size = String(Math.ceil(Number(getVarFromCtx(ctx, false, 'memLength')) / 32) * 32);
@@ -705,6 +712,8 @@ class FullTracer {
         // Check previous step
         const prevStep = this.execution_trace[this.execution_trace.length - 2];
         if (prevStep && opIncContext.includes(prevStep.opcode)) {
+            // Create new call data entry
+            this.callData[ctx.CTX] = { type: prevStep.opcode };
             // Set 'gasCall' when depth has changed
             this.txGAS[this.depth] = getVarFromCtx(ctx, true, 'gasCall').toString();
             if (generate_call_trace) { // TODO: why ?
@@ -713,7 +722,11 @@ class FullTracer {
                 // take gas when a new context is created
             }
         }
-
+        // Set contract params depending on current call type
+        singleCallTrace.contract.type = this.callData[ctx.CTX].type;
+        if (singleCallTrace.contract.type === 'DELEGATECALL') {
+            singleCallTrace.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
+        }
         // If is an ether transfer, don't add stop opcode to trace
         if (singleInfo.opcode === 'STOP'
             && (typeof prevStep === 'undefined' || opCall.includes(prevStep.opcode) || (opCreate.includes(prevStep.opcode) && Number(prevStep.gas_cost) <= 32000))
