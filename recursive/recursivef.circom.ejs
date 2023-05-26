@@ -28,20 +28,17 @@ template Main() {
     signal input s2_root[4];
     signal input s3_root[4];
     signal input s4_root[4];
-    signal input s5_root[4];
 
-    signal input s1_vals[43][24];
-    signal input s1_siblings[43][17][4];
-    signal input s2_vals[43][24];
-    signal input s2_siblings[43][14][4];
+    signal input s1_vals[43][48];
+    signal input s1_siblings[43][16][4];
+    signal input s2_vals[43][48];
+    signal input s2_siblings[43][12][4];
     signal input s3_vals[43][24];
-    signal input s3_siblings[43][11][4];
+    signal input s3_siblings[43][9][4];
     signal input s4_vals[43][24];
-    signal input s4_siblings[43][8][4];
-    signal input s5_vals[43][24];
-    signal input s5_siblings[43][5][4];
+    signal input s4_siblings[43][6][4];
 
-    signal input finalPol[32][3];
+    signal input finalPol[64][3];
 
     component sv = StarkVerifier();
 
@@ -65,7 +62,6 @@ template Main() {
     sv.s2_root <== s2_root;
     sv.s3_root <== s3_root;
     sv.s4_root <== s4_root;
-    sv.s5_root <== s5_root;
     sv.s1_vals <== s1_vals;
     sv.s1_siblings <== s1_siblings;
     sv.s2_vals <== s2_vals;
@@ -74,8 +70,6 @@ template Main() {
     sv.s3_siblings <== s3_siblings;
     sv.s4_vals <== s4_vals;
     sv.s4_siblings <== s4_siblings;
-    sv.s5_vals <== s5_vals;
-    sv.s5_siblings <== s5_siblings;
     sv.finalPol <== finalPol;
 
     component isOne = IsZero();
