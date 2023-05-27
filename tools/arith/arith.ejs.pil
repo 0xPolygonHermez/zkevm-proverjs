@@ -38,10 +38,13 @@ namespace Arith(%N);
     pol commit resultEq1;
     pol commit resultEq2;
     pol commit resultEq3;
+    pol commit resultEq4;
+
     resultEq0 * (1 - resultEq0) = 0;
     resultEq1 * (1 - resultEq1) = 0;
     resultEq2 * (1 - resultEq2) = 0;
     resultEq3 * (1 - resultEq3) = 0;
+    resultEq4 * (1 - resultEq4) = 0;
 
     // FEATURE:
 
@@ -342,6 +345,24 @@ namespace Arith(%N);
     <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
                                                                   offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
 
+    /*******
+    *
+    * EQ7:  x1 + x2 - x3 + (q1 * p)
+    *
+    *******/
+
+    <%- equation('pol eq7_## =', 'x1+x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ8:  y1 + y2 - y3 + (q2 * p)
+    *
+    *******/
+
+    <%- equation('pol eq8_## =', 'y1+y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
@@ -350,11 +371,13 @@ namespace Arith(%N);
     pol eq4 = <%- clksel(['eq4_[0..31]'], 'Global.CLK32') %>;
     pol eq5 = <%- clksel(['eq5_[0..31]'], 'Global.CLK32') %>;
     pol eq6 = <%- clksel(['eq6_[0..31]'], 'Global.CLK32') %>;
+    pol eq7 = <%- clksel(['eq7_[0..31]'], 'Global.CLK32') %>;
+    pol eq8 = <%- clksel(['eq8_[0..31]'], 'Global.CLK32') %>;
 
-    pol commit selEq[5];
+    pol commit selEq[6];
 
-    <%- latch(['selEq[0..4]'],'Global.CLK32[31]') %>
-    <%- binary(['selEq[0..4]']) %>
+    <%- latch(['selEq[0..5]'],'Global.CLK32[31]') %>
+    <%- binary(['selEq[0..5]']) %>
 
     pol commit carry[3];
 
@@ -373,3 +396,5 @@ namespace Arith(%N);
     selEq[3] * (eq4 + carry[2]) = selEq[3] * carry[2]' * 2**16;
     selEq[4] * (eq5 + carry[1]) = selEq[4] * carry[1]' * 2**16;
     selEq[4] * (eq6 + carry[2]) = selEq[4] * carry[2]' * 2**16;
+    selEq[5] * (eq7 + carry[1]) = selEq[5] * carry[1]' * 2**16;
+    selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;

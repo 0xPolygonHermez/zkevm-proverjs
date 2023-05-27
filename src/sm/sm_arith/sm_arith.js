@@ -10,6 +10,8 @@ const arithEq3 = require('./sm_arith_eq3');
 const arithEq4 = require('./sm_arith_eq4');
 const arithEq5 = require('./sm_arith_eq5');
 const arithEq6 = require('./sm_arith_eq6');
+const arithEq7 = require('./sm_arith_eq7');
+const arithEq8 = require('./sm_arith_eq8');
 
 const F1Field = require("ffjavascript").F1Field;
 
@@ -99,7 +101,7 @@ module.exports.execute = async function (pols, input) {
     // prepareInput256bits(input, N);
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
-                        arithEq5.calculate, arithEq6.calculate];
+                        arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -183,7 +185,7 @@ module.exports.execute = async function (pols, input) {
             q2 += 2n ** 258n;
         }
         else if (input[i].selEq4) {
-            // EQ5:  x1 * x2 - y1 * y2 - x3  + (q0 * p)
+            // EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
             let pq1 = x1 * x2 - y1 * y2 - x3;
             q1 = -(pq1/pBN254);
             if ((pq1 + pBN254*q1) != 0n) {
@@ -192,8 +194,27 @@ module.exports.execute = async function (pols, input) {
             // offset
             q1 += 2n ** 258n;
 
-            // EQ6:  y1 * x2 + x1 * y2 - y3 + (q1 * p)
+            // EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
             let pq2 = y1 * x2 + x1 * y2 - y3;
+            q2 = -(pq2/pBN254);
+            if ((pq2 + pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+            // offset
+            q2 += 2n ** 258n;
+        }
+        else if (input[i].selEq5) {
+            // EQ6:  x1 + x2 - x3  + (q1 * p)
+            let pq1 = x1 + x2 - x3;
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+            // offset
+            q1 += 2n ** 258n;
+
+            // EQ7:  y1 + y2 - y3 + (q2 * p)
+            let pq2 = y1 + y2 - y3;
             q2 = -(pq2/pBN254);
             if ((pq2 + pBN254*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
@@ -266,10 +287,11 @@ module.exports.execute = async function (pols, input) {
             pols.selEq[2][offset + step] = BigInt(input[i].selEq2);
             pols.selEq[3][offset + step] = BigInt(input[i].selEq3);
             pols.selEq[4][offset + step] = BigInt(input[i].selEq4);
+            pols.selEq[5][offset + step] = BigInt(input[i].selEq5);
         }
         let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2];
-        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n]
+        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2, 1, 2];
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
 
         let eqIndexes = [];
         if (pols.selEq[0][offset]) eqIndexes.push(0);
@@ -277,6 +299,7 @@ module.exports.execute = async function (pols, input) {
         if (pols.selEq[2][offset]) eqIndexes.push(2);
         if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([3, 4]);
         if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([5, 6]);
+        if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([7, 8]);
 
         for (let step = 0; step < 32; ++step) {
             eqIndexes.forEach((eqIndex) => {
@@ -290,6 +313,7 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq1[offset + 31] = pols.selEq[1][offset] ? 1n : 0n;
         pols.resultEq2[offset + 31] = pols.selEq[2][offset] ? 1n : 0n;
         pols.resultEq3[offset + 31] = pols.selEq[4][offset] ? 1n : 0n;
+        pols.resultEq4[offset + 31] = pols.selEq[5][offset] ? 1n : 0n;
     }
 }
 

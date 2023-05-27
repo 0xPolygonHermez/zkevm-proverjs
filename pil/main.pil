@@ -58,7 +58,7 @@ namespace Main(%N);
     // operations
     pol commit mOp, mWR;
     pol commit sWR, sRD;
-    pol commit arithEq0, arithEq1, arithEq2, arithEq3;
+    pol commit arithEq0, arithEq1, arithEq2, arithEq3, arithEq4;
     pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashK1, hashKLen, hashKDigest;
     pol commit hashP, hashP1, hashPLen, hashPDigest;
@@ -445,7 +445,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4" -b
     */
 
     pol operations =
@@ -460,7 +460,8 @@ namespace Main(%N);
             + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
             + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
             + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * arithEq3;
+            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * arithEq3
+            + 2**48 * arithEq4;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -510,6 +511,7 @@ namespace Main(%N);
     (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
     (1 - arithEq3) * arithEq3 = 0;
+    (1 - arithEq4) * arithEq4 = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
@@ -586,14 +588,14 @@ namespace Main(%N);
     pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
     pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
 
-    arithEq0 {  1, 0, 0, 0, 0,
+    arithEq0 {  1, 0, 0, 0, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
         C0, C1, C2, C3, C4, C5, C6, C7,
         D0, D1, D2, D3, D4, D5, D6, D7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq0 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -601,8 +603,8 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    arithEq1 + arithEq3 {
-        0, arithEq1, 0, arithEq1, arithEq3,
+    arithEq1 + arithEq3 + arithEq4 {
+        0, arithEq1, 0, arithEq1, arithEq3, arithEq4,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
         C0, C1, C2, C3, C4, C5, C6, C7,
@@ -610,7 +612,7 @@ namespace Main(%N);
         E0, E1, E2, E3, E4, E5, E6, E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq1 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -619,15 +621,15 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    arithEq2 {  0, 0, 1, 1, 0,
+    arithEq2 { 0, 0, 1, 1, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
-        C0, C1, C2, C3, C4, C5, C6, C7,
-        D0, D1, D2, D3, D4, D5, D6, D7,
+        A0, A1, A2, A3, A4, A5, A6, A7,
+        B0, B1, B2, B3, B4, B5, B6, B7,
         E0, E1, E2, E3, E4, E5, E6, E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq2 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -636,7 +638,7 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2 + arithEq3;
+    cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2 + arithEq3 + arithEq4;
 
 /////////
 // Binary Plookpups
