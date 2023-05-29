@@ -107,9 +107,6 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq0[i] = 0n;
         pols.resultEq1[i] = 0n;
         pols.resultEq2[i] = 0n;
-        pols.resultEq3[i] = 0n;
-        pols.resultEq4[i] = 0n;
-        pols.resultEq5[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
@@ -272,11 +269,8 @@ module.exports.execute = async function (pols, input) {
             });
         }
         pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
-        pols.resultEq1[offset + 31] = pols.selEq[1][offset] ? 1n : 0n;
+        pols.resultEq1[offset + 31] = (pols.selEq[1][offset] || pols.selEq[3][offset] || pols.selEq[4][offset] || pols.selEq[5][offset]) ? 1n : 0n;
         pols.resultEq2[offset + 31] = pols.selEq[2][offset] ? 1n : 0n;
-        pols.resultEq3[offset + 31] = pols.selEq[4][offset] ? 1n : 0n;
-        pols.resultEq4[offset + 31] = pols.selEq[5][offset] ? 1n : 0n;
-        pols.resultEq5[offset + 31] = pols.selEq[6][offset] ? 1n : 0n;
     }
 }
 
