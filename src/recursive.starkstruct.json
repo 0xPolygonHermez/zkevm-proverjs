@@ -5,10 +5,9 @@
     "verificationHashType": "GL",
     "steps": [
         {"nBits": 20},
-        {"nBits": 17},
-        {"nBits": 14},
-        {"nBits": 11},
-        {"nBits": 8},
-        {"nBits": 5}
+        {"nBits": 16},
+        {"nBits": 12},
+        {"nBits": 9},
+        {"nBits": 6}
     ]
 }
