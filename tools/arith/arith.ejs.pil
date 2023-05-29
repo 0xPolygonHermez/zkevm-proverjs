@@ -41,16 +41,10 @@ namespace Arith(%N);
     pol commit resultEq0;
     pol commit resultEq1;
     pol commit resultEq2;
-    pol commit resultEq3;
-    pol commit resultEq4;
-    pol commit resultEq5;
 
     resultEq0 * (1 - resultEq0) = 0;
     resultEq1 * (1 - resultEq1) = 0;
     resultEq2 * (1 - resultEq2) = 0;
-    resultEq3 * (1 - resultEq3) = 0;
-    resultEq4 * (1 - resultEq4) = 0;
-    resultEq5 * (1 - resultEq5) = 0;
 
     // FEATURE:
 
