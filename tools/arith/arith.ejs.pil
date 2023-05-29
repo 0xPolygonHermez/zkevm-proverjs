@@ -8,8 +8,12 @@
     EQ2: 2 * s * y1 - 3 * x1 * x1 + (q0 * p)    lambda - DBL
     EQ3: s * s - x1 - x2 - x3 + (q1 * p)        x3
     EQ4: s * x1 - s * x3 - y1 - y3 + (q2 * p)   y3
-    EQ5:  x1 * x2 - y1 * y2 - x3  + (q0 * p)
-    EQ6:  y1 * x2 + x1 * y2 - y3 + (q1 * p)
+    EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
+    EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
+	EQ7:  x1 + x2 - x3 + (q1 * p)
+	EQ8:  y1 + y2 - y3 + (q2 * p)
+	EQ9:  x1 - x2 - x3 + (q1 * p)
+	EQ10: y1 - y2 - y3 + (q2 * p)
 
 */
 include "global.pil";
@@ -39,12 +43,14 @@ namespace Arith(%N);
     pol commit resultEq2;
     pol commit resultEq3;
     pol commit resultEq4;
+    pol commit resultEq5;
 
     resultEq0 * (1 - resultEq0) = 0;
     resultEq1 * (1 - resultEq1) = 0;
     resultEq2 * (1 - resultEq2) = 0;
     resultEq3 * (1 - resultEq3) = 0;
     resultEq4 * (1 - resultEq4) = 0;
+    resultEq5 * (1 - resultEq5) = 0;
 
     // FEATURE:
 
@@ -364,6 +370,24 @@ namespace Arith(%N);
                                                                   offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
 
 
+    /*******
+    *
+    * EQ9:  x1 - x2 - x3 + (q1 * p)
+    *
+    *******/
+
+    <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ10:  y1 - y2 - y3 + (q2 * p)
+    *
+    *******/
+
+    <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
     pol eq2 = <%- clksel(['eq2_[0..31]'], 'Global.CLK32') %>;
@@ -373,11 +397,13 @@ namespace Arith(%N);
     pol eq6 = <%- clksel(['eq6_[0..31]'], 'Global.CLK32') %>;
     pol eq7 = <%- clksel(['eq7_[0..31]'], 'Global.CLK32') %>;
     pol eq8 = <%- clksel(['eq8_[0..31]'], 'Global.CLK32') %>;
+    pol eq9 = <%- clksel(['eq9_[0..31]'], 'Global.CLK32') %>;
+    pol eq10 = <%- clksel(['eq10_[0..31]'], 'Global.CLK32') %>;
 
-    pol commit selEq[6];
+    pol commit selEq[7];
 
-    <%- latch(['selEq[0..5]'],'Global.CLK32[31]') %>
-    <%- binary(['selEq[0..5]']) %>
+    <%- latch(['selEq[0..6]'],'Global.CLK32[31]') %>
+    <%- binary(['selEq[0..6]']) %>
 
     pol commit carry[3];
 
@@ -398,3 +424,6 @@ namespace Arith(%N);
     selEq[4] * (eq6 + carry[2]) = selEq[4] * carry[2]' * 2**16;
     selEq[5] * (eq7 + carry[1]) = selEq[5] * carry[1]' * 2**16;
     selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;
+    // selEq[6] * (eq9 + eq10 + carry[1] + carry[2]) = selEq[6] * (carry[1]' + carry[2]') * 2**16;
+    selEq[6] * (eq9 + carry[1]) = selEq[6] * carry[1]' * 2**16;
+    selEq[6] * (eq10 + carry[2]) = selEq[6] * carry[2]' * 2**16;
