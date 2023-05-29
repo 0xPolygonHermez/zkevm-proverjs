@@ -141,6 +141,7 @@ class FullTracer {
         }
 
         this.execution_trace[this.execution_trace.length - 1].error = errorName;
+        this.call_trace[this.call_trace.length - 1].error = errorName;
 
         // Revert logs
         for (const [key] of Object.entries(this.logs)) {
@@ -239,6 +240,7 @@ class FullTracer {
         response.call_trace.context = context;
         response.call_trace.steps = [];
         response.execution_trace = [];
+        response.effective_percentage = Number(getVarFromCtx(ctx, false, 'effectivePercentageRLP'));
 
         response.txCounters = {
             cnt_arith: Number(ctx.cntArith),
@@ -295,6 +297,7 @@ class FullTracer {
     onFinishTx(ctx) {
         const response = this.finalTrace.responses[this.txCount];
         response.call_trace.context.from = bnToPaddedHex(getVarFromCtx(ctx, true, 'txSrcOriginAddr'), 40);
+        response.effective_gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'txGasPrice'));
 
         // Update spent counters
         response.txCounters = {
@@ -729,7 +732,7 @@ class FullTracer {
         }
         // If is an ether transfer, don't add stop opcode to trace
         if (singleInfo.opcode === 'STOP'
-            && (typeof prevStep === 'undefined' || opCall.includes(prevStep.opcode) || (opCreate.includes(prevStep.opcode) && Number(prevStep.gas_cost) <= 32000))
+            && (typeof prevStep === 'undefined' || (opCreate.includes(prevStep.opcode) && Number(prevStep.gas_cost) <= 32000))
             && Number(getVarFromCtx(ctx, false, 'bytecodeLength')) === 0) {
             this.call_trace.pop();
             this.execution_trace.pop();

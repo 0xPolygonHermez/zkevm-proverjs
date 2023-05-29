@@ -19,12 +19,21 @@ const providerURL = 'http://127.0.0.1:8545';
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 const config = require('./config.json');
 
+const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
+const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json'];
-const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json'];
+const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
+
+const errorsMap = {
+    OOG: 'out of gas',
+    invalidStaticTx: 'write protection',
+    revert: 'execution reverted',
+    invalidOpcode: 'invalid opcode: INVALID',
+};
 
 async function main() {
     try {
@@ -69,7 +78,7 @@ async function main() {
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
                     const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i);
-                    if (!_.isEmpty(changes) && !includesInvalidOpcode(gethTraces[i].structLogs)) {
+                    if (!_.isEmpty(changes) && !includesInvalidOpcode(ftTraces[i].execution_trace) && !includesInvalidError(changes, ftTraces[i].execution_trace)) {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
@@ -95,13 +104,25 @@ async function main() {
     }
 }
 
-function includesInvalidOpcode(changes) {
-    if (!changes) {
+function includesInvalidError(changes, executorTrace) {
+    if (JSON.stringify(changes).includes('return data out of bounds')) {
+        return true;
+    }
+    if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
+        return true;
+    }
+
+    return false;
+}
+
+function includesInvalidOpcode(steps) {
+    if (!steps) {
         return false;
     }
-    const str = JSON.stringify(changes);
-    for (const op of invalidOpcodes) {
-        if (str.includes(op)) {
+    for (const step of steps) {
+        if (invalidOpcodes.includes(step.opcode)) {
+            console.log(`Invalid opcode found: ${step.opcode}`);
+
             return true;
         }
     }
@@ -172,12 +193,12 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
 }
 async function compareTracesByMethod(geth, fullTracer, method, key) {
     switch (method) {
-    case 'defaultTrace':
-        return compareDefaultTrace(geth, fullTracer, key);
+    case 'defaultTracer':
+        return compareDefaultTracer(geth, fullTracer, key);
     case 'callTracer':
         return compareCallTracer(geth, fullTracer, key);
     default:
-        return compareDefaultTrace(geth, fullTracer, key);
+        return compareDefaultTracer(geth, fullTracer, key);
     }
 }
 
@@ -201,38 +222,63 @@ async function compareCallTracer(geth, fullTracer, i) {
         value: `0x${Number(context.value).toString(16)}`,
         type: context.type,
     };
-
+    if (fullTracer.error !== '') {
+        newFT.error = errorsMap[fullTracer.error];
+    }
+    // if is a deploy, replace 0x to by create address
+    if (context.type === 'CREATE') {
+        newFT.to = fullTracer.create_address;
+    }
     // Fill calls array
-    const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
-    const opCreate = ['CREATE', 'CREATE2'];
-    const zeroCostOp = ['STOP', 'REVERT', 'RETURN'];
-
+    const callData = [];
+    let ctx = 0;
     let currentStep = 0;
-    let lastCall = {};
     for (const step of fullTracer.call_trace.steps) {
-        const call = {};
-        // Current step
-        if (opCall.includes(step.opcode)) {
-            const { contract } = step;
-            call.from = contract.address;
-            // call.gas = `0x${Number(contract.gas).toString(16)}`;
-            call.gas = `0x${Number(fullTracer.call_trace.steps[currentStep + 1].gas).toString(16)}`;
-            call.gasUsed = `0x${(Number(step.gas) - Number(fullTracer.call_trace.steps[currentStep + 1].gas)).toString(16)}`;
-            call.to = contract.caller;
-            call.input = fullTracer.call_trace.steps[currentStep + 1].contract.data;
-            call.output = contract.return_data;
-            call.value = `0x${Number(contract.value).toString(16)}`;
-            call.type = step.opcode;
-            call.calls = [];
-            let { calls } = newFT;
-            for (let j = 1; j < step.depth; j++) {
-                calls = calls[calls.length - 1].calls;
+        // Previous step analysis
+        if (currentStep > 0) {
+            const previousStep = fullTracer.call_trace.steps[currentStep - 1];
+            // Increase depth
+            if (previousStep.depth < step.depth) {
+                ctx++;
+                callData[ctx] = {
+                    from: step.contract.caller,
+                    gas: `0x${Number(step.gas).toString(16)}`,
+                    gasUsed: '0x0',
+                    to: step.contract.address,
+                    input: step.contract.data,
+                    value: `0x${Number(step.contract.value).toString(16)}`,
+                    type: previousStep.opcode,
+                    calls: [],
+                };
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx]);
+            } else if (previousStep.depth > step.depth) {
+                // Decrease depth
+                callData[ctx].output = step.return_data;
+                if (previousStep.error !== '') {
+                    callData[ctx].error = errorsMap[previousStep.error];
+                }
+                ctx--;
+                // Update gas cost
+                if (ctx > 0) {
+                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + (Number(previousStep.contract.gas) - Number(step.gas))).toString(16)}`;
+                } else if (opCreate.includes(previousStep.contract.type)) {
+                    callData[ctx + 1].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas)).toString(16)}`;
+                }
             }
-            calls.push(call);
-            lastCall = call;
+            if (ctx > 0 && !opCall.includes(step.opcode)) {
+                callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(step.gas_cost)).toString(16)}`;
+            }
         }
         currentStep++;
     }
+
     fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
@@ -244,7 +290,7 @@ async function compareCallTracer(geth, fullTracer, i) {
  * @param {Object} fullTracer trace
  * @returns Array with the differences found
  */
-async function compareDefaultTrace(geth, fullTracer, i) {
+async function compareDefaultTracer(geth, fullTracer, i) {
     // Generate geth trace from fullTracer trace
     const newFT = {
         gas: Number(fullTracer.gas_used),
@@ -276,10 +322,7 @@ async function compareDefaultTrace(geth, fullTracer, i) {
             newStep.storage = step.storage;
         }
         if (!_.isEmpty(step.error)) {
-            newStep.error = step.error;
-            if (newStep.error === 'OOG') {
-                newStep.error = 'out of gas';
-            }
+            newStep.error = errorsMap[step.error];
         }
         if (newStep.op === 'SHA3') {
             newStep.op = 'KECCAK256';

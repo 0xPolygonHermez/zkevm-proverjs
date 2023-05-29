@@ -24,7 +24,7 @@ To add new tests to the script append the test name to `config.json`:
    {
         "testName":"op-invalid", // name of the test from test-vectors
         "testToDebug": 0, // Test index
-        "traceMethod": "defaultTrace",
+        "traceMethod": "defaultTracer",
         "isEthereumTest": false // Set the flag to true in case of ethereum test instead of state transition test
    }
 ```
@@ -34,7 +34,7 @@ It's also posible to add a state transition or ethereum suite test folder. In th
 ```
    {
         "folderName": "calldata", // name of the folder in state transition
-        "traceMethod": "defaultTrace",
+        "traceMethod": "defaultTracer",
         "isEthereumTest": false
    }
 ```
@@ -42,11 +42,18 @@ In case is a Ethereum test suite folder
 ```
    {
         "folderName":"stArgsZeroOneBalance", // name of the folder in ethereum tests
-        "traceMethod": "defaultTrace",
+        "traceMethod": "defaultTracer",
         "isEthereumTest": true
    }
 ```
-
+In case to test callTracer
+```
+   {
+        "folderName":"stArgsZeroOneBalance", // name of the folder in ethereum tests
+        "traceMethod": "callTracer", // change emthod to callTracer
+        "isEthereumTest": true
+   }
+```
 ### Known differences:
 
 In case of a failing opcode runing in a depth > 1, for example out of gas or doing a sstore in a static call the gas cost is computed differently. In geth, the gas cost is shown as the cost of the correct opcode execution. In case of full tracer, the gas cost is shown as the gas cost of the error, the remaining gas of the call.
