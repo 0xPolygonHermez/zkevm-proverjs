@@ -121,6 +121,7 @@
     "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v1.0.1-rc.3",
     "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v1.1.0-fork.4",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v1.0.0-fork.3",
+    "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
     "circomlibjs": "^0.1.1",
@@ -130,8 +131,8 @@
     "ffjavascript": "^0.2.55",
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
-    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#develop",
     "lodash": "^4.17.21",
+    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#develop",
     "pilcom": "0.0.23",
     "snarkjs": "0.6.9",
     "yargs": "^17.4.0"

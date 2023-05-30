@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable newline-before-return */
 /* eslint-disable multiline-comment-style */
 /* eslint-disable no-continue */
@@ -24,14 +25,25 @@ const providerURL = 'http://127.0.0.1:8545';
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 const config = require('./config.json');
 
+const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
+const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
-const invalidTests = ['custom-tx.json', 'op-call-fail.json', 'access-list.json'];
-const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'RevertDepthCreateAddressCollisionBerlin'];
+const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'PUSH0'];
+const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
+const opcodes = require('../../src/sm/sm_main/debug/opcodes');
+
+const errorsMap = {
+    ROM_ERROR_OUT_OF_GAS: 'out of gas',
+    ROM_ERROR_INVALID_STATIC: 'write protection',
+    ROM_ERROR_EXECUTION_REVERTED: 'execution reverted',
+    ROM_ERROR_INVALID_OPCODE: 'invalid opcode: INVALID',
+};
 
 const EXECUTOR_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/executor/v1/executor.proto');
-const DB_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/statedb/v1/statedb.proto');
+const DB_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/hashdb/v1/hashdb.proto');
 
 const executorPackageDefinition = protoLoader.loadSync(
     EXECUTOR_PROTO_PATH,
@@ -54,11 +66,11 @@ const dbPackageDefinition = protoLoader.loadSync(
     },
 );
 const zkProverProto = grpc.loadPackageDefinition(executorPackageDefinition).executor.v1;
-const stateDbProto = grpc.loadPackageDefinition(dbPackageDefinition).statedb.v1;
+const hashDbProto = grpc.loadPackageDefinition(dbPackageDefinition).hashdb.v1;
 const { ExecutorService } = zkProverProto;
-const { StateDBService } = stateDbProto;
-const client = new ExecutorService('51.210.116.237:50078', grpc.credentials.createInsecure());
-const dbClient = new StateDBService('51.210.116.237:50068', grpc.credentials.createInsecure());
+const { HashDBService } = hashDbProto;
+const client = new ExecutorService('51.210.116.237:50079', grpc.credentials.createInsecure());
+const dbClient = new HashDBService('51.210.116.237:50069', grpc.credentials.createInsecure());
 let tn;
 let fn;
 let tid;
@@ -71,7 +83,7 @@ async function main() {
         const noExecTests = noExec['breaks-computation'].concat(noExec['not-supported']);
         for (const configTest of config) {
             const {
-                testName, testToDebug, isEthereumTest, folderName, disable,
+                testName, testToDebug, isEthereumTest, folderName, disable, traceMethod,
             } = configTest;
             if (disable) {
                 continue;
@@ -82,6 +94,7 @@ async function main() {
             const tests = createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName);
             for (let j = 0; j < tests.length; j++) {
                 const test = tests[j];
+                console.log(chalk.green(`Checking ${test.testName}-${test.id}`));
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
                 || t.name === `${test.folderName}/${test.testName}`).length > 0) {
@@ -98,7 +111,7 @@ async function main() {
                 const txsHashes = isEthereumTest ? await runTxsFromEthTest(test) : await runTxs(test);
 
                 // Get geth traces from debug call
-                gethTraces = await getGethTrace(txsHashes, test.testName);
+                gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod);
                 // Get trace from full tracer
                 const ftTxHashes = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length);
 
@@ -109,7 +122,7 @@ async function main() {
                 fn = test.folderName;
                 tid = test.id;
                 console.log(`Processing ${fn}/${tn}-${tid}`);
-                checkBytecode(input, 0, ftTxHashes);
+                checkBytecode(input, 0, ftTxHashes, traceMethod);
 
                 while (waiting) {
                     await sleep(2000);
@@ -130,10 +143,27 @@ async function main() {
     }
 }
 
-function includesInvalidOpcode(changes) {
-    const str = JSON.stringify(changes);
-    for (const op of invalidOpcodes) {
-        if (str.includes(op)) {
+function includesInvalidError(changes, executorTrace) {
+    for (const error of invalidErrors) {
+        if (JSON.stringify(changes).includes(error)) {
+            return true;
+        }
+    }
+    if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
+        return true;
+    }
+
+    return false;
+}
+
+function includesInvalidOpcode(steps) {
+    if (!steps) {
+        return false;
+    }
+    for (const step of steps) {
+        if (invalidOpcodes.includes(step.op)) {
+            console.log(`Invalid opcode found: ${step.op}`);
+
             return true;
         }
     }
@@ -148,10 +178,10 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             test = [test[keysTests[testToDebug]]];
         }
         const inputTestPath = isEthereumTest ? path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
-        const tn = isEthereumTest ? testName.split('/')[1] : testName;
-        const fn = isEthereumTest ? testName.split('/')[0] : testName;
+        const testN = isEthereumTest ? testName.split('/')[1] : testName;
+        const folderN = isEthereumTest ? testName.split('/')[0] : testName;
         Object.assign(test[0], {
-            testName: tn, inputTestPath, testToDebug, id: testToDebug, folderName: fn,
+            testName: testN, inputTestPath, testToDebug, id: testToDebug, folderName: folderN,
         });
 
         return test;
@@ -200,10 +230,10 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
 }
 function compareTracesByMethod(geth, fullTracer, method, key) {
     switch (method) {
-    case 'defaultTrace':
-        return compareDefaultTrace(geth, fullTracer, key);
-    case 'defaultTraceProver':
-        return compareDefaultTraceProver(geth, fullTracer, key);
+    case 'defaultTracer':
+        return compareDefaultTracer(geth, fullTracer, key);
+    case 'callTracer':
+        return compareCallTracer(geth, fullTracer, key);
     default:
         return compareDefaultTrace(geth, fullTracer, key);
     }
@@ -215,7 +245,181 @@ function compareTracesByMethod(geth, fullTracer, method, key) {
  * @param {Object} fullTracer trace
  * @returns Array with the differences found
  */
-function compareDefaultTraceProver(geth, fullTracer, i) {
+function compareCallTracer(geth, fullTracer, i) {
+    const { context } = fullTracer.call_trace;
+    // Generate geth trace from fullTracer trace
+    const newFT = {
+        from: context.from,
+        gas: `0x${Number(context.gas).toString(16)}`,
+        gasUsed: `0x${Number(context.gas_used).toString(16)}`,
+        to: context.to,
+        input: `0x${context.data.toString('hex')}`,
+        output: `0x${context.output.toString('hex')}`,
+        calls: [],
+        value: `0x${Number(context.value).toString(16)}`,
+        type: context.type,
+    };
+    if (fullTracer.error !== 'ROM_ERROR_NO_ERROR') {
+        newFT.error = errorsMap[fullTracer.error];
+    }
+    // if is a deploy, replace 0x to by create address
+    if (context.type === 'CREATE') {
+        newFT.to = `0x${fullTracer.create_address}`;
+    }
+    // Fill calls array
+    const callData = [];
+    let ctx = 0;
+    let currentStep = 0;
+    for (const step of fullTracer.call_trace.steps) {
+        // Previous step analysis
+        if (currentStep > 0) {
+            const previousStep = fullTracer.call_trace.steps[currentStep - 1];
+            // Increase depth
+            if (previousStep.depth < step.depth) {
+                ctx++;
+                callData[ctx] = {
+                    from: `0x${step.contract.caller}`,
+                    gas: `0x${Number(step.gas).toString(16)}`,
+                    gasUsed: '0x0',
+                    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(`0x${step.contract.address}`)), 20),
+                    input: `0x${step.contract.data.toString('hex')}`,
+                    value: `0x${Number(step.contract.value).toString(16)}`,
+                    type: opcodes[previousStep.op][0],
+                    calls: [],
+                };
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx]);
+            } else if (previousStep.depth > step.depth) {
+                // Decrease depth
+                callData[ctx].output = `0x${step.return_data.toString('hex')}`;
+                if (previousStep.error !== 'ROM_ERROR_NO_ERROR') {
+                    callData[ctx].error = errorsMap[previousStep.error];
+                    let callCost = 0;
+                    if (opCall.includes(previousStep.contract.type)) {
+                        callCost = 100;
+                    }
+                    callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
+                    if (previousStep.error !== 'ROM_ERROR_EXECUTION_REVERTED') {
+                        callData[ctx].gasUsed = callData[ctx].gas;
+                    }
+                }
+                ctx--;
+                // Update gas used
+                if (ctx > 0 && previousStep.error === 'ROM_ERROR_NO_ERROR') {
+                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + (Number(previousStep.contract.gas) - Number(step.gas))).toString(16)}`;
+                } else if (opCreate.includes(previousStep.contract.type && previousStep.error === 'ROM_ERROR_NO_ERROR')) {
+                    callData[ctx + 1].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas)).toString(16)}`;
+                }
+                // Detect precompiled call
+            } else if (opCall.includes(opcodes[previousStep.op][0]) && previousStep.depth === step.depth) {
+                const to = BigInt(`0x${previousStep.stack[previousStep.stack.length - 2]}`);
+                // Check precompiled destination
+                if (to > 0 && to < 10) {
+                    callData[ctx + 1] = {
+                        from: `0x${step.contract.address}`,
+                        gas: `0x${Number(step.gas).toString(16)}`,
+                        gasUsed: `0x${(Number(previousStep.gas_cost) - 100).toString(16)}`,
+                        to: ethers.utils.hexZeroPad(ethers.utils.hexlify(to), 20),
+                        input: getFromMemory(previousStep.memory.toString('hex'), previousStep.stack, opcodes[previousStep.op][0]),
+                        output: `0x${step.return_data.toString('hex')}`,
+                        type: opcodes[previousStep.op][0],
+                        value: '0x0',
+                        calls: [],
+                    };
+                    // Compute gas sent to call
+                    let gasSent = Number(previousStep.gas) - 100;
+                    gasSent -= Math.floor(gasSent / 64);
+                    callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                    // Remove value from staticcall
+                    if (previousStep.opcode === 'STATICCALL') {
+                        delete callData[ctx + 1].value;
+                    }
+                    let { calls } = newFT;
+                    // Fill call in the right depth
+                    if (previousStep.depth > 1) {
+                        for (let j = 1; j < previousStep.depth; j++) {
+                            calls = calls[calls.length - 1].calls;
+                        }
+                    }
+                    calls.push(callData[ctx + 1]);
+                } else {
+                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(previousStep.gas_cost)).toString(16)}`;
+                }
+                // Detect failed create2
+            } else if (opCreate.includes(opcodes[previousStep.op][0]) && previousStep.depth === step.depth) {
+                callData[ctx + 1] = {
+                    from: previousStep.contract.address,
+                    gas: `0x${Number(step.gas).toString(16)}`,
+                    gasUsed: '0x0',
+                    to: step.stack[step.stack.length - 1],
+                    input: getFromMemory(previousStep.memory, previousStep.stack, opcodes[previousStep.op][0]),
+                    output: step.return_data,
+                    type: opcodes[previousStep.op][0],
+                    value: previousStep.stack[previousStep.stack.length - 4],
+                    calls: [],
+                };
+                // Compute gas sent to call
+                let gasSent = Number(previousStep.gas) - 32000;
+                gasSent -= Math.floor(gasSent / 64);
+                callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx + 1]);
+            }
+            if (ctx > 0 && !opCall.includes(opcodes[step.op][0])) {
+                callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(step.gas_cost)).toString(16)}`;
+            }
+        }
+        currentStep++;
+    }
+
+    fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
+
+    return compareTraces(geth, newFT);
+}
+
+function getFromMemory(mem, stack, opcode) {
+    let offset;
+    let size;
+    if (opcode === 'STATICCALL') {
+        offset = Number(`0x${stack[stack.length - 3]}`);
+        size = Number(`0x${stack[stack.length - 4]}`);
+    } else if (opcode === 'REVERT') {
+        offset = Number(`0x${stack[stack.length - 1]}`);
+        size = Number(`0x${stack[stack.length - 2]}`);
+    } else if (opcode === 'CREATE2') {
+        offset = Number(`0x${stack[stack.length - 2]}`);
+        size = Number(`0x${stack[stack.length - 3]}`);
+    } else {
+        offset = Number(`0x${stack[stack.length - 4]}`);
+        size = Number(`0x${stack[stack.length - 5]}`);
+    }
+    let value = '0x';
+    value += mem.slice(offset * 2, (offset + size) * 2);
+    value = value.padEnd(size * 2 + 2, '0');
+
+    return value;
+}
+/**
+ * Compare a geth trace with a full tracer trace
+ * @param {Object} geth trace
+ * @param {Object} fullTracer trace
+ * @returns Array with the differences found
+ */
+function compareDefaultTracer(geth, fullTracer, i) {
     // Generate geth trace from fullTracer trace
     const newFT = {
         gas: Number(fullTracer.gas_used),
@@ -398,28 +602,28 @@ function compareTraces(geth, fullTracer) {
  * @param {Object} input proverjs json input
  * @param {Number} bcPos position of the bytecode in the contracts bytecode map
  */
-function checkBytecode(input, bcPos, txsHashes) {
+function checkBytecode(input, bcPos, txsHashes, traceMethod) {
     if (bcPos >= Object.keys(input.contractsBytecode).length) {
-        processBatch(input, txsHashes, 0);
+        processBatch(input, txsHashes, 0, traceMethod);
         return;
     }
     const hash = Object.keys(input.contractsBytecode)[bcPos];
     // Only process bytecodes not address - bcHash
     if (hash.length < 64) {
-        checkBytecode(input, bcPos + 1, txsHashes);
+        checkBytecode(input, bcPos + 1, txsHashes, traceMethod);
         return;
     }
     const key = scalar2fea4(Scalar.e(hash));
     dbClient.GetProgram({ key }, (error, res) => {
         if (error) {
             console.log(error);
-            setBytecode(input, bcPos, txsHashes);
+            setBytecode(input, bcPos, txsHashes, traceMethod);
             throw error;
         }
         if (res.result.code === 'CODE_DB_KEY_NOT_FOUND') {
-            setBytecode(input, bcPos, txsHashes);
+            setBytecode(input, bcPos, txsHashes, traceMethod);
         } else {
-            checkBytecode(input, bcPos + 1, txsHashes);
+            checkBytecode(input, bcPos + 1, txsHashes, traceMethod);
         }
     });
 }
@@ -429,7 +633,7 @@ function checkBytecode(input, bcPos, txsHashes) {
  * @param {Object} input proverjs json input
  * @param {Number} bcPos position of the bytecode in the contracts bytecode map
  */
-function setBytecode(input, bcPos, txsHashes) {
+function setBytecode(input, bcPos, txsHashes, traceMethod) {
     const hash = Object.keys(input.contractsBytecode)[bcPos];
     const bytecode = input.contractsBytecode[hash].startsWith('0x') ? input.contractsBytecode[hash].slice(2) : input.contractsBytecode[hash];
     const key = scalar2fea4(Scalar.e(hash));
@@ -438,7 +642,7 @@ function setBytecode(input, bcPos, txsHashes) {
             console.log(error);
             throw error;
         }
-        checkBytecode(input, bcPos + 1, txsHashes);
+        checkBytecode(input, bcPos + 1, txsHashes, traceMethod);
     });
 }
 
@@ -446,7 +650,7 @@ function setBytecode(input, bcPos, txsHashes) {
  * Sends input to proverC for execution
  * @param {Object} input proverjs json input
  */
-function processBatch(input, txsHashes, currentHash) {
+function processBatch(input, txsHashes, currentHash, traceMethod) {
     if (currentHash >= txsHashes.length) {
         waiting = false;
         return;
@@ -456,15 +660,16 @@ function processBatch(input, txsHashes, currentHash) {
         try {
             if (error) throw error;
             // Compare trace
-            const changes = compareTracesByMethod(gethTraces[currentHash], res.responses[currentHash], 'defaultTraceProver', currentHash);
-            if (!_.isEmpty(changes) && !includesInvalidOpcode(gethTraces[currentHash].structLogs)) {
+            const changes = compareTracesByMethod(gethTraces[currentHash], res.responses[currentHash], traceMethod, currentHash);
+            if (!_.isEmpty(changes) && !includesInvalidOpcode(res.responses[currentHash].execution_trace)
+            && !includesInvalidError(changes, res.responses[currentHash].execution_trace)) {
                 const message = `Diff found at test ${fn}/${tn}-${tid}-${currentHash}: ${JSON.stringify(changes)}`;
                 console.log(chalk.red(message));
                 process.exit(1);
             } else {
                 console.log(chalk.green(`No differences for test ${fn}/${tn}-${tid}-${currentHash}`));
                 // check next txHash
-                processBatch(input, txsHashes, currentHash + 1);
+                processBatch(input, txsHashes, currentHash + 1, traceMethod);
             }
 
             return;
@@ -499,6 +704,7 @@ function formatInput(jsInput, txHash) {
             enable_memory: 1,
             enable_return_data: 1,
             tx_hash_to_generate_execute_trace: Buffer.from(txHash.slice(2), 'hex'),
+            tx_hash_to_generate_call_trace: Buffer.from(txHash.slice(2), 'hex'),
         },
     };
 }
@@ -522,19 +728,27 @@ function formatDb(jsDb) {
  * @param {String} testName Name of the test
  * @returns Array with all the debug geth traces
  */
-async function getGethTrace(txHashes, testName) {
-    const gethTraces = [];
+async function getGethTrace(txHashes, testName, traceMethod) {
+    const tmpGethTraces = [];
+    let traceConfig = {
+        enableMemory: true,
+        disableStack: false,
+        disableStorage: false,
+        enableReturnData: true,
+    };
+    switch (traceMethod) {
+    case 'callTracer':
+        traceConfig = { tracer: 'callTracer' };
+        break;
+    default:
+        break;
+    }
     for (const [testKey, txHash] of Object.entries(txHashes)) {
         const response = await provider.send('debug_traceTransaction', [
             txHash,
-            {
-                enableMemory: true,
-                disableStack: false,
-                disableStorage: false,
-                enableReturnData: true,
-            },
+            traceConfig,
         ]);
-        gethTraces.push(response);
+        tmpGethTraces.push(response);
         // Write tracer output to file
         if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
             fs.mkdirSync(path.join(__dirname, 'geth-traces'));
@@ -542,7 +756,7 @@ async function getGethTrace(txHashes, testName) {
         fs.writeFileSync(path.join(__dirname, `geth-traces/${testName.split('.')[0]}_${testKey}.json`), JSON.stringify(response, null, 2));
     }
 
-    return gethTraces;
+    return tmpGethTraces;
 }
 
 /**
@@ -592,7 +806,7 @@ async function runTxs(test) {
                 tx.chainId = CHAIN_ID;
             }
             // Check deploy
-            if (tx.to === '0x') {
+            if (tx.to === '0x' || tx.to === '') {
                 delete tx.to;
             }
             try {
@@ -690,7 +904,7 @@ async function configureGenesis(test, isEthereumTest) {
         for (const account of Object.keys(test.pre)) {
             genesis.alloc[account.slice(2)] = {
                 nonce: String(Number(test.pre[account].nonce)),
-                balance: String(Number(test.pre[account].balance)),
+                balance: String(BigInt(test.pre[account].balance)),
                 code: test.pre[account].code,
                 storage: test.pre[account].storage,
             };

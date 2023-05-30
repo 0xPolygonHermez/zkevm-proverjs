@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable max-len */
 /* eslint-disable no-continue */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-plusplus */
@@ -24,8 +26,9 @@ const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json'];
-const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'RevertDepthCreateAddressCollisionBerlin'];
+const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
+const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
 
 const errorsMap = {
@@ -33,6 +36,8 @@ const errorsMap = {
     invalidStaticTx: 'write protection',
     revert: 'execution reverted',
     invalidOpcode: 'invalid opcode: INVALID',
+    overflow: 'stack limit reached 1024 (1023)',
+    underflow: 'stack underflow (0 <=> 1)',
 };
 
 async function main() {
@@ -54,11 +59,13 @@ async function main() {
             const tests = createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName);
             for (let j = 0; j < tests.length; j++) {
                 const test = tests[j];
+                console.log(chalk.green(`Checking ${test.testName}-${test.id}`));
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
                 || t.name === `${test.folderName}/${test.testName}`).length > 0) {
                     continue;
                 }
+
                 // Configure genesis for test
                 await configureGenesis(test, isEthereumTest);
 
@@ -105,9 +112,12 @@ async function main() {
 }
 
 function includesInvalidError(changes, executorTrace) {
-    if (JSON.stringify(changes).includes('return data out of bounds')) {
-        return true;
+    for (const error of invalidErrors) {
+        if (JSON.stringify(changes).includes(error)) {
+            return true;
+        }
     }
+
     if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
         return true;
     }
@@ -244,7 +254,7 @@ async function compareCallTracer(geth, fullTracer, i) {
                     from: step.contract.caller,
                     gas: `0x${Number(step.gas).toString(16)}`,
                     gasUsed: '0x0',
-                    to: step.contract.address,
+                    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(step.contract.address)), 20),
                     input: step.contract.data,
                     value: `0x${Number(step.contract.value).toString(16)}`,
                     type: previousStep.opcode,
@@ -263,14 +273,86 @@ async function compareCallTracer(geth, fullTracer, i) {
                 callData[ctx].output = step.return_data;
                 if (previousStep.error !== '') {
                     callData[ctx].error = errorsMap[previousStep.error];
+                    let callCost = 0;
+                    if (opCall.includes(previousStep.contract.type)) {
+                        callCost = 100;
+                    }
+                    callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
+                    if (previousStep.error !== 'revert') {
+                        callData[ctx].gasUsed = callData[ctx].gas;
+                    }
                 }
                 ctx--;
-                // Update gas cost
-                if (ctx > 0) {
+                // Update gas used
+                if (ctx > 0 && previousStep.error === '') {
                     callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + (Number(previousStep.contract.gas) - Number(step.gas))).toString(16)}`;
-                } else if (opCreate.includes(previousStep.contract.type)) {
+                } else if (opCreate.includes(previousStep.contract.type) && previousStep.error === '') {
                     callData[ctx + 1].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas)).toString(16)}`;
                 }
+
+                // Detect precompiled call
+            } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth) {
+                const to = BigInt(previousStep.stack[previousStep.stack.length - 2]);
+                // Check precompiled destination
+                if (to > 0 && to < 10) {
+                    callData[ctx + 1] = {
+                        from: step.contract.address,
+                        gas: `0x${Number(step.gas).toString(16)}`,
+                        gasUsed: `0x${(Number(previousStep.gas_cost) - 100).toString(16)}`,
+                        to: ethers.utils.hexZeroPad(ethers.utils.hexlify(to), 20),
+                        input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
+                        output: step.return_data,
+                        type: previousStep.opcode,
+                        value: '0x0',
+                        calls: [],
+                    };
+                    // Compute gas sent to call
+                    let gasSent = Number(previousStep.gas) - 100;
+                    gasSent -= Math.floor(gasSent / 64);
+                    callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                    // Remove value from staticcall
+                    if (previousStep.opcode === 'STATICCALL') {
+                        delete callData[ctx + 1].value;
+                    }
+                    let { calls } = newFT;
+                    // Fill call in the right depth
+                    if (previousStep.depth > 1) {
+                        for (let j = 1; j < previousStep.depth; j++) {
+                            calls = calls[calls.length - 1].calls;
+                        }
+                    }
+                    calls.push(callData[ctx + 1]);
+                } else {
+                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(previousStep.gas_cost)).toString(16)}`;
+                }
+            // Detect failed create2
+            } else if (opCreate.includes(previousStep.opcode) && previousStep.depth === step.depth) {
+                callData[ctx + 1] = {
+                    from: previousStep.contract.address,
+                    gas: `0x${Number(step.gas).toString(16)}`,
+                    gasUsed: '0x0',
+                    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(step.stack[step.stack.length - 1])), 20),
+                    input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
+                    output: step.return_data,
+                    type: previousStep.opcode,
+                    value: previousStep.stack[previousStep.stack.length - 1],
+                    calls: [],
+                };
+
+                // Compute gas sent to call
+                let gasSent = Number(previousStep.gas) - 32000;
+                gasSent -= Math.floor(gasSent / 64);
+                callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx + 1]);
             }
             if (ctx > 0 && !opCall.includes(step.opcode)) {
                 callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(step.gas_cost)).toString(16)}`;
@@ -278,12 +360,45 @@ async function compareCallTracer(geth, fullTracer, i) {
         }
         currentStep++;
     }
-
+    // Set revert reason
+    if (newFT.error === 'execution reverted') {
+        const step = fullTracer.call_trace.steps[currentStep - 1];
+        const reason = getFromMemory(step.memory, step.stack, step.opcode);
+        try {
+            const decodedReason = ethers.utils.defaultAbiCoder.decode(['string'], `0x${reason.slice(10)}`)[0];
+            newFT.revertReason = decodedReason;
+        } catch (e) {
+            console.log("Can't decode revert reason");
+        }
+    }
     fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
 }
 
+function getFromMemory(mem, stack, opcode) {
+    let offset;
+    let size;
+    if (opcode === 'STATICCALL') {
+        offset = Number(stack[stack.length - 3]);
+        size = Number(stack[stack.length - 4]);
+    } else if (opcode === 'REVERT') {
+        offset = Number(stack[stack.length - 1]);
+        size = Number(stack[stack.length - 2]);
+    } else if (opcode === 'CREATE2') {
+        offset = Number(stack[stack.length - 2]);
+        size = Number(stack[stack.length - 3]);
+    } else {
+        offset = Number(stack[stack.length - 4]);
+        size = Number(stack[stack.length - 5]);
+    }
+    let value = '0x';
+    mem = mem.join('');
+    value += mem.slice(offset * 2, (offset + size) * 2);
+    value = value.padEnd(size * 2 + 2, '0');
+
+    return value;
+}
 /**
  * Compare a geth trace with a full tracer trace
  * @param {Object} geth trace
@@ -529,7 +644,7 @@ async function runTxsFromEthTest(test) {
         chainId: CHAIN_ID,
     };
         // Check deploy
-    if (tx.to === '0x') {
+    if (tx.to === '0x' || tx.to === '') {
         delete tx.to;
     }
     let sentTx;
@@ -589,7 +704,7 @@ async function configureGenesis(test, isEthereumTest) {
         for (const account of Object.keys(test.pre)) {
             genesis.alloc[account.slice(2)] = {
                 nonce: String(Number(test.pre[account].nonce)),
-                balance: String(Number(test.pre[account].balance)),
+                balance: String(BigInt(test.pre[account].balance)),
                 code: test.pre[account].code,
                 storage: test.pre[account].storage,
             };
