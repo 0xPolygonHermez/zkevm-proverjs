@@ -36,7 +36,7 @@ let fullTracer;
 let debug;
 let statsTracer;
 let sourceRef;
-let nameRomErrors = [];
+let nameRomErrors;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
     const required = {
@@ -49,6 +49,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         MemAlign: [],
         Storage: []
     };
+    nameRomErrors = [];
 
     debug = config && config.debug;
     const flagTracer = config && config.tracer;
