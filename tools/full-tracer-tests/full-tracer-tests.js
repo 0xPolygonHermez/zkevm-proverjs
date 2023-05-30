@@ -114,11 +114,15 @@ async function main() {
 function includesInvalidError(changes, executorTrace) {
     for (const error of invalidErrors) {
         if (JSON.stringify(changes).includes(error)) {
+            console.log(`Invalid error found: ${error}`);
+
             return true;
         }
     }
 
     if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
+        console.log(`Invalid error found: ${error}`);
+
         return true;
     }
 
@@ -277,7 +281,7 @@ async function compareCallTracer(geth, fullTracer, i) {
                     if (opCall.includes(previousStep.contract.type)) {
                         callCost = 100;
                     }
-                    callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
+                    // callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
                     if (previousStep.error !== 'revert') {
                         callData[ctx].gasUsed = callData[ctx].gas;
                     }
@@ -298,7 +302,7 @@ async function compareCallTracer(geth, fullTracer, i) {
                     callData[ctx + 1] = {
                         from: step.contract.address,
                         gas: `0x${Number(step.gas).toString(16)}`,
-                        gasUsed: `0x${(Number(previousStep.gas_cost) - 100).toString(16)}`,
+                        gasUsed: `0x${(Number(previousStep.gas_cost)).toString(16)}`,
                         to: ethers.utils.hexZeroPad(ethers.utils.hexlify(to), 20),
                         input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
                         output: step.return_data,
@@ -306,13 +310,15 @@ async function compareCallTracer(geth, fullTracer, i) {
                         value: '0x0',
                         calls: [],
                     };
+                    // Compute call gas cost
+                    const callGastCost = computeCallGasCost(previousStep.memory, previousStep.stack, previousStep.opcode) + 100;
+                    callData[ctx + 1].gasUsed = `0x${(Number(callData[ctx + 1].gasUsed) - callGastCost).toString(16)}`;
                     // Compute gas sent to call
-                    let gasSent = Number(previousStep.gas) - 100;
+                    let gasSent = Number(previousStep.gas) - callGastCost;
                     gasSent -= Math.floor(gasSent / 64);
                     callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
-
                     // Remove value from staticcall
-                    if (previousStep.opcode === 'STATICCALL') {
+                    if (previousStep.opcode === 'STATICCALL' || previousStep.opcode === 'DELEGATECALL') {
                         delete callData[ctx + 1].value;
                     }
                     let { calls } = newFT;
@@ -374,6 +380,44 @@ async function compareCallTracer(geth, fullTracer, i) {
     fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
+}
+
+function computeCallGasCost(mem, stack, opcode) {
+    let argsOffset;
+    let argsSize;
+    let retOffset;
+    let retSize;
+    const memSize = mem.join('').length / 2;
+    switch (opcode) {
+    case 'STATICCALL':
+    case 'DELEGATECALL':
+        argsOffset = Number(stack[stack.length - 3]);
+        argsSize = Number(stack[stack.length - 4]);
+        retOffset = Number(stack[stack.length - 5]);
+        retSize = Number(stack[stack.length - 6]);
+        break;
+    default:
+        argsOffset = Number(stack[stack.length - 4]);
+        argsSize = Number(stack[stack.length - 5]);
+        retOffset = Number(stack[stack.length - 6]);
+        retSize = Number(stack[stack.length - 7]);
+        break;
+    }
+    // Compute call memory expansion cost
+    const lastMemSizeWord = Math.ceil((memSize + 31) / 32);
+    const lastMemCost = Math.floor((lastMemSizeWord ** 2) / 512) + (3 * lastMemSizeWord);
+
+    const memSizeWord = Math.ceil((argsOffset + argsSize + 31) / 32);
+    const newMemCost = Math.floor((memSizeWord ** 2) / 512) + (3 * memSizeWord);
+    const callMemCost = newMemCost - lastMemCost;
+
+    // Compute return memory expansion cost
+    const retMemSizeWord = Math.ceil((retOffset + retSize + 31) / 32);
+    const retNewMemCost = Math.floor((retMemSizeWord ** 2) / 512) + (3 * retMemSizeWord);
+    const retMemCost = retNewMemCost - newMemCost;
+    console.log(`Last mem cost: ${lastMemCost}`);
+
+    return retMemCost + callMemCost;
 }
 
 function getFromMemory(mem, stack, opcode) {

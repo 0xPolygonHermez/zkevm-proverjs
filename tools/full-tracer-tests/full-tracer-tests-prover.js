@@ -30,7 +30,7 @@ const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'RevertDepthCreateAddressCollisionBerlin'];
-const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'PUSH0'];
+const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
 const opcodes = require('../../src/sm/sm_main/debug/opcodes');
@@ -69,8 +69,8 @@ const zkProverProto = grpc.loadPackageDefinition(executorPackageDefinition).exec
 const hashDbProto = grpc.loadPackageDefinition(dbPackageDefinition).hashdb.v1;
 const { ExecutorService } = zkProverProto;
 const { HashDBService } = hashDbProto;
-const client = new ExecutorService('51.210.116.237:50079', grpc.credentials.createInsecure());
-const dbClient = new HashDBService('51.210.116.237:50069', grpc.credentials.createInsecure());
+const client = new ExecutorService('51.210.116.237:50071', grpc.credentials.createInsecure());
+const dbClient = new HashDBService('51.210.116.237:50061', grpc.credentials.createInsecure());
 let tn;
 let fn;
 let tid;
@@ -149,7 +149,7 @@ function includesInvalidError(changes, executorTrace) {
             return true;
         }
     }
-    if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
+    if (JSON.stringify(executorTrace).includes('ROM_ERROR_INVALID_BYTECODE_STARTS_EF')) {
         return true;
     }
 
@@ -304,7 +304,7 @@ function compareCallTracer(geth, fullTracer, i) {
                     if (opCall.includes(previousStep.contract.type)) {
                         callCost = 100;
                     }
-                    callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
+                    // callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
                     if (previousStep.error !== 'ROM_ERROR_EXECUTION_REVERTED') {
                         callData[ctx].gasUsed = callData[ctx].gas;
                     }
@@ -313,7 +313,7 @@ function compareCallTracer(geth, fullTracer, i) {
                 // Update gas used
                 if (ctx > 0 && previousStep.error === 'ROM_ERROR_NO_ERROR') {
                     callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + (Number(previousStep.contract.gas) - Number(step.gas))).toString(16)}`;
-                } else if (opCreate.includes(previousStep.contract.type && previousStep.error === 'ROM_ERROR_NO_ERROR')) {
+                } else if (opCreate.includes(previousStep.contract.type) && previousStep.error === 'ROM_ERROR_NO_ERROR') {
                     callData[ctx + 1].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas)).toString(16)}`;
                 }
                 // Detect precompiled call
