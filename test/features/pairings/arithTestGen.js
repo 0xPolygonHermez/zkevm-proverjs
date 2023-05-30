@@ -121,6 +121,10 @@ class ArithEqs {
         return [(A + C) % P_BN254, (B + D) % P_BN254];
     }
 
+    ARITH_BN254_SUBFP2(A,B,C,D) {
+        return [(A + (P_BN254 - C)) % P_BN254, (B + (P_BN254 - D)) % P_BN254];
+    }
+
     ARITH_BN254_MULFP2(A,B,C,D) {
         return [(A*C-((B*D) %P_BN254)+P_BN254) % P_BN254, (A*D+B*C) % P_BN254];
     }
@@ -129,7 +133,7 @@ class ArithEqs {
 arithEqs = new ArithEqs();
     // return ctx.FpBN254.sub(ctx.FpBN254.mul(x1,x2), ctx.FpBN254.mul(y1, y2));
     // return ctx.FpBN254.add(ctx.FpBN254.mul(x1,y2), ctx.FpBN254.mul(x2, y1));
-for (const eq of ['ARITH_BN254_MULFP2','ARITH_BN254_ADDFP2']) {
+for (const eq of ['ARITH_BN254_MULFP2','ARITH_BN254_ADDFP2','ARITH_BN254_SUBFP2']) {
     for (const value of values) {
         const [E, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
         const regs = {...value, E};
