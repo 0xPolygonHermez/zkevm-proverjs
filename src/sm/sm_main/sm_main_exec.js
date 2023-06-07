@@ -1439,7 +1439,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     s = Fec.div(Fec.sub(Fec.e(y2), Fec.e(y1)), deltaX);
                 }
 
-                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fe.e(x1), dbl ? Fec.e(x1) : Fec.e(x2)));
+                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), dbl ? Fec.e(x1) : Fec.e(x2)));
                 const _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
