@@ -26,11 +26,12 @@ const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'RevertDepthCreateAddressCollisionBerlin'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
 
+const regen = false;
 const errorsMap = {
     OOG: 'out of gas',
     invalidStaticTx: 'write protection',
@@ -45,6 +46,10 @@ async function main() {
         console.log('Starting traces comparator');
         const failedTests = [];
         const noExecTests = noExec['breaks-computation'].concat(noExec['not-supported']);
+        // Write tracer output to file
+        if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
+            fs.mkdirSync(path.join(__dirname, 'geth-traces'));
+        }
         for (const configTest of config) {
             const {
                 testName, testToDebug, traceMethod, isEthereumTest, folderName, disable,
@@ -65,26 +70,37 @@ async function main() {
                 || t.name === `${test.folderName}/${test.testName}`).length > 0) {
                     continue;
                 }
-
+                // Find test from folder if not regen
+                let gethTraces = [];
+                // Read files
+                const files = fs.readdirSync(path.join(__dirname, 'geth-traces'));
+                files.forEach((file) => {
+                    const parts = file.split('_');
+                    if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
+                        gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
+                    }
+                });
+                if (regen || gethTraces.length !== test.txs.length) {
                 // Configure genesis for test
-                await configureGenesis(test, isEthereumTest);
+                    await configureGenesis(test, isEthereumTest);
 
-                // Init geth node
+                    // Init geth node
 
-                await startGeth();
+                    await startGeth();
 
-                // Run txs
-                const txsHashes = isEthereumTest ? await runTxsFromEthTest(test) : await runTxs(test);
+                    // Run txs
+                    const txsHashes = isEthereumTest ? await runTxsFromEthTest(test) : await runTxs(test);
 
-                // Get geth traces from debug call
-                const gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod);
+                    // Get geth traces from debug call
+                    gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod, test.id);
+                }
 
                 // Get trace from full tracer
                 const ftTraces = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length);
 
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
-                    const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i);
+                    const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i, testName);
                     if (!_.isEmpty(changes) && !includesInvalidOpcode(ftTraces[i].execution_trace) && !includesInvalidError(changes, ftTraces[i].execution_trace)) {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
@@ -96,8 +112,6 @@ async function main() {
                         console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i}`));
                     }
                 }
-                // Stop docker compose
-                await stopGeth();
             }
         }
         if (failedTests.length) {
@@ -121,7 +135,7 @@ function includesInvalidError(changes, executorTrace) {
     }
 
     if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
-        console.log(`Invalid error found: ${error}`);
+        console.log('Invalid error found: invalidCodeStartsEF');
 
         return true;
     }
@@ -192,27 +206,32 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             }
         } else {
             const t = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/state-transition/${folderName}/${file}`)));
-            t.map((v) => {
-                const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
-                Object.assign(v, { testName: file.split('.')[0], folderName, inputTestPath });
+            if (Array.isArray(t)) {
+                t.map((v) => {
+                    const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
+                    Object.assign(v, { testName: file.split('.')[0], folderName, inputTestPath });
 
-                return v;
-            });
-
-            tests = tests.concat(t);
+                    return v;
+                });
+                tests = tests.concat(t);
+            } else {
+                const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${t.id}.json`);
+                Object.assign(t, { testName: file.split('.')[0], folderName, inputTestPath });
+                tests = tests.concat([t]);
+            }
         }
     }
 
     return tests;
 }
-async function compareTracesByMethod(geth, fullTracer, method, key) {
+async function compareTracesByMethod(geth, fullTracer, method, key, testName) {
     switch (method) {
     case 'defaultTracer':
-        return compareDefaultTracer(geth, fullTracer, key);
+        return compareDefaultTracer(geth, fullTracer, key, testName);
     case 'callTracer':
-        return compareCallTracer(geth, fullTracer, key);
+        return compareCallTracer(geth, fullTracer, key, testName);
     default:
-        return compareDefaultTracer(geth, fullTracer, key);
+        return compareDefaultTracer(geth, fullTracer, key, testName);
     }
 }
 
@@ -222,7 +241,7 @@ async function compareTracesByMethod(geth, fullTracer, method, key) {
  * @param {Object} fullTracer trace
  * @returns Array with the differences found
  */
-async function compareCallTracer(geth, fullTracer, i) {
+async function compareCallTracer(geth, fullTracer, i, testName) {
     const { context } = fullTracer.call_trace;
     // Generate geth trace from fullTracer trace
     const newFT = {
@@ -263,6 +282,8 @@ async function compareCallTracer(geth, fullTracer, i) {
                     value: `0x${Number(step.contract.value).toString(16)}`,
                     type: previousStep.opcode,
                     calls: [],
+                    gasCallCost: `0x${(Number(previousStep.gas_cost) - Number(step.gas)).toString(16)}`,
+                    gasAtCall: `0x${(Number(previousStep.gas)).toString(16)}`,
                 };
                 let { calls } = newFT;
                 // Fill call in the right depth
@@ -277,23 +298,25 @@ async function compareCallTracer(geth, fullTracer, i) {
                 callData[ctx].output = step.return_data;
                 if (previousStep.error !== '') {
                     callData[ctx].error = errorsMap[previousStep.error];
-                    let callCost = 0;
-                    if (opCall.includes(previousStep.contract.type)) {
-                        callCost = 100;
-                    }
-                    // callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
                     if (previousStep.error !== 'revert') {
                         callData[ctx].gasUsed = callData[ctx].gas;
+                    } else {
+                        callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasAtCall) - Number(step.gas) - Number(callData[ctx].gasCallCost)).toString(16)}`;
+                        if (previousStep.opcode === 'STOP' && previousStep.pc === 0) {
+                            callData[ctx].gasUsed = '0x0';
+                        } else if (opCreate.includes(previousStep.contract.type)) {
+                            callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas - Number(step.gas))).toString(16)}`;
+                        }
+                    }
+                } else {
+                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasAtCall) - Number(step.gas) - Number(callData[ctx].gasCallCost)).toString(16)}`;
+                    if (previousStep.opcode === 'STOP' && previousStep.pc === 0) {
+                        callData[ctx].gasUsed = '0x0';
+                    } else if (opCreate.includes(previousStep.contract.type)) {
+                        callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas - Number(step.gas))).toString(16)}`;
                     }
                 }
                 ctx--;
-                // Update gas used
-                if (ctx > 0 && previousStep.error === '') {
-                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + (Number(previousStep.contract.gas) - Number(step.gas))).toString(16)}`;
-                } else if (opCreate.includes(previousStep.contract.type) && previousStep.error === '') {
-                    callData[ctx + 1].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas)).toString(16)}`;
-                }
-
                 // Detect precompiled call
             } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth) {
                 const to = BigInt(previousStep.stack[previousStep.stack.length - 2]);
@@ -360,9 +383,6 @@ async function compareCallTracer(geth, fullTracer, i) {
                 }
                 calls.push(callData[ctx + 1]);
             }
-            if (ctx > 0 && !opCall.includes(step.opcode)) {
-                callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(step.gas_cost)).toString(16)}`;
-            }
         }
         currentStep++;
     }
@@ -415,9 +435,8 @@ function computeCallGasCost(mem, stack, opcode) {
     const retMemSizeWord = Math.ceil((retOffset + retSize + 31) / 32);
     const retNewMemCost = Math.floor((retMemSizeWord ** 2) / 512) + (3 * retMemSizeWord);
     const retMemCost = retNewMemCost - newMemCost;
-    console.log(`Last mem cost: ${lastMemCost}`);
 
-    return retMemCost + callMemCost;
+    return retMemCost + callMemCost < 0 ? 0 : retMemCost + callMemCost;
 }
 
 function getFromMemory(mem, stack, opcode) {
@@ -572,7 +591,7 @@ async function getFtTrace(inputPath, testName, txsCount) {
  * @param {String} testName Name of the test
  * @returns Array with all the debug geth traces
  */
-async function getGethTrace(txHashes, testName, traceMethod) {
+async function getGethTrace(txHashes, testName, traceMethod, testId) {
     const gethTraces = [];
     let traceConfig = {
         enableMemory: true,
@@ -593,11 +612,7 @@ async function getGethTrace(txHashes, testName, traceMethod) {
             traceConfig,
         ]);
         gethTraces.push(response);
-        // Write tracer output to file
-        if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
-            fs.mkdirSync(path.join(__dirname, 'geth-traces'));
-        }
-        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName.split('.')[0]}_${testKey}.json`), JSON.stringify(response, null, 2));
+        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName}_${testId}_${traceMethod}_${testKey}_geth.json`), JSON.stringify(response, null, 2));
     }
 
     return gethTraces;
@@ -777,13 +792,6 @@ async function startGeth() {
     // start docker compose
     await upAll({ cwd: path.join(__dirname), log: false });
     await sleep(2000);
-}
-
-/**
- * Stop geth dockers
- */
-async function stopGeth() {
-    await down({ cwd: path.join(__dirname), log: false });
 }
 
 function sleep(ms) {

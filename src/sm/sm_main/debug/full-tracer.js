@@ -51,7 +51,8 @@ class FullTracer {
         // Final output json to log
         this.finalTrace = {};
 
-        this.depth = 0;
+        this.depth = 1;
+        this.prevCTX = 0;
         this.initGas = 0;
         this.txCount = 0;
         this.deltaStorage = {};
@@ -203,6 +204,7 @@ class FullTracer {
         context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         context.gas_price = Number(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
         this.callData[ctx.CTX] = { type: 'CALL' };
+        this.prevCTX = ctx.CTX;
         // Fill response object
         const response = {};
         const r = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'txR'));
@@ -256,7 +258,7 @@ class FullTracer {
         this.txTime = Date.now();
 
         // Reset values
-        this.depth = 0;
+        this.depth = 1;
         this.deltaStorage = {};
         this.txGAS[this.depth] = context.gas;
 
@@ -477,6 +479,13 @@ class FullTracer {
      * @param {Object} params to identify opcode values
      */
     onOpcode(ctx, params) {
+        // Update depth if a variation in CTX is detected
+        if (this.prevCTX > ctx.CTX) {
+            this.depth -= 1;
+        } else if (this.prevCTX < ctx.CTX) {
+            this.depth += 1;
+        }
+        this.prevCTX = ctx.CTX;
         const singleInfo = {};
 
         // Get opcode info
@@ -536,8 +545,7 @@ class FullTracer {
             }
         }
         // add info opcodes
-        this.depth = Number(getVarFromCtx(ctx, true, 'depth'));
-        singleInfo.depth = this.depth + 1;
+        singleInfo.depth = this.depth;
         singleInfo.pc = Number(ctx.PC);
         singleInfo.gas = ctx.GAS.toString();
         singleInfo.gas_cost = codes[codeId][1];
@@ -714,7 +722,7 @@ class FullTracer {
 
         // Check previous step
         const prevStep = this.execution_trace[this.execution_trace.length - 2];
-        if (prevStep && opIncContext.includes(prevStep.opcode)) {
+        if (prevStep && opIncContext.includes(prevStep.opcode) && prevStep.depth !== singleInfo.depth) {
             // Create new call data entry
             this.callData[ctx.CTX] = { type: prevStep.opcode };
             // Set 'gasCall' when depth has changed
