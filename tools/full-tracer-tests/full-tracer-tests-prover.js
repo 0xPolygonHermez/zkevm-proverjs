@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* eslint-disable no-loop-func */
 /* eslint-disable no-undef */
 /* eslint-disable newline-before-return */
 /* eslint-disable multiline-comment-style */
@@ -44,6 +46,7 @@ const errorsMap = {
 
 const EXECUTOR_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/executor/v1/executor.proto');
 const DB_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/hashdb/v1/hashdb.proto');
+const STATE_DB_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/statedb/v1/statedb.proto');
 
 const executorPackageDefinition = protoLoader.loadSync(
     EXECUTOR_PROTO_PATH,
@@ -65,22 +68,43 @@ const dbPackageDefinition = protoLoader.loadSync(
         oneofs: true,
     },
 );
+const stateDbPackageDefinition = protoLoader.loadSync(
+    STATE_DB_PROTO_PATH,
+    {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+    },
+);
 const zkProverProto = grpc.loadPackageDefinition(executorPackageDefinition).executor.v1;
 const hashDbProto = grpc.loadPackageDefinition(dbPackageDefinition).hashdb.v1;
+const stateDbProto = grpc.loadPackageDefinition(stateDbPackageDefinition).statedb.v1;
+
 const { ExecutorService } = zkProverProto;
 const { HashDBService } = hashDbProto;
-const client = new ExecutorService('51.210.116.237:50071', grpc.credentials.createInsecure());
-const dbClient = new HashDBService('51.210.116.237:50061', grpc.credentials.createInsecure());
+const { StateDBService } = stateDbProto;
+const client = new ExecutorService('51.210.116.237:50078', grpc.credentials.createInsecure());
+let dbClient = new HashDBService('51.210.116.237:50068', grpc.credentials.createInsecure());
+dbClient = new StateDBService('51.210.116.237:50068', grpc.credentials.createInsecure());
+
+const regen = false;
+
 let tn;
 let fn;
 let tid;
-let gethTraces;
+let gethTraces = [];
 let waiting = false;
 async function main() {
     try {
         console.log('Starting traces comparator');
         const failedTests = [];
         const noExecTests = noExec['breaks-computation'].concat(noExec['not-supported']);
+        // Write tracer output to file
+        if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
+            fs.mkdirSync(path.join(__dirname, 'geth-traces'));
+        }
         for (const configTest of config) {
             const {
                 testName, testToDebug, isEthereumTest, folderName, disable, traceMethod,
@@ -93,6 +117,7 @@ async function main() {
 
             const tests = createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName);
             for (let j = 0; j < tests.length; j++) {
+                gethTraces = [];
                 const test = tests[j];
                 console.log(chalk.green(`Checking ${test.testName}-${test.id}`));
                 // Skip tests from no exec file
@@ -100,18 +125,29 @@ async function main() {
                 || t.name === `${test.folderName}/${test.testName}`).length > 0) {
                     continue;
                 }
+                // Find test from folder if not regen
+                // Read files
+                const files = fs.readdirSync(path.join(__dirname, 'geth-traces'));
+                files.forEach((file) => {
+                    const parts = file.split('_');
+                    if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
+                        gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
+                    }
+                });
+                if (regen || (!isEthereumTest && gethTraces.length !== test.txs.length) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
                 // Configure genesis for test
-                await configureGenesis(test, isEthereumTest);
+                    await configureGenesis(test, isEthereumTest);
 
-                // Init geth node
+                    // Init geth node
 
-                await startGeth();
+                    await startGeth();
 
-                // Run txs
-                const txsHashes = isEthereumTest ? await runTxsFromEthTest(test) : await runTxs(test);
+                    // Run txs
+                    const txsHashes = isEthereumTest ? await runTxsFromEthTest(test) : await runTxs(test);
 
-                // Get geth traces from debug call
-                gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod);
+                    // Get geth traces from debug call
+                    gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod, test.id);
+                }
                 // Get trace from full tracer
                 const ftTxHashes = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length);
 
@@ -128,8 +164,6 @@ async function main() {
                     await sleep(2000);
                 }
                 console.log(`Finished processing ${fn}/${tn}-${tid}`);
-                // Stop docker compose
-                await stopGeth();
             }
         }
         if (failedTests.length) {
@@ -286,6 +320,8 @@ function compareCallTracer(geth, fullTracer, i) {
                     value: `0x${Number(step.contract.value).toString(16)}`,
                     type: opcodes[previousStep.op][0],
                     calls: [],
+                    gasCallCost: `0x${(Number(previousStep.gas_cost) - Number(step.gas)).toString(16)}`,
+                    gasAtCall: `0x${(Number(previousStep.gas)).toString(16)}`,
                 };
                 let { calls } = newFT;
                 // Fill call in the right depth
@@ -300,22 +336,26 @@ function compareCallTracer(geth, fullTracer, i) {
                 callData[ctx].output = `0x${step.return_data.toString('hex')}`;
                 if (previousStep.error !== 'ROM_ERROR_NO_ERROR') {
                     callData[ctx].error = errorsMap[previousStep.error];
-                    let callCost = 0;
-                    if (opCall.includes(previousStep.contract.type)) {
-                        callCost = 100;
-                    }
-                    // callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas) - callCost).toString(16)}`;
                     if (previousStep.error !== 'ROM_ERROR_EXECUTION_REVERTED') {
                         callData[ctx].gasUsed = callData[ctx].gas;
+                    } else {
+                        callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasAtCall) - Number(step.gas) - Number(callData[ctx].gasCallCost)).toString(16)}`;
+                        if (opcodes[previousStep.op][0] === 'STOP' && previousStep.pc === 0) {
+                            callData[ctx].gasUsed = '0x0';
+                        } else if (opCreate.includes(previousStep.contract.type)) {
+                            callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas - Number(step.gas))).toString(16)}`;
+                        }
+                    }
+                } else {
+                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasAtCall) - Number(step.gas) - Number(callData[ctx].gasCallCost)).toString(16)}`;
+                    if (opcodes[previousStep.op][0] === 'STOP' && previousStep.pc === 0) {
+                        callData[ctx].gasUsed = '0x0';
+                    } else if (opCreate.includes(callData[ctx].type)) {
+                        callData[ctx].gasUsed = `0x${(Number(previousStep.contract.gas - Number(step.gas))).toString(16)}`;
                     }
                 }
                 ctx--;
-                // Update gas used
-                if (ctx > 0 && previousStep.error === 'ROM_ERROR_NO_ERROR') {
-                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + (Number(previousStep.contract.gas) - Number(step.gas))).toString(16)}`;
-                } else if (opCreate.includes(previousStep.contract.type) && previousStep.error === 'ROM_ERROR_NO_ERROR') {
-                    callData[ctx + 1].gasUsed = `0x${(Number(previousStep.contract.gas) - Number(step.gas)).toString(16)}`;
-                }
+
                 // Detect precompiled call
             } else if (opCall.includes(opcodes[previousStep.op][0]) && previousStep.depth === step.depth) {
                 const to = BigInt(`0x${previousStep.stack[previousStep.stack.length - 2]}`);
@@ -659,6 +699,7 @@ function processBatch(input, txsHashes, currentHash, traceMethod) {
     client.ProcessBatch(cInput, (error, res) => {
         try {
             if (error) throw error;
+            executorJsonFromBatch(res, res.responses[currentHash].tx_hash.toString('hex'));
             // Compare trace
             const changes = compareTracesByMethod(gethTraces[currentHash], res.responses[currentHash], traceMethod, currentHash);
             if (!_.isEmpty(changes) && !includesInvalidOpcode(res.responses[currentHash].execution_trace)
@@ -679,6 +720,9 @@ function processBatch(input, txsHashes, currentHash, traceMethod) {
     });
 }
 
+function executorJsonFromBatch(batch, currentHash) {
+    fs.writeFileSync(path.join(__dirname, `executor-responses/${currentHash}.json`), JSON.stringify(batch, null, 2));
+}
 /**
  * Formats the proverjs input to be proverc compatible
  * @param {Object} jsInput porverjs input
@@ -728,7 +772,7 @@ function formatDb(jsDb) {
  * @param {String} testName Name of the test
  * @returns Array with all the debug geth traces
  */
-async function getGethTrace(txHashes, testName, traceMethod) {
+async function getGethTrace(txHashes, testName, traceMethod, testId) {
     const tmpGethTraces = [];
     let traceConfig = {
         enableMemory: true,
@@ -749,11 +793,8 @@ async function getGethTrace(txHashes, testName, traceMethod) {
             traceConfig,
         ]);
         tmpGethTraces.push(response);
-        // Write tracer output to file
-        if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
-            fs.mkdirSync(path.join(__dirname, 'geth-traces'));
-        }
-        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName.split('.')[0]}_${testKey}.json`), JSON.stringify(response, null, 2));
+
+        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName}_${testId}_${traceMethod}_${testKey}_geth.json`), JSON.stringify(response, null, 2));
     }
 
     return tmpGethTraces;
@@ -933,13 +974,6 @@ async function startGeth() {
     // start docker compose
     await upAll({ cwd: path.join(__dirname), log: false });
     await sleep(2000);
-}
-
-/**
- * Stop geth dockers
- */
-async function stopGeth() {
-    await down({ cwd: path.join(__dirname), log: false });
 }
 
 function sleep(ms) {

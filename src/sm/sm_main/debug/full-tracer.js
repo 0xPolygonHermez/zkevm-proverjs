@@ -195,14 +195,14 @@ class FullTracer {
         context.type = Number(getVarFromCtx(ctx, false, 'isCreateContract')) ? 'CREATE' : 'CALL';
         context.to = (context.type === 'CREATE') ? '0x' : bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
-        context.gas = Number(getVarFromCtx(ctx, false, 'txGasLimit'));
+        context.gas = String(getVarFromCtx(ctx, false, 'txGasLimit'));
         context.value = getVarFromCtx(ctx, false, 'txValue').toString();
         context.batch = '';
         context.output = '';
         context.gas_used = '';
         context.execution_time = '';
         context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
-        context.gas_price = Number(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
+        context.gas_price = String(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
         this.callData[ctx.CTX] = { type: 'CALL' };
         this.prevCTX = ctx.CTX;
         // Fill response object
@@ -220,8 +220,8 @@ class FullTracer {
             context.to,
             Number(context.value),
             nonce,
-            context.gas,
-            context.gas_price,
+            Number(context.gas),
+            Number(context.gas_price),
             context.data,
             r,
             s,
@@ -727,9 +727,9 @@ class FullTracer {
             this.callData[ctx.CTX] = { type: prevStep.opcode };
             // Set 'gasCall' when depth has changed
             this.txGAS[this.depth] = getVarFromCtx(ctx, true, 'gasCall').toString();
-            if (generate_call_trace) { // TODO: why ?
-                // TODO: Why ?
+            if (generate_call_trace) {
                 singleInfo.contract.gas = this.txGAS[this.depth]; // execute_trace does not have contracts property
+                singleCallTrace.contract.gas = this.txGAS[this.depth]; // execute_trace does not have contracts property
                 // take gas when a new context is created
             }
         }

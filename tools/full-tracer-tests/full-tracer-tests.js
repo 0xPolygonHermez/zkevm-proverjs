@@ -39,6 +39,7 @@ const errorsMap = {
     invalidOpcode: 'invalid opcode: INVALID',
     overflow: 'stack limit reached 1024 (1023)',
     underflow: 'stack underflow (0 <=> 1)',
+    invalidJump: 'invalid jump destination',
 };
 
 async function main() {
@@ -80,7 +81,7 @@ async function main() {
                         gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
                     }
                 });
-                if (regen || gethTraces.length !== test.txs.length) {
+                if (regen || (!isEthereumTest && gethTraces.length !== test.txs.length) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
                 // Configure genesis for test
                     await configureGenesis(test, isEthereumTest);
 
@@ -193,10 +194,13 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 if (!key.includes('Berlin')) {
                     continue;
                 }
-                const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                let inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
                 // Check input exists
                 if (!fs.existsSync(inputTestPath)) {
-                    continue;
+                    inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file}`);
+                    if (!fs.existsSync(inputTestPath)) {
+                        continue;
+                    }
                 }
                 Object.assign(value, {
                     testName: file.split('.')[0], folderName, inputTestPath, testToDebug: j, id: j,
@@ -318,7 +322,7 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
                 }
                 ctx--;
                 // Detect precompiled call
-            } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth) {
+            } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth && previousStep.error === '') {
                 const to = BigInt(previousStep.stack[previousStep.stack.length - 2]);
                 // Check precompiled destination
                 if (to > 0 && to < 10) {
@@ -373,6 +377,38 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
                 let gasSent = Number(previousStep.gas) - 32000;
                 gasSent -= Math.floor(gasSent / 64);
                 callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx + 1]);
+            // Detect failed op call
+            } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth) {
+                callData[ctx + 1] = {
+                    from: previousStep.contract.address,
+                    gas: `0x${Number(previousStep.stack[previousStep.stack.length - 1])}`,
+                    gasUsed: `0x${Number(previousStep.stack[previousStep.stack.length - 1])}`,
+                    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(previousStep.stack[previousStep.stack.length - 2])), 20),
+                    input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
+                    output: step.return_data,
+                    type: previousStep.opcode,
+                    error: errorsMap[previousStep.error],
+                    value: previousStep.stack[previousStep.stack.length - 3],
+                    calls: [],
+                };
+                if (['STATICCALL'].includes(previousStep.opcode)) {
+                    delete callData[ctx + 1].value;
+                }
+                // Compute gas sent to call
+                if (Number(previousStep.contract.value) > 0 && previousStep.opcode !== 'DELEGATECALL') {
+                    const stipend = 2300 + Number(previousStep.stack[previousStep.stack.length - 1]);
+                    callData[ctx + 1].gas = `0x${stipend.toString(16)}`;
+                    callData[ctx + 1].gasUsed = callData[ctx + 1].gas;
+                }
 
                 let { calls } = newFT;
                 // Fill call in the right depth
