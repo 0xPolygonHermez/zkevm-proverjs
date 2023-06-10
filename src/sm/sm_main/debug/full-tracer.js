@@ -376,8 +376,18 @@ class FullTracer {
         // Append logs correctly formatted to response logs
         this.logs = this.logs.filter((n) => n); // Remove null values
         // eslint-disable-next-line no-restricted-syntax
-        for (const l of this.logs) {
-            this.finalTrace.responses[this.txCount].logs = this.finalTrace.responses[this.txCount].logs.concat(Object.values(l));
+        let logIndex = 0;
+        for (let i = 0; i < this.logs.length; i++) {
+            const logsToAdd = Object.values(this.logs[i]);
+            for (let j = 0; j < logsToAdd.length; j++) {
+                const singleLog = logsToAdd[j];
+                // set logIndex
+                singleLog.index = logIndex;
+                // store log
+                this.finalTrace.responses[this.txCount].logs.push(singleLog);
+                // increase logIndex
+                logIndex += 1;
+            }
         }
 
         // create directory if it does not exist
