@@ -663,14 +663,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ctx.lastSWrite.keyI = keyI;
                     ctx.lastSWrite.key = key;
 
-                    // commented since readings are also done directly in the s
-                    // ctx.lastSWrite.keyS = ctx.lastSWrite.key.toString(16);
-                    // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
-                    const A1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.A)); // addr
-                    const B1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.B)); // type
-                    const C1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.C)); // key (in case storage)
-                    const D1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.D)); // value
-                    const E1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.E));
                     const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
                     incCounter = res.proofHashCounter + 2;
 
