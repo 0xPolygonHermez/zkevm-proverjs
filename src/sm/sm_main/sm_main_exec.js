@@ -650,9 +650,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ctx.lastSWrite.keyI = keyI;
                     ctx.lastSWrite.key = key;
 
-                    // commented since readings are also done directly in the s
-                    // ctx.lastSWrite.keyS = ctx.lastSWrite.key.toString(16);
-                    // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
                     const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
                     incCounter = res.proofHashCounter + 2;
 
@@ -670,6 +667,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ctx.lastSWrite.step = step;
 
                     fi = sr4to8(ctx.Fr, ctx.lastSWrite.newRoot);
+                    nHits++;
+                }
+
+                if (l.poseidon == 1) {
+                    const input0 = scalar2h4(fea2scalar(Fr, ctx.A));
+                    const input1 = scalar2h4(fea2scalar(Fr, ctx.B));
+                    const capacity = scalar2h4(fea2scalar(Fr, ctx.C));
+
+                    const resPoseidon = poseidon([...input0, ...input1], capacity);
+
+                    fi = sr4to8(ctx.Fr, resPoseidon);
                     nHits++;
                 }
 
@@ -1069,6 +1077,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
+        // TODO: FILL IN POLYNOMIALS
+        if (l.poseidon == 1) {
+            // pols.poseidon[i] = 1n;
+        } else {
+            // pols.poseidon[i] = 0n;
+        }
 
         if (l.hashK || l.hashK1) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
