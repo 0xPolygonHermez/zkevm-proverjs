@@ -141,8 +141,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let previousRCXInv = 0n;
     let auxNewStateRoot;
 
-    if (verboseOptions.batchL2Data) {
-        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
+    if (verboseOptions.batchData) {
+        await printBatchData(ctx.input.batchData, verboseOptions.getNameSelector);
     }
 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
@@ -653,7 +653,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     // commented since readings are also done directly in the s
                     // ctx.lastSWrite.keyS = ctx.lastSWrite.key.toString(16);
                     // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
-
                     const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
                     incCounter = res.proofHashCounter + 2;
 
@@ -2162,7 +2161,7 @@ function assertOutputs(ctx){
         throw new Error(errorMsg);
     }
 
-    const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
+    const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccBatchHashData));
 
     if (
         (!ctx.Fr.eq(ctx.D[0], feaNewAccInputHash[0])) ||
@@ -2174,9 +2173,9 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.D[6], feaNewAccInputHash[6])) ||
         (!ctx.Fr.eq(ctx.D[7], feaNewAccInputHash[7]))
     ) {
-        let errorMsg = "Assert Error: AccInputHash does not match\n";
-        errorMsg += `   AccInputHash computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
-        errorMsg += `   AccInputHash expected: ${ctx.input.newAccInputHash}\n`;
+        let errorMsg = "Assert Error: newAccBatchHashData does not match\n";
+        errorMsg += `   newAccBatchHashData computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
+        errorMsg += `   newAccBatchHashData expected: ${ctx.input.newAccBatchHashData}\n`;
         errorMsg += `Errors: ${nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
@@ -2231,7 +2230,7 @@ function initState(Fr, pols, ctx) {
         pols.B7[0]
     ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
 
-    // Set oldAccInputHash to register C
+    // Set oldAccBatchHashData to register C
     [
         pols.C0[0],
         pols.C1[0],
@@ -2241,7 +2240,7 @@ function initState(Fr, pols, ctx) {
         pols.C5[0],
         pols.C6[0],
         pols.C7[0]
-    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccBatchHashData));
 
     // Set oldNumBatch to SP register
     pols.SP[0] = ctx.Fr.e(ctx.input.oldNumBatch)
@@ -2308,12 +2307,12 @@ async function eventsAsyncTracer(ctx, cmds) {
     }
 }
 
-async function printBatchL2Data(batchL2Data, getNameSelector) {
+async function printBatchData(batchData, getNameSelector) {
     console.log("/////////////////////////////");
     console.log("/////// BATCH L2 DATA ///////");
     console.log("/////////////////////////////\n");
 
-    const txs = encodedStringToArray(batchL2Data);
+    const txs = encodedStringToArray(batchData);
     console.log("Number of transactions: ", txs.length);
 
     for (let i = 0; i < txs.length; i++){
@@ -2561,10 +2560,10 @@ function eval_getMemValue(ctx, tag) {
 function eval_functionCall(ctx, tag) {
     if (tag.funcName == "getSequencerAddr") {
         return eval_getSequencerAddr(ctx, tag);
-    } else if (tag.funcName == "getTimestamp") {
-        return eval_getTimestamp(ctx, tag);
-    } else if (tag.funcName == "getGlobalExitRoot") {
-        return eval_getGlobalExitRoot(ctx, tag);
+    } else if (tag.funcName == "getTimestampLimit") {
+        return eval_getTimestampLimit(ctx, tag);
+    } else if (tag.funcName == "getHistoricGERRoot") {
+        return eval_getHistoricGERRoot(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
@@ -2623,12 +2622,12 @@ function eval_functionCall(ctx, tag) {
 
 function eval_getSequencerAddr(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddress));
 }
 
 function eval_getTxs(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    const txs = ctx.input.batchL2Data;
+    const txs = ctx.input.batchData;
     const offset = Number(evalCommand(ctx,tag.params[0]));
     const len = Number(evalCommand(ctx,tag.params[1]));
     let d = "0x" + txs.slice(2+offset*2, 2+offset*2 + len*2);
@@ -2638,17 +2637,17 @@ function eval_getTxs(ctx, tag) {
 
 function eval_getTxsLen(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.e((ctx.input.batchData.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getGlobalExitRoot(ctx, tag) {
+function eval_getHistoricGERRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.globalExitRoot));
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.historicGERRoot));
 }
 
-function eval_getTimestamp(ctx, tag) {
+function eval_getTimestampLimit(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_eventLog(ctx, tag) {
