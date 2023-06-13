@@ -691,6 +691,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
 
+                if (l.poseidon == 1) {
+                    const input0 = scalar2h4(fea2scalar(Fr, ctx.A));
+                    const input1 = scalar2h4(fea2scalar(Fr, ctx.B));
+                    const capacity = scalar2h4(fea2scalar(Fr, ctx.C));
+
+                    const resPoseidon = poseidon([...input0, ...input1], capacity);
+
+                    fi = sr4to8(ctx.Fr, resPoseidon);
+                    nHits++;
+                }
+
                 if (l.hashK || l.hashK1) {
                     if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
@@ -1087,6 +1098,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
+        // TODO: FILL IN POLYNOMIALS
+        if (l.poseidon == 1) {
+            // pols.poseidon[i] = 1n;
+        } else {
+            // pols.poseidon[i] = 0n;
+        }
 
         if (l.hashK || l.hashK1) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
