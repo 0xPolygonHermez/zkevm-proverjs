@@ -484,7 +484,7 @@ function getFromMemory(mem, stack, opcode) {
     } else if (opcode === 'REVERT') {
         offset = Number(stack[stack.length - 1]);
         size = Number(stack[stack.length - 2]);
-    } else if (opcode === 'CREATE2') {
+    } else if (opcode === 'CREATE2' || opcode === 'CREATE') {
         offset = Number(stack[stack.length - 2]);
         size = Number(stack[stack.length - 3]);
     } else {

@@ -37,6 +37,7 @@ const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'cont
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
 const opcodes = require('../../src/sm/sm_main/debug/opcodes');
 
+const regen = false;
 const errorsMap = {
     ROM_ERROR_OUT_OF_GAS: 'out of gas',
     ROM_ERROR_INVALID_STATIC: 'write protection',
@@ -46,7 +47,6 @@ const errorsMap = {
 
 const EXECUTOR_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/executor/v1/executor.proto');
 const DB_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/hashdb/v1/hashdb.proto');
-const STATE_DB_PROTO_PATH = path.join(__dirname, '../../../zkevm-comms-protocol/proto/statedb/v1/statedb.proto');
 
 const executorPackageDefinition = protoLoader.loadSync(
     EXECUTOR_PROTO_PATH,
@@ -68,29 +68,16 @@ const dbPackageDefinition = protoLoader.loadSync(
         oneofs: true,
     },
 );
-const stateDbPackageDefinition = protoLoader.loadSync(
-    STATE_DB_PROTO_PATH,
-    {
-        keepCase: true,
-        longs: String,
-        enums: String,
-        defaults: true,
-        oneofs: true,
-    },
-);
+
 const zkProverProto = grpc.loadPackageDefinition(executorPackageDefinition).executor.v1;
 const hashDbProto = grpc.loadPackageDefinition(dbPackageDefinition).hashdb.v1;
-const stateDbProto = grpc.loadPackageDefinition(stateDbPackageDefinition).statedb.v1;
 
 const { ExecutorService } = zkProverProto;
 const { HashDBService } = hashDbProto;
-const { StateDBService } = stateDbProto;
-const client = new ExecutorService('51.210.116.237:50078', grpc.credentials.createInsecure());
-let dbClient = new HashDBService('51.210.116.237:50068', grpc.credentials.createInsecure());
-dbClient = new StateDBService('51.210.116.237:50068', grpc.credentials.createInsecure());
-
-const regen = false;
-
+// my prover -> 52.30.205.190
+// executor Fr -> 51.210.116.237
+const client = new ExecutorService('52.30.205.190:50071', grpc.credentials.createInsecure());
+const dbClient = new HashDBService('52.30.205.190:50061', grpc.credentials.createInsecure());
 let tn;
 let fn;
 let tid;
@@ -394,15 +381,16 @@ function compareCallTracer(geth, fullTracer, i) {
                 }
                 // Detect failed create2
             } else if (opCreate.includes(opcodes[previousStep.op][0]) && previousStep.depth === step.depth) {
+                const to = BigInt(`0x${step.stack[step.stack.length - 1]}`);
                 callData[ctx + 1] = {
-                    from: previousStep.contract.address,
+                    from: `0x${previousStep.contract.address}`,
                     gas: `0x${Number(step.gas).toString(16)}`,
                     gasUsed: '0x0',
-                    to: step.stack[step.stack.length - 1],
+                    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(to), 20),
                     input: getFromMemory(previousStep.memory, previousStep.stack, opcodes[previousStep.op][0]),
                     output: step.return_data,
                     type: opcodes[previousStep.op][0],
-                    value: previousStep.stack[previousStep.stack.length - 4],
+                    value: `0x${previousStep.stack[previousStep.stack.length - 1]}`,
                     calls: [],
                 };
                 // Compute gas sent to call
@@ -440,7 +428,7 @@ function getFromMemory(mem, stack, opcode) {
     } else if (opcode === 'REVERT') {
         offset = Number(`0x${stack[stack.length - 1]}`);
         size = Number(`0x${stack[stack.length - 2]}`);
-    } else if (opcode === 'CREATE2') {
+    } else if (opcode === 'CREATE2' || opcode === 'CREATE') {
         offset = Number(`0x${stack[stack.length - 2]}`);
         size = Number(`0x${stack[stack.length - 3]}`);
     } else {
@@ -734,7 +722,7 @@ function formatInput(jsInput, txHash) {
         old_acc_input_hash: Buffer.from(jsInput.oldAccInputHash.slice(2), 'hex'),
         old_batch_num: jsInput.oldNumBatch,
         chain_id: jsInput.chainID,
-        fork_id: 4,
+        fork_id: 5,
         batch_l2_data: Buffer.from(jsInput.batchL2Data.slice(2), 'hex'),
         global_exit_root: Buffer.from(jsInput.globalExitRoot.slice(2), 'hex'),
         eth_timestamp: Number(jsInput.timestamp),
