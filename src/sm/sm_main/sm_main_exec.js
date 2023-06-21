@@ -59,6 +59,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     const POSEIDONG_PERMUTATION1_ID = 1;
     const POSEIDONG_PERMUTATION2_ID = 2;
+    const POSEIDONG_PERMUTATION4_ID = 4;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
@@ -500,7 +501,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
+            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest || l.hashP_fe12 ||  l.hashK || 
+            l.hashK1 || l.hashKLen || l.hashKDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -670,17 +672,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
 
-                if (l.poseidon == 1) {
-                    const input0 = scalar2h4(fea2scalar(Fr, ctx.A));
-                    const input1 = scalar2h4(fea2scalar(Fr, ctx.B));
-                    const capacity = scalar2h4(fea2scalar(Fr, ctx.C));
-
-                    const resPoseidon = poseidon([...input0, ...input1], capacity);
-
-                    fi = sr4to8(ctx.Fr, resPoseidon);
-                    nHits++;
-                }
-
                 if (l.hashK || l.hashK1) {
                     if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
@@ -730,6 +721,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashP[addr].digest);
                     nHits++;
                 }
+
+                if (l.hashP_fe12 == 1) {
+                    const input0 = scalar2h4(safeFea2scalar(Fr, ctx.A));
+                    const input1 = scalar2h4(safeFea2scalar(Fr, ctx.B));
+                    const capacity = scalar2h4(safeFea2scalar(Fr, ctx.C));
+                    const resPoseidon = poseidon([...input0, ...input1], capacity);
+                    fi = sr4to8(ctx.Fr, resPoseidon);
+                    nHits++;
+                }
+
                 if (l.bin) {
                     if (l.binOpcode == 0) { // ADD
                         const a = safeFea2scalar(Fr, ctx.A);
@@ -1077,13 +1078,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
-        // TODO: FILL IN POLYNOMIALS
-        if (l.poseidon == 1) {
-            // pols.poseidon[i] = 1n;
-        } else {
-            // pols.poseidon[i] = 0n;
-        }
-
         if (l.hashK || l.hashK1) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
             pols.hashK[i] = l.hashK ? 1n : 0n;
@@ -1249,7 +1243,27 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashPDigest[i] = 0n;
         }
 
-        if (l.hashPDigest || l.sWR) {
+        if (l.hashP_fe12 == 1) {
+            const a = safeFea2scalar(Fr, ctx.A);
+            const b = safeFea2scalar(Fr, ctx.B);
+            const c = safeFea2scalar(Fr, ctx.C);
+            const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const expectedOp = safeFea2scalar(sr4to8(poseidon([...scalar2h4(a), ...scalar2h4(b)], scalar2h4(c))));
+            if (!Scalar.eq(op, expectedOp)) {
+                throw new Error(`Poseidon hash does not match (${expectedOp} != ${op}) ${sourceRef}`);
+            }
+
+            pols.hashP_fe12[i] = 1n;
+            required.PoseidonG.push([...scalar2h4(a), ...scalar2h4(b), ...scalar2h4(c), ...scalar2h4(op), POSEIDONG_PERMUTATION4_ID]);
+
+            const mockAplusB = Scalar.band(Scalar.add(a, b), Mask256); // Should I use band + Mask256 here?
+            required.Binary.push({a: a, b: b, c: mockAplusB, opcode: 0, type: 2});
+            required.Binary.push({a: c, b: 0n, c: c, opcode: 0, type: 2});
+        } else {
+            pols.hashP_fe12[i] = 0n;
+        }
+
+        if (l.sWR || l.hashPDigest || l.hashP_fe12) {
             const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
         }
@@ -1509,9 +1523,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.repeat[i] = 0n;
         }
 
-    //////////
-    // SET NEXT REGISTERS
-    //////////
+//////////
+// SET NEXT REGISTERS
+//////////
 
         const nexti = (i+1) % N;
 
@@ -1929,6 +1943,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
             } else {
                 pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + BigInt(incCounter);
+            }
+        } else {
+            pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
+        }
+
+        if (l.hashP_fe12) {
+            if (skipCounters) {
+                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
+            } else {
+                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + 1n;
             }
         } else {
             pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
