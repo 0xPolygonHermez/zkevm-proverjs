@@ -1248,7 +1248,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const b = safeFea2scalar(Fr, ctx.B);
             const c = safeFea2scalar(Fr, ctx.C);
             const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            const expectedOp = safeFea2scalar(sr4to8(poseidon([...scalar2h4(a), ...scalar2h4(b)], scalar2h4(c))));
+            const expectedOp = safeFea2scalar(sr4to8(poseidon([...scalar2h4(a), ...scalar2h4(b)], ...scalar2h4(c))));
             if (!Scalar.eq(op, expectedOp)) {
                 throw new Error(`Poseidon hash does not match (${expectedOp} != ${op}) ${sourceRef}`);
             }
