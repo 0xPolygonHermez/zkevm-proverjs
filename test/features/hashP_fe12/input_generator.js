@@ -5,9 +5,15 @@ const P_BN254 = 2188824287183927522224640574525727508869631115729782366268903789
 let values = [];
 for (let i = 0; i < 15; i++) {
     values.push({
-        A: random(64) % P_BN254,
-        B: random(64) % P_BN254,
-        C: random(64) % P_BN254,
+        A: random(64),
+        B: random(64),
+        C: random(64),
+    })
+
+    values.push({
+        A: random(256),
+        B: random(256),
+        C: random(256),
     })
 }
 console.log(values)
