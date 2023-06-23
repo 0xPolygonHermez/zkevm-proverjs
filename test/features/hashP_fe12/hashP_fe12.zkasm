@@ -1,4 +1,4 @@
-; node test/zkasmtest.js -C -R 2**16 -e -o tmp test/features/hashP_fe12/hashP_fe12.zkasm
+; node test/zkasmtest.js -C -e -n Binary,PoseidonG -o tmp test/features/hashP_fe12/hashP_fe12.zkasm
 
 ; constants needed by executor C++
 CONST %N = 2**19
@@ -59,9 +59,7 @@ init:
         5577465515873305007n => A
         14007324077747804655n => B
         11970558779030694813n => C
-        $ => D :HASHP_FE12
-        ${dump(D)}
-        ; 90072333880767889159723417923683074156284148368350583462231994241045501576981n :HASHP_FE12
+        90072333880767889159723417923683074156284148368350583462231994241045501576981n :HASHP_FE12
 
         9837762843954570281n => A
         4153395419289976189n => B
