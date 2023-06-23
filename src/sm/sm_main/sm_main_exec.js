@@ -501,7 +501,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest || l.hashP_fe12 ||  l.hashK || 
+            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || 
             l.hashK1 || l.hashKLen || l.hashKDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
@@ -1244,6 +1244,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.hashP_fe12 == 1) {
+            if (!isFea(Fr, ctx.A)) {
+                throw new Error(`A is not a valid array of 4 field elements ${sourceRef} ${ctx.A}`);
+            } else if (!isFea(Fr, ctx.B)) {
+                throw new Error(`B is not a valid array of 4 field elements ${sourceRef} ${ctx.B}`);
+            } else if (!isFea(Fr, ctx.C)) {
+                throw new Error(`C is not a valid array of 4 field elements ${sourceRef} ${ctx.C}`);
+            }
+
             const a = safeFea2scalar(Fr, ctx.A);
             const b = safeFea2scalar(Fr, ctx.B);
             const c = safeFea2scalar(Fr, ctx.C);
@@ -1255,10 +1263,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
             pols.hashP_fe12[i] = 1n;
             required.PoseidonG.push([...scalar2h4(a), ...scalar2h4(b), ...scalar2h4(c), ...scalar2h4(op), POSEIDONG_PERMUTATION4_ID]);
-
-            const mockAplusB = Scalar.band(Scalar.add(a, b), Mask256); // Should I use band + Mask256 here?
-            required.Binary.push({a: a, b: b, c: mockAplusB, opcode: 0, type: 2});
-            required.Binary.push({a: c, b: 0n, c: c, opcode: 0, type: 2});
+            required.MemAlign.push({m0: a, m1: b, v: c, w0: c, w1: b, offset: 0, wr256: 1n, wr8: 0n});
         } else {
             pols.hashP_fe12[i] = 0n;
         }
@@ -1780,13 +1785,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.cntArith[nexti] = pols.cntArith[i];
         }
 
-        if (!skipCounters && (l.bin == 1 || l.hashPDigest || l.sWR)) {
+        if (!skipCounters && (l.bin == 1 || l.hashPDigest || l.sWR || l.hashP_fe12)) {
             pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
         } else {
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }
 
-        if (!skipCounters && (l.memAlignRD || l.memAlignWR || l.memAlignWR8)) {
+        if (!skipCounters && (l.memAlignRD || l.memAlignWR || l.memAlignWR8 || l.hashP_fe12)) {
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
         } else {
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
@@ -3092,4 +3097,20 @@ function safeFea2scalar(Fr, arr) {
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+function isFea(Fr, arr) {
+    const p = Fr.p;
+
+    for (let index = 0; index < 8; index += 2) {
+        const lowvalue = Fr.toObject(arr[index]);
+        const highvalue = Fr.toObject(arr[index + 1]);
+        const value = lowvalue + (highvalue << 32n);
+
+        if (value > p) {
+            return false;
+        }
+    }
+
+    return true;
 }
