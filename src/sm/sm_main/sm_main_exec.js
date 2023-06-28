@@ -2747,7 +2747,7 @@ function eval_functionCall(ctx, tag) {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
-    } else if (tag.funcName == "getSmtProof") {
+    } else if (tag.funcName == "getSmtProof") {scalar2fea
         return eval_getSmtProof(ctx, tag);
     } else if (tag.funcName == "eventLog") {
         return eval_eventLog(ctx, tag);
