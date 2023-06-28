@@ -826,7 +826,7 @@ async function runTxs(test) {
                 to: txTest.to,
                 nonce: Number(txTest.nonce),
                 value: ethers.utils.parseUnits(String(txTest.value), 'wei'),
-                data: txTest.data,
+                data: formatNotOddData(txTest.data),
                 gasLimit: Number(txTest.gasLimit),
                 gasPrice: Number(txTest.gasPrice),
                 chainId: Number(txTest.chainId),
@@ -851,6 +851,13 @@ async function runTxs(test) {
     return txsHashes;
 }
 
+function formatNotOddData(data) {
+    if (data && data.length % 2 !== 0) {
+        return `0x0${data.slice(2)}`;
+    }
+
+    return data;
+}
 /**
  * Execute transaction of the ethereum test suite to geth instance
  * @param {Object} test
