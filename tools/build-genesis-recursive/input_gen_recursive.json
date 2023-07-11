@@ -14,7 +14,7 @@
     }
   ],
   "chainID": 1000,
-  "forkID": 3,
+  "forkID": 5,
   "aggregatorAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   "batches": [
     {

@@ -30,7 +30,7 @@
   "numBatch": 1,
   "timestamp": 1944498031,
   "chainID": 1000,
-  "forkID": 3,
+  "forkID": 5,
   "contractsBytecode": {},
   "expectedLeafs": {
     "0xa40d5f56745a118d0906a34e69aec8c0db1cb8fa": {
