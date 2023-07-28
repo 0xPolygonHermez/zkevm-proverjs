@@ -2567,6 +2567,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getIsForced(ctx, tag);
     } else if (tag.funcName == "getHistoricGERRoot") {
         return eval_getHistoricGERRoot(ctx, tag);
+    } else if (tag.funcName == "getNewGERRoot") {
+        return eval_getNewGERRoot(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
@@ -2654,6 +2656,15 @@ function eval_getSmtProof(ctx, tag) {
 function eval_getHistoricGERRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.historicGERRoot));
+}
+
+function eval_getNewGERRoot(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    const currentTx = Number(evalCommand(ctx, tag.params[0]));
+    // If is forced return historicGERRoot, else tx's GER
+    const newGER = ctx.input.isForced ? ctx.input.
+    historicGERRoot :ctx.input.GERS[currentTx]
+    return scalar2fea(ctx.Fr, Scalar.e(newGER));
 }
 
 function eval_getTimestampLimit(ctx, tag) {
