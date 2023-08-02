@@ -27,6 +27,16 @@
       "final_gencircom final_compile",
       "fflonk_setup fflonk_evk fflonk_solidity"
     ],
+    "steps_setup_pilfflonk": [
+      "buildrom buildpil buildstoragerom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
+      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
+      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
+      "recursive_pil_check recursive_verifier_check ",
+      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
+      "final_gencircom final_compile",
+      "pilfflonk_compile pilfflonk_fflonkinfo pilfflonk_shkey pilfflonk_chelpers pilfflonk_zkey pilfflonk_vk pilfflonk_solidity"
+    ],
     "steps_proof": [
       "exec pilverify prove verify",
       "c12a_exec c12a_pilverify c12a_prove c12a_verify"
@@ -38,6 +48,7 @@
     "buildall": "tools/build_all.sh ${npm_package_config_steps}",
     "buildpiltoolfiles": "tools/build_all.sh ${npm_package_config_steps_piltoolfiles}",
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
+    "buildsetup_pilfflonk": "tools/build_all.sh ${npm_package_config_steps_setup_pilfflonk}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
     "buildrom": ". ./pre.sh && ROM_DIR=node_modules/@0xpolygonhermez/zkevm-rom && (cd $ROM_DIR && npm run build) && cp $ROM_DIR/build/rom.json $ROM_DIR/build/metadata-rom.txt $BDIR/",
     "buildstoragerom": ". ./pre.sh && ROM_DIR=node_modules/@0xpolygonhermez/zkevm-storage-rom && (cd $ROM_DIR && npm run build:rom) && cp $ROM_DIR/build/storage_sm_rom.json src/sm/sm_storage && cp src/sm/sm_storage/storage_sm_rom.json $BDIR/",
@@ -83,10 +94,17 @@
     "recursivef_buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -i $BDIR/recursivef.starkinfo.json",
     "recursivef_buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -c $BDIR/recursivef.chelpers/recursivef.chelpers.cpp -C StarkRecursiveFSteps",
     "recursivef_buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/recursivef.const -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -t $BDIR/recursivef.consttree -v $BDIR/recursivef.verkey.json",
-    "recursivef_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -v $BDIR/recursivef.verkey.json -o $BDIR/recursivef.verifier.circom",
+    "recursivef_verifier_gencircom": ". ./pre.sh && $PILSTARK/main_pil2circom.js --skipMain -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkinfo.json -v $BDIR/recursivef.verkey.json -o $BDIR/recursivef.verifier.circom --arity=4 --custom",
     "final_gencircom": ". ./pre.sh && cp recursive/final.circom $BDIR",
-    "final_compile": ". ./pre.sh && circom --O1 --r1cs --sym --wasm --c --verbose $BDIR/final.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits",
+    "final_compile": ". ./pre.sh && circom --O1 --r1cs --sym --wasm --c --verbose $BDIR/final.circom -o $BDIR -l node_modules/pil-stark/circuits.bn128.custom -l node_modules/circomlib/circuits",
     "downloadptaw": "wget -P build https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final.ptau",
+    "pilfflonk_compile": ". ./pre.sh && $PILSTARK/final/main_final_setup.js -r $BDIR/final.r1cs -p $BDIR/pilfflonk_final.pil -c $BDIR/pilfflonk_final.const -e $BDIR/pilfflonk_final.exec --cols=9",
+    "pilfflonk_fflonkinfo": ". ./pre.sh && $PILSTARK/fflonk/main_fflonkinfo.js -p $BDIR/pilfflonk_final.pil -i $BDIR/pilfflonk_final.fflonkinfo.json",
+    "pilfflonk_shkey": ". ./pre.sh && $PILSTARK/fflonk/main_shkey.js -p $BDIR/pilfflonk_final.pil -f $BDIR/pilfflonk_final.fflonkinfo.json -t build/powersOfTau28_hez_final.ptau -e 5 -s $BDIR/pilfflonk_final.shkey.json",
+    "pilfflonk_chelpers": ". ./pre.sh && $PILSTARK/fflonk/main_buildchelpers.js -f $BDIR/pilfflonk_final.fflonkinfo.json -c $BDIR/pilfflonk_final.chelpers/pilfflonk.chelpers.cpp -m",
+    "pilfflonk_zkey": ". ./pre.sh && $PFSETUP build/powersOfTau28_hez_final.ptau $BDIR/pilfflonk_final.zkey $BDIR/pilfflonk_final.shkey.json $BDIR/pilfflonk_final.fflonkinfo.json $BDIR/pilfflonk_final.const",
+    "pilfflonk_vk": ". ./pre.sh && $PILSTARK/fflonk/main_exportVerificationKey.js -z $BDIR/pilfflonk_final.zkey -v $BDIR/pilfflonk_final.vkey",
+    "pilfflonk_solidity": ". ./pre.sh && $PILSTARK/fflonk/main_exportSolidityVerifier.js -v $BDIR/pilfflonk_final.vkey -f $BDIR/pilfflonk_final.fflonkinfo.json -p $BDIR/final.pilfflonk.verifier.sol -s $BDIR/final.shplonk.verifier.sol",
     "fflonk_setup": ". ./pre.sh && $SNARKJS ffs $BDIR/final.r1cs build/powersOfTau28_hez_final.ptau $BDIR/final.fflonk.zkey --verbose",
     "fflonk_evk": ". ./pre.sh && $SNARKJS zkev $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verkey.json",
     "fflonk_solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verifier.sol",
@@ -118,8 +136,8 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v1.0.0",
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v1.1.0-rc.4",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v1.1.0-fork.4",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v1.0.1-rc.3",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v2.0.0-rc.1-fork.5",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v1.0.0-fork.3",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
@@ -132,9 +150,9 @@
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
-    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#develop",
-    "pilcom": "0.0.23",
-    "snarkjs": "0.6.9",
+    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#fflonk",
+    "pilcom": "https://github.com/0xPolygonHermez/pilcom.git#polsArrayGeneric",
+    "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
   },
   "devDependencies": {

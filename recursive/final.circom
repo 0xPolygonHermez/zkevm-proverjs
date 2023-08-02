@@ -1,4 +1,5 @@
 pragma circom 2.1.0;
+pragma custom_templates;
 
 /*
 aggregatorAddr -> 160   -> 160
@@ -51,10 +52,10 @@ template Main() {
     signal input s0_vals4[32][21];
     signal input s0_valsC[32][39];
 
-    signal input s0_siblings1[32][6][16];
-    signal input s0_siblings3[32][6][16];
-    signal input s0_siblings4[32][6][16];
-    signal input s0_siblingsC[32][6][16];
+    signal input s0_siblings1[32][11][4];
+    signal input s0_siblings3[32][11][4];
+    signal input s0_siblings4[32][11][4];
+    signal input s0_siblingsC[32][11][4];
 
     signal input s1_root;
     signal input s2_root;
@@ -62,18 +63,18 @@ template Main() {
     signal input s4_root;
     signal input s5_root;
 
-    signal input s1_vals[32][48];
-    signal input s1_siblings[32][5][16];
+    signal input s1_vals[32][24];
+    signal input s1_siblings[32][9][4];
     signal input s2_vals[32][24];
-    signal input s2_siblings[32][4][16];
+    signal input s2_siblings[32][8][4];
     signal input s3_vals[32][24];
-    signal input s3_siblings[32][3][16];
+    signal input s3_siblings[32][6][4];
     signal input s4_vals[32][24];
-    signal input s4_siblings[32][2][16];
+    signal input s4_siblings[32][5][4];
     signal input s5_vals[32][24];
-    signal input s5_siblings[32][2][16];
+    signal input s5_siblings[32][3][4];
 
-    signal input finalPol[32][3];
+    signal input finalPol[64][3];
 
 
     component sv = StarkVerifier();
