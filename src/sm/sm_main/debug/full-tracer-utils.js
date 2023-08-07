@@ -65,8 +65,9 @@ function findOffsetLabel(program, label) {
  * @param {String} varLabel name of the label
  * @returns {Scalar} value of the label
  */
-function getVarFromCtx(ctx, global, varLabel) {
-    const offsetCtx = global ? 0 : Number(ctx.CTX) * 0x40000;
+function getVarFromCtx(ctx, global, varLabel, customCTX) {
+    const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
+    const offsetCtx = global ? 0 : Number(CTX) * 0x40000;
     const offsetRelative = findOffsetLabel(ctx.rom.program, varLabel);
     const addressMem = offsetCtx + offsetRelative;
     const value = ctx.mem[addressMem];
@@ -110,13 +111,15 @@ function getRegFromCtx(ctx, reg) {
 
 /**
  * Get range from memory
- * @param {Object} ctx current context object
  * @param {Number} offset to start read from calldata
  * @param {Number} length size of the bytes to read from offset
+ * @param {Object} ctx current context object
+ * @param {Number} customCTX get memory from a custom context
  * @returns {Array} string array with 32 bytes hexa values
  */
-function getFromMemory(offset, length, ctx) {
-    const offsetCtx = Number(ctx.CTX) * 0x40000;
+function getFromMemory(offset, length, ctx, customCTX) {
+    const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
+    const offsetCtx = Number(CTX) * 0x40000;
     let addrMem = 0;
     addrMem += offsetCtx;
     addrMem += 0x20000;

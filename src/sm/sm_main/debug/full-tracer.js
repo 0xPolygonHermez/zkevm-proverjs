@@ -17,7 +17,7 @@ const {
 const codes = require('./opcodes');
 const Verbose = require('./verbose-tracer');
 const {
-    getTransactionHash, findOffsetLabel, getVarFromCtx, getCalldataFromStack,
+    getTransactionHash, findOffsetLabel, getVarFromCtx,
     getRegFromCtx, getFromMemory, getConstantFromCtx, bnToPaddedHex,
 } = require('./full-tracer-utils');
 
@@ -194,7 +194,9 @@ class FullTracer {
         const context = {};
         context.type = Number(getVarFromCtx(ctx, false, 'isCreateContract')) ? 'CREATE' : 'CALL';
         context.to = (context.type === 'CREATE') ? '0x' : bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
-        context.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
+        const calldataCTX = getVarFromCtx(ctx, false, 'calldataCTX');
+        const calldataOffset = getVarFromCtx(ctx, false, 'calldataOffset');
+        context.data = getFromMemory(calldataOffset, getVarFromCtx(ctx, false, 'txCalldataLen').toString(), ctx, calldataCTX);
         context.gas = String(getVarFromCtx(ctx, false, 'txGasLimit'));
         context.value = getVarFromCtx(ctx, false, 'txValue').toString();
         context.batch = '';
@@ -649,7 +651,9 @@ class FullTracer {
         singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'txSrcAddr'), 40);
         singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
-        singleInfo.contract.data = getCalldataFromStack(ctx, 0, getVarFromCtx(ctx, false, 'txCalldataLen').toString());
+        const calldataCTX = getVarFromCtx(ctx, false, 'calldataCTX');
+        const calldataOffset = getVarFromCtx(ctx, false, 'calldataOffset');
+        singleInfo.contract.data = getFromMemory(calldataOffset, getVarFromCtx(ctx, false, 'txCalldataLen').toString(), ctx, calldataCTX);
         singleInfo.contract.gas = this.txGAS[this.depth];
         singleInfo.contract.type = 'CALL';
 
@@ -673,14 +677,7 @@ class FullTracer {
             // write return data from create/create2 until CTX changes
             if (this.returnFromCreate !== null) {
                 if (typeof this.returnFromCreate.returnValue === 'undefined') {
-                    const ctxTmp = {
-                        rom: ctx.rom,
-                        mem: ctx.mem,
-                        CTX: this.returnFromCreate.createCTX,
-                        Fr: ctx.Fr,
-                    };
-
-                    this.returnFromCreate.returnValue = getFromMemory(getVarFromCtx(ctxTmp, false, 'retDataOffset').toString(), getVarFromCtx(ctxTmp, false, 'retDataLength').toString(), ctxTmp);
+                    this.returnFromCreate.returnValue = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset', this.returnFromCreate.createCTX).toString(), getVarFromCtx(ctx, false, 'retDataLength', this.returnFromCreate.createCTX).toString(), ctx, this.returnFromCreate.createCTX);
                 }
 
                 const currentCTX = Number(getVarFromCtx(ctx, true, 'currentCTX'));
@@ -705,13 +702,7 @@ class FullTracer {
                 const retDataCTX = getVarFromCtx(ctx, false, 'retDataCTX');
 
                 if (Scalar.neq(retDataCTX, 0)) {
-                    const ctxTmp = {
-                        rom: ctx.rom,
-                        mem: ctx.mem,
-                        CTX: retDataCTX,
-                        Fr: ctx.Fr,
-                    };
-                    singleInfo.return_data = getFromMemory(getVarFromCtx(ctxTmp, false, 'retDataOffset').toString(), getVarFromCtx(ctxTmp, false, 'retDataLength').toString(), ctxTmp);
+                    singleInfo.return_data = getFromMemory(getVarFromCtx(ctx, false, 'retDataOffset', retDataCTX).toString(), getVarFromCtx(ctx, false, 'retDataLength', retDataCTX).toString(), ctx, retDataCTX);
                 }
             }
         }
