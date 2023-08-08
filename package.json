@@ -116,7 +116,7 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/pairings-complex-addition",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/pairings",
     "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v1.0.0",
     "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v1.1.0-fork.4",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v1.0.0-fork.3",
