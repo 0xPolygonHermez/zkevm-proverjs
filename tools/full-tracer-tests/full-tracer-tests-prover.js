@@ -9,10 +9,10 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-syntax */
-const { upAll, down, buildAll } = require('docker-compose');
-const ethers = require('ethers');
 const path = require('path');
 const fs = require('fs');
+const { upAll, down, buildAll } = require('docker-compose');
+const ethers = require('ethers');
 const { newCommitPolsArray, compile } = require('pilcom');
 const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 const _ = require('lodash');
@@ -38,6 +38,7 @@ const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.
 const opcodes = require('../../src/sm/sm_main/debug/opcodes');
 
 const regen = false;
+const saveExecutorResponse = false;
 const errorsMap = {
     ROM_ERROR_OUT_OF_GAS: 'out of gas',
     ROM_ERROR_INVALID_STATIC: 'write protection',
@@ -76,8 +77,8 @@ const { ExecutorService } = zkProverProto;
 const { HashDBService } = hashDbProto;
 // my prover -> 52.30.205.190
 // executor Fr -> 51.210.116.237
-const client = new ExecutorService('52.30.205.190:50071', grpc.credentials.createInsecure());
-const dbClient = new HashDBService('52.30.205.190:50061', grpc.credentials.createInsecure());
+const client = new ExecutorService('51.210.116.237:50071', grpc.credentials.createInsecure(), { 'grpc.max_receive_message_length': 91837108 });
+const dbClient = new HashDBService('51.210.116.237:50061', grpc.credentials.createInsecure());
 let tn;
 let fn;
 let tid;
@@ -687,7 +688,9 @@ function processBatch(input, txsHashes, currentHash, traceMethod) {
     client.ProcessBatch(cInput, (error, res) => {
         try {
             if (error) throw error;
-            executorJsonFromBatch(res, res.responses[currentHash].tx_hash.toString('hex'));
+            if (saveExecutorResponse) {
+                executorJsonFromBatch(res, res.responses[currentHash].tx_hash.toString('hex'));
+            }
             // Compare trace
             const changes = compareTracesByMethod(gethTraces[currentHash], res.responses[currentHash], traceMethod, currentHash);
             if (!_.isEmpty(changes) && !includesInvalidOpcode(res.responses[currentHash].execution_trace)
@@ -700,8 +703,6 @@ function processBatch(input, txsHashes, currentHash, traceMethod) {
                 // check next txHash
                 processBatch(input, txsHashes, currentHash + 1, traceMethod);
             }
-
-            return;
         } catch (e) {
             console.log(e);
         }

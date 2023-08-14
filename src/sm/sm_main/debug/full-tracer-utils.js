@@ -63,10 +63,12 @@ function findOffsetLabel(program, label) {
  * @param {Object} ctx current context object
  * @param {Boolean} global true if label is global, false if is ctx label
  * @param {String} varLabel name of the label
+ * @param {Number} customCTX get memory from a custom context
  * @returns {Scalar} value of the label
  */
-function getVarFromCtx(ctx, global, varLabel) {
-    const offsetCtx = global ? 0 : Number(ctx.CTX) * 0x40000;
+function getVarFromCtx(ctx, global, varLabel, customCTX) {
+    const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
+    const offsetCtx = global ? 0 : Number(CTX) * 0x40000;
     const offsetRelative = findOffsetLabel(ctx.rom.program, varLabel);
     const addressMem = offsetCtx + offsetRelative;
     const value = ctx.mem[addressMem];
@@ -74,28 +76,6 @@ function getVarFromCtx(ctx, global, varLabel) {
     if (!finalValue) return 0n;
 
     return fea2scalar(ctx.Fr, finalValue);
-}
-
-/**
- * Get the stored calldata in the stack
- * @param {Object} ctx current context object
- * @param {Number} offset to start read from calldata
- * @param {Number} length size of the bytes to read from offset
- * @returns {Scalar} value of the label
- */
-function getCalldataFromStack(ctx, offset = 0, length) {
-    const addr = 0x10000 + 1024 + Number(ctx.CTX) * 0x40000;
-    let value = '0x';
-    for (let i = addr + Number(offset); i < 0x20000 + Number(ctx.CTX) * 0x40000; i++) {
-        const memVal = ctx.mem[i];
-        if (!memVal) break;
-        value += ethers.utils.hexZeroPad(ethers.utils.hexlify(fea2scalar(ctx.Fr, memVal)), 32).slice(2);
-    }
-    if (length) {
-        value = value.slice(0, 2 + length * 2);
-    }
-
-    return value;
 }
 
 /**
@@ -110,13 +90,15 @@ function getRegFromCtx(ctx, reg) {
 
 /**
  * Get range from memory
- * @param {Object} ctx current context object
  * @param {Number} offset to start read from calldata
  * @param {Number} length size of the bytes to read from offset
+ * @param {Object} ctx current context object
+ * @param {Number} customCTX get memory from a custom context
  * @returns {Array} string array with 32 bytes hexa values
  */
-function getFromMemory(offset, length, ctx) {
-    const offsetCtx = Number(ctx.CTX) * 0x40000;
+function getFromMemory(offset, length, ctx, customCTX) {
+    const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
+    const offsetCtx = Number(CTX) * 0x40000;
     let addrMem = 0;
     addrMem += offsetCtx;
     addrMem += 0x20000;
@@ -186,7 +168,6 @@ module.exports = {
     getTransactionHash,
     findOffsetLabel,
     getVarFromCtx,
-    getCalldataFromStack,
     getRegFromCtx,
     getFromMemory,
     getConstantFromCtx,
