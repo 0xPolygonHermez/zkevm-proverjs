@@ -159,7 +159,7 @@ async function main() {
             second += info;
             // if error OOC move test to OOC directory
             if (err.toString().includes('OOC')) {
-                testsOOC.push({ fileName, error: err.toString(), stepsN: stepsNexec ? Scalar.mul(Scalar.e(stepsNexec), 2) : 8388608 });
+                testsOOC.push({ fileName: `/GeneralStateTests/${fileName.split('/GeneralStateTests/')[1]}`, error: err.toString(), stepsN: stepsNexec ? Scalar.mul(Scalar.e(stepsNexec), 2) : 8388608 });
                 const newPathFileName = fileName.replace(fileName.split('/')[fileName.split('/').length - 2], 'tests-OOC');
                 dirOOC = newPathFileName.replace(newPathFileName.split('/')[newPathFileName.split('/').length - 1], '');
                 if (!fs.existsSync(dirOOC)) {
