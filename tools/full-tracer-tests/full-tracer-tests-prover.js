@@ -474,7 +474,7 @@ function compareDefaultTracer(geth, fullTracer, i) {
             // memSize?
             stack: step.stack,
             depth: step.depth,
-            // returndata?
+            returnData: step.return_data,
         };
         // Split memory in hunks of 32 bytes
         if (!_.isEmpty(newStep.memory)) {
