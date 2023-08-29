@@ -1,5 +1,5 @@
 {
-    "generate_call_trace": true,
+    "generate_trace": true,
     "generate_execute_trace": true,
     "disableStorage": false,
     "disableStack":     false,
