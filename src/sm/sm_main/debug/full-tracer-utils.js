@@ -141,7 +141,7 @@ function getFromMemory(offset, length, ctx, customCTX) {
         finalMemory = finalMemory.concat(hexStringEnd);
     }
 
-    return finalMemory;
+    return finalMemory.substring(0, length * 2 + 2);
 }
 
 /**
