@@ -6,6 +6,7 @@ const chalk = require('chalk');
 const { Scalar } = require('ffjavascript');
 
 const { smtUtils, stateUtils, utils } = require('@0xpolygonhermez/zkevm-commonjs');
+const { convertBigIntsToNumbers } = require('./full-tracer-utils');
 
 class VerboseTracer {
     /**
@@ -22,13 +23,16 @@ class VerboseTracer {
         this.initFinalState = options.initFinalState;
         this.saveInitFinalState = options.saveInitFinalState;
         this.bytecode = options.bytecode;
+        this.printReturn = options.printReturn;
+        this.saveReturn = options.saveReturn;
 
         this.smt = smt;
         this.touched = {};
 
         // Logs init-final state path
         this.folderLogs = path.join(__dirname, '../logs-verbose');
-        this.pathLogFile = `${this.folderLogs}/${fileName.split('.')[0]}-verbose`;
+        this.pathLogFileState = `${this.folderLogs}/${fileName.split('.')[0]}-pre-post-state`;
+        this.pathLogFileReturn = `${this.folderLogs}/${fileName.split('.')[0]}-return-data`;
     }
 
     saveInitStateRoot(initSR) {
@@ -121,7 +125,7 @@ class VerboseTracer {
             if (!fs.existsSync(this.folderLogs)) {
                 fs.mkdirSync(this.folderLogs);
             }
-            fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(fullInfo, null, 2));
+            fs.writeFileSync(`${this.pathLogFileState}.json`, JSON.stringify(fullInfo, null, 2));
         }
     }
 
@@ -155,6 +159,40 @@ class VerboseTracer {
         info.storage = storageInfo;
 
         return info;
+    }
+
+    printSaveReturn(returnData) {
+        if (this.enable !== true) return;
+
+        if (this.printReturn) {
+            let info = `${chalk.whiteBright('/////////////////////////////\n')}`;
+            info += `${chalk.whiteBright('//////////RETURN////////////\n')}`;
+            info += `${chalk.whiteBright('///////////////////////////')}`;
+            console.log(info);
+
+            info = `${chalk.magenta('---> OUTPUTS\n')}`;
+            console.log(returnData.outputs);
+
+            info = `${chalk.magenta('\n---> COUNTERS\n')}`;
+            console.log(returnData.counters);
+
+            info = `${chalk.magenta('\n---> ERRORS\n')}`;
+            console.log(returnData.errors);
+        }
+
+        if (this.saveReturn) {
+            const saveData = {
+                outputs: convertBigIntsToNumbers(returnData.outputs),
+                counters: convertBigIntsToNumbers(returnData.counters),
+                errors: returnData.errors,
+                logs: returnData.logs,
+            };
+
+            if (!fs.existsSync(this.folderLogs)) {
+                fs.mkdirSync(this.folderLogs);
+            }
+            fs.writeFileSync(`${this.pathLogFileReturn}.json`, JSON.stringify(saveData, null, 2));
+        }
     }
 }
 
