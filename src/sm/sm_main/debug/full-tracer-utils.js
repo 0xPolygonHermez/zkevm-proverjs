@@ -1,5 +1,6 @@
 /* eslint-disable default-param-last */
 const { ethers } = require('ethers');
+const { Scalar } = require('ffjavascript');
 const { toHexStringRlp, addressToHexStringRlp } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
 const { scalar2fea, fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
 
@@ -164,6 +165,28 @@ function bnToPaddedHex(bn, paddingLength) {
     return `0x${ethers.utils.hexlify(bn).slice(2).padStart(paddingLength, '0')}`;
 }
 
+function convertBigIntsToNumbers(obj) {
+    if (typeof (obj) === 'bigint') {
+        if (Scalar.gt(obj, Number.MAX_SAFE_INTEGER)) {
+            throw new Error(`Cannot convert ${obj} to number. Greater than MAX_SAFE_INTEGER`);
+        }
+
+        return Number(obj);
+    } if (Array.isArray(obj)) {
+        return obj.map(convertBigIntsToNumbers);
+    } if (typeof obj === 'object') {
+        const res = {};
+        const keys = Object.keys(obj);
+        keys.forEach((k) => {
+            res[k] = convertBigIntsToNumbers(obj[k]);
+        });
+
+        return res;
+    }
+
+    return obj;
+}
+
 module.exports = {
     getTransactionHash,
     findOffsetLabel,
@@ -172,4 +195,5 @@ module.exports = {
     getFromMemory,
     getConstantFromCtx,
     bnToPaddedHex,
+    convertBigIntsToNumbers,
 };

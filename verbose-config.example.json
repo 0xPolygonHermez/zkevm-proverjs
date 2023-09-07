@@ -5,9 +5,12 @@
         "filterOpcodes": ["EXTCODECOPY"],
         "initFinalState": true,
         "bytecode": true,
-        "saveInitFinalState": true
+        "saveInitFinalState": true,
+        "outputs": true,
+        "saveOutputs": true
     },
     "zkPC": false,
     "batchL2Data": false,
+    "getNameSelector": "https://api.openchain.xyz/signature-database/v1/lookup?filter=false&function=",
     "step": 1000000
 }

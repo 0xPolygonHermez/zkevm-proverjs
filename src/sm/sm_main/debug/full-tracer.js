@@ -403,6 +403,9 @@ class FullTracer {
         // write single tx trace
         fs.writeFileSync(`${this.pathLogFile}_${this.txCount}.json`, JSON.stringify(this.finalTrace.responses[this.txCount], null, 2));
 
+        // verbose
+        this.verbose.printTx(`finish ${this.txCount}`);
+
         // Increase transaction count
         this.txCount += 1;
 
@@ -411,8 +414,6 @@ class FullTracer {
         this.execution_trace = [];
         this.logs = [];
         this.callData = [];
-        // verbose
-        this.verbose.printTx(`finish ${this.txCount}`);
     }
 
     /**
@@ -815,6 +816,14 @@ class FullTracer {
             fs.mkdirSync(this.folderLogs);
         }
         fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(this.finalTrace, null, 2));
+    }
+
+    /**
+     * Prints outcome of the execution
+     * @param {Object} returnData required outputs
+     */
+    printReturn(returnData) {
+        this.verbose.printSaveReturn(returnData);
     }
 }
 
