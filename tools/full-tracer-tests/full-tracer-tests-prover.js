@@ -93,6 +93,9 @@ async function main() {
         if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
             fs.mkdirSync(path.join(__dirname, 'geth-traces'));
         }
+        // Compile rom file
+        const zkasmFile = path.join(__dirname, '../../node_modules/@0xpolygonhermez/zkevm-rom/main/main.zkasm');
+        const rom = await zkasm.compile(zkasmFile, null, {});
         for (const configTest of config) {
             const {
                 testName, testToDebug, isEthereumTest, folderName, disable, traceMethod,
@@ -137,7 +140,7 @@ async function main() {
                     gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod, test.id);
                 }
                 // Get trace from full tracer
-                const ftTxHashes = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length);
+                const ftTxHashes = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length, rom);
 
                 const input = JSON.parse(fs.readFileSync(test.inputTestPath, 'utf8'));
                 // Populate db with input bytecode
@@ -515,11 +518,10 @@ function compareDefaultTracer(geth, fullTracer, i) {
  * @param {Number} txsCount Number of transactions executed
  * @returns Array of tx hashes
  */
-async function getFtTrace(inputPath, testName, txsCount) {
+async function getFtTrace(inputPath, testName, txsCount, rom) {
     const input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
     const poseidon = await buildPoseidon();
     const { F } = poseidon;
-    const rom = JSON.parse(fs.readFileSync(path.join(__dirname, 'rom.json'), 'utf8'));
     const fileCachePil = path.join(__dirname, '../../cache-main-pil.json');
     let pil;
     if (fs.existsSync(fileCachePil)) {

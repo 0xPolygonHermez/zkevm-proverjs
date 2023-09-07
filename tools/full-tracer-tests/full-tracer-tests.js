@@ -14,6 +14,7 @@ const { newCommitPolsArray, compile } = require('pilcom');
 const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 const _ = require('lodash');
 const chalk = require('chalk');
+const zkasm = require('@0xpolygonhermez/zkasmcom');
 const smMain = require('../../src/sm/sm_main/sm_main');
 
 const CHAIN_ID = 1000;
@@ -51,6 +52,9 @@ async function main() {
         if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
             fs.mkdirSync(path.join(__dirname, 'geth-traces'));
         }
+        // Compile rom file
+        const zkasmFile = path.join(__dirname, '../../node_modules/@0xpolygonhermez/zkevm-rom/main/main.zkasm');
+        const rom = await zkasm.compile(zkasmFile, null, {});
         for (const configTest of config) {
             const {
                 testName, testToDebug, traceMethod, isEthereumTest, folderName, disable,
@@ -97,7 +101,7 @@ async function main() {
                 }
 
                 // Get trace from full tracer
-                const ftTraces = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length);
+                const ftTraces = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length, rom);
 
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
@@ -110,7 +114,7 @@ async function main() {
                             process.exit(1);
                         }
                     } else {
-                        console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i}`));
+                        console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i}  -- ${traceMethod}`));
                     }
                 }
             }
@@ -579,11 +583,11 @@ function compareTraces(geth, fullTracer) {
  * @param {Number} txsCount Number of transactions executed
  * @returns Array of full traces outputs
  */
-async function getFtTrace(inputPath, testName, txsCount) {
+async function getFtTrace(inputPath, testName, txsCount, rom) {
     const input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
     const poseidon = await buildPoseidon();
     const { F } = poseidon;
-    const rom = JSON.parse(fs.readFileSync(path.join(__dirname, 'rom.json'), 'utf8'));
+
     const fileCachePil = path.join(__dirname, '../../cache-main-pil.json');
     let pil;
     if (fs.existsSync(fileCachePil)) {

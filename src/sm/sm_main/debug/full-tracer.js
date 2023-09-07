@@ -668,14 +668,20 @@ class FullTracer {
         singleInfo.error = '';
         singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
 
+        // Check previous step
+        const prevStep = this.execution_trace[this.execution_trace.length - 1];
+
         // Add contract info
         singleInfo.contract = {};
         singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'txSrcAddr'), 40);
         singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
-        const calldataCTX = getVarFromCtx(ctx, false, 'calldataCTX');
-        const calldataOffset = getVarFromCtx(ctx, false, 'calldataOffset');
-        singleInfo.contract.data = getFromMemory(calldataOffset, getVarFromCtx(ctx, false, 'txCalldataLen').toString(), ctx, calldataCTX);
+        // Only set contract data param if it has changed (new context created or context terminated) to not overflow the trace
+        if (prevStep && (opIncContext.includes(prevStep.opcode) || zeroCostOp.includes(prevStep.opcode))) {
+            const calldataCTX = getVarFromCtx(ctx, false, 'calldataCTX');
+            const calldataOffset = getVarFromCtx(ctx, false, 'calldataOffset');
+            singleInfo.contract.data = getFromMemory(calldataOffset, getVarFromCtx(ctx, false, 'txCalldataLen').toString(), ctx, calldataCTX);
+        }
         singleInfo.contract.gas = this.txGAS[this.depth];
         singleInfo.contract.type = 'CALL';
 
@@ -745,8 +751,6 @@ class FullTracer {
         this.call_trace.push(singleCallTrace);
         this.execution_trace.push(singleExecuteTrace);
 
-        // Check previous step
-        const prevStep = this.execution_trace[this.execution_trace.length - 2];
         if (prevStep && opIncContext.includes(prevStep.opcode) && prevStep.depth !== singleInfo.depth) {
             // Create new call data entry
             this.callData[ctx.CTX] = { type: prevStep.opcode };
