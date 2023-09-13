@@ -16,10 +16,7 @@ const smMem = require("./sm/sm_mem.js");
 const smBits2Field = require("./sm/sm_bits2field.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
-const smPaddingPG = require("./sm/sm_padding_pg.js");
-const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
-const smStorage = require("./sm/sm_storage/sm_storage.js");
 
 const { F1Field } = require("ffjavascript");
 
@@ -119,21 +116,9 @@ async function run() {
         console.log("PaddingKKBit...");
         await smPaddingKKBit.buildConstants(constPols.PaddingKKBit);
     }
-    if (constPols.PaddingPG) {
-        console.log("PaddingPG...");
-        await smPaddingPG.buildConstants(constPols.PaddingPG);
-    }
-    if (constPols.PoseidonG) {
-        console.log("PoseidonG...");
-        await smPoseidonG.buildConstants(constPols.PoseidonG);
-    }
     if (constPols.Rom) {
         console.log("Rom...");
         await smRom.buildConstants(constPols.Rom, rom);
-    }
-    if (constPols.Storage) {
-        console.log("Storage...");
-        await smStorage.buildConstants(constPols.Storage);
     }
 
     if (typeof outputTextDir === 'string') {

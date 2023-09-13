@@ -1,6 +1,5 @@
 include "global.pil";
 
-
 namespace KeccakF(%N);
 
     pol constant ConnA, ConnB, ConnC, GateType, kGateType, kA, kB, kC;

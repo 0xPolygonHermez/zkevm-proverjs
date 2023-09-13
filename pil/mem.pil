@@ -7,7 +7,7 @@ namespace Mem(%N);
     pol commit addr;
     pol commit step;
     pol commit mOp, mWr;
-    pol commit val[8];
+    pol commit val[2];
     pol commit lastAccess; // 1 if its the last access of a given address
 
     // The list is sorted by [addr, step]
@@ -31,19 +31,9 @@ namespace Mem(%N);
 
     rdSame * (val[0]' - val[0])  =  0;
     rdSame * (val[1]' - val[1])  =  0;
-    rdSame * (val[2]' - val[2])  =  0;
-    rdSame * (val[3]' - val[3])  =  0;
-    rdSame * (val[4]' - val[4])  =  0;
-    rdSame * (val[5]' - val[5])  =  0;
-    rdSame * (val[6]' - val[6])  =  0;
-    rdSame * (val[7]' - val[7])  =  0;
+
 
     // The first evaluation is successfully validated when the evaluation cycle is restarted
     rdDifferent * (val[0]')  =  0;
     rdDifferent * (val[1]')  =  0;
-    rdDifferent * (val[2]')  =  0;
-    rdDifferent * (val[3]')  =  0;
-    rdDifferent * (val[4]')  =  0;
-    rdDifferent * (val[5]')  =  0;
-    rdDifferent * (val[6]')  =  0;
-    rdDifferent * (val[7]')  =  0;
+

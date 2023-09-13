@@ -3,14 +3,14 @@ const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
 
 const {
-    scalar2fea,
-    fea2scalar,
-    fe2n,
-    scalar2h4,
+//    scalar2fea,
+//    fea2scalar,
+//    fe2n,
+//    scalar2h4,
     stringToH4,
     nodeIsEq,
     hashContractBytecode,
-    fea2String
+//    fea2String
 } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
 const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
@@ -26,8 +26,10 @@ const { lstat } = require("fs");
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
 
-const Mask256 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
-const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8n));
+const MASK_64 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
+const BYTE_MASK_ON_64 = Scalar.bor(Scalar.shl(MASK_64, 64), Scalar.shr(MASK_64, 8n));
+const P2_64 = 2n ** 64n;
+
 
 const WarningCheck = 1;
 const ErrorCheck = 2;
@@ -43,11 +45,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Arith: [],
         Binary: [],
         PaddingKK: [],
-        PaddingPG: [],
-        PoseidonG: [],
         Mem: [],
-        MemAlign: [],
-        Storage: []
+        MemAlign: []
     };
 
     debug = config && config.debug;
@@ -56,9 +55,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
-
-    const POSEIDONG_PERMUTATION1_ID = 1;
-    const POSEIDONG_PERMUTATION2_ID = 2;
+    let helpers = (config && config.helpers) ? config.helpers : false;
 
     if (config && config.unsigned){
         if (typeof input.from === 'undefined'){
@@ -91,23 +88,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     // load smt
     const smt = new SMT(db, poseidon, Fr);
 
-    let op7, op6, op5, op4, op3, op2, op1, op0;
-
+    let op1, op0;
+    const FrZeros = [Fr.zero, Fr.zero];
     const ctx = {
         mem: [],
         hashK: [],
-        hashP: [],
         pols: pols,
         input: input,
         vars:[],
         Fr: Fr,
-        Fec: Fec,
-        Fnec: Fnec,
         sto: input.keys,
         rom: rom,
         outLogs: {},
         N,
-        stepsN
+        stepsN,
+        helpers
     }
 
     if (config.stats) {
@@ -148,17 +143,43 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
     const checkHashNoDigest = config.checkHashNoDigest ? (config.checkHashNoDigest === "warning" ? WarningCheck:ErrorCheck) : false;
 
+
+    if (helpers) {
+        console.log('USING custom helpers ....');
+        if (!Array.isArray(helpers)) {
+            helpers = [helpers];
+        }
+        for (const helper of helpers) {
+            if (typeof helper.setup !== 'function') {
+                throw new Error('Helpers must be an instance with at least setup method');
+            }
+            helper.setup({
+                evalCommand,
+                safeFea2scalar,
+                scalar2fea,
+                Scalar,
+                fullTracer,
+                nameRomErrors,
+                checkParams
+            });
+            for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
+                if (!method.startsWith('eval_')) continue;
+                console.log(`  found helper ${method.substring(5)} => ${method}`);
+            }
+        }
+        ctx.helpers = helpers;
+    }
+
     try {
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
         ctx.step = step;
-        ctx.A = [pols.A0[i], pols.A1[i], pols.A2[i], pols.A3[i], pols.A4[i], pols.A5[i], pols.A6[i], pols.A7[i]];
-        ctx.B = [pols.B0[i], pols.B1[i], pols.B2[i], pols.B3[i], pols.B4[i], pols.B5[i], pols.B6[i], pols.B7[i]];
-        ctx.C = [pols.C0[i], pols.C1[i], pols.C2[i], pols.C3[i], pols.C4[i], pols.C5[i], pols.C6[i], pols.C7[i]];
-        ctx.D = [pols.D0[i], pols.D1[i], pols.D2[i], pols.D3[i], pols.D4[i], pols.D5[i], pols.D6[i], pols.D7[i]];
-        ctx.E = [pols.E0[i], pols.E1[i], pols.E2[i], pols.E3[i], pols.E4[i], pols.E5[i], pols.E6[i], pols.E7[i]];
-        ctx.SR = [ pols.SR0[i], pols.SR1[i], pols.SR2[i], pols.SR3[i], pols.SR4[i], pols.SR5[i], pols.SR6[i], pols.SR7[i]];
+        ctx.A = [pols.A0[i], pols.A1[i]];
+        ctx.B = [pols.B0[i], pols.B1[i]];
+        ctx.C = [pols.C0[i], pols.C1[i]];
+        ctx.D = [pols.D0[i], pols.D1[i]];
+        ctx.E = [pols.E0[i], pols.E1[i]];
         ctx.CTX = pols.CTX[i];
         ctx.SP = pols.SP[i];
         ctx.PC = pols.PC[i];
@@ -170,8 +191,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.cntBinary = pols.cntBinary[i];
         ctx.cntKeccakF = pols.cntKeccakF[i];
         ctx.cntMemAlign = pols.cntMemAlign[i];
-        ctx.cntPoseidonG = pols.cntPoseidonG[i];
-        ctx.cntPaddingPG = pols.cntPaddingPG[i];
         ctx.RCX = pols.RCX[i];
 
         // evaluate commands "after" before start new line, but when new values of registers are ready.
@@ -232,99 +251,57 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 // LOAD INPUTS
 //////////
 
-        [op0, op1, op2, op3, op4, op5, op6, op7] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+        [op0, op1] = FrZeros;
 
         if (l.inA) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [op0, op1] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inA), ctx.A[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inA), ctx.A[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inA), ctx.A[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inA), ctx.A[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inA), ctx.A[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inA), ctx.A[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inA), ctx.A[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inA), ctx.A[7]))
-                ];
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inA), ctx.A[1]))];
             pols.inA[i] = Fr.e(l.inA);
         } else {
             pols.inA[i] = Fr.zero;
         }
 
         if (l.inB) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [op0, op1] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inB), ctx.B[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inB), ctx.B[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inB), ctx.B[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inB), ctx.B[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inB), ctx.B[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inB), ctx.B[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inB), ctx.B[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inB), ctx.B[7]))
-                ];
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inB), ctx.B[1]))];
             pols.inB[i] = Fr.e(l.inB);
         } else {
             pols.inB[i] = Fr.zero;
         }
 
         if (l.inC) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [op0, op1] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inC), ctx.C[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inC), ctx.C[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inC), ctx.C[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inC), ctx.C[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inC), ctx.C[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inC), ctx.C[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inC), ctx.C[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inC), ctx.C[7]))
-                ];
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inC), ctx.C[1]))];
             pols.inC[i] = Fr.e(l.inC);
         } else {
             pols.inC[i] = Fr.zero;
         }
 
         if (l.inD) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [op0, op1] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inD), ctx.D[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inD), ctx.D[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inD), ctx.D[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inD), ctx.D[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inD), ctx.D[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inD), ctx.D[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inD), ctx.D[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inD), ctx.D[7]))
-                ];
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inD), ctx.D[1]))];
             pols.inD[i] = Fr.e(l.inD);
         } else {
             pols.inD[i] = Fr.zero;
         }
 
         if (l.inE) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [op0, op1] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inE), ctx.E[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inE), ctx.E[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inE), ctx.E[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inE), ctx.E[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inE), ctx.E[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inE), ctx.E[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inE), ctx.E[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inE), ctx.E[7]))
-                ];
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inE), ctx.E[1]))];
             pols.inE[i] = Fr.e(l.inE);
         } else {
             pols.inE[i] = Fr.zero;
         }
 
         if (l.inSR) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [op0, op1] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inSR), ctx.SR[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inSR), ctx.SR[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inSR), ctx.SR[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inSR), ctx.SR[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inSR), ctx.SR[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inSR), ctx.SR[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inSR), ctx.SR[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inSR), ctx.SR[7]))
-                ];
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inSR), ctx.SR[1]))];
             pols.inSR[i] = Fr.e(l.inSR);
         } else {
             pols.inSR[i] = Fr.zero;
@@ -413,31 +390,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inCntKeccakF[i] = Fr.zero;
         }
 
-        if (l.inCntPoseidonG) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntPoseidonG), Fr.e(ctx.cntPoseidonG)));
-            pols.inCntPoseidonG[i] = Fr.e(l.inCntPoseidonG);
-        } else {
-            pols.inCntPoseidonG[i] = Fr.zero;
-        }
-
-        if (l.inCntPaddingPG) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntPaddingPG), Fr.e(ctx.cntPaddingPG)));
-            pols.inCntPaddingPG[i] = Fr.e(l.inCntPaddingPG);
-        } else {
-            pols.inCntPaddingPG[i] = Fr.zero;
-        }
-
         if (l.inROTL_C) {
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[7])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[0])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[1])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[2])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[3])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[4])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[5])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[6]))
-                ];
+            [op0, op1] =
+                [Fr.add(op0 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[1])),
+                 Fr.add(op1 , Fr.mul( Fr.e(l.inROTL_C), ctx.C[0]))];
             pols.inROTL_C[i] = Fr.e(l.inROTL_C);
         } else {
             pols.inROTL_C[i] = Fr.zero;
@@ -454,43 +410,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if ((!isNaN(l.CONSTL))&&(l.CONSTL)) {
             [
                 pols.CONST0[i],
-                pols.CONST1[i],
-                pols.CONST2[i],
-                pols.CONST3[i],
-                pols.CONST4[i],
-                pols.CONST5[i],
-                pols.CONST6[i],
-                pols.CONST7[i]
+                pols.CONST1[i]
             ] = scalar2fea(Fr, l.CONSTL);
-            [op0, op1, op2, op3, op4, op5, op6, op7] = [
-                Fr.add(op0 , pols.CONST0[i]),
-                Fr.add(op1 , pols.CONST1[i]),
-                Fr.add(op2 , pols.CONST2[i]),
-                Fr.add(op3 , pols.CONST3[i]),
-                Fr.add(op4 , pols.CONST4[i]),
-                Fr.add(op5 , pols.CONST5[i]),
-                Fr.add(op6 , pols.CONST6[i]),
-                Fr.add(op7 , pols.CONST7[i])
-            ];
+            [op0, op1] = [Fr.add(op0 , pols.CONST0[i]),
+                          Fr.add(op1 , pols.CONST1[i])];
         } else if ((!isNaN(l.CONST))&&(l.CONST)) {
             pols.CONST0[i] = Fr.e(l.CONST);
             op0 = Fr.add(op0, pols.CONST0[i] );
             pols.CONST1[i] = Fr.zero;
-            pols.CONST2[i] = Fr.zero;
-            pols.CONST3[i] = Fr.zero;
-            pols.CONST4[i] = Fr.zero;
-            pols.CONST5[i] = Fr.zero;
-            pols.CONST6[i] = Fr.zero;
-            pols.CONST7[i] = Fr.zero;
         } else {
             pols.CONST0[i] = Fr.zero;
             pols.CONST1[i] = Fr.zero;
-            pols.CONST2[i] = Fr.zero;
-            pols.CONST3[i] = Fr.zero;
-            pols.CONST4[i] = Fr.zero;
-            pols.CONST5[i] = Fr.zero;
-            pols.CONST6[i] = Fr.zero;
-            pols.CONST7[i] = Fr.zero;
         }
 
 ////////////
@@ -500,7 +430,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
+            l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -571,106 +501,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.mem[addr] != "undefined") {
                         fi = ctx.mem[addr];
                     } else {
-                        fi = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+                        fi = FrZeros;
                     }
-                    nHits++;
-                }
-                if (l.sRD == 1) {
-                    const Kin0 = [
-                        ctx.C[0],
-                        ctx.C[1],
-                        ctx.C[2],
-                        ctx.C[3],
-                        ctx.C[4],
-                        ctx.C[5],
-                        ctx.C[6],
-                        ctx.C[7],
-                    ];
-
-                    const Kin1 = [
-                        ctx.A[0],
-                        ctx.A[1],
-                        ctx.A[2],
-                        ctx.A[3],
-                        ctx.A[4],
-                        ctx.A[5],
-                        ctx.B[0],
-                        ctx.B[1]
-                    ];
-
-                    const keyI = poseidon(Kin0);
-                    const key = poseidon(Kin1, keyI);
-
-                    // commented since readings are done directly in the smt
-                    // const keyS = Fr.toString(key, 16).padStart(64, "0");
-                    // if (typeof ctx.sto[keyS] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
-
-                    // fi = scalar2fea(Fr, Scalar.e("0x" + ctx.sto[ keyS ]));
-                    const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
-                    incCounter = res.proofHashCounter + 2;
-
-                    // save readWriteAddress
-                    if (fullTracer){
-                        fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, res.value);
-                    }
-
-                    fi = scalar2fea(Fr, Scalar.e(res.value));
-                    nHits++;
-                }
-                if (l.sWR == 1) {
-                    ctx.lastSWrite = {};
-
-                    const Kin0 = [
-                        ctx.C[0],
-                        ctx.C[1],
-                        ctx.C[2],
-                        ctx.C[3],
-                        ctx.C[4],
-                        ctx.C[5],
-                        ctx.C[6],
-                        ctx.C[7],
-                    ];
-
-                    const Kin1 = [
-                        ctx.A[0],
-                        ctx.A[1],
-                        ctx.A[2],
-                        ctx.A[3],
-                        ctx.A[4],
-                        ctx.A[5],
-                        ctx.B[0],
-                        ctx.B[1]
-                    ];
-
-                    const keyI = poseidon(Kin0);
-                    const key = poseidon(Kin1, keyI);
-
-                    ctx.lastSWrite.Kin0 = Kin0;
-                    ctx.lastSWrite.Kin1 = Kin1;
-                    ctx.lastSWrite.keyI = keyI;
-                    ctx.lastSWrite.key = key;
-
-                    // commented since readings are also done directly in the s
-                    // ctx.lastSWrite.keyS = ctx.lastSWrite.key.toString(16);
-                    // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
-
-                    const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
-                    incCounter = res.proofHashCounter + 2;
-
-                    // save readWriteAddress
-                    if (fullTracer){
-                        fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, safeFea2scalar(Fr, ctx.D));
-
-                        // handle verbose full-tracer events
-                        if (fullTracer.options.verbose.enable)
-                            fullTracer.onAccessed(ctx.Fr, ctx.A, ctx.C, ctx.B);
-                    }
-
-                    ctx.lastSWrite.newRoot = res.newRoot;
-                    ctx.lastSWrite.res = res;
-                    ctx.lastSWrite.step = step;
-
-                    fi = sr4to8(ctx.Fr, ctx.lastSWrite.newRoot);
                     nHits++;
                 }
 
@@ -698,57 +530,24 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
                     nHits++;
                 }
-                if (l.hashP || l.hashP1) {
-                    if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
-                    const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-
-                    if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
-                    if (pos+size > ctx.hashP[addr].data.length) throw new Error(`Accessing hashP(${addr}) out of bounds ${sourceRef}`);
-                    let s = Scalar.zero;
-                    for (let k=0; k<size; k++) {
-                        if (typeof ctx.hashP[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashP(${addr}) not defined place ${pos+k} ${sourceRef}`);
-                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[addr].data[pos + k]));
-                    }
-                    fi = scalar2fea(Fr, s);
-                    nHits++;
-                }
-                if (l.hashPDigest == 1) {
-                    if (typeof ctx.hashP[addr] === "undefined") {
-                        throw new Error(`digest(${addr}) not defined ${sourceRef}`);
-                    }
-                    if (typeof ctx.hashP[addr].digest === "undefined") {
-                        throw new Error(`digest(${addr}) not calculated. Call hashPlen to finish digest ${sourceRef}`);
-                    }
-                    fi = scalar2fea(Fr, ctx.hashP[addr].digest);
-                    nHits++;
-                }
                 if (l.bin) {
                     if (l.binOpcode == 0) { // ADD
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
-                        const c = Scalar.band(Scalar.add(a, b), Mask256);
+                        const c = Scalar.band(Scalar.add(a, b), MASK_64);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 1) { // SUB
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
-                        const c = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
+                        const c = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), MASK_64);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 2) { // LT
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.lt(a, b);
-                        fi = scalar2fea(Fr, c);
-                        nHits ++;
-                    } else if (l.binOpcode == 3) { // SLT
-                        let a = safeFea2scalar(Fr, ctx.A);
-                        if (Scalar.geq(a, twoTo255)) a = Scalar.sub(a, twoTo256);
-                        let b = safeFea2scalar(Fr, ctx.B);
-                        if (Scalar.geq(b, twoTo255)) b = Scalar.sub(b, twoTo256);
-                        const c = Scalar.lt(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalar2fea(Fr, c);scalar2fea
                         nHits ++;
                     } else if (l.binOpcode == 4) { // EQ
                         const a = safeFea2scalar(Fr, ctx.A);
@@ -782,14 +581,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 if (l.memAlignRD) {
                     const m0 = safeFea2scalar(Fr, ctx.A);
                     const m1 = safeFea2scalar(Fr, ctx.B);
-                    const P2_256 = 2n ** 256n;
-                    const MASK_256 = P2_256 - 1n;
+                    const P2_64 = 2n ** 64n;
+                    const MASK_64 = P2_64 - 1n;
                     const offset = safeFea2scalar(Fr, ctx.C);
-                    if (offset < 0 || offset > 32) {
+                    if (offset < 0 || offset >= 8) {
                         throw new Error(`MemAlign out of range (${offset})  ${sourceRef}`);
                     }
-                    const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
-                    const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
+                    const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_64);
+                    const rightV = Scalar.band(Scalar.shr(m1, 64n - (offset * 8n)), MASK_64 >> (64n - (offset * 8n)));
                     const _V = Scalar.bor(leftV, rightV);
                     fi = scalar2fea(Fr, _V);
                     nHits ++;
@@ -805,20 +604,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 fi = evalCommand(ctx, l.freeInTag);
                 if (!Array.isArray(fi)) fi = scalar2fea(Fr, fi);
             }
-            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = fi;
-            [op0, op1, op2, op3, op4, op5, op6, op7] =
+            [pols.FREE0[i], pols.FREE1[i]] = fi;
+            [op0, op1] =
                 [Fr.add( Fr.mul(Fr.e(l.inFREE), fi[0]), op0 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[1]), op1 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[2]), op2 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[3]), op3 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[4]), op4 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[5]), op5 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[6]), op6 ),
-                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[7]), op7 )
-                ];
+                 Fr.add( Fr.mul(Fr.e(l.inFREE), fi[1]), op1 )];
             pols.inFREE[i] = Fr.e(l.inFREE);
         } else {
-            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+            [pols.FREE0[i], pols.FREE1[i]] = FrZeros;
             pols.inFREE[i] = Fr.zero;
         }
 
@@ -837,17 +629,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 console.log("Skip assert newStateRoot");
             } else if ((Number(ctx.zkPC) === rom.labels.assertNewLocalExitRoot) && skipAsserts){
                 console.log("Skip assert newLocalExitRoot");
-            } else if (
-                    (!Fr.eq(ctx.A[0], op0)) ||
-                    (!Fr.eq(ctx.A[1], op1)) ||
-                    (!Fr.eq(ctx.A[2], op2)) ||
-                    (!Fr.eq(ctx.A[3], op3)) ||
-                    (!Fr.eq(ctx.A[4], op4)) ||
-                    (!Fr.eq(ctx.A[5], op5)) ||
-                    (!Fr.eq(ctx.A[6], op6)) ||
-                    (!Fr.eq(ctx.A[7], op7))
-            ) {
-                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
+            } else if ((!Fr.eq(ctx.A[0], op0)) || (!Fr.eq(ctx.A[1], op1))) {
+                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1])} A:${fea2scalar(Fr, ctx.A)})`);
             }
             pols.assert[i] = 1n;
         } else {
@@ -860,49 +643,27 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
             if (l.mWR) {
                 pols.mWR[i] = 1n;
-                ctx.mem[addr] = [op0, op1, op2, op3, op4, op5, op6, op7];
-                required.Mem.push({
-                    bIsWrite: true,
-                    address: addr,
-                    pc: step,
-                    fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
-                });
+                ctx.mem[addr] = [op0, op1];
+                required.Mem.push({bIsWrite: true, address: addr, pc: step, fe0:op0, fe1:op1});
             } else {
                 pols.mWR[i] = 0n;
-                required.Mem.push({
-                    bIsWrite: false,
-                    address: addr,
-                    pc: step,
-                    fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
-                });
+                required.Mem.push({bIsWrite: false,  address: addr, pc: step, fe0:op0, fe1:op1});
                 if (ctx.mem[addr]) {
                     if ((!Fr.eq(ctx.mem[addr][0],  op0)) ||
-                        (!Fr.eq(ctx.mem[addr][1],  op1)) ||
-                        (!Fr.eq(ctx.mem[addr][2],  op2)) ||
-                        (!Fr.eq(ctx.mem[addr][3],  op3)) ||
-                        (!Fr.eq(ctx.mem[addr][4],  op4)) ||
-                        (!Fr.eq(ctx.mem[addr][5],  op5)) ||
-                        (!Fr.eq(ctx.mem[addr][6],  op6)) ||
-                        (!Fr.eq(ctx.mem[addr][7],  op7)))
+                        (!Fr.eq(ctx.mem[addr][1],  op1)))
                     {
                         const memdata = ctx.mem[addr].slice().reverse().join(',');
                         const hmemdata = ctx.mem[addr].slice().reverse().map((x)=>x.toString(16).padStart(8,'0')).join('');
-                        const opdata = [op7,op6,op5,op4,op3,op2,op1,op0].join(',');
-                        const hopdata = [op7,op6,op5,op4,op3,op2,op1,op0].map((x)=>x.toString(16).padStart(8,'0')).join('');
+                        const opdata = [op1,op0].join(',');
+                        const hopdata = [op1,op0].map((x)=>x.toString(16).padStart(8,'0')).join('');
                         throw new Error(`Memory Read does not match MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}\n${hmemdata}\n${hopdata}`);
                     }
                 } else {
                     if ((!Fr.isZero(op0)) ||
-                        (!Fr.isZero(op1)) ||
-                        (!Fr.isZero(op2)) ||
-                        (!Fr.isZero(op3)) ||
-                        (!Fr.isZero(op4)) ||
-                        (!Fr.isZero(op5)) ||
-                        (!Fr.isZero(op6)) ||
-                        (!Fr.isZero(op7)))
+                        (!Fr.isZero(op1)))
                     {
                         const memdata = ctx.mem[addr].slice().reverse().join(',');
-                        const opdata = [op7,op6,op5,op4,op3,op2,op1,op0].join(',');
+                        const opdata = [op1,op0].join(',');
                         throw new Error(`Memory Read does not match with non-initialized MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}`);
                     }
                 }
@@ -914,163 +675,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.mWR[i] = 0n;
         }
 
-        if (l.SRD || l.sWR) {
-            if (!Fr.isZero(ctx.A[7]) || !Fr.isZero(ctx.A[6]) || !Fr.isZero(ctx.A[5])) {
-                const values = '0x' + ([ctx.A[7], ctx.A[6], ctx.A[5]].map(x => x.toString(16)).join(',0x'));
-                throw new Error(`Storage invalid key (address) [A7..A5] = [${values}] on ${sourceRef}`);
-            }
-
-            if (!Fr.isZero(ctx.B[7]) || !Fr.isZero(ctx.B[6]) || !Fr.isZero(ctx.B[5]) ||
-                !Fr.isZero(ctx.B[4]) || !Fr.isZero(ctx.B[3]) || !Fr.isZero(ctx.B[2])) {
-                const values = '0x' + [ctx.B[7], ctx.B[6], ctx.B[5], ctx.B[4], ctx.B[3], ctx.B[2] ].map(x => x.toString(16)).join(',0x');
-                throw new Error(`Storage invalid key (type) [B7..B2] = [${values}] on ${sourceRef}`);
-            }
-        }
-
-        if (l.sRD) {
-            pols.sRD[i] = 1n;
-
-            const Kin0 = [
-                ctx.C[0],
-                ctx.C[1],
-                ctx.C[2],
-                ctx.C[3],
-                ctx.C[4],
-                ctx.C[5],
-                ctx.C[6],
-                ctx.C[7],
-            ];
-
-            const Kin1 = [
-                ctx.A[0],
-                ctx.A[1],
-                ctx.A[2],
-                ctx.A[3],
-                ctx.A[4],
-                ctx.A[5],
-                ctx.B[0],
-                ctx.B[1]
-            ];
-
-            const keyI = poseidon(Kin0);
-            required.PoseidonG.push([...Kin0, 0n, 0n, 0n, 0n, ...keyI, POSEIDONG_PERMUTATION1_ID]);
-
-            const key = poseidon(Kin1, keyI);
-            required.PoseidonG.push([...Kin1, ...keyI,  ...key, POSEIDONG_PERMUTATION2_ID]);
-
-            const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
-            incCounter = res.proofHashCounter + 2;
-
-            required.Storage.push({
-                bIsSet: false,
-                getResult: {
-                    root: [...res.root],
-                    key: [...res.key],
-                    siblings: [...res.siblings],
-                    insKey: res.insKey ? [...res.insKey] : new Array(4).fill(Scalar.zero),
-                    insValue: res.insValue,
-                    isOld0: res.isOld0,
-                    value: res.value
-                }});
-
-            if (!Scalar.eq(res.value,safeFea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
-                throw new Error(`Storage read does not match ${sourceRef}`);
-            }
-
-            for (let k=0; k<4; k++) {
-                pols.sKeyI[k][i] =  keyI[k];
-                pols.sKey[k][i] = key[k];
-            }
-
-        } else {
-            pols.sRD[i] = 0n;
-        }
-
-        if (l.sWR) {
-            pols.sWR[i] = 1n;
-
-            if ((!ctx.lastSWrite)||(ctx.lastSWrite.step != step)) {
-                ctx.lastSWrite = {};
-
-                const Kin0 = [
-                    ctx.C[0],
-                    ctx.C[1],
-                    ctx.C[2],
-                    ctx.C[3],
-                    ctx.C[4],
-                    ctx.C[5],
-                    ctx.C[6],
-                    ctx.C[7],
-                ];
-
-                const Kin1 = [
-                    ctx.A[0],
-                    ctx.A[1],
-                    ctx.A[2],
-                    ctx.A[3],
-                    ctx.A[4],
-                    ctx.A[5],
-                    ctx.B[0],
-                    ctx.B[1]
-                ];
-
-                ctx.lastSWrite.Kin0 = Kin0;
-                ctx.lastSWrite.Kin1 = Kin1;
-                ctx.lastSWrite.keyI = poseidon(Kin0);
-                ctx.lastSWrite.key = poseidon(Kin1, ctx.lastSWrite.keyI);
-
-                // commented since readings are also done directly in the smt
-                // ctx.lastSWrite.keyS = Fr.toString(ctx.lastSWrite.key, 16).padStart(64, "0");
-                // if (typeof ctx.sto[ctx.lastSWrite.keyS ] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
-
-                const res = await smt.set(sr8to4(ctx.Fr, ctx.SR), ctx.lastSWrite.key, safeFea2scalar(Fr, ctx.D));
-                incCounter = res.proofHashCounter + 2;
-
-                ctx.lastSWrite.res = res;
-                ctx.lastSWrite.newRoot = res.newRoot;
-                ctx.lastSWrite.step = step;
-            }
-
-            required.PoseidonG.push([...ctx.lastSWrite.Kin0, 0n, 0n, 0n, 0n, ...ctx.lastSWrite.keyI, POSEIDONG_PERMUTATION1_ID]);
-            required.PoseidonG.push([...ctx.lastSWrite.Kin1, ...ctx.lastSWrite.keyI,  ...ctx.lastSWrite.key, POSEIDONG_PERMUTATION2_ID]);
-
-            required.Storage.push({
-                bIsSet: true,
-                setResult: {
-                    oldRoot: [...ctx.lastSWrite.res.oldRoot],
-                    newRoot: [...ctx.lastSWrite.res.newRoot],
-                    key: [...ctx.lastSWrite.res.key],
-                    siblings: [...ctx.lastSWrite.res.siblings],
-                    insKey: ctx.lastSWrite.res.insKey ? [...ctx.lastSWrite.res.insKey] : new Array(4).fill(Scalar.zero),
-                    insValue: ctx.lastSWrite.res.insValue,
-                    isOld0: ctx.lastSWrite.res.isOld0,
-                    oldValue: ctx.lastSWrite.res.oldValue,
-                    newValue: ctx.lastSWrite.res.newValue,
-                    mode: ctx.lastSWrite.res.mode
-                }});
-
-            if (!nodeIsEq(ctx.lastSWrite.newRoot, sr8to4(ctx.Fr, [op0, op1, op2, op3, op4, op5, op6, op7 ]), ctx.Fr)) {
-                throw new Error(`Storage write does not match ${sourceRef}`);
-            }
-
-            // commented since readings are also done directly in the smt
-            // ctx.sto[ ctx.lastSWrite.keyS ] = fea2scalar(Fr, ctx.D).toString(16).padStart(64, "0");
-            for (let k=0; k<4; k++) {
-                pols.sKeyI[k][i] =  ctx.lastSWrite.keyI[k];
-                pols.sKey[k][i] = ctx.lastSWrite.key[k];
-            }
-        } else {
-            pols.sWR[i] = 0n;
-        }
-
-        if ((!l.sRD) && (!l.sWR)) {
-            for (let k=0; k<4; k++) {
-                pols.sKeyI[k][i] =  Fr.zero;
-                pols.sKey[k][i] = Fr.zero;
-            }
-        }
-
-
         if (l.hashK || l.hashK1) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
             pols.hashK[i] = l.hashK ? 1n : 0n;
@@ -1078,7 +682,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
-            const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const a = safeFea2scalar(Fr, [op0, op1]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
                 const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
@@ -1134,7 +738,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashKDigest) {
             pols.hashKDigest[i] = 1n;
-            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const dg = safeFea2scalar(Fr, [op0, op1]);
             if (typeof ctx.hashK[addr].digest === "undefined") {
                 throw new Error(`HASHKDIGEST(${addr}) cannot load keccak from DB ${sourceRef}`);
             }
@@ -1150,200 +754,49 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashKDigest[i] = 0n;
         }
 
-        if (l.hashP || l.hashP1) {
-            if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-            pols.hashP[i] = l.hashP ? 1n : 0n;
-            pols.hashP1[i] = l.hashP1 ? 1n : 0n;
-            const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
-            const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`HashP(${addr}) invalid size ${size} ${sourceRef}`);
-            const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            const maskByte = Scalar.e("0xFF");
-            for (let k=0; k<size; k++) {
-                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
-                const bh = ctx.hashP[addr].data[pos + k];
-                if (typeof bh === "undefined") {
-                    ctx.hashP[addr].data[pos + k] = bm;
-                } else if (bm != bh) {
-                    throw new Error(`HashP(${addr}) do not match pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
-                }
+        if (l.arith) {
+            const A = safeFea2scalar(Fr, ctx.A);
+            const B = safeFea2scalar(Fr, ctx.B);
+            const C = safeFea2scalar(Fr, ctx.C);
+            const D = safeFea2scalar(Fr, ctx.D);
+            const op = safeFea2scalar(Fr, [op0, op1]);
+            if (! Scalar.eq(Scalar.add(Scalar.mul(A, B), C),  Scalar.add(Scalar.shl(D, 64), op))   ) {
+                console.log('A: '+A.toString()+' (0x'+A.toString(16)+')');
+                console.log('B: '+B.toString()+' (0x'+B.toString(16)+')');
+                console.log('C: '+C.toString()+' (0x'+C.toString(16)+')');
+                console.log('D: '+D.toString()+' (0x'+D.toString(16)+')');
+                console.log('op: '+op.toString()+' (0x'+op.toString(16)+')');
+                let left = Scalar.add(Scalar.mul(A, B), C);
+                let right = Scalar.add(Scalar.shl(D, 64), op);
+                console.log(left.toString() + ' (0x'+left.toString(16)+') != '+ right.toString()
+                                            + ' (0x' + right.toString(16)+')');
+                throw new Error(`Arithmetic does not match ${sourceRef}`);
             }
-            const paddingA = Scalar.shr(a, size * 8);
-            if (!Scalar.isZero(paddingA)) {
-                throw new Error(`HashP(${addr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
-            }
-
-            if ((typeof ctx.hashP[addr].reads[pos] !== "undefined") &&
-                (ctx.hashP[addr].reads[pos] != size))
-            {
-                throw new Error(`HashP(${addr}) diferent read sizes in the same position ${pos} (${ctx.hashP[addr].reads[pos]} != ${size}) ${sourceRef}`);
-            }
-            ctx.hashP[addr].reads[pos] = size;
-            ctx.hashP[addr].sourceRef = sourceRef;
-            incHashPos = size;
+            pols.arith[i] = 1n;
+            required.Arith.push({ x1: ctx.A, y1: ctx.B,
+                                  x2: ctx.C, y2: ctx.D,
+                                  x3: FrZeros, y3: [op0, op1]});
         } else {
-            pols.hashP[i] = 0n;
-            pols.hashP1[i] = 0n;
-        }
-
-        if (l.hashPLen) {
-            pols.hashPLen[i] = 1n;
-            if (typeof ctx.hashP[addr] === "undefined") {
-                ctx.hashP[addr] = { data: [], reads: {} , digestCalled: false};
-            }
-            const lh = ctx.hashP[addr].data.length;
-            const lm = fe2n(Fr, op0, ctx);
-            if (lm != lh) throw new Error(`HashPLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
-            if (typeof ctx.hashP[addr].digest === "undefined") {
-                // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
-                ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
-                ctx.hashP[addr].digestCalled = false;
-                await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);
-            }
-            ctx.hashP[addr].sourceRef = sourceRef;
-            if (ctx.hashP[addr].lenCalled) {
-                throw new Error(`Call HASHPLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-            }
-            ctx.hashP[addr].lenCalled = true;
-        } else {
-            pols.hashPLen[i] = 0n;
-        }
-
-        if (l.hashPDigest) {
-            pols.hashPDigest[i] = 1n;
-            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            if (typeof ctx.hashP[addr] === "undefined") {
-                const k = scalar2h4(dg);
-                const data = await smt.db.getProgram(k);
-
-                ctx.hashP[addr] = {
-                    data: data,
-                    digest: dg,
-                    lenCalled: false,
-                    sourceRef,
-                    reads: {}
-                }
-            }
-            if (ctx.hashP[addr].digestCalled) {
-                throw new Error(`Call HASHPDIGEST @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-            }
-            ctx.hashP[addr].digestCalled = true;
-            incCounter = Math.ceil((ctx.hashP[addr].data.length + 1) / 56);
-            if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashP[addr].digest))) {
-                throw new Error(`HashPDigest(${addr}) doesn't match ${sourceRef}`);
-            }
-        } else {
-            pols.hashPDigest[i] = 0n;
-        }
-
-        if (l.hashPDigest || l.sWR) {
-            const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
-        }
-
-        if (l.arithEq0 || l.arithEq1 || l.arithEq2) {
-            if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2)) {
-                const A = safeFea2scalar(Fr, ctx.A);
-                const B = safeFea2scalar(Fr, ctx.B);
-                const C = safeFea2scalar(Fr, ctx.C);
-                const D = safeFea2scalar(Fr, ctx.D);
-                const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                if (! Scalar.eq(Scalar.add(Scalar.mul(A, B), C),  Scalar.add(Scalar.shl(D, 256), op))   ) {
-                    console.log('A: '+A.toString()+' (0x'+A.toString(16)+')');
-                    console.log('B: '+B.toString()+' (0x'+B.toString(16)+')');
-                    console.log('C: '+C.toString()+' (0x'+C.toString(16)+')');
-                    console.log('D: '+D.toString()+' (0x'+D.toString(16)+')');
-                    console.log('op: '+op.toString()+' (0x'+op.toString(16)+')');
-                    let left = Scalar.add(Scalar.mul(A, B), C);
-                    let right = Scalar.add(Scalar.shl(D, 256), op);
-                    console.log(left.toString() + ' (0x'+left.toString(16)+') != '+ right.toString()
-                                                + ' (0x' + right.toString(16)+')');
-                    throw new Error(`Arithmetic(Eq0) does not match ${sourceRef}`);
-                }
-                pols.arithEq0[i] = 1n;
-                pols.arithEq1[i] = 0n;
-                pols.arithEq2[i] = 0n;
-                required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0});
-            }
-            else {
-                const x1 = safeFea2scalar(Fr, ctx.A);
-                const y1 = safeFea2scalar(Fr, ctx.B);
-                const x2 = safeFea2scalar(Fr, ctx.C);
-                const y2 = safeFea2scalar(Fr, ctx.D);
-                const x3 = safeFea2scalar(Fr, ctx.E);
-                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                let dbl = false;
-                if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2)) {
-                    dbl = false;
-                } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2) {
-                    dbl = true;
-                } else {
-                    throw new Error(`Invalid arithmetic op (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
-                }
-
-                let s;
-                if (dbl) {
-                    // Division by zero must be managed by ROM before call ARITH
-                    const divisor = Fec.add(y1, y1);
-                    if (Fec.isZero(divisor)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
-                    }
-                    s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), divisor);
-                }
-                else {
-                    // Division by zero must be managed by ROM before call ARITH
-                    const deltaX = Fec.sub(x2, x1)
-                    if (Fec.isZero(deltaX)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
-                    }
-                    s = Fec.div(Fec.sub(y2, y1), deltaX);
-                }
-
-                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(x1, dbl ? x1 : x2));
-                const _y3 = Fec.sub(Fec.mul(s, Fec.sub(x1,x3)), y1);
-                const x3eq = Scalar.eq(x3, _x3);
-                const y3eq = Scalar.eq(y3, _y3);
-
-                if (!x3eq || !y3eq) {
-                    console.log('x1,y1: ('+x1.toString()+', '+y1.toString()+')');
-                    if (!dbl) {
-                        console.log('x2,y2: ('+x2.toString()+', '+y2.toString()+')');
-                    }
-
-                    console.log('x3: '+x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
-                    console.log('y3: '+y3.toString()+(y3eq ? ' == ' : ' != ')+_y3.toString());
-
-                    throw new Error('Arithmetic curve '+(dbl?'dbl':'add')+` point does not match: ${sourceRef}`);
-                }
-
-                pols.arithEq0[i] = 0n;
-                pols.arithEq1[i] = dbl ? 0n : 1n;
-                pols.arithEq2[i] = dbl ? 1n : 0n;
-                required.Arith.push({x1: x1, y1: y1, x2: dbl ? x1:x2, y2: dbl? y1:y2, x3: x3, y3: y3, selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1});
-            }
-        } else {
-            pols.arithEq0[i] = 0n;
-            pols.arithEq1[i] = 0n;
-            pols.arithEq2[i] = 0n;
+            pols.arith[i] = 0n;
         }
 
         if (l.bin) {
             if (l.binOpcode == 0) { // ADD
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                const expectedC = Scalar.band(Scalar.add(a, b), Mask256);
+                const c = safeFea2scalar(Fr, [op0, op1]);
+                const expectedC = Scalar.band(Scalar.add(a, b), MASK_64);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`ADD does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
                 pols.binOpcode[i] = 0n;
-                pols.carry[i] = (((a + b) >> 256n) > 0n) ? 1n : 0n;
+                pols.carry[i] = (((a + b) >> 64n) > 0n) ? 1n : 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 0, type: 1});
             } else if (l.binOpcode == 1) { // SUB
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                const expectedC = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
+                const c = safeFea2scalar(Fr, [op0, op1]);
+                const expectedC = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), MASK_64);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`SUB does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
@@ -1353,7 +806,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else if (l.binOpcode == 2) { // LT
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const c = safeFea2scalar(Fr, [op0, op1]);
                 const expectedC = Scalar.lt(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`LT does not match (${expectedC?1n:0n} != ${c}) ${sourceRef}`);
@@ -1364,7 +817,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else if (l.binOpcode == 3) { // SLT
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const c = safeFea2scalar(Fr, [op0, op1]);
 
                 const signedA = Scalar.geq(a, twoTo255) ? Scalar.sub(a, twoTo256): a;
                 const signedB = Scalar.geq(b, twoTo255) ? Scalar.sub(b, twoTo256): b;
@@ -1379,7 +832,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else if (l.binOpcode == 4) { // EQ
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const c = safeFea2scalar(Fr, [op0, op1]);
                 const expectedC = Scalar.eq(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`EQ does not match (${expectedC?1n:0n} != ${c}) ${sourceRef}`);
@@ -1390,7 +843,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else if (l.binOpcode == 5) { // AND
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const c = safeFea2scalar(Fr, [op0, op1]);
                 const expectedC = Scalar.band(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`AND does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1401,7 +854,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else if (l.binOpcode == 6) { // OR
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const c = safeFea2scalar(Fr, [op0, op1]);
                 const expectedC = Scalar.bor(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`OR does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1412,7 +865,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else if (l.binOpcode == 7) { // XOR
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
-                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const c = safeFea2scalar(Fr, [op0, op1]);
                 const expectedC = Scalar.bxor(a, b);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`XOR does not match (${expectedC} != ${c}) ${sourceRef}`);
@@ -1432,12 +885,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.memAlignRD || l.memAlignWR || l.memAlignWR8) {
             const m0 = safeFea2scalar(Fr, ctx.A);
-            const v = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            const P2_256 = 2n ** 256n;
-            const MASK_256 = P2_256 - 1n;
+            const v = safeFea2scalar(Fr, [op0, op1]);
             const offset = safeFea2scalar(Fr, ctx.C);
 
-            if (offset < 0 || offset >= 32) {
+            if (offset < 0 || offset >= 7) {
                 throw new Error(`MemAlign out of range (${offset}) ${sourceRef}`);
             }
 
@@ -1445,9 +896,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const m1 = safeFea2scalar(Fr, ctx.B);
                 const w0 = safeFea2scalar(Fr, ctx.D);
                 const w1 = safeFea2scalar(Fr, ctx.E);
-                const _W0 = Scalar.bor(Scalar.band(m0, P2_256 - (2n ** (256n - (8n * offset)))), Scalar.shr(v, 8n * offset));
-                const _W1 = Scalar.bor(Scalar.band(m1, MASK_256 >> (offset * 8n)),
-                                       Scalar.band(Scalar.shl(v, (256n - (offset * 8n))), MASK_256));
+                const _W0 = Scalar.bor(Scalar.band(m0, P2_64 - (2n ** (64n - (8n * offset)))), Scalar.shr(v, 8n * offset));
+                const _W1 = Scalar.bor(Scalar.band(m1, MASK_64 >> (offset * 8n)),
+                                       Scalar.band(Scalar.shl(v, (64n - (offset * 8n))), MASK_64));
                 if (!Scalar.eq(w0, _W0) || !Scalar.eq(w1, _W1) ) {
                     throw new Error(`MemAlign w0,w1 invalid (0x${w0.toString(16)},0x${w1.toString(16)}) vs (0x${_W0.toString(16)},0x${_W1.toString(16)})`+
                                     `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, v:${v.toString(16)}, offset:${offset}] ${sourceRef}`);
@@ -1459,7 +910,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             else if (!l.memAlignRD && !l.memAlignWR && l.memAlignWR8) {
                 const w0 = safeFea2scalar(Fr, ctx.D);
-                const _W0 = Scalar.bor(Scalar.band(m0, Scalar.shr(byteMaskOn256, 8n * offset)), Scalar.shl(Scalar.band(v, 0xFF), 8n * (31n - offset)));
+                const _W0 = Scalar.bor(Scalar.band(m0, Scalar.shr(BYTE_MASK_ON_64, 8n * offset)), Scalar.shl(Scalar.band(v, 0xFF), 8n * (7n - offset)));
                 if (!Scalar.eq(w0, _W0)) {
                     throw new Error(`MemAlign w0 invalid (0x${w0.toString(16)}) vs (0x${_W0.toString(16)})`+
                                     `[m0:${m0.toString(16)}, v:${v.toString(16)}, offset:${offset}] ${sourceRef}`);
@@ -1470,8 +921,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 required.MemAlign.push({m0: m0, m1: 0n, v: v, w0: w0, w1: 0n, offset: offset, wr256: 0n, wr8: 1n});
             } else if (l.memAlignRD && !l.memAlignWR && !l.memAlignWR8) {
                 const m1 = safeFea2scalar(Fr, ctx.B);
-                const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
-                const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
+                const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_64);
+                const rightV = Scalar.band(Scalar.shr(m1, 64n - (offset * 8n)), MASK_64 >> (64n - (offset * 8n)));
                 const _V = Scalar.bor(leftV, rightV);
                 if (!Scalar.eq(v, _V)) {
                     throw new Error(`MemAlign v invalid ${v.toString(16)} vs ${_V.toString(16)}:`+
@@ -1504,215 +955,47 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setA == 1) {
             pols.setA[i]=1n;
-            [pols.A0[nexti],
-             pols.A1[nexti],
-             pols.A2[nexti],
-             pols.A3[nexti],
-             pols.A4[nexti],
-             pols.A5[nexti],
-             pols.A6[nexti],
-             pols.A7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            [pols.A0[nexti], pols.A1[nexti]] = [op0, op1];
         } else {
             pols.setA[i]=0n;
-            [pols.A0[nexti],
-             pols.A1[nexti],
-             pols.A2[nexti],
-             pols.A3[nexti],
-             pols.A4[nexti],
-             pols.A5[nexti],
-             pols.A6[nexti],
-             pols.A7[nexti]
-            ] = [
-             pols.A0[i],
-             pols.A1[i],
-             pols.A2[i],
-             pols.A3[i],
-             pols.A4[i],
-             pols.A5[i],
-             pols.A6[i],
-             pols.A7[i]
-            ];
+            [pols.A0[nexti],pols.A1[nexti]] = [pols.A0[i], pols.A1[i]];
 
             // Set A register with input.from to process unsigned transactions
             if ((Number(ctx.zkPC) === rom.labels.checkAndSaveFrom) && config.unsigned){
-                const feaFrom = scalar2fea(Fr, input.from);
-                [pols.A0[nexti],
-                 pols.A1[nexti],
-                 pols.A2[nexti],
-                 pols.A3[nexti],
-                 pols.A4[nexti],
-                 pols.A5[nexti],
-                 pols.A6[nexti],
-                 pols.A7[nexti]
-                ] = [feaFrom[0], feaFrom[1], feaFrom[2], feaFrom[3], feaFrom[4], feaFrom[5], feaFrom[6], feaFrom[7]];
+                [pols.A0[nexti], pols.A1[nexti]] = scalar2fea(Fr, input.from);
             }
         }
 
         if (l.setB == 1) {
             pols.setB[i]=1n;
-            [pols.B0[nexti],
-             pols.B1[nexti],
-             pols.B2[nexti],
-             pols.B3[nexti],
-             pols.B4[nexti],
-             pols.B5[nexti],
-             pols.B6[nexti],
-             pols.B7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            [pols.B0[nexti], pols.B1[nexti]] = [op0, op1];
         } else {
             pols.setB[i]=0n;
-            [pols.B0[nexti],
-             pols.B1[nexti],
-             pols.B2[nexti],
-             pols.B3[nexti],
-             pols.B4[nexti],
-             pols.B5[nexti],
-             pols.B6[nexti],
-             pols.B7[nexti]
-            ] = [
-             pols.B0[i],
-             pols.B1[i],
-             pols.B2[i],
-             pols.B3[i],
-             pols.B4[i],
-             pols.B5[i],
-             pols.B6[i],
-             pols.B7[i]
-            ];
+            [pols.B0[nexti], pols.B1[nexti]] = [pols.B0[i], pols.B1[i]];
         }
 
         if (l.setC == 1) {
             pols.setC[i]=1n;
-            [pols.C0[nexti],
-             pols.C1[nexti],
-             pols.C2[nexti],
-             pols.C3[nexti],
-             pols.C4[nexti],
-             pols.C5[nexti],
-             pols.C6[nexti],
-             pols.C7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            [pols.C0[nexti], pols.C1[nexti]] = [op0, op1];
         } else {
             pols.setC[i]=0n;
-            [pols.C0[nexti],
-             pols.C1[nexti],
-             pols.C2[nexti],
-             pols.C3[nexti],
-             pols.C4[nexti],
-             pols.C5[nexti],
-             pols.C6[nexti],
-             pols.C7[nexti]
-            ] = [
-             pols.C0[i],
-             pols.C1[i],
-             pols.C2[i],
-             pols.C3[i],
-             pols.C4[i],
-             pols.C5[i],
-             pols.C6[i],
-             pols.C7[i]
-            ];
+            [pols.C0[nexti], pols.C1[nexti]] = [pols.C0[i], pols.C1[i]];
         }
 
         if (l.setD == 1) {
             pols.setD[i]=1n;
-            [pols.D0[nexti],
-             pols.D1[nexti],
-             pols.D2[nexti],
-             pols.D3[nexti],
-             pols.D4[nexti],
-             pols.D5[nexti],
-             pols.D6[nexti],
-             pols.D7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            [pols.D0[nexti], pols.D1[nexti]] = [op0, op1];
         } else {
             pols.setD[i]=0n;
-            [pols.D0[nexti],
-             pols.D1[nexti],
-             pols.D2[nexti],
-             pols.D3[nexti],
-             pols.D4[nexti],
-             pols.D5[nexti],
-             pols.D6[nexti],
-             pols.D7[nexti]
-            ] = [
-             pols.D0[i],
-             pols.D1[i],
-             pols.D2[i],
-             pols.D3[i],
-             pols.D4[i],
-             pols.D5[i],
-             pols.D6[i],
-             pols.D7[i]
-            ];
+            [pols.D0[nexti], pols.D1[nexti]] = [pols.D0[i], pols.D1[i]];
         }
 
         if (l.setE == 1) {
             pols.setE[i]=1n;
-            [pols.E0[nexti],
-             pols.E1[nexti],
-             pols.E2[nexti],
-             pols.E3[nexti],
-             pols.E4[nexti],
-             pols.E5[nexti],
-             pols.E6[nexti],
-             pols.E7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            [pols.E0[nexti], pols.E1[nexti]] = [op0, op1];
         } else {
             pols.setE[i]=0n;
-            [pols.E0[nexti],
-             pols.E1[nexti],
-             pols.E2[nexti],
-             pols.E3[nexti],
-             pols.E4[nexti],
-             pols.E5[nexti],
-             pols.E6[nexti],
-             pols.E7[nexti]
-            ] = [
-             pols.E0[i],
-             pols.E1[i],
-             pols.E2[i],
-             pols.E3[i],
-             pols.E4[i],
-             pols.E5[i],
-             pols.E6[i],
-             pols.E7[i]
-            ];
-        }
-
-
-        if (l.setSR == 1) {
-            pols.setSR[i]=1n;
-            [pols.SR0[nexti],
-             pols.SR1[nexti],
-             pols.SR2[nexti],
-             pols.SR3[nexti],
-             pols.SR4[nexti],
-             pols.SR5[nexti],
-             pols.SR6[nexti],
-             pols.SR7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-        } else {
-            pols.setSR[i]=0n;
-            [pols.SR0[nexti],
-             pols.SR1[nexti],
-             pols.SR2[nexti],
-             pols.SR3[nexti],
-             pols.SR4[nexti],
-             pols.SR5[nexti],
-             pols.SR6[nexti],
-             pols.SR7[nexti]
-            ] = [
-             pols.SR0[i],
-             pols.SR1[i],
-             pols.SR2[i],
-             pols.SR3[i],
-             pols.SR4[i],
-             pols.SR5[i],
-             pols.SR6[i],
-             pols.SR7[i]
-            ];
+            [pols.E0[nexti], pols.E1[nexti]] = [pols.E0[i], pols.E1[i]];
         }
 
         if (l.setCTX == 1) {
@@ -1747,13 +1030,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
         }
 
-        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2)) {
+        if (!skipCounters && l.arith) {
             pols.cntArith[nexti] = pols.cntArith[i] + 1n;
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
         }
 
-        if (!skipCounters && (l.bin == 1 || l.hashPDigest || l.sWR)) {
+        if (!skipCounters && l.bin == 1) {
             pols.cntBinary[nexti] = pols.cntBinary[i] + 1n;
         } else {
             pols.cntBinary[nexti] = pols.cntBinary[i];
@@ -1800,12 +1083,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         const finalJmpAddr = l.useJmpAddr ? l.jmpAddr : addr;
         const nextNoJmpZkPC = pols.zkPC[i] + ((l.repeat && !Fr.isZero(ctx.RCX)) ? 0n:1n);
 
-        let elseAddr = l.useElseAddr ? BigInt(l.elseAddr) : nextNoJmpZkPC;
-        // modify JMP 'elseAddr' to continue execution in case of an unsigned transaction
-        if (config.unsigned && l.elseAddrLabel === 'invalidIntrinsicTxSenderCode') {
-            elseAddr = BigInt(finalJmpAddr);
-        }
-
+        const elseAddr = l.useElseAddr ? BigInt(l.elseAddr) : nextNoJmpZkPC;
         pols.elseAddr[i] = l.elseAddr ? BigInt(l.elseAddr) : 0n;
         pols.useElseAddr[i] = l.useElseAddr ? 1n: 0n;
 
@@ -2026,8 +1304,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntBinary: ctx.cntBinary,
         cntKeccakF: ctx.cntKeccakF,
         cntMemAlign: ctx.cntMemAlign,
-        cntPoseidonG: ctx.cntPoseidonG,
-        cntPaddingPG: ctx.cntPaddingPG,
         cntSteps: ctx.step,
     }
     required.output = {
@@ -2048,39 +1324,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
  */
 function checkFinalState(Fr, pols, ctx) {
 
-    if (
-        (!Fr.isZero(pols.A0[0])) ||
+    if ((!Fr.isZero(pols.A0[0])) ||
         (!Fr.isZero(pols.A1[0])) ||
-        (!Fr.isZero(pols.A2[0])) ||
-        (!Fr.isZero(pols.A3[0])) ||
-        (!Fr.isZero(pols.A4[0])) ||
-        (!Fr.isZero(pols.A5[0])) ||
-        (!Fr.isZero(pols.A6[0])) ||
-        (!Fr.isZero(pols.A7[0])) ||
         (!Fr.isZero(pols.D0[0])) ||
         (!Fr.isZero(pols.D1[0])) ||
         (!Fr.isZero(pols.D2[0])) ||
-        (!Fr.isZero(pols.D3[0])) ||
-        (!Fr.isZero(pols.D4[0])) ||
-        (!Fr.isZero(pols.D5[0])) ||
-        (!Fr.isZero(pols.D6[0])) ||
-        (!Fr.isZero(pols.D7[0])) ||
         (!Fr.isZero(pols.E0[0])) ||
         (!Fr.isZero(pols.E1[0])) ||
-        (!Fr.isZero(pols.E2[0])) ||
-        (!Fr.isZero(pols.E3[0])) ||
-        (!Fr.isZero(pols.E4[0])) ||
-        (!Fr.isZero(pols.E5[0])) ||
-        (!Fr.isZero(pols.E6[0])) ||
-        (!Fr.isZero(pols.E7[0])) ||
-        (!Fr.isZero(pols.SR0[0])) ||
-        (!Fr.isZero(pols.SR1[0])) ||
-        (!Fr.isZero(pols.SR2[0])) ||
-        (!Fr.isZero(pols.SR3[0])) ||
-        (!Fr.isZero(pols.SR4[0])) ||
-        (!Fr.isZero(pols.SR5[0])) ||
-        (!Fr.isZero(pols.SR6[0])) ||
-        (!Fr.isZero(pols.SR7[0])) ||
         (pols.PC[0]) ||
         (pols.HASHPOS[0]) ||
         (pols.RR[0]) ||
@@ -2384,7 +1634,6 @@ function evalCommand(ctx, tag) {
     } else {
         throw new Error(`Invalid operation ${tag.op} ${ctx.sourceRef}`);
     }
-
 }
 
 function eval_number(ctx, tag) {
@@ -2429,17 +1678,17 @@ function eval_getVar(ctx, tag) {
 
 function eval_getReg(ctx, tag) {
     if (tag.regName == "A") {
-        return safeFea2scalar(ctx.Fr, ctx.A);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.A) : safeFea2scalar(ctx.Fr, ctx.A);
     } else if (tag.regName == "B") {
-        return safeFea2scalar(ctx.Fr, ctx.B);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.B) : safeFea2scalar(ctx.Fr, ctx.B);
     } else if (tag.regName == "C") {
-        return safeFea2scalar(ctx.Fr, ctx.C);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.C) : safeFea2scalar(ctx.Fr, ctx.C);
     } else if (tag.regName == "D") {
-        return safeFea2scalar(ctx.Fr, ctx.D);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.D) : safeFea2scalar(ctx.Fr, ctx.D);
     } else if (tag.regName == "E") {
-        return safeFea2scalar(ctx.Fr, ctx.E);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.E) : safeFea2scalar(ctx.Fr, ctx.E);
     } else if (tag.regName == "SR") {
-        return safeFea2scalar(ctx.Fr, ctx.SR);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.SR) : safeFea2scalar(ctx.Fr, ctx.SR);
     } else if (tag.regName == "CTX") {
         return Scalar.e(ctx.CTX);
     } else if (tag.regName == "SP") {
@@ -2555,50 +1804,44 @@ function eval_logical_operation(ctx, tag)
 
 function eval_getMemValue(ctx, tag) {
     // to be compatible with
+    if (ctx.fullFe) {
+        return fea2scalar(ctx.Fr, ctx.mem[tag.offset])
+    }
     return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset]);
 }
 
 function eval_functionCall(ctx, tag) {
+    if (ctx.helpers) {
+        const method = 'eval_'+ tag.funcName;
+        for (const helper of ctx.helpers) {
+            if (typeof helper[method] !== 'function') continue;
+            const res = helper[method](ctx, tag);
+            if (res !== null) {
+                return res;
+            }
+        }
+    }
+
     if (tag.funcName == "getSequencerAddr") {
         return eval_getSequencerAddr(ctx, tag);
-    } else if (tag.funcName == "getTimestampLimit") {
-        return eval_getTimestampLimit(ctx, tag);
-    } else if (tag.funcName == "getIsForced") {
-        return eval_getIsForced(ctx, tag);
-    } else if (tag.funcName == "getHistoricGERRoot") {
-        return eval_getHistoricGERRoot(ctx, tag);
-    } else if (tag.funcName == "getNewGERRoot") {
-        return eval_getNewGERRoot(ctx, tag);
+    } else if (tag.funcName == "getTimestamp") {
+        return eval_getTimestamp(ctx, tag);
+    } else if (tag.funcName == "getGlobalExitRoot") {
+        return eval_getGlobalExitRoot(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
-    } else if (tag.funcName == "getSmtProof") {
-        return eval_getSmtProof(ctx, tag);
     } else if (tag.funcName == "eventLog") {
         return eval_eventLog(ctx, tag);
     } else if (tag.funcName == "cond") {
         return eval_cond(ctx, tag);
-    } else if (tag.funcName == "inverseFpEc") {
-        return eval_inverseFpEc(ctx, tag);
-    } else if (tag.funcName == "inverseFnEc") {
-        return eval_inverseFnEc(ctx, tag);
-    } else if (tag.funcName == "sqrtFpEc") {
-        return eval_sqrtFpEc(ctx, tag);
     } else if (tag.funcName == "dumpRegs") {
         return eval_dumpRegs(ctx, tag);
     } else if (tag.funcName == "dump") {
         return eval_dump(ctx, tag);
     } else if (tag.funcName == "dumphex") {
         return eval_dumphex(ctx, tag);
-    } else if (tag.funcName == "xAddPointEc") {
-        return eval_xAddPointEc(ctx, tag);
-    } else if (tag.funcName == "yAddPointEc") {
-        return eval_yAddPointEc(ctx, tag);
-    } else if (tag.funcName == "xDblPointEc") {
-        return eval_xDblPointEc(ctx, tag);
-    } else if (tag.funcName == "yDblPointEc") {
-        return eval_yDblPointEc(ctx, tag);
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
     } else if (tag.funcName.includes("bitwise")) {
@@ -2647,34 +1890,14 @@ function eval_getTxsLen(ctx, tag) {
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getSmtProof(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    const smtProof = ctx.input.smtProofs[Number(evalCommand(ctx, tag.params[0]))][Number(evalCommand(ctx, tag.params[1]))];
-    return scalar2fea(ctx.Fr, Scalar.e(smtProof));
-}
-
-function eval_getHistoricGERRoot(ctx, tag) {
+function eval_getGlobalExitRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.historicGERRoot));
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.globalExitRoot));
 }
 
-function eval_getNewGERRoot(ctx, tag) {
-    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    const currentTx = Number(evalCommand(ctx, tag.params[0]));
-    // If is forced return historicGERRoot, else tx's GER
-    const newGER = ctx.input.isForced ? ctx.input.
-    historicGERRoot :ctx.input.GERS[currentTx]
-    return scalar2fea(ctx.Fr, Scalar.e(newGER));
-}
-
-function eval_getTimestampLimit(ctx, tag) {
+function eval_getTimestamp(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-function eval_getIsForced(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e(ctx.input.isForced), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_eventLog(ctx, tag) {
@@ -2693,9 +1916,9 @@ function eval_cond(ctx, tag) {
     if (tag.params.length != 1) throw new Error(`Invalid number of parameters (1 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     const result = Number(evalCommand(ctx,tag.params[0]));
     if (result) {
-        return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+        return [ctx.Fr.e(-1), ctx.Fr.zero];
     }
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_exp(ctx, tag) {
@@ -2725,7 +1948,7 @@ function eval_bitwise(ctx, tag) {
             return Scalar.bxor(a, b);
         case 'not':
             checkParams(ctx, tag, 1);
-            return Scalar.bxor(a, Mask256);
+            return Scalar.bxor(a, MASK_64);
         default:
             throw new Error(`Invalid bitwise operation ${func} (${tag.funcName}) ${ctx.sourceRef}`)
     }
@@ -2733,9 +1956,9 @@ function eval_bitwise(ctx, tag) {
 
 function eval_beforeLast(ctx) {
     if (ctx.step >= ctx.stepsN-2) {
-        return [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
+        return [0n, 0n];
     } else {
-        return [ctx.Fr.negone, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
+        return [ctx.Fr.negone, 0n];
     }
 }
 
@@ -2825,8 +2048,8 @@ function eval_memAlignWR_W0(ctx, tag) {
     const value = evalCommand(ctx, tag.params[1]);
     const offset = evalCommand(ctx, tag.params[2]);
 
-    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.shl(Mask256, (32n - offset) * 8n)),
-                        Scalar.band(Mask256, Scalar.shr(value, offset * 8n))));
+    return scalar2fea(ctx.Fr, Scalar.bor(Scalar.band(m0, Scalar.shl(MASK_64, (8n - offset) * 8n)),
+                        Scalar.band(MASK_64, Scalar.shr(value, offset * 8n))));
 }
 
 function eval_memAlignWR_W1(ctx, tag) {
@@ -2835,8 +2058,8 @@ function eval_memAlignWR_W1(ctx, tag) {
     const value = evalCommand(ctx, tag.params[1]);
     const offset = evalCommand(ctx, tag.params[2]);
 
-    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m1, Scalar.shr(Mask256, offset * 8n)),
-                        Scalar.band(Mask256, Scalar.shl(value, (32n - offset) * 8n))));
+    return scalar2fea(ctx.Fr, Scalar.bor(Scalar.band(m1, Scalar.shr(MASK_64, offset * 8n)),
+                        Scalar.band(MASK_64, Scalar.shl(value, (8n - offset) * 8n))));
 }
 
 function eval_memAlignWR8_W0(ctx, tag) {
@@ -2844,9 +2067,9 @@ function eval_memAlignWR8_W0(ctx, tag) {
     const m0 = evalCommand(ctx, tag.params[0]);
     const value = evalCommand(ctx, tag.params[1]);
     const offset = evalCommand(ctx, tag.params[2]);
-    const bits = (31n - offset) * 8n;
+    const bits = (7n - offset) * 8n;
 
-    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.sub(Mask256, Scalar.shl(0xFFn, bits))),
+    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.sub(MASK_64, Scalar.shl(0xFFn, bits))),
                         Scalar.shl(Scalar.band(0xFFn, value), bits)));
 }
 
@@ -2858,13 +2081,21 @@ function eval_dumpRegs(ctx, tag) {
 
     console.log(`dumpRegs ${ctx.fileName}:${ctx.line}`);
 
-    console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
-    console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
-    console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
-    console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
-    console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
+    if (ctx.fullFe) {
+        console.log(['A', fea2scalar(ctx.Fr, ctx.A)]);
+        console.log(['B', fea2scalar(ctx.Fr, ctx.B)]);
+        console.log(['C', fea2scalar(ctx.Fr, ctx.C)]);
+        console.log(['D', fea2scalar(ctx.Fr, ctx.D)]);
+        console.log(['E', fea2scalar(ctx.Fr, ctx.E)]);
+    } else {
+        console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
+        console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
+        console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
+        console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
+        console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
+    }
 
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_dump(ctx, tag) {
@@ -2878,7 +2109,7 @@ function eval_dump(ctx, tag) {
         console.log("\x1b[35m"+ name +"\x1b[0;35m: "+evalCommand(ctx, value)+"\x1b[0m");
     });
 
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_dumphex(ctx, tag) {
@@ -2892,85 +2123,15 @@ function eval_dumphex(ctx, tag) {
         console.log("\x1b[35m"+ name +"\x1b[0;35m: 0x"+evalCommand(ctx, value).toString(16)+"\x1b[0m");
     });
 
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-function eval_inverseFpEc(ctx, tag) {
-    const a = evalCommand(ctx, tag.params[0]);
-    if (ctx.Fec.isZero(a)) {
-        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
-    }
-    return ctx.Fec.inv(a);
-}
-
-function eval_inverseFnEc(ctx, tag) {
-    const a = evalCommand(ctx, tag.params[0]);
-    if (ctx.Fnec.isZero(a)) {
-        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
-    }
-    return ctx.Fnec.inv(a);
-}
-
-function eval_sqrtFpEc(ctx, tag) {
-    const a = evalCommand(ctx, tag.params[0]);
-    const r = ctx.Fec.sqrt(a);
-    if (r === null) {
-        return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
-    }
-    return r;
-}
-
-function eval_xAddPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, false)[0];
-}
-
-function eval_yAddPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, false)[1];
-}
-
-function eval_xDblPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, true)[0];
-}
-
-function eval_yDblPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, true)[1];
-}
-
-function eval_AddPointEc(ctx, tag, dbl)
-{
-    const x1 = evalCommand(ctx, tag.params[0]);
-    const y1 = evalCommand(ctx, tag.params[1]);
-    const x2 = evalCommand(ctx, tag.params[dbl ? 0 : 2]);
-    const y2 = evalCommand(ctx, tag.params[dbl ? 1 : 3]);
-
-    if (dbl) {
-        // Division by zero must be managed by ROM before call ARITH
-        const divisor = ctx.Fec.add(y1, y1)
-        if (ctx.Fec.isZero(divisor)) {
-            throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
-        }
-        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), divisor);
-    }
-    else {
-        const deltaX = ctx.Fec.sub(x2, x1)
-        if (ctx.Fec.isZero(deltaX)) {
-            throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
-        }
-        s = ctx.Fec.div(ctx.Fec.sub(y2, y1), deltaX );
-    }
-
-    const x3 = ctx.Fec.sub(ctx.Fec.mul(s, s), ctx.Fec.add(x1, x2));
-    const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
-
-    return [x3, y3];
+    return [ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function printRegs(Fr, ctx) {
-    printReg8(Fr, "A", ctx.A);
-    printReg8(Fr, "B", ctx.B);
-    printReg8(Fr, "C", ctx.C);
-    printReg8(Fr, "D", ctx.D);
-    printReg8(Fr, "E", ctx.E);
-    printReg4(Fr,  "SR", ctx.SR);
+    printReg2(Fr, "A", ctx.A);
+    printReg2(Fr, "B", ctx.B);
+    printReg2(Fr, "C", ctx.C);
+    printReg2(Fr, "D", ctx.D);
+    printReg2(Fr, "E", ctx.E);
     printReg1("CTX", ctx.CTX);
     printReg1("SP", ctx.SP);
     printReg1("PC", ctx.PC);
@@ -2981,23 +2142,8 @@ function printRegs(Fr, ctx) {
     console.log(ctx.fileName + ":" + ctx.line);
 }
 
-function printReg4(Fr, name, V) {
-    printReg(Fr, name+"7", V[7], true);
-    printReg(Fr, name+"6", V[6], true);
-    printReg(Fr, name+"5", V[5], true);
-    printReg(Fr, name+"4", V[4], true);
-    printReg(Fr, name+"3", V[3], true);
-    printReg(Fr, name+"2", V[2], true);
-    printReg(Fr, name+"1", V[1], true);
-    printReg(Fr, name+"0", V[0]);
-    console.log("");
-}
+function printReg2(Fr, name, V) {
 
-
-function printReg4(Fr, name, V) {
-
-    printReg(Fr, name+"3", V[3], true);
-    printReg(Fr, name+"2", V[2], true);
     printReg(Fr, name+"1", V[1], true);
     printReg(Fr, name+"0", V[0]);
     console.log("");
@@ -3051,34 +2197,42 @@ function printReg1(name, V, h, short) {
     console.log(S);
 }
 
-function sr8to4(F, SR) {
-    const r=[];
-    r[0] = F.add(SR[0], F.mul(SR[1], F.e("0x100000000")));
-    r[1] = F.add(SR[2], F.mul(SR[3], F.e("0x100000000")));
-    r[2] = F.add(SR[4], F.mul(SR[5], F.e("0x100000000")));
-    r[3] = F.add(SR[6], F.mul(SR[7], F.e("0x100000000")));
-    return r;
-}
-
-function sr4to8(F, r) {
-    const sr=[];
-    sr[0] = r[0] & 0xFFFFFFFFn;
-    sr[1] = r[0] >> 32n;
-    sr[2] = r[1] & 0xFFFFFFFFn;
-    sr[3] = r[1] >> 32n;
-    sr[4] = r[2] & 0xFFFFFFFFn;
-    sr[5] = r[2] >> 32n;
-    sr[6] = r[3] & 0xFFFFFFFFn;
-    sr[7] = r[3] >> 32n;
-    return sr;
-}
-
 function safeFea2scalar(Fr, arr) {
-    for (let index = 0; index < 8; ++index) {
+    for (let index = 0; index < 2; ++index) {
         const value = Fr.toObject(arr[index]);
         if (value > 0xFFFFFFFFn) {
             throw new Error(`Invalid value 0x${value.toString(16)} to convert to scalar on index ${index}: ${sourceRef}`);
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+
+/**
+ * Converts a Scalar into an array of 2 elements encoded as Fields elements where each one represents 32 bits
+ * result = [Scalar[0:31], scalar[32:63]
+ * @param {Field} Fr - field
+ * @param {Scalar} scalar - value to convert
+ * @returns {Array[Field]} array of fields
+ */
+function scalar2fea(Fr, scalar) {
+    scalar = Scalar.e(scalar);
+    const r0 = Scalar.band(scalar, Scalar.e('0xFFFFFFFF'));
+    const r1 = Scalar.band(Scalar.shr(scalar, 32), Scalar.e('0xFFFFFFFF'));
+
+    return [Fr.e(r0), Fr.e(r1)];
+}
+
+/**
+ * Field element array to Scalar
+ * result = arr[0] + arr[1]*(2^32)
+ * @param {Field} F - field element
+ * @param {Array[Field]} arr - array of fields elements
+ * @returns {Scalar}
+ */
+function fea2scalar(Fr, arr) {
+    let res = Fr.toObject(arr[0]);
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[1]), 32));
+
+    return res;
 }

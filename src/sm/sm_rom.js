@@ -24,32 +24,14 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
             if (rom.program[pIndex].CONSTL) throw new Error("Program mixed with long and short constants");
             pols.CONST0[i] = rom.program[pIndex].CONST ? F.e(rom.program[pIndex].CONST) : F.zero;
             pols.CONST1[i] = F.zero;
-            pols.CONST2[i] = F.zero;
-            pols.CONST3[i] = F.zero;
-            pols.CONST4[i] = F.zero;
-            pols.CONST5[i] = F.zero;
-            pols.CONST6[i] = F.zero;
-            pols.CONST7[i] = F.zero;
         } else if (rom.program[pIndex].CONSTL) {
             [
                 pols.CONST0[i],
-                pols.CONST1[i],
-                pols.CONST2[i],
-                pols.CONST3[i],
-                pols.CONST4[i],
-                pols.CONST5[i],
-                pols.CONST6[i],
-                pols.CONST7[i],
+                pols.CONST1[i]
             ] = scalar2fea(F, BigInt(rom.program[pIndex].CONSTL));
         } else {
             pols.CONST0[i] = F.zero;
             pols.CONST1[i] = F.zero;
-            pols.CONST2[i] = F.zero;
-            pols.CONST3[i] = F.zero;
-            pols.CONST4[i] = F.zero;
-            pols.CONST5[i] = F.zero;
-            pols.CONST6[i] = F.zero;
-            pols.CONST7[i] = F.zero;
         }
         pols.offset[i] = rom.program[pIndex].offset ? BigInt(rom.program[pIndex].offset) : 0n;
 
@@ -58,7 +40,6 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.inC[i] = rom.program[pIndex].inC ? F.e(rom.program[pIndex].inC) : F.zero;
         pols.inD[i] = rom.program[pIndex].inD ? F.e(rom.program[pIndex].inD) : F.zero;
         pols.inE[i] = rom.program[pIndex].inE ? F.e(rom.program[pIndex].inE) : F.zero;
-        pols.inSR[i] = rom.program[pIndex].inSR ? F.e(rom.program[pIndex].inSR) : F.zero;
         pols.inCTX[i] = rom.program[pIndex].inCTX ? F.e(rom.program[pIndex].inCTX) : F.zero;
         pols.inSP[i] = rom.program[pIndex].inSP ? F.e(rom.program[pIndex].inSP) : F.zero;
         pols.inPC[i] = rom.program[pIndex].inPC ? F.e(rom.program[pIndex].inPC) : F.zero;
@@ -74,26 +55,18 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.inCntBinary[i] = rom.program[pIndex].inCntBinary ? F.e(rom.program[pIndex].inCntBinary) : F.zero;
         pols.inCntKeccakF[i] = rom.program[pIndex].inCntKeccakF ? F.e(rom.program[pIndex].inCntKeccakF) : F.zero;
         pols.inCntMemAlign[i] = rom.program[pIndex].inCntMemAlign ? F.e(rom.program[pIndex].inCntMemAlign) : F.zero;
-        pols.inCntPaddingPG[i] = rom.program[pIndex].inCntPaddingPG ? F.e(rom.program[pIndex].inCntPaddingPG) : F.zero;
-        pols.inCntPoseidonG[i] = rom.program[pIndex].inCntPoseidonG ? F.e(rom.program[pIndex].inCntPoseidonG) : F.zero;
-
         /*
             code generated with:
             node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
-          (rom.program[pIndex].arithEq0 ? (2n**0n  * BigInt(rom.program[pIndex].arithEq0)) : 0n)
-        + (rom.program[pIndex].arithEq1 ? (2n**1n  * BigInt(rom.program[pIndex].arithEq1)) : 0n)
-        + (rom.program[pIndex].arithEq2 ? (2n**2n  * BigInt(rom.program[pIndex].arithEq2)) : 0n)
+          (rom.program[pIndex].arith ? (2n**0n  * BigInt(rom.program[pIndex].arith)) : 0n)
         + (rom.program[pIndex].assert ? (2n**3n  * BigInt(rom.program[pIndex].assert)) : 0n)
         + (rom.program[pIndex].bin ? (2n**4n  * BigInt(rom.program[pIndex].bin)) : 0n)
         + (rom.program[pIndex].hashK ? (2n**5n  * BigInt(rom.program[pIndex].hashK)) : 0n)
         + (rom.program[pIndex].hashKDigest ? (2n**6n  * BigInt(rom.program[pIndex].hashKDigest)) : 0n)
         + (rom.program[pIndex].hashKLen ? (2n**7n  * BigInt(rom.program[pIndex].hashKLen)) : 0n)
-        + (rom.program[pIndex].hashP ? (2n**8n  * BigInt(rom.program[pIndex].hashP)) : 0n)
-        + (rom.program[pIndex].hashPDigest ? (2n**9n  * BigInt(rom.program[pIndex].hashPDigest)) : 0n)
-        + (rom.program[pIndex].hashPLen ? (2n**10n * BigInt(rom.program[pIndex].hashPLen)) : 0n)
         + (rom.program[pIndex].ind ? (2n**11n * BigInt(rom.program[pIndex].ind)) : 0n)
         + (rom.program[pIndex].indRR ? (2n**12n * BigInt(rom.program[pIndex].indRR)) : 0n)
         + (rom.program[pIndex].isMem ? (2n**13n * BigInt(rom.program[pIndex].isMem)) : 0n)
@@ -119,16 +92,12 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         + (rom.program[pIndex].setRCX ? (2n**33n * BigInt(rom.program[pIndex].setRCX)) : 0n)
         + (rom.program[pIndex].setRR ? (2n**34n * BigInt(rom.program[pIndex].setRR)) : 0n)
         + (rom.program[pIndex].setSP ? (2n**35n * BigInt(rom.program[pIndex].setSP)) : 0n)
-        + (rom.program[pIndex].setSR ? (2n**36n * BigInt(rom.program[pIndex].setSR)) : 0n)
-        + (rom.program[pIndex].sRD ? (2n**37n * BigInt(rom.program[pIndex].sRD)) : 0n)
-        + (rom.program[pIndex].sWR ? (2n**38n * BigInt(rom.program[pIndex].sWR)) : 0n)
         + (rom.program[pIndex].useCTX ? (2n**39n * BigInt(rom.program[pIndex].useCTX)) : 0n)
         + (rom.program[pIndex].useJmpAddr ? (2n**40n * BigInt(rom.program[pIndex].useJmpAddr)) : 0n)
         + (rom.program[pIndex].JMPZ ? (2n**41n * BigInt(rom.program[pIndex].JMPZ)) : 0n)
         + (rom.program[pIndex].call ? (2n**42n * BigInt(rom.program[pIndex].call)) : 0n)
         + (rom.program[pIndex].return ? (2n**43n * BigInt(rom.program[pIndex].return)) : 0n)
         + (rom.program[pIndex].hashK1 ? (2n**44n * BigInt(rom.program[pIndex].hashK1)) : 0n)
-        + (rom.program[pIndex].hashP1 ? (2n**45n * BigInt(rom.program[pIndex].hashP1)) : 0n)
         + (rom.program[pIndex].useElseAddr ? (2n**46n * BigInt(rom.program[pIndex].useElseAddr)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;

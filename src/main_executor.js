@@ -17,10 +17,6 @@ const smMem = require("./sm/sm_mem.js");
 const smBits2Field = require("./sm/sm_bits2field.js");
 const smPaddingKK = require("./sm/sm_padding_kk.js");
 const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
-const smPaddingPG = require("./sm/sm_padding_pg.js");
-const smPoseidonG = require("./sm/sm_poseidong.js");
-const smStorage = require("./sm/sm_storage/sm_storage.js");
-
 
 const argv = require("yargs")
     .version(version)
@@ -172,11 +168,6 @@ async function run() {
     console.log("Main ...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, config, metadata);
     if (typeof config.outputFile !== "undefined") {
-        if (cmPols.Storage) {
-            console.log("Storage...");
-        }
-        const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage) : false;
-
         if (cmPols.Arith) {
             console.log("Arith...");
             await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
@@ -205,15 +196,6 @@ async function run() {
         if (cmPols.KeccakF) {
             console.log("KeccakF...");
             await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF || []);
-        }
-
-        if (cmPols.PaddingPG) console.log("PaddingPG...");
-        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG || []) : false;
-
-        if (cmPols.PoseidonG) {
-            console.log("PoseidonG...");
-            const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
-            await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         }
 
         for (let i=0; i<cmPols.$$array.length; i++) {
