@@ -36,7 +36,7 @@ let fullTracer;
 let debug;
 let statsTracer;
 let sourceRef;
-let nameRomErrors = [];
+let nameRomErrors;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
     const required = {
@@ -46,6 +46,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Mem: [],
         MemAlign: []
     };
+    nameRomErrors = [];
 
     debug = config && config.debug;
     const flagTracer = config && config.tracer;
@@ -66,8 +67,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     const poseidon = await buildPoseidon();
     const Fr = poseidon.F;
-    const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
-    const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -1822,14 +1821,20 @@ function eval_functionCall(ctx, tag) {
 
     if (tag.funcName == "getSequencerAddr") {
         return eval_getSequencerAddr(ctx, tag);
-    } else if (tag.funcName == "getTimestamp") {
-        return eval_getTimestamp(ctx, tag);
-    } else if (tag.funcName == "getGlobalExitRoot") {
-        return eval_getGlobalExitRoot(ctx, tag);
+    } else if (tag.funcName == "getTimestampLimit") {
+        return eval_getTimestampLimit(ctx, tag);
+    } else if (tag.funcName == "getIsForced") {
+        return eval_getIsForced(ctx, tag);
+    } else if (tag.funcName == "getHistoricGERRoot") {
+        return eval_getHistoricGERRoot(ctx, tag);
+    } else if (tag.funcName == "getNewGERRoot") {
+        return eval_getNewGERRoot(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
+    } else if (tag.funcName == "getSmtProof") {
+        return eval_getSmtProof(ctx, tag);
     } else if (tag.funcName == "eventLog") {
         return eval_eventLog(ctx, tag);
     } else if (tag.funcName == "cond") {
@@ -1888,14 +1893,34 @@ function eval_getTxsLen(ctx, tag) {
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getGlobalExitRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.globalExitRoot));
+function eval_getSmtProof(ctx, tag) {
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    const smtProof = ctx.input.smtProofs[Number(evalCommand(ctx, tag.params[0]))][Number(evalCommand(ctx, tag.params[1]))];
+    return scalar2fea(ctx.Fr, Scalar.e(smtProof));
 }
 
-function eval_getTimestamp(ctx, tag) {
+function eval_getHistoricGERRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.historicGERRoot));
+}
+
+function eval_getNewGERRoot(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    const currentTx = Number(evalCommand(ctx, tag.params[0]));
+    // If is forced return historicGERRoot, else tx's GER
+    const newGER = ctx.input.isForced ? ctx.input.
+    historicGERRoot :ctx.input.GERS[currentTx]
+    return scalar2fea(ctx.Fr, Scalar.e(newGER));
+}
+
+function eval_getTimestampLimit(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
+function eval_getIsForced(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    return [ctx.Fr.e(ctx.input.isForced), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_eventLog(ctx, tag) {
@@ -2123,6 +2148,7 @@ function eval_dumphex(ctx, tag) {
 
     return [ctx.Fr.zero, ctx.Fr.zero];
 }
+
 
 function printRegs(Fr, ctx) {
     printReg2(Fr, "A", ctx.A);

@@ -1,4 +1,7 @@
+const {fea2scalar} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+
 // all arith sources and tools on https://github.com/hermeznetwork/sm_arith.git
+
 
 const arithEq0 = require('./sm_arith_eq0');
 
@@ -58,14 +61,12 @@ module.exports.execute = async function (pols, input) {
     // Get N from definitions
     const N = pols.x1[0].length;
 
-    // Field Elliptic Curve
-    let pFec = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
-    const Fec = new F1Field(pFec);
     const Fr = new F1Field(0xffffffff00000001n);
 
-    // Split the input in little-endian bytes
-    prepareInput256bits(input, N);
-    let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate];
+    // Split the input in little-endian words
+    // prepareInput256bits(input, N);
+    inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
+    let eqCalculates = [arithEq0.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -92,24 +93,38 @@ module.exports.execute = async function (pols, input) {
             }
             pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
         }
-        let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2];
-        let eq = [0n, 0n , 0n, 0n, 0n]
+        let carry = 0n;
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
 
         let eqIndexes = [];
         if (pols.selEq[0][offset]) eqIndexes.push(0);
 
 
         for (let step = 0; step < 8; ++step) {
-            eqIndexes.forEach((eqIndex) => {
-                let carryIndex = eqIndexToCarryIndex[eqIndex];
-                eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
-                pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
-                carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
-            });
+                eq[0] = eqCalculates[0](pols, step, offset);
+                pols.carry[offset + step] = Fr.e(carry);
+                carry = (eq[0] + carry) / (2n ** 16n);
         }
         pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
     }
+}
+
+function inputFeaTo16bits(input, N, names) {
+    for (let i = 0; i < input.length; i++) {
+        for (const name of names) {
+            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
+        }
+    }
+}
+
+function splitFeaTo16bits(chunks) {
+    let res = [];
+    for(const chunk of chunks) {
+        res.push(chunk % 2n**16n);
+        res.push((chunk / 2n**16n) >> 0n);
+    }
+    console.log(res);
+    return res;
 }
 
 function prepareInput256bits(input, N) {

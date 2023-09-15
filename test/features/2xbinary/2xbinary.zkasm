@@ -36,8 +36,8 @@ test1_end:
 end:
        0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, HASHPOS
 
-finalWait:
-        ${beforeLast()}  : JMPN(finalWait)
+finalizeExecution:
+        ${beforeLast()}  : JMPN(finalizeExecution)
 
                          : JMP(start)
 opINVALID:
