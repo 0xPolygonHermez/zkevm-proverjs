@@ -21,7 +21,7 @@ start:
         ${getPublicOldAccInputHashR64(3)} :MSTORE(oldAccInputHash[3])
 
 end:
-        0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
+        0 => A,B,C,D,E,CTX, SP, PC, GAS
 
 finalWait:
         ${beforeFinal(12)}  : JMPN(finalWait)

@@ -23,12 +23,10 @@ const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { lstat } = require("fs");
 
-const twoTo255 = Scalar.shl(Scalar.one, 255);
-const twoTo256 = Scalar.shl(Scalar.one, 256);
-
+const P2_63 = Scalar.shl(Scalar.one, 63);
 const MASK_64 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
 const BYTE_MASK_ON_64 = Scalar.bor(Scalar.shl(MASK_64, 64), Scalar.shr(MASK_64, 8n));
-const P2_64 = 2n ** 64n;
+const P2_64 = Scalar.shl(Scalar.one, 64);
 
 
 const WarningCheck = 1;
@@ -819,8 +817,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const b = safeFea2scalar(Fr, ctx.B);
                 const c = safeFea2scalar(Fr, [op0, op1]);
 
-                const signedA = Scalar.geq(a, twoTo255) ? Scalar.sub(a, twoTo256): a;
-                const signedB = Scalar.geq(b, twoTo255) ? Scalar.sub(b, twoTo256): b;
+                const signedA = Scalar.geq(a, P2_63) ? Scalar.sub(a, P2_64): a;
+                const signedB = Scalar.geq(b, P2_63) ? Scalar.sub(b, P2_64): b;
                 const expectedC = Scalar.lt(signedA, signedB);
 
                 if (!Scalar.eq(c, expectedC)) {

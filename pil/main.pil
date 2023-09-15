@@ -422,15 +422,13 @@ namespace Main(%N);
         addr,
         HASHPOS,
         D0 * hashK + hashK1,
-        op0, op1, A0, A1,
-        B0, B1, C0, C1
+        op0, op1
     } in
     PaddingKK.crLatch * PaddingKK.r8valid {
         PaddingKK.addr,
         PaddingKK.len - PaddingKK.rem - PaddingKK.crLen + 1,
         PaddingKK.crLen,
-        PaddingKK.crV0C, PaddingKK.crV1C, PaddingKK.crV2C, PaddingKK.crV3C,
-        PaddingKK.crV4C, PaddingKK.crV5C, PaddingKK.crV6C, PaddingKK.crV7C
+        PaddingKK.crV0C, PaddingKK.crV1C
     };
 
     hashKLen {

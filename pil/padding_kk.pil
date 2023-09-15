@@ -47,22 +47,10 @@ namespace PaddingKK(%N);
     lastHashLatch {
         hash0,
         hash1,
-        hash2,
-        hash3,
-        hash4,
-        hash5,
-        hash6,
-        hash7,
         sOutId
      } in {
         PaddingKKBit.sOut0,
         PaddingKKBit.sOut1,
-        PaddingKKBit.sOut2,
-        PaddingKKBit.sOut3,
-        PaddingKKBit.sOut4,
-        PaddingKKBit.sOut5,
-        PaddingKKBit.sOut6,
-        PaddingKKBit.sOut7,
         PaddingKKBit.sOutId
      };
 
@@ -73,15 +61,10 @@ namespace PaddingKK(%N);
     len' * lastHash = rem' * lastHash;
     len'*(1-lastHash) = len*(1-lastHash);
 
-    pol commit hash0, hash1, hash2, hash3, hash4, hash5, hash6, hash7;
+    pol commit hash0, hash1;
     (hash0' - hash0) * (1-lastHash) = 0;
     (hash1' - hash1) * (1-lastHash) = 0;
-    (hash2' - hash2) * (1-lastHash) = 0;
-    (hash3' - hash3) * (1-lastHash) = 0;
-    (hash4' - hash4) * (1-lastHash) = 0;
-    (hash5' - hash5) * (1-lastHash) = 0;
-    (hash6' - hash6) * (1-lastHash) = 0;
-    (hash7' - hash7) * (1-lastHash) = 0;
+
 
     (addr' -addr) * (1-lastHash) = 0;
     (addr' - 1 -addr) * lastHashLatch = 0;
@@ -106,33 +89,18 @@ namespace PaddingKK(%N);
     crLen'*(1-crLatch) = crLen*(1-crLatch);
     crLatch * crOffset' = crLatch * (crLen' -1);
 
-    pol commit crF0, crF1, crF2, crF3, crF4, crF5, crF6, crF7;
+    pol commit crF0, crF1;
 
-    { crOffset, crF0, crF1, crF2, crF3,
-                crF4, crF5, crF6, crF7} in
-    { Global.STEP32, Global.BYTE_FACTOR[0], Global.BYTE_FACTOR[1], Global.BYTE_FACTOR[2], Global.BYTE_FACTOR[3],
-                     Global.BYTE_FACTOR[4], Global.BYTE_FACTOR[5], Global.BYTE_FACTOR[6], Global.BYTE_FACTOR[7] };
+    { crOffset, crF0, crF1} in { Global.STEP8, Global.BYTE_FACTOR[0], Global.BYTE_FACTOR[1] };
 
 
-    pol commit crV0, crV1, crV2, crV3, crV4, crV5, crV6, crV7;
+    pol commit crV0, crV1;
 
     pol crV0C = crV0 + crF0 * aFreeIn;
     pol crV1C = crV1 + crF1 * aFreeIn;
-    pol crV2C = crV2 + crF2 * aFreeIn;
-    pol crV3C = crV3 + crF3 * aFreeIn;
-    pol crV4C = crV4 + crF4 * aFreeIn;
-    pol crV5C = crV5 + crF5 * aFreeIn;
-    pol crV6C = crV6 + crF6 * aFreeIn;
-    pol crV7C = crV7 + crF7 * aFreeIn;
 
     crV0' = crV0C*(1-crLatch);
     crV1' = crV1C*(1-crLatch);
-    crV2' = crV2C*(1-crLatch);
-    crV3' = crV3C*(1-crLatch);
-    crV4' = crV4C*(1-crLatch);
-    crV5' = crV5C*(1-crLatch);
-    crV6' = crV6C*(1-crLatch);
-    crV7' = crV7C*(1-crLatch);
 
     (1-crLatch) * lastHash = 0;  // Ensure qhen a hash ends it resets the address.
 
