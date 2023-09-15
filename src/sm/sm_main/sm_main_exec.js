@@ -2531,6 +2531,8 @@ function evalCommand(ctx, tag) {
         return eval_if(ctx, tag);
     } else if (tag.op == "getMemValue") {
         return eval_getMemValue(ctx, tag);
+    } else if (tag.op == "getMemValueByAddress") {
+        return eval_getMemValueByAddress(ctx, tag);
     } else {
         throw new Error(`Invalid operation ${tag.op} ${ctx.sourceRef}`);
     }
@@ -2705,9 +2707,17 @@ function eval_logical_operation(ctx, tag)
 function eval_getMemValue(ctx, tag) {
     // to be compatible with
     if (ctx.fullFe) {
-        return fea2scalar(ctx.Fr, ctx.mem[tag.offset])
+        return fea2scalar(ctx.Fr, ctx.mem[tag.offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n])
     }
-    return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset]);
+    return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
+}
+
+function eval_getMemValueByAddress(ctx, tag) {
+    const offset = Number(evalCommand(ctx,tag.params[0]));
+    if (ctx.fullFe) {
+        return fea2scalar(ctx.Fr, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n])
+    }
+    return safeFea2scalar(ctx.Fr, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
 }
 
 function eval_functionCall(ctx, tag) {
@@ -2798,6 +2808,10 @@ function eval_functionCall(ctx, tag) {
         return eval_ARITH_BN254_SUBFP2_X(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_SUBFP2_Y") {
         return eval_ARITH_BN254_SUBFP2_Y(ctx, tag);
+    } else if (tag.funcName == "getMemValue") {
+        return eval_getMemValue(ctx, tag);
+    } else if (tag.funcName == "getMemValueByAddress") {
+        return eval_getMemValueByAddress(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
