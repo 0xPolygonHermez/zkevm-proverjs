@@ -49,7 +49,8 @@ module.exports.buildConstants = async function (pols) {
 module.exports.execute = async function (pols, input) {
     // Get N from definitions
     const N = pols.offset.length;
-
+    const RC = 2;
+    const LAST_R = RC - 1;
     // Initialization
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < 2; j++) {
@@ -64,12 +65,12 @@ module.exports.execute = async function (pols, input) {
         pols.inM[0][i]= 0n;
         pols.inM[1][i]= 0n;
         pols.wr8[i]= 0n;
-        pols.wr256[i]= 0n;
+        pols.wr64[i]= 0n;
         pols.offset[i]= 0n;
         pols.selM1[i]= 0n;
         pols.resultRd[i] = 0n;
         pols.resultWr8[i] = 0n;
-        pols.resultWr256[i] = 0n;
+        pols.resultWr64[i] = 0n;
     }
 
     const factors = [ 1, 2 ** 8, 2 ** 16, 2 ** 24];
@@ -79,25 +80,25 @@ module.exports.execute = async function (pols, input) {
         const _v = BigInt(input[i]["v"]);
         const offset = Number(input[i]["offset"]);
         const wr8 = Number(input[i]["wr8"]);
-        const wr256 = Number(input[i]["wr256"]);
-        const polIndex = i * 8;
+        const wr64 = Number(input[i]["wr64"]);
+        const polIndex = i * RC;
 
         // setting index when result was ready
-        const polResultIndex = ((i+1) * 8)%N;
-        pols.resultRd[polResultIndex] = (wr8 || wr256) ? 0n:1n;
+        const polResultIndex = ((i+1) * RC)%N;
+        pols.resultRd[polResultIndex] = (wr8 || wr64) ? 0n:1n;
         pols.resultWr8[polResultIndex] = wr8 ? 1n:0n;
-        pols.resultWr256[polResultIndex] = wr256 ? 1n:0n;
+        pols.resultWr64[polResultIndex] = wr64 ? 1n:0n;
 
         let vv = _v;
-        for (let j = 0; j < 8; ++j) {
-            const _vByte = ((7 + (offset + wr8) - j) % 8);
-            const _inM0 = getByte(m0v, 7-j);
-            const _inM1 = getByte(m1v, 7-j);
+        for (let j = 0; j < RC; ++j) {
+            const _vByte = ((LAST_R + (offset + wr8) - j) % RC);
+            const _inM0 = getByte(m0v, LAST_R-j);
+            const _inM1 = getByte(m1v, LAST_R-j);
             const _inV = getByte(vv, _vByte);
             const _selM1 = (wr8 ? (j == offset) :(offset > j)) ? 1:0;
 
             pols.wr8[polIndex + j + 1] = BigInt(wr8);
-            pols.wr256[polIndex + j + 1] = BigInt(wr256);
+            pols.wr64[polIndex + j + 1] = BigInt(wr64);
             pols.offset[polIndex + j + 1] = BigInt(offset);
             pols.inM[0][polIndex + j] = BigInt(_inM0);
             pols.inM[1][polIndex + j] = BigInt(_inM1);
@@ -106,10 +107,10 @@ module.exports.execute = async function (pols, input) {
             pols.factorV[_vByte >> 2][polIndex + j] = BigInt(factors[(_vByte % 4)]);
 
             // TODO: review
-            const mIndex = 7 - (j >> 2);
+            const mIndex = LAST_R - (j >> 2);
 
-            const _inW0 = ((wr256 * (1 - _selM1)) || (wr8 * _selM1))? _inV : ((wr256 + wr8) * _inM0);
-            const _inW1 = (wr256 * _selM1) ? _inV : ((wr256 + wr8) * _inM1);
+            const _inW0 = ((wr64 * (1 - _selM1)) || (wr8 * _selM1))? _inV : ((wr64 + wr8) * _inM0);
+            const _inW1 = (wr64 * _selM1) ? _inV : ((wr64 + wr8) * _inM1);
 
             const factor = BigInt(factors[3 - (j % 4)]);
 
@@ -119,14 +120,14 @@ module.exports.execute = async function (pols, input) {
             pols.w0[mIndex][polIndex + 1 + j] = (( j === 0 ) ? 0n : pols.w0[mIndex][polIndex + j]) + BigInt(_inW0) * factor;
             pols.w1[mIndex][polIndex + 1 + j] = (( j === 0 ) ? 0n : pols.w1[mIndex][polIndex + j]) + BigInt(_inW1) * factor;
         }
-        for (let j = 0; j < 32; ++j) {
-            for (let index = 0; index < 8; ++index) {
+        for (let j = 0; j < RC * 4; ++j) {
+            for (let index = 0; index < RC; ++index) {
                 pols.v[index][polIndex + 1 + j] = (( j === 0 ) ? 0n : pols.v[index][polIndex + j]) + pols.inV[polIndex + j] * pols.factorV[index][polIndex + j];
             }
         }
 
         for (let index = 0; index < 2; ++index) {
-            for (j = 8 - (index  * 4); j < 8; ++j) {
+            for (j = RC - (index  * 4); j < RC; ++j) {
                 pols.m0[index][polIndex + j + 1] = pols.m0[index][polIndex + j];
                 pols.m1[index][polIndex + j + 1] = pols.m1[index][polIndex + j];
                 pols.w0[index][polIndex + j + 1] = pols.w0[index][polIndex + j];
@@ -135,7 +136,7 @@ module.exports.execute = async function (pols, input) {
         }
     }
     console.log(`Filling from w=${input.length * 8}.....`);
-    for (let i = (input.length * 8); i < N; i++) {
+    for (let i = (input.length * RC); i < N; i++) {
         for (let index = 0; index < 2; ++index) {
             pols.factorV[index][i] = BigInt(CONST_F.FACTORV(index, i % 8));
         }

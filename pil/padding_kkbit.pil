@@ -83,7 +83,7 @@ namespace PaddingKKBit(%N);
     pol constant r8Id;
 
     pol commit connected;
-    pol commit sOut0, sOut1;
+    pol commit sOut0, sOut1, sOut2, sOut3, sOut4, sOut5, sOut6, sOut7;
     pol constant sOutId;
 
     pol constant latchR8;
@@ -91,12 +91,18 @@ namespace PaddingKKBit(%N);
     pol constant rBitValid;  // 1 when rIn can be 0 or 1
 
     pol constant latchSOut;
-    pol constant FSOut0, FSOut1;
+    pol constant FSOut0, FSOut1, FSOut2, FSOut3, FSOut4, FSOut5, FSOut6, FSOut7;
 
     r8' = r8 * (1-latchR8) + rBit*Fr8;
 
     sOut0' = sOut0*(1-latchSOut) + sOutBit*FSOut0;
     sOut1' = sOut1*(1-latchSOut) + sOutBit*FSOut1;
+    sOut2' = sOut2*(1-latchSOut) + sOutBit*FSOut2;
+    sOut3' = sOut3*(1-latchSOut) + sOutBit*FSOut3;
+    sOut4' = sOut4*(1-latchSOut) + sOutBit*FSOut4;
+    sOut5' = sOut5*(1-latchSOut) + sOutBit*FSOut5;
+    sOut6' = sOut6*(1-latchSOut) + sOutBit*FSOut6;
+    sOut7' = sOut7*(1-latchSOut) + sOutBit*FSOut7;
 
     connected'*(1-latchSOut) = connected*(1-latchSOut);
     connected * (1-connected) = 0;

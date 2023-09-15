@@ -287,22 +287,25 @@ module.exports.execute = async function (pols, input) {
 
         curInput += 1;
     }
+    console.log(curState);
 
-    let pp = 0;
-    // Connect the last state with the first
-    for (let j=0; j<136; j++) {
-        for (k=0; k<8; k++) {
-            pols.sOutBit[pp] = bitFromState(curState, j*8 + k);
+    if (nBlocks > 0) {
+        let pp = 0;
+        // Connect the last state with the first
+        for (let j=0; j<136; j++) {
+            for (k=0; k<8; k++) {
+                pols.sOutBit[pp] = bitFromState(curState, j*8 + k);
+                pp += 1;
+            }
+            pols.sOutBit[pp] = 0n;
             pp += 1;
         }
-        pols.sOutBit[pp] = 0n;
-        pp += 1;
-    }
 
-    for (let j=0; j<512; j++) {
-        pols.sOutBit[pp] = bitFromState(curState, 136*8 + j);
+        for (let j=0; j<512; j++) {
+            pols.sOutBit[pp] = bitFromState(curState, 136*8 + j);
 
-        pp += 1;
+            pp += 1;
+        }
     }
 
     while (p<N) {

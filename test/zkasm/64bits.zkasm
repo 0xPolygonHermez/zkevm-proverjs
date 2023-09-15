@@ -32,6 +32,61 @@ start:
         0xFFFFFFFFFFFFFFFFn => D
         0 :ARITH
 
+        0xFFFFFFFFFFFFFFFFn => A,B
+        0xFFFFFFFFFFFFFFFEn :ADD,JMPC(on_carry)
+
+        0                   :ASSERT ; fails A != 0
+
+on_carry:
+
+        0x7FFFFFFFFFFFFFFFn => A
+        0x8000000000000000n => B
+        0xFFFFFFFFFFFFFFFFn :ADD,JMPC(on_carry_2)
+
+                            :JMP(no_carry)
+on_carry_2:
+
+        0                   :ASSERT ; fails A != 0
+
+no_carry:
+
+        0 => HASHPOS
+        8 => D
+
+        ; 0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHK(E) 256-bits machine
+
+        0x5E1268E5B2A8DC1Dn :HASHK(E)
+        0x0BB047386FC227FAn :HASHK(E)
+        0x4C852DBA596511B9n :HASHK(E)
+        0xEAF7FCDD79C9006Dn :HASHK(E)
+
+        0x5E1268E5B2A8DC1Dn :HASHK(E)
+        0x0BB047386FC227FAn :HASHK(E)
+        0x4C852DBA596511B9n :HASHK(E)
+        0xEAF7FCDD79C9006Dn :HASHK(E)
+
+        0x5E1268E5B2A8DC1Dn :HASHK(E)
+        0x0BB047386FC227FAn :HASHK(E)
+        0x4C852DBA596511B9n :HASHK(E)
+        0xEAF7FCDD79C9006Dn :HASHK(E)
+
+        0x5E1268E5B2A8DC1Dn :HASHK(E)
+        0x0BB047386FC227FAn :HASHK(E)
+        0x4C852DBA596511B9n :HASHK(E)
+        0xEAF7FCDD79C9006Dn :HASHK(E)
+
+        7 => D
+        0x5E1268E5B2A8DCn   :HASHK(E)
+
+        135                 :HASHKLEN(E)
+
+
+        ${hashKDigestR64(E, 1)} => A
+        ${hashKDigestR64(E, 2)} => B
+        ${hashKDigestR64(E, 3)} => C
+        ${hashKDigestR64(E, 0)}   :HASHKDIGEST(E)
+
+
 end:
         0 => A,B,C,D,E,CTX, SP, PC, GAS
 

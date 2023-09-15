@@ -24,7 +24,7 @@ const StatsTracer = require("./debug/stats-tracer");
 const { lstat } = require("fs");
 
 const P2_63 = Scalar.shl(Scalar.one, 63);
-const MASK_64 = Scalar.sub(Scalar.shl(Scalar.e(1), 256), 1);
+const MASK_64 = Scalar.sub(Scalar.shl(Scalar.e(1), 64), 1);
 const BYTE_MASK_ON_64 = Scalar.bor(Scalar.shl(MASK_64, 64), Scalar.shr(MASK_64, 8n));
 const P2_64 = Scalar.shl(Scalar.one, 64);
 
@@ -494,7 +494,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-                    if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
+                    if ((size<0) || (size>8)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK(${addr}) out of bounds (${pos+size} > ${ctx.hashK[addr].data.length}) ${sourceRef}`);
                     let s = Scalar.zero;
                     for (let k=0; k<size; k++) {
@@ -504,6 +504,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, s);
                     nHits++;
                 }
+                /*
                 if (l.hashKDigest == 1) {
                     if (typeof ctx.hashK[addr] === "undefined") {
                         throw new Error(`digest(${addr}) not defined ${sourceRef}`);
@@ -511,9 +512,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.hashK[addr].digest === "undefined") {
                         throw new Error(`digest(${addr}) not calculated. Call hashKlen to finish digest ${sourceRef}`);
                     }
-                    fi = scalar2fea(Fr, ctx.hashK[addr].digest);
+                    fi = scalar2fea8(Fr, ctx.hashK[addr].digest).slice(0, 2);
                     nHits++;
-                }
+                }*/
                 if (l.bin) {
                     if (l.binOpcode == 0) { // ADD
                         const a = safeFea2scalar(Fr, ctx.A);
@@ -665,7 +666,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashK1[i] = l.hashK1 ? 1n : 0n;
             const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
+            if ((size<0) || (size>8)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -722,12 +723,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashKDigest) {
             pols.hashKDigest[i] = 1n;
-            const dg = safeFea2scalar(Fr, [op0, op1]);
+            const dg = safeFea2scalar8(Fr, [op0, op1, ctx.A[0], ctx.A[1], ctx.B[0], ctx.B[1], ctx.C[0], ctx.C[1]]);
             if (typeof ctx.hashK[addr].digest === "undefined") {
                 throw new Error(`HASHKDIGEST(${addr}) cannot load keccak from DB ${sourceRef}`);
             }
+            console.log(Scalar.e(dg));
+            console.log(Scalar.e(ctx.hashK[addr].digest))
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashK[addr].digest))) {
-                throw new Error(`HashKDigest(${addr}) doesn't match ${sourceRef}`);
+                            throw new Error(`HashKDigest(${addr}) doesn't match ${sourceRef}`);
             }
             if (ctx.hashK[addr].digestCalled) {
                 throw new Error(`Call HASHKDIGEST(${addr}) more than once: ${sourceRef}`);
@@ -757,9 +760,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`Arithmetic does not match ${sourceRef}`);
             }
             pols.arith[i] = 1n;
-            required.Arith.push({ x1: ctx.A, y1: ctx.B,
-                                  x2: ctx.C, y2: ctx.D,
-                                  x3: FrZeros, y3: [op0, op1]});
+            required.Arith.push({ a: ctx.A, b: ctx.B,
+                                  c: ctx.C, d: ctx.D,
+                                  op: [op0, op1]});
         } else {
             pols.arith[i] = 0n;
         }
@@ -1683,6 +1686,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getPublicOldStateRootR64(ctx, tag);
     } else if (tag.funcName == "getPublicOldAccInputHashR64") {
         return eval_getPublicOldAccInputHashR64(ctx, tag);
+    } else if (tag.funcName == "hashKDigestR64") {
+        return eval_hashKDigestR64(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -1913,15 +1918,28 @@ function eval_memAlignWR8_W0(ctx, tag) {
 }
 
 function eval_getPublicOldStateRootR64(ctx, tag) {
-    const index = evalCommand(ctx, tag.params[0]);
-
-    return scalar2fea8(ctx.Fr, ctx.input.oldStateRoot)[index];
+    const index = Number(evalCommand(ctx, tag.params[0]));
+    const start = index * 2;
+    return scalar2fea8(ctx.Fr, ctx.input.oldStateRoot).slice(start, start+2);
 }
 
 function eval_getPublicOldAccInputHashR64(ctx, tag) {
-    const index = evalCommand(ctx, tag.params[0]);
+    const index = Number(evalCommand(ctx, tag.params[0]));
+    const start = index * 2;
+    return scalar2fea8(ctx.Fr, ctx.input.oldAccInputHash).slice(start, start+2);
+}
 
-    return scalar2fea8(ctx.Fr, ctx.input.oldAccInputHash)[index];
+function eval_hashKDigestR64(ctx, tag) {
+    const addr = evalCommand(ctx, tag.params[0]);
+    const index = Number(evalCommand(ctx, tag.params[1]));
+    if (typeof ctx.hashK[addr] === "undefined") {
+        throw new Error(`digest(${addr}) not defined ${sourceRef}`);
+    }
+    if (typeof ctx.hashK[addr].digest === "undefined") {
+        throw new Error(`digest(${addr}) not calculated. Call hashKlen to finish digest ${sourceRef}`);
+    }
+    const start = index * 2;
+    return scalar2fea8(ctx.Fr, ctx.hashK[addr].digest).slice(start, start+2);
 }
 
 function checkParams(ctx, tag, expectedParams){
@@ -2049,16 +2067,23 @@ function printReg1(name, V, h, short) {
     console.log(S);
 }
 
-function safeFea2scalar(Fr, arr) {
-    for (let index = 0; index < 2; ++index) {
+function safeFea(Fr, arr, count) {
+    for (let index = 0; index < count; ++index) {
         const value = Fr.toObject(arr[index]);
         if (value > 0xFFFFFFFFn) {
             throw new Error(`Invalid value 0x${value.toString(16)} to convert to scalar on index ${index}: ${sourceRef}`);
         }
     }
+}
+function safeFea2scalar(Fr, arr) {
+    safeFea(Fr, arr, 2);
     return fea2scalar(Fr, arr);
 }
 
+function safeFea2scalar8(Fr, arr) {
+    safeFea(Fr, arr, 8);
+    return fea2scalar8(Fr, arr);
+}
 
 /**
  * Converts a Scalar into an array of 2 elements encoded as Fields elements where each one represents 32 bits
@@ -2109,3 +2134,24 @@ function scalar2fea8(Fr, scalar) {
 
     return [Fr.e(r0), Fr.e(r1), Fr.e(r2), Fr.e(r3), Fr.e(r4), Fr.e(r5), Fr.e(r6), Fr.e(r7)];
 }
+
+/**
+ * Field element array to Scalar
+ * result = arr[0] + arr[1]*(2^32) + arr[2]*(2^64) + arr[3]*(2^96) + arr[3]*(2^128) + arr[3]*(2^160) + arr[3]*(2^192) + arr[3]*(2^224)
+ * @param {Field} F - field element
+ * @param {Array[Field]} arr - array of fields elements
+ * @returns {Scalar}
+ */
+function fea2scalar8(Fr, arr) {
+    let res = Fr.toObject(arr[0]);
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[1]), 32));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[2]), 64));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[3]), 96));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[4]), 128));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[5]), 160));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[6]), 192));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[7]), 224));
+
+    return res;
+}
+

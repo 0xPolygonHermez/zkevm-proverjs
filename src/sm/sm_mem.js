@@ -44,12 +44,6 @@ module.exports.execute = async function (pols, access) {
             pols.mWr[i] = (access[a].bIsWrite) ? 1n : 0n;
             pols.val[0][i] = BigInt(access[a].fe0);
             pols.val[1][i] = BigInt(access[a].fe1);
-            pols.val[2][i] = BigInt(access[a].fe2);
-            pols.val[3][i] = BigInt(access[a].fe3);
-            pols.val[4][i] = BigInt(access[a].fe4);
-            pols.val[5][i] = BigInt(access[a].fe5);
-            pols.val[6][i] = BigInt(access[a].fe6);
-            pols.val[7][i] = BigInt(access[a].fe7);
             pols.lastAccess[i] = ((a < access.length-1) && (access[a].address == access[a+1].address)) ? 0n : 1n;
 
             logger("Memory executor i="+i+
@@ -57,13 +51,7 @@ module.exports.execute = async function (pols, access) {
             " step="+pols.step[i]+
             " mOp="+pols.mOp[i]+
             " mWr="+pols.mWr[i]+
-            " val="+fr.toString(pols.val[7][i],16)+
-                ":"+fr.toString(pols.val[6][i],16)+
-                ":"+fr.toString(pols.val[5][i],16)+
-                ":"+fr.toString(pols.val[4][i],16)+
-                ":"+fr.toString(pols.val[3][i],16)+
-                ":"+fr.toString(pols.val[2][i],16)+
-                ":"+fr.toString(pols.val[1][i],16)+
+            " val="+fr.toString(pols.val[1][i],16)+
                 ":"+fr.toString(pols.val[0][i],16)+
             " lastAccess="+pols.lastAccess[i]);
 
@@ -86,12 +74,6 @@ module.exports.execute = async function (pols, access) {
             pols.mWr[i] = 0n;
             pols.val[0][i] = 0n;
             pols.val[1][i] = 0n;
-            pols.val[2][i] = 0n;
-            pols.val[3][i] = 0n;
-            pols.val[4][i] = 0n;
-            pols.val[5][i] = 0n;
-            pols.val[6][i] = 0n;
-            pols.val[7][i] = 0n;
             // lastAccess = 1 in the last evaluation to ensure ciclical validation
             pols.lastAccess[i] = (i==degree-1) ? 1n : 0n;
         }

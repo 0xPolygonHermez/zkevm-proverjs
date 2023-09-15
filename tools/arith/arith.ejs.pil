@@ -59,7 +59,11 @@ namespace Arith(%N);
 
     carry * Global.CLK8[0] = 0;
 
-    // TODO: review range check
     carry in GL_SIGNED_22BITS;
 
     eq0 + carry = carry' * 2**16;
+
+    pol commit result;
+
+    // all rows of cycle has same valid latched values
+    result * (1 - result) = 0;

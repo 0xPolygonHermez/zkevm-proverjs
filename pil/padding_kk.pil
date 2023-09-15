@@ -47,10 +47,22 @@ namespace PaddingKK(%N);
     lastHashLatch {
         hash0,
         hash1,
+        hash2,
+        hash3,
+        hash4,
+        hash5,
+        hash6,
+        hash7,
         sOutId
      } in {
         PaddingKKBit.sOut0,
         PaddingKKBit.sOut1,
+        PaddingKKBit.sOut2,
+        PaddingKKBit.sOut3,
+        PaddingKKBit.sOut4,
+        PaddingKKBit.sOut5,
+        PaddingKKBit.sOut6,
+        PaddingKKBit.sOut7,
         PaddingKKBit.sOutId
      };
 
@@ -61,9 +73,16 @@ namespace PaddingKK(%N);
     len' * lastHash = rem' * lastHash;
     len'*(1-lastHash) = len*(1-lastHash);
 
-    pol commit hash0, hash1;
+    pol commit hash0, hash1, hash2, hash3, hash4, hash5, hash6, hash7;
+
     (hash0' - hash0) * (1-lastHash) = 0;
     (hash1' - hash1) * (1-lastHash) = 0;
+    (hash2' - hash2) * (1-lastHash) = 0;
+    (hash3' - hash3) * (1-lastHash) = 0;
+    (hash4' - hash4) * (1-lastHash) = 0;
+    (hash5' - hash5) * (1-lastHash) = 0;
+    (hash6' - hash6) * (1-lastHash) = 0;
+    (hash7' - hash7) * (1-lastHash) = 0;
 
 
     (addr' -addr) * (1-lastHash) = 0;

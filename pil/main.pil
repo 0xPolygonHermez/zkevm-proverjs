@@ -484,7 +484,7 @@ namespace Main(%N);
         C0
     } is
     MemAlign.resultRd {
-        MemAlign.wr256,
+        MemAlign.wr64,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1],
         MemAlign.m1[0], MemAlign.m1[1],
@@ -501,8 +501,8 @@ namespace Main(%N);
         D0, D1,
         E0, E1
     } is
-    MemAlign.resultWr256 {
-        MemAlign.wr256,
+    MemAlign.resultWr64 {
+        MemAlign.wr64,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1],
         MemAlign.m1[0], MemAlign.m1[1],
@@ -520,7 +520,7 @@ namespace Main(%N);
         D0, D1
     } is
     MemAlign.resultWr8 {
-        MemAlign.wr256,
+        MemAlign.wr64,
         MemAlign.wr8,
         MemAlign.m0[0], MemAlign.m0[1],
         MemAlign.v[0], MemAlign.v[1],

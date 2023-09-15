@@ -58,25 +58,28 @@ async function main(){
     let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
-    ns = Array.isArray(ns) ? ns : [ns];
-
-    let namespaces = [];
-    for (const name of ns) {
-        namespaces = namespaces.concat(name.trim().split(','));
-    }
-    if (namespaces.indexOf('Main') < 0) {
-        namespaces = ['Main',...namespaces];
-    }
-    if (namespaces.indexOf('Global') < 0) {
-        namespaces = ['Global',...namespaces];
-    }
 
     let defaultPilConfig = {
         defines: {N: rows},
-        namespaces,
         verbose,
         color: true,
         disableUnusedError: true
+    }
+
+    if (typeof ns !== 'string' || ns.toLowerCase() !== 'all') {
+        ns = Array.isArray(ns) ? ns : [ns];
+
+        let namespaces = [];
+        for (const name of ns) {
+            namespaces = namespaces.concat(name.trim().split(','));
+        }
+        if (namespaces.indexOf('Main') < 0) {
+            namespaces = ['Main',...namespaces];
+        }
+        if (namespaces.indexOf('Global') < 0) {
+            namespaces = ['Global',...namespaces];
+        }
+        defaultPilConfig.namespaces = namespaces;
     }
 
     let defaultConfig = {

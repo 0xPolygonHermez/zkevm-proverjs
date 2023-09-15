@@ -59,53 +59,47 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
 
 module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = pols.x1[0].length;
+    const N = pols.a[0].length;
 
     const Fr = new F1Field(0xffffffff00000001n);
 
     // Split the input in little-endian words
     // prepareInput256bits(input, N);
-    inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
-    let eqCalculates = [arithEq0.calculate];
+    inputFeaTo16bits(input, N, ['a', 'b', 'c', 'd', 'op']);
+    let eqCalculates = [];
 
     // Initialization
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < 4; j++) {
-            pols.x1[j][i] = 0n;
-            pols.y1[j][i] = 0n;
-            pols.x2[j][i] = 0n;
-            pols.y2[j][i] = 0n;
-            pols.x3[j][i] = 0n;
-            if (j < pols.carry.length) pols.carry[j][i] = 0n;
-            if (j < pols.selEq.length) pols.selEq[j][i] = 0n;
+            pols.a[j][i] = 0n;
+            pols.b[j][i] = 0n;
+            pols.c[j][i] = 0n;
+            pols.d[j][i] = 0n;
+            pols.op[j][i] = 0n;
         }
+        pols.carry[i] = 0n;
+        pols.result[i] = 0n;
     }
     for (let i = 0; i < input.length; i++) {
         let offset = i * 8;
         for (let step = 0; step < 8; ++step) {
             for (let j = 0; j < 4; j++) {
-                pols.x1[j][offset + step] = BigInt(input[i]["_x1"][j])
-                pols.y1[j][offset + step] = BigInt(input[i]["_y1"][j])
-                pols.x2[j][offset + step] = BigInt(input[i]["_x2"][j])
-                pols.y2[j][offset + step] = BigInt(input[i]["_y2"][j])
-                pols.x3[j][offset + step] = BigInt(input[i]["_x3"][j])
-                pols.y3[j][offset + step] = BigInt(input[i]["_y3"][j])
+                pols.a[j][offset + step] = BigInt(input[i]["_a"][j])
+                pols.b[j][offset + step] = BigInt(input[i]["_b"][j])
+                pols.c[j][offset + step] = BigInt(input[i]["_c"][j])
+                pols.d[j][offset + step] = BigInt(input[i]["_d"][j])
+                pols.op[j][offset + step] = BigInt(input[i]["_op"][j])
             }
-            pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
         }
         let carry = 0n;
-        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
-
-        let eqIndexes = [];
-        if (pols.selEq[0][offset]) eqIndexes.push(0);
-
+        let eq = 0n;
 
         for (let step = 0; step < 8; ++step) {
-                eq[0] = eqCalculates[0](pols, step, offset);
-                pols.carry[offset + step] = Fr.e(carry);
-                carry = (eq[0] + carry) / (2n ** 16n);
+            eq = arithEq0.calculate(pols, step, offset);
+            pols.carry[offset + step] = Fr.e(carry);
+            carry = (eq + carry) / (2n ** 16n);
         }
-        pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
+        pols.result[offset + 7] = 1n;
     }
 }
 

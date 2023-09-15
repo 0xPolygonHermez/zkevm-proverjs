@@ -127,26 +127,26 @@ namespace MemAlign(%N);
     // selW0 contains data to be store in w0, must be 0 in "reading mode"
     // in "writting mode", in particular with wr8 only on byte must be
     // stored, for this reason use selM1 that was active only one clock (in wr8 mode)
-    pol selW0 = (1 - selM1) * wr256' + selM1 * wr8';
+    pol selW0 = (1 - selM1) * wr64' + selM1 * wr8';
 
     // selW1 contains data to be store in w1, must be 0 in "reading mode"
-    pol selW1 = selM1 * wr256';
+    pol selW1 = selM1 * wr64';
 
-    // NOTE: when wr8 = 1 implies wr256 = 0, check in this situations where use selM1
+    // NOTE: when wr8 = 1 implies wr64 = 0, check in this situations where use selM1
     // to verify that non exists collateral effects
     //
-    // pol selW0 = selM1 (because wr256 = 0 and wr8 = 1)
+    // pol selW0 = selM1 (because wr64 = 0 and wr8 = 1)
     //
     // selM1 used in pol _inM, but _inM is only used on dataV
-    // pol dataV = (1 - wr256' - wr8') * _inM + (wr256' + wr8') * inV;
-    // pol dataV = inV (because wr256 = 0 and wr8 = 1)
+    // pol dataV = (1 - wr64' - wr8') * _inM + (wr64' + wr8') * inV;
+    // pol dataV = inV (because wr64 = 0 and wr8 = 1)
     //
     // CONCLUSION: it's safe reuse selM1 to indicate when store byte
 
     // data to "write" on w, if current byte must be override by V contains inV
     // if not contains inM "in reading mode" must be 0.
-    pol dataW0 = (wr8' + wr256') * inM[0] + selW0 * (inV - inM[0]);
-    pol dataW1 = (wr8' + wr256') * inM[1] + selW1 * (inV - inM[1]);
+    pol dataW0 = (wr8' + wr64') * inM[0] + selW0 * (inV - inM[0]);
+    pol dataW1 = (wr8' + wr64') * inM[1] + selW1 * (inV - inM[1]);
 
     w0[0]' = (1-RESET) * w0[0] + FACTOR[0] * dataW0;
     w0[1]' = (1-RESET) * w0[1] + FACTOR[1] * dataW0;
@@ -158,7 +158,7 @@ namespace MemAlign(%N);
     pol _inM = (1 - selM1) * inM[0] + selM1 * inM[1];
 
     // contains data to store in V, could be one of inM if was reading or inV if was writting
-    pol dataV = (1 - wr256' - wr8') * _inM + (wr256' + wr8') * inV;
+    pol dataV = (1 - wr64' - wr8') * _inM + (wr64' + wr8') * inV;
 
     // factorV = f(STEP, offset, wr8)
     v[0]' = (1-RESET) * v[0] + factorV[0] * dataV;

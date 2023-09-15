@@ -44,6 +44,7 @@ module.exports.buildConstants = async function (pols) {
 module.exports.execute = async function (pols, input) {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
+    const RC = 2;
 
     prepareInput(input);
 
@@ -60,12 +61,12 @@ module.exports.execute = async function (pols, input) {
 
     let addr = 0n;
 
-    for (let i=0; i<8; i++) {
+    for (let i=0; i < RC; i++) {
         pols.crF[i] = pols[`crF${i}`];
         pols.crV[i] = pols[`crV${i}`];
     }
 
-    for (let k=0; k<8; k++) {
+    for (let k=0; k < RC; k++) {
         pols.crV[k][p] = 0n;
     }
 
@@ -107,8 +108,8 @@ module.exports.execute = async function (pols, input) {
             const crAccI = Math.floor(Number(pols.crOffset[p]) / 4);
             const crSh = BigInt((Number(pols.crOffset[p]) % 4) * 8);
 
-            for (let k=0; k<8; k++) {
-                pols.crF[k][p] = (k==crAccI) ? 1n << crSh : 0n;
+            for (let k=0; k < RC; k++) {
+                pols.crF[k][p] = (k == crAccI) ? 1n << crSh : 0n;
                 if (pols.crOffset[p] == 0n) {
                     pols.crV[k][p+1] = 0n;
                 } else {
@@ -194,7 +195,7 @@ module.exports.execute = async function (pols, input) {
 
             pols.crOffsetInv[p] = pols.crOffset[p] == 0n ? 0n : F.inv(pols.crOffset[p]);
 
-            for (let k=0; k<8; k++) {
+            for (let k=0; k < RC; k++) {
                 pols.crF[k][p] = (k==0) ? 1n : 0n;
                 pols.crV[k][p+1] = 0n;
             }
@@ -252,7 +253,7 @@ module.exports.execute = async function (pols, input) {
 
         pols.crOffsetInv[p] = pols.crOffset[p] == 0n ? 0n : F.inv(pols.crOffset[p]);
 
-        for (let k=0; k<8; k++) {
+        for (let k=0; k < RC; k++) {
             pols.crF[k][p] = (k==0) ? 1n : 0n;
             pols.crV[k][(p+1)%N] = 0n;
         }

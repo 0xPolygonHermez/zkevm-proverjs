@@ -88,18 +88,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log("Const Mem...");
         await smMem.buildConstants(constPols.Mem);
     }
-    if (constPols.PaddingPG) {
-        console.log("Const PaddingPG...");
-        await smPaddingPG.buildConstants(constPols.PaddingPG);
-    }
-    if (constPols.PoseidonG) {
-        console.log("Const PoseidonG...");
-        await smPoseidonG.buildConstants(constPols.PoseidonG);
-    }
-    if (constPols.Storage) {
-        console.log("Const Storage...");
-        await smStorage.buildConstants(constPols.Storage);
-    }
     if (constPols.MemAlign) {
         console.log("Const MemAlign...");
         await smMemAlign.buildConstants(constPols.MemAlign);
@@ -152,28 +140,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             await smMem.execute(cmPols.Mem, requiredMain.Mem || []);
         } else if (verifyPilFlag && requiredMain.Mem && requiredMain.Mem.length) {
             console.log(`WARNING: Namespace Mem isn't included, but there are ${requiredMain.Mem.length} Mem operations`);
-        }
-
-        if (cmPols.Storage) console.log("Exec Storage...");
-        const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage || []) : false;
-
-
-        if (!cmPols.Storage && verifyPilFlag && requiredMain.Storage && requiredMain.Storage.length) {
-            console.log(`WARNING: Namespace Storage isn't included, but there are ${requiredMain.Storage.length} Storage operations`);
-        }
-
-
-        if (cmPols.PaddingPG) console.log("Exec PaddingPG...");
-        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG,  requiredMain.PaddingPG || []) : false;
-
-        const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
-        console.log('POSEIDONS='+allPoseidonG.length);
-        if (cmPols.PoseidonG) {
-            console.log("Exec PoseidonG...");
-            await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
-        } else if (verifyPilFlag && allPoseidonG.length) {
-            console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations `+
-                            `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
         }
 
         if (cmPols.Arith) {
