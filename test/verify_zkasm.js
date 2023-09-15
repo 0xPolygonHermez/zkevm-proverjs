@@ -18,10 +18,7 @@ const smMem = require("../src/sm/sm_mem.js");
 const smBits2Field = require("../src/sm/sm_bits2field.js");
 const smPaddingKK = require("../src/sm/sm_padding_kk.js");
 const smPaddingKKBit = require("../src/sm/sm_padding_kkbit/sm_padding_kkbit.js");
-const smPaddingPG = require("../src/sm/sm_padding_pg.js");
-const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
-const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 const { config } = require("yargs");
 
 module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {

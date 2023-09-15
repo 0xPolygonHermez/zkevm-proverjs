@@ -17,10 +17,7 @@ const smMem = require(smPath + "sm_mem.js");
 const smBits2Field = require(smPath + "sm_bits2field.js");
 const smPaddingKK = require(smPath + "sm_padding_kk.js");
 const smPaddingKKBit = require(smPath + "sm_padding_kkbit/sm_padding_kkbit.js");
-const smPaddingPG = require(smPath + "sm_padding_pg.js");
-const smPoseidonG = require(smPath + "sm_poseidong.js");
 const smRom = require(smPath + "sm_rom.js");
-const smStorage = require(smPath + "sm_storage/sm_storage.js");
 
 describe("test main sm", async function () {
     this.timeout(10000000);

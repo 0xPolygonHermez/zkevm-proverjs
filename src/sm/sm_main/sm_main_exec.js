@@ -5,7 +5,7 @@ const { Scalar, F1Field } = require("ffjavascript");
 const {
 //    scalar2fea,
 //    fea2scalar,
-//    fe2n,
+    fe2n,
 //    scalar2h4,
     stringToH4,
     nodeIsEq,
@@ -215,10 +215,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             console.log(sourceRef);
         }
 
-        // Store SR before set it to 0 at finalizeExecution
-        if(Number(ctx.zkPC) === rom.labels.finalizeExecution) {
-            auxNewStateRoot = fea2String(Fr, ctx.SR);
-        }
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
@@ -293,15 +289,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inE[i] = Fr.e(l.inE);
         } else {
             pols.inE[i] = Fr.zero;
-        }
-
-        if (l.inSR) {
-            [op0, op1] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inSR), ctx.SR[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inSR), ctx.SR[1]))];
-            pols.inSR[i] = Fr.e(l.inSR);
-        } else {
-            pols.inSR[i] = Fr.zero;
         }
 
         if (l.inCTX) {
@@ -1176,26 +1163,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
         }
 
-        if (l.hashPDigest) {
-            if (skipCounters) {
-                pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i];
-            } else {
-                pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i] + BigInt(incCounter);
-            }
-        } else {
-            pols.cntPaddingPG[nexti] = pols.cntPaddingPG[i];
-        }
-
-        if (l.sRD || l.sWR || l.hashPDigest) {
-            if (skipCounters) {
-                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
-            } else {
-                pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i] + BigInt(incCounter);
-            }
-        } else {
-            pols.cntPoseidonG[nexti] = pols.cntPoseidonG[i];
-        }
-
         if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
             pendingCmds = l.cmdAfter;
         }
@@ -1260,40 +1227,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         required.PaddingKK.push(h);
     }
 
-    for (let i=0; i<ctx.hashP.length; i++) {
-        if (typeof ctx.hashP[i] === 'undefined') {
-            const nextAddr = Object.keys(ctx.hashP)[i];
-            throw new Error(`Reading hashP(${i}) not defined, next defined was ${nextAddr} on ${ctx.hashP[nextAddr].sourceRef||''}`);
-        }
-        const h = {
-            data: ctx.hashP[i].data,
-            digestCalled: ctx.hashP[i].digestCalled,
-            lenCalled: ctx.hashP[i].lenCalled,
-            reads: []
-        }
-        let p= 0;
-        while (p<ctx.hashP[i].data.length) {
-            if (ctx.hashP[i].reads[p]) {
-                h.reads.push(ctx.hashP[i].reads[p]);
-                p += ctx.hashP[i].reads[p];
-            } else {
-                h.reads.push(1);
-                p += 1;
-            }
-        }
-        if (p!= ctx.hashP[i].data.length) {
-            throw new Error(`Reading hashP(${i}) out of limits (${p} != ${ctx.hashP[i].data.length})`);
-        }
-        if (checkHashNoDigest && !ctx.hashP[i].digestCalled) {
-            const msg = `Reading hashP(${i}) not call to hashPDigest, last access on ${ctx.hashP[i].sourceRef||''}`;
-            if (checkHashNoDigest === ErrorCheck) {
-                throw new Error('ERROR:'+msg);
-            }
-            console.log('WARNING:'+msg)
-        }
-        required.PaddingPG.push(h);
-    }
-
     required.logs = ctx.outLogs;
     required.errors = nameRomErrors;
     required.counters = {
@@ -1303,12 +1236,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntMemAlign: ctx.cntMemAlign,
         cntSteps: ctx.step,
     }
+    /*
     required.output = {
         newStateRoot: auxNewStateRoot,
         newAccInputHash: fea2String(Fr, ctx.D),
         newLocalExitRoot: fea2String(Fr, ctx.E),
         newNumBatch: ctx.PC,
-    }
+    }*/
 
     return required;
 }
@@ -1323,9 +1257,12 @@ function checkFinalState(Fr, pols, ctx) {
 
     if ((!Fr.isZero(pols.A0[0])) ||
         (!Fr.isZero(pols.A1[0])) ||
+        (!Fr.isZero(pols.B0[0])) ||
+        (!Fr.isZero(pols.B1[0])) ||
+        (!Fr.isZero(pols.C0[0])) ||
+        (!Fr.isZero(pols.C1[0])) ||
         (!Fr.isZero(pols.D0[0])) ||
         (!Fr.isZero(pols.D1[0])) ||
-        (!Fr.isZero(pols.D2[0])) ||
         (!Fr.isZero(pols.E0[0])) ||
         (!Fr.isZero(pols.E1[0])) ||
         (pols.PC[0]) ||
@@ -1336,38 +1273,11 @@ function checkFinalState(Fr, pols, ctx) {
         if(fullTracer) fullTracer.exportTrace();
 
         if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n");
-        throw new Error("Program terminated with registers A, D, E, SR, PC, HASHPOS, RR, RCX, zkPC not set to zero");
+        throw new Error("Program terminated with registers A, D, E, PC, HASHPOS, RR, RCX, zkPC not set to zero");
     }
 
     const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-    if (
-        (!Fr.eq(pols.B0[0], feaOldStateRoot[0])) ||
-        (!Fr.eq(pols.B1[0], feaOldStateRoot[1])) ||
-        (!Fr.eq(pols.B2[0], feaOldStateRoot[2])) ||
-        (!Fr.eq(pols.B3[0], feaOldStateRoot[3])) ||
-        (!Fr.eq(pols.B4[0], feaOldStateRoot[4])) ||
-        (!Fr.eq(pols.B5[0], feaOldStateRoot[5])) ||
-        (!Fr.eq(pols.B6[0], feaOldStateRoot[6])) ||
-        (!Fr.eq(pols.B7[0], feaOldStateRoot[7]))
-    ) {
-        if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register B not terminetd equal as its initial value");
-    }
-
     const feaOldAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
-    if (
-        (!Fr.eq(pols.C0[0], feaOldAccInputHash[0])) ||
-        (!Fr.eq(pols.C1[0], feaOldAccInputHash[1])) ||
-        (!Fr.eq(pols.C2[0], feaOldAccInputHash[2])) ||
-        (!Fr.eq(pols.C3[0], feaOldAccInputHash[3])) ||
-        (!Fr.eq(pols.C4[0], feaOldAccInputHash[4])) ||
-        (!Fr.eq(pols.C5[0], feaOldAccInputHash[5])) ||
-        (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
-        (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
-    ) {
-        if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register C not termined equal as its initial value");
-    }
 
     if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
         if(fullTracer) fullTracer.exportTrace();
@@ -1391,61 +1301,8 @@ function checkFinalState(Fr, pols, ctx) {
  */
 function assertOutputs(ctx){
     const feaNewStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newStateRoot));
-
-    if (
-        (!ctx.Fr.eq(ctx.SR[0], feaNewStateRoot[0])) ||
-        (!ctx.Fr.eq(ctx.SR[1], feaNewStateRoot[1])) ||
-        (!ctx.Fr.eq(ctx.SR[2], feaNewStateRoot[2])) ||
-        (!ctx.Fr.eq(ctx.SR[3], feaNewStateRoot[3])) ||
-        (!ctx.Fr.eq(ctx.SR[4], feaNewStateRoot[4])) ||
-        (!ctx.Fr.eq(ctx.SR[5], feaNewStateRoot[5])) ||
-        (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
-        (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
-    ) {
-        let errorMsg = "Assert Error: newStateRoot does not match\n";
-        errorMsg += `   State root computed: ${fea2String(ctx.Fr, ctx.SR)}\n`;
-        errorMsg += `   State root expected: ${ctx.input.newStateRoot}\n`;
-        errorMsg += `Errors: ${nameRomErrors.toString()}`;
-        throw new Error(errorMsg);
-    }
-
     const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
-
-    if (
-        (!ctx.Fr.eq(ctx.D[0], feaNewAccInputHash[0])) ||
-        (!ctx.Fr.eq(ctx.D[1], feaNewAccInputHash[1])) ||
-        (!ctx.Fr.eq(ctx.D[2], feaNewAccInputHash[2])) ||
-        (!ctx.Fr.eq(ctx.D[3], feaNewAccInputHash[3])) ||
-        (!ctx.Fr.eq(ctx.D[4], feaNewAccInputHash[4])) ||
-        (!ctx.Fr.eq(ctx.D[5], feaNewAccInputHash[5])) ||
-        (!ctx.Fr.eq(ctx.D[6], feaNewAccInputHash[6])) ||
-        (!ctx.Fr.eq(ctx.D[7], feaNewAccInputHash[7]))
-    ) {
-        let errorMsg = "Assert Error: AccInputHash does not match\n";
-        errorMsg += `   AccInputHash computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
-        errorMsg += `   AccInputHash expected: ${ctx.input.newAccInputHash}\n`;
-        errorMsg += `Errors: ${nameRomErrors.toString()}`;
-        throw new Error(errorMsg);
-    }
-
     const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
-
-    if (
-        (!ctx.Fr.eq(ctx.E[0], feaNewLocalExitRoot[0])) ||
-        (!ctx.Fr.eq(ctx.E[1], feaNewLocalExitRoot[1])) ||
-        (!ctx.Fr.eq(ctx.E[2], feaNewLocalExitRoot[2])) ||
-        (!ctx.Fr.eq(ctx.E[3], feaNewLocalExitRoot[3])) ||
-        (!ctx.Fr.eq(ctx.E[4], feaNewLocalExitRoot[4])) ||
-        (!ctx.Fr.eq(ctx.E[5], feaNewLocalExitRoot[5])) ||
-        (!ctx.Fr.eq(ctx.E[6], feaNewLocalExitRoot[6])) ||
-        (!ctx.Fr.eq(ctx.E[7], feaNewLocalExitRoot[7]))
-    ) {
-        let errorMsg = "Assert Error: NewLocalExitRoot does not match\n";
-        errorMsg += `   NewLocalExitRoot computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
-        errorMsg += `   NewLocalExitRoot expected: ${ctx.input.newLocalExitRoot}\n`;
-        errorMsg += `Errors: ${nameRomErrors.toString()}`;
-        throw new Error(errorMsg);
-    }
 
     if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
         let errorMsg = "Assert Error: NewNumBatch does not match\n";
@@ -1467,28 +1324,7 @@ function assertOutputs(ctx){
  */
 function initState(Fr, pols, ctx) {
     // Set oldStateRoot to register B
-    [
-        pols.B0[0],
-        pols.B1[0],
-        pols.B2[0],
-        pols.B3[0],
-        pols.B4[0],
-        pols.B5[0],
-        pols.B6[0],
-        pols.B7[0]
-    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-
     // Set oldAccInputHash to register C
-    [
-        pols.C0[0],
-        pols.C1[0],
-        pols.C2[0],
-        pols.C3[0],
-        pols.C4[0],
-        pols.C5[0],
-        pols.C6[0],
-        pols.C7[0]
-    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
 
     // Set oldNumBatch to SP register
     pols.SP[0] = ctx.Fr.e(ctx.input.oldNumBatch)
@@ -1501,36 +1337,14 @@ function initState(Fr, pols, ctx) {
 
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;
-    pols.A2[0] = Fr.zero;
-    pols.A3[0] = Fr.zero;
-    pols.A4[0] = Fr.zero;
-    pols.A5[0] = Fr.zero;
-    pols.A6[0] = Fr.zero;
-    pols.A7[0] = Fr.zero;
+    pols.B0[0] = Fr.zero;
+    pols.B1[0] = Fr.zero;
+    pols.C0[0] = Fr.zero;
+    pols.C1[0] = Fr.zero;
     pols.D0[0] = Fr.zero;
     pols.D1[0] = Fr.zero;
-    pols.D2[0] = Fr.zero;
-    pols.D3[0] = Fr.zero;
-    pols.D4[0] = Fr.zero;
-    pols.D5[0] = Fr.zero;
-    pols.D6[0] = Fr.zero;
-    pols.D7[0] = Fr.zero;
     pols.E0[0] = Fr.zero;
     pols.E1[0] = Fr.zero;
-    pols.E2[0] = Fr.zero;
-    pols.E3[0] = Fr.zero;
-    pols.E4[0] = Fr.zero;
-    pols.E5[0] = Fr.zero;
-    pols.E6[0] = Fr.zero;
-    pols.E7[0] = Fr.zero;
-    pols.SR0[0] = Fr.zero;
-    pols.SR1[0] = Fr.zero;
-    pols.SR2[0] = Fr.zero;
-    pols.SR3[0] = Fr.zero;
-    pols.SR4[0] = Fr.zero;
-    pols.SR5[0] = Fr.zero;
-    pols.SR6[0] = Fr.zero;
-    pols.SR7[0] = Fr.zero;
     pols.PC[0] = 0n;
     pols.HASHPOS[0] = 0n;
     pols.RR[0] = 0n;
@@ -1539,8 +1353,6 @@ function initState(Fr, pols, ctx) {
     pols.cntBinary[0] = 0n;
     pols.cntKeccakF[0] = 0n;
     pols.cntMemAlign[0] = 0n;
-    pols.cntPaddingPG[0] = 0n;
-    pols.cntPoseidonG[0] = 0n;
     pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
@@ -1684,8 +1496,6 @@ function eval_getReg(ctx, tag) {
         return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.D) : safeFea2scalar(ctx.Fr, ctx.D);
     } else if (tag.regName == "E") {
         return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.E) : safeFea2scalar(ctx.Fr, ctx.E);
-    } else if (tag.regName == "SR") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.SR) : safeFea2scalar(ctx.Fr, ctx.SR);
     } else if (tag.regName == "CTX") {
         return Scalar.e(ctx.CTX);
     } else if (tag.regName == "SP") {
@@ -1869,6 +1679,10 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
+    } else if (tag.funcName == "getPublicOldStateRootR64") {
+        return eval_getPublicOldStateRootR64(ctx, tag);
+    } else if (tag.funcName == "getPublicOldAccInputHashR64") {
+        return eval_getPublicOldAccInputHashR64(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -1977,8 +1791,10 @@ function eval_bitwise(ctx, tag) {
     }
 }
 
-function eval_beforeLast(ctx) {
-    if (ctx.step >= ctx.stepsN-2) {
+function eval_beforeLast(ctx, tag) {
+    const stepsBefore = typeof tag.params[0] === 'undefined' ? -2 : Number(evalCommand(ctx,tag.params[0]));
+
+    if (ctx.step >= ctx.stepsN - stepsBefore) {
         return [0n, 0n];
     } else {
         return [ctx.Fr.negone, 0n];
@@ -2094,6 +1910,18 @@ function eval_memAlignWR8_W0(ctx, tag) {
 
     return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.sub(MASK_64, Scalar.shl(0xFFn, bits))),
                         Scalar.shl(Scalar.band(0xFFn, value), bits)));
+}
+
+function eval_getPublicOldStateRootR64(ctx, tag) {
+    const index = evalCommand(ctx, tag.params[0]);
+
+    return scalar2fea8(ctx.Fr, ctx.input.oldStateRoot)[index];
+}
+
+function eval_getPublicOldAccInputHashR64(ctx, tag) {
+    const index = evalCommand(ctx, tag.params[0]);
+
+    return scalar2fea8(ctx.Fr, ctx.input.oldAccInputHash)[index];
 }
 
 function checkParams(ctx, tag, expectedParams){
@@ -2259,4 +2087,25 @@ function fea2scalar(Fr, arr) {
     res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[1]), 32));
 
     return res;
+}
+
+/**
+ * Converts a Scalar into an array of 8 elements encoded as Fields elements where each one represents 32 bits
+ * result = [Scalar[0:31], scalar[32:63], scalar[64:95], scalar[96:127], scalar[128:159], scalar[160:191], scalar[192:223], scalar[224:255]
+ * @param {Field} Fr - field
+ * @param {Scalar} scalar - value to convert
+ * @returns {Array[Field]} array of fields
+ */
+function scalar2fea8(Fr, scalar) {
+    scalar = Scalar.e(scalar);
+    const r0 = Scalar.band(scalar, Scalar.e('0xFFFFFFFF'));
+    const r1 = Scalar.band(Scalar.shr(scalar, 32), Scalar.e('0xFFFFFFFF'));
+    const r2 = Scalar.band(Scalar.shr(scalar, 64), Scalar.e('0xFFFFFFFF'));
+    const r3 = Scalar.band(Scalar.shr(scalar, 96), Scalar.e('0xFFFFFFFF'));
+    const r4 = Scalar.band(Scalar.shr(scalar, 128), Scalar.e('0xFFFFFFFF'));
+    const r5 = Scalar.band(Scalar.shr(scalar, 160), Scalar.e('0xFFFFFFFF'));
+    const r6 = Scalar.band(Scalar.shr(scalar, 192), Scalar.e('0xFFFFFFFF'));
+    const r7 = Scalar.band(Scalar.shr(scalar, 224), Scalar.e('0xFFFFFFFF'));
+
+    return [Fr.e(r0), Fr.e(r1), Fr.e(r2), Fr.e(r3), Fr.e(r4), Fr.e(r5), Fr.e(r6), Fr.e(r7)];
 }

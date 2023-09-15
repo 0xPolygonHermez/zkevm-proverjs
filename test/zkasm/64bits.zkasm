@@ -20,11 +20,23 @@ start:
         ${getPublicOldAccInputHashR64(2)} :MSTORE(oldAccInputHash[2])
         ${getPublicOldAccInputHashR64(3)} :MSTORE(oldAccInputHash[3])
 
+
+        0xFFFFFFFFFFFFFFFFn => A,B
+        0n => C
+        0xFFFFFFFFFFFFFFFEn => D
+        1 :ARITH
+
+
+        0xFFFFFFFFFFFFFFFFn => A,B
+        0xFFFFFFFFFFFFFFFFn => C
+        0xFFFFFFFFFFFFFFFFn => D
+        0 :ARITH
+
 end:
         0 => A,B,C,D,E,CTX, SP, PC, GAS
 
 finalWait:
-        ${beforeFinal(12)}  : JMPN(finalWait)
+        ${beforeLast(12)}  : JMPN(finalWait)
 
         $ :MLOAD(newStateRoot[0])
         $ :MLOAD(newStateRoot[1])

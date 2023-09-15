@@ -1,6 +1,8 @@
 namespace Global(%N);
     pol constant L1;    // 1, 0, 0, 0, 0,
+    pol constant L4, L6, L8, L10;
     pol constant LLAST; // 0,0,0,0,0, ...., 0, 1
+    pol constant LLAST3, LLAST5, LLAST7, LLAST9, LLAST11;
     pol constant BYTE;
     pol constant BYTE_2A;
     pol constant BYTE2;
