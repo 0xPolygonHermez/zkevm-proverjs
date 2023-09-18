@@ -1,0 +1,48 @@
+VAR GLOBAL oldStateRoot[4]
+VAR GLOBAL oldAccInputHash[4]
+VAR GLOBAL newStateRoot[4]
+VAR GLOBAL newAccInputHash[4]
+VAR GLOBAL newLocalExitRoot[4]
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        ; from STEP 2
+        ${getPublicOldStateRootR64(0)} :MSTORE(oldStateRoot[0])
+        ${getPublicOldStateRootR64(1)} :MSTORE(oldStateRoot[1])
+        ${getPublicOldStateRootR64(2)} :MSTORE(oldStateRoot[2])
+        ${getPublicOldStateRootR64(3)} :MSTORE(oldStateRoot[3])
+
+        ${getPublicOldAccInputHashR64(0)} :MSTORE(oldAccInputHash[0])
+        ${getPublicOldAccInputHashR64(1)} :MSTORE(oldAccInputHash[1])
+        ${getPublicOldAccInputHashR64(2)} :MSTORE(oldAccInputHash[2])
+        ${getPublicOldAccInputHashR64(3)} :MSTORE(oldAccInputHash[3])
+
+
+        0xFFFFFFFFFFFFFFFFn => A,B
+        64 * 1024 - 1 => RCX
+        $ :ADD,REPEAT(RCX)
+
+end:
+        0 => A,B,C,D,E,CTX, SP, PC, GAS
+
+finalWait:
+        ${beforeLast(12)}  : JMPN(finalWait)
+
+        $ :MLOAD(newStateRoot[0])
+        $ :MLOAD(newStateRoot[1])
+        $ :MLOAD(newStateRoot[2])
+        $ :MLOAD(newStateRoot[3])
+
+        $ :MLOAD(newAccInputHash[0])
+        $ :MLOAD(newAccInputHash[1])
+        $ :MLOAD(newAccInputHash[2])
+        $ :MLOAD(newAccInputHash[3])
+
+        $ :MLOAD(newLocalExitRoot[0])
+        $ :MLOAD(newLocalExitRoot[1])
+        $ :MLOAD(newLocalExitRoot[2])
+        $ :MLOAD(newLocalExitRoot[3]),JMP(start)
+opINVALID:

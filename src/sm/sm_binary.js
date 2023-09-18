@@ -462,7 +462,7 @@ module.exports.execute = async function (pols, input) {
             pols.resultValidRange [((i+1) * STEPS)%N] = 1n;
         }
     }
-    console.log(`Binary-used-steps:${input.length * STEPS} (${input.length}x32)`);
+    console.log(`Binary-used-steps: ${input.length * STEPS} of ${N} (${(input.length * STEPS * 100)/N}%)`);
 
     for (let index = input.length * STEPS; index < N; index++) {
         const nextIndex = (index + 1) % N;
