@@ -586,7 +586,7 @@ function compareDefaultTrace(geth, fullTracer, i) {
             // memSize?
             stack: step.stack,
             depth: step.depth,
-            // returndata?
+            returnData: step.return_data,
         };
         if (Number(step.gas_refund) > 0) {
             newStep.refund = Number(step.gas_refund);
