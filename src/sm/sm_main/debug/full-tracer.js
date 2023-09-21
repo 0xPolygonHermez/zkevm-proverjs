@@ -45,6 +45,11 @@ class FullTracer {
         // Opcode step traces of all processed tx
         this.call_trace = [];
         this.execution_trace = [];
+
+        // Track opcodes called
+        this.hasGaspriceOpcode = false;
+        this.hasBalanceOpcode = false;
+
         // Logs path
         this.folderLogs = path.join(__dirname, '../logs-full-trace');
         this.pathLogFile = `${this.folderLogs}/${logFileName.split('.')[0]}__full_trace`;
@@ -377,6 +382,10 @@ class FullTracer {
             }
         }
 
+        // set flags has_gasprice_opcode and has_balance_opcode
+        this.finalTrace.responses[this.finalTrace.responses.length - 1].has_gasprice_opcode = this.hasGaspriceOpcode;
+        this.finalTrace.responses[this.finalTrace.responses.length - 1].has_balance_opcode = this.hasBalanceOpcode;
+
         // Append logs correctly formatted to response logs
         this.logs = this.logs.filter((n) => n); // Remove null values
         // Put all logs in an array
@@ -414,6 +423,8 @@ class FullTracer {
         this.execution_trace = [];
         this.logs = [];
         this.callData = [];
+        this.hasGaspriceOpcode = false;
+        this.hasBalanceOpcode = false;
     }
 
     /**
@@ -515,6 +526,16 @@ class FullTracer {
             codeId = 0xfe;
         }
         const opcode = codes[codeId][0];
+
+        // set flag 'has_gasprice_opcode' if opcode is GASPRICE
+        if (this.hasGaspriceOpcode === false && opcode === 'GASPRICE') {
+            this.hasGaspriceOpcode = true;
+        }
+
+        // set flag 'has_balance_opcode' if opcode is BALANCE
+        if (this.hasBalanceOpcode === false && opcode === 'BALANCE') {
+            this.hasBalanceOpcode = true;
+        }
 
         // store memory
         const offsetCtx = Number(ctx.CTX) * 0x40000;
