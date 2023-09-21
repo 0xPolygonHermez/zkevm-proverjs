@@ -2037,6 +2037,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         newNumBatch: ctx.PC,
     }
 
+    if (fullTracer) {
+        if (fullTracer.options.verbose.enable) {
+            fullTracer.printReturn({
+                outputs: required.output,
+                counters: required.counters,
+                logs: required.logs,
+                errors: required.errors
+            });
+        }
+    }
+
     return required;
 }
 
