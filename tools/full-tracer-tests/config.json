@@ -1,5 +1,10 @@
 [
     {
+        "folderName": "calldata",
+        "traceMethod": "callTracer",
+        "isEthereumTest": false
+   },
+    {
         "testName": "op-invalid",
         "testToDebug": 0,
         "traceMethod": "defaultTracer"

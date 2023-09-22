@@ -17,4 +17,3 @@ pil-config.json
 parallel-tests
 verbose-config.json
 *.stats
-tools/full-tracer-tests/geth-traces/
