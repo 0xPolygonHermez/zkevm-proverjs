@@ -30,7 +30,7 @@ jobs:
       - name: Clone repos
         run: |
           cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git
+          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch v2.0.0-fork.5
           cd zkevm-testvectors/tools/ethereum-tests
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests

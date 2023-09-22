@@ -119,7 +119,7 @@
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v1.0.0",
     "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xPolygonHermez/zkevm-commonjs.git#v2.0.0-fork.5",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v1.1.0-fork.4",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v2.0.0-fork.5",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v1.0.0-fork.3",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
@@ -134,7 +134,7 @@
     "lodash": "^4.17.21",
     "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#develop",
     "pilcom": "0.0.23",
-    "snarkjs": "0.6.9",
+    "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
   },
   "devDependencies": {
