@@ -22,8 +22,7 @@ const { argv } = require('yargs')
     .alias('S', 'stats')
     .alias('c', 'counters')
     .alias('n', 'stepsN')
-    .alias('t', 'tracer')
-    .alias('x', 'customhelpers');
+    .alias('t', 'tracer');
 
 const helpers = require('./helpers');
 
@@ -139,13 +138,6 @@ async function main() {
                 stats: (argv.stats === true),
                 assertOutputs: true,
             };
-            if (argv.customhelpers) {
-                // eslint-disable-next-line import/no-dynamic-require, global-require
-                const MyHelperClass = require(argv.customhelpers);
-                const customhelpers = new MyHelperClass();
-                config.helpers = customhelpers;
-            }
-
             await smMain.execute(cmPols.Main, input, rom, config);
             const stopTime = performance.now();
             info += `${chalk.green(`Finish executor JS ==> ${(stopTime - startTime) / 1000} s\n`)}`;
