@@ -22,6 +22,7 @@ const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { lstat } = require("fs");
+const MyHelperClass = require("./helpers/helpers");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -57,7 +58,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
-    let helpers = (config && config.helpers) ? config.helpers : false;
 
     const POSEIDONG_PERMUTATION1_ID = 1;
     const POSEIDONG_PERMUTATION2_ID = 2;
@@ -113,8 +113,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         rom: rom,
         outLogs: {},
         N,
-        stepsN,
-        helpers
+        stepsN
     }
 
     if (config.stats) {
@@ -156,33 +155,28 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const checkHashNoDigest = config.checkHashNoDigest ? (config.checkHashNoDigest === "warning" ? WarningCheck:ErrorCheck) : false;
 
 
-    if (helpers) {
-        console.log('USING custom helpers ....');
-        if (!Array.isArray(helpers)) {
-            helpers = [helpers];
+    const customHelpers = [new MyHelperClass()];
+    for (const helper of customHelpers) {
+        if (typeof helper.setup !== 'function') {
+            throw new Error('Helpers must be an instance with at least setup method');
         }
-        for (const helper of helpers) {
-            if (typeof helper.setup !== 'function') {
-                throw new Error('Helpers must be an instance with at least setup method');
-            }
-            helper.setup({
-                evalCommand,
-                safeFea2scalar,
-                scalar2fea,
-                Scalar,
-                fullTracer,
-                nameRomErrors,
-                checkParams,
-                sr8to4,
-                sr4to8
-            });
-            for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
-                if (!method.startsWith('eval_')) continue;
-                console.log(`  found helper ${method.substring(5)} => ${method}`);
-            }
+        helper.setup({
+            evalCommand,
+            safeFea2scalar,
+            scalar2fea,
+            Scalar,
+            fullTracer,
+            nameRomErrors,
+            checkParams,
+            sr8to4,
+            sr4to8
+        });
+        for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
+            if (!method.startsWith('eval_')) continue;
+            console.log(`  found helper ${method.substring(5)} => ${method}`);
         }
-        ctx.helpers = helpers;
     }
+    ctx.helpers = customHelpers;
 
     try {
     for (let step = 0; step < stepsN; step++) {
