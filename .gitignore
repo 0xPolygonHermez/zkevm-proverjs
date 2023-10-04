@@ -17,3 +17,5 @@ pil-config.json
 parallel-tests
 verbose-config.json
 *.stats
+tools/full-tracer-tests/ft-traces
+tools/full-tracer-tests/genesis.json
