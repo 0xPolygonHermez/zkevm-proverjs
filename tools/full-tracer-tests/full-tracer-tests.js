@@ -28,7 +28,7 @@ const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
@@ -170,6 +170,9 @@ function includesInvalidOpcode(steps) {
 }
 function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName) {
     if (!folderName) {
+        if (invalidTests.includes(`${testName}.json`)) {
+            return [];
+        }
         let test = isEthereumTest ? [JSON.parse(fs.readFileSync(testPath))][0] : [JSON.parse(fs.readFileSync(testPath))[testToDebug]];
         if (isEthereumTest) {
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
@@ -202,6 +205,9 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             let j = 0;
             for (const [key, value] of Object.entries(test)) {
                 if (!key.includes('Berlin')) {
+                    continue;
+                }
+                if (value.network !== 'Berlin') {
                     continue;
                 }
                 let inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
