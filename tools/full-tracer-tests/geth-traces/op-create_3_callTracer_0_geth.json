@@ -1,9 +1,0 @@
-{
-  "from": "0x4d5cf5032b2a844602278b01199ed191a86c93ff",
-  "gas": "0xc3500",
-  "gasUsed": "0xa916",
-  "to": "0x1275fbb540c8efc58b812ba83b0d0b8b9917ae98",
-  "input": "0x27c845dc",
-  "value": "0x3e8",
-  "type": "CALL"
-}
