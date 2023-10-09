@@ -1,4 +1,9 @@
 [
+	   {
+        "folderName": "stCallCodes",
+        "traceMethod": "defaultTracer",
+        "isEthereumTest": true
+    },
     {
         "testName": "op-invalid",
         "testToDebug": 0,

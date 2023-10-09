@@ -1,0 +1,134 @@
+{
+  "gas": 23623,
+  "failed": false,
+  "returnValue": "",
+  "structLogs": [
+    {
+      "pc": 0,
+      "op": "PUSH1",
+      "gas": 69000,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [],
+      "memory": []
+    },
+    {
+      "pc": 2,
+      "op": "PUSH1",
+      "gas": 68997,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 4,
+      "op": "PUSH1",
+      "gas": 68994,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 6,
+      "op": "PUSH1",
+      "gas": 68991,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 8,
+      "op": "PUSH1",
+      "gas": 68988,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 10,
+      "op": "PUSH3",
+      "gas": 68985,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 14,
+      "op": "PUSH1",
+      "gas": 68982,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0xe4971"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 16,
+      "op": "CALL",
+      "gas": 68979,
+      "gasCost": 2600,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0xe4971",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 17,
+      "op": "POP",
+      "gas": 66379,
+      "gasCost": 2,
+      "depth": 1,
+      "stack": [
+        "0x1"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 18,
+      "op": "STOP",
+      "gas": 66377,
+      "gasCost": 0,
+      "depth": 1,
+      "stack": [],
+      "memory": []
+    }
+  ]
+}
