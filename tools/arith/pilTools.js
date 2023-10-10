@@ -18,20 +18,20 @@ function join(values, glue)
     return expandTerms(values).join(glue);
 }
 
-function clksel(values, clkname)
+function clksel(values, clkname, sep = ' + ')
 {
     clkname = clkname || 'CLK';
 
     let clkindex = 0;
-    let sep = '';
+    let _sep = '';
     let s = '';
     expandTerms(values).forEach((value) => {
         if (clkindex && !(clkindex % 8)) {
             s += '\n\t  ';
         }
-        s += sep + `${value}*${clkname}[${clkindex}]`;
+        s += _sep + `${value}*${clkname}[${clkindex}]`;
         ++clkindex;
-        sep = ' + ';
+        _sep = sep;
     });
     return s;
 }
@@ -292,9 +292,15 @@ function expandArrayRange (value) {
         let result = [];
         let fromIndex = parseInt(m[1]);
         let toIndex = parseInt(m[2]);
-        for (index = fromIndex; index <= toIndex; ++index ) {
-            let name = nameToIndex(value.substring(0, m.index), index);
-            result.push(name + value.substring(m.index + m[0].length));
+        if (fromIndex != toIndex) {
+            let index = fromIndex;
+            const delta = fromIndex < toIndex ? 1:-1;
+            while (true) {
+                let name = nameToIndex(value.substring(0, m.index), index);
+                result.push(name + value.substring(m.index + m[0].length));
+                if (index === toIndex) break;
+                index += delta;
+            }
         }
         return result;
     }

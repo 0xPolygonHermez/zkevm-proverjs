@@ -2594,8 +2594,8 @@ function eval_functionCall(ctx, tag) {
         return eval_inverseFpEc(ctx, tag);
     } else if (tag.funcName == "inverseFnEc") {
         return eval_inverseFnEc(ctx, tag);
-    } else if (tag.funcName == "sqrtFpEc") {
-        return eval_sqrtFpEc(ctx, tag);
+    } else if (tag.funcName == "sqrtFpEcParity") {
+        return eval_sqrtFpEcParity(ctx, tag);
     } else if (tag.funcName == "dumpRegs") {
         return eval_dumpRegs(ctx, tag);
     } else if (tag.funcName == "dump") {
@@ -2921,13 +2921,17 @@ function eval_inverseFnEc(ctx, tag) {
     return ctx.Fnec.inv(a);
 }
 
-function eval_sqrtFpEc(ctx, tag) {
+function eval_sqrtFpEcParity(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
+    const parity = evalCommand(ctx, tag.params[1]);
     const r = ctx.Fec.sqrt(a);
     if (r === null) {
         return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
     }
-    return r;
+    if ((r & 0x01n) === parity)  {
+        return r;
+    }
+    return ctx.Fec.neg(r);
 }
 
 function eval_xAddPointEc(ctx, tag) {

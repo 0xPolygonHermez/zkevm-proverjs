@@ -13,6 +13,24 @@ module.exports.buildConstants = async function (pols) {
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
+    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, [0xFFFF,0xFFFE,0xFFFD,0xFC2F,0xFC2E]);
+}
+
+function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
+    let i = 0;
+    let valueIndex = 0;
+    while (i < N) {
+        const from = i;
+        while ((i - from) <= maxValues[valueIndex] && i < N) {
+            pol[i] = BigInt(valueIndex);
+            ++i;
+        }
+        while ((i - from) < cycle && i < N) {
+            pol[i] = paddingValue;
+            ++i;
+        }
+        valueIndex = valueIndex < maxValues.length ? valueIndex + 1: 0;
+    }
 }
 
 function buildByte2Bits16(pols, N) {
@@ -90,6 +108,12 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq0[i] = 0n;
         pols.resultEq1[i] = 0n;
         pols.resultEq2[i] = 0n;
+        pols.xDeltaChunkInverse[i] = 0n;
+        pols.xAreDifferent[i] = 0n;
+
+        // by default valueLtPrime must be one
+        pols.valueLtPrime[i] = 0n;
+        pols.chunkLtPrime[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
@@ -101,8 +125,13 @@ module.exports.execute = async function (pols, input) {
         let y3 = BigInt(input[i]["y3"]);
 
         if (input[i].selEq1) {
-            s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
-            let pq0 = s * x2 - s * x1 - y2 + y1;
+            let pq0;
+            if (Fec.eq(x2, x1)) {
+                throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
+            } else {
+                s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
+                pq0 = s * x2 - s * x1 - y2 + y1;
+            }
             q0 = -(pq0/pFec);
             if ((pq0 + pFec*q0) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q0 the residual is not zero (diff point)`);
@@ -148,25 +177,58 @@ module.exports.execute = async function (pols, input) {
         input[i]['_q2'] = to16bitsRegisters(q2);
     }
 
+    const chunksPrimeHL = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
+                            0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn ];
     for (let i = 0; i < input.length; i++) {
         let offset = i * 32;
+        let xAreDifferent = false;
+        let valueLtPrime;
         for (let step = 0; step < 32; ++step) {
-            for (let j = 0; j < 16; j++) {
-                pols.x1[j][offset + step] = BigInt(input[i]["_x1"][j])
-                pols.y1[j][offset + step] = BigInt(input[i]["_y1"][j])
-                pols.x2[j][offset + step] = BigInt(input[i]["_x2"][j])
-                pols.y2[j][offset + step] = BigInt(input[i]["_y2"][j])
-                pols.x3[j][offset + step] = BigInt(input[i]["_x3"][j])
-                pols.y3[j][offset + step] = BigInt(input[i]["_y3"][j])
-                pols.s[j][offset + step]  = BigInt(input[i]["_s"][j])
-                pols.q0[j][offset + step] = BigInt(input[i]["_q0"][j])
-                pols.q1[j][offset + step] = BigInt(input[i]["_q1"][j])
-                pols.q2[j][offset + step] = BigInt(input[i]["_q2"][j])
+            const index = offset + step;
+            const nextIndex = (index + 1) % N;
+            const step16 = step % 16;
+            if (step16 === 0) {
+                valueLtPrime = false;
             }
-            pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
-            pols.selEq[1][offset + step] = BigInt(input[i].selEq1);
-            pols.selEq[2][offset + step] = BigInt(input[i].selEq2);
-            pols.selEq[3][offset + step] = BigInt(input[i].selEq3);
+            for (let j = 0; j < 16; j++) {
+                pols.x1[j][index] = BigInt(input[i]["_x1"][j])
+                pols.y1[j][index] = BigInt(input[i]["_y1"][j])
+                pols.x2[j][index] = BigInt(input[i]["_x2"][j])
+                pols.y2[j][index] = BigInt(input[i]["_y2"][j])
+                pols.x3[j][index] = BigInt(input[i]["_x3"][j])
+                pols.y3[j][index] = BigInt(input[i]["_y3"][j])
+                pols.s[j][index]  = BigInt(input[i]["_s"][j])
+                pols.q0[j][index] = BigInt(input[i]["_q0"][j])
+                pols.q1[j][index] = BigInt(input[i]["_q1"][j])
+                pols.q2[j][index] = BigInt(input[i]["_q2"][j])
+            }
+            pols.selEq[0][index] = BigInt(input[i].selEq0);
+            pols.selEq[1][index] = BigInt(input[i].selEq1);
+            pols.selEq[2][index] = BigInt(input[i].selEq2);
+            pols.selEq[3][index] = BigInt(input[i].selEq3);
+
+            // selEq1 (addition different points) is select need to check that points are diferent
+            if (pols.selEq[1][index] && step < 16) {
+                if (xAreDifferent === false) {
+                    const delta = Fr.sub(pols.x2[step][index], pols.x1[step][index]);
+                    pols.xDeltaChunkInverse[index] = Fr.isZero(delta) ? 0n : Fr.inv(delta);
+                    xAreDifferent = true;
+                }
+                pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
+                // console.log(`w: ${index} x1:${pols.x1[step][index]}(0x${pols.x1[step][index].toString(16)}) x2:${pols.x2[step][index]}(0x${pols.x2[step][index].toString(16)}) delta:${delta} inv:${pols.xDeltaChunkInverse[index]} xAreDifferent':${pols.xAreDifferent[nextIndex]}`);
+            }
+
+            // selEq3 (addition + doubling points) is select need to check that x3, y3 is alias free.
+            if (pols.selEq[3][index]) {
+                const chunkValue = step > 15 ? pols.y3[15 - step16][offset] : pols.x3[15 - step16][offset];
+                const chunkPrime = chunksPrimeHL[step16];
+                const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
+                const _valueLtPrime = valueLtPrime;
+                valueLtPrime = valueLtPrime || chunkLtPrime;
+                pols.chunkLtPrime[index] = chunkLtPrime ? 1n : 0n;
+                pols.valueLtPrime[nextIndex] = valueLtPrime ? 1n : 0n;
+                // console.log(`w: ${index} chunkValue:${chunkValue}(0x${chunkValue.toString(16)}) chunkPrime:0x${chunkPrime.toString(16)} chunkLtPrime:${pols.chunkLtPrime[index]} valueLtPrime:${_valueLtPrime} valueLtPrime':${pols.valueLtPrime[nextIndex]}`);
+            }
         }
         let carry = [0n, 0n, 0n];
         const eqIndexToCarryIndex = [0, 0, 0, 1, 2];

@@ -450,8 +450,8 @@ class FullTracer {
         }
 
         // set flags has_gasprice_opcode and has_balance_opcode
-        this.finalTrace.responses[this.finalTrace.responses.length - 1].has_gasprice_opcode = this.hasGaspriceOpcode;
-        this.finalTrace.responses[this.finalTrace.responses.length - 1].has_balance_opcode = this.hasBalanceOpcode;
+        this.currentBlock.responses[this.currentBlock.responses.length - 1].has_gasprice_opcode = this.hasGaspriceOpcode;
+        this.currentBlock.responses[this.currentBlock.responses.length - 1].has_balance_opcode = this.hasBalanceOpcode;
 
         // Append logs correctly formatted to response logs
         this.logs = this.logs.filter((n) => n); // Remove null values
