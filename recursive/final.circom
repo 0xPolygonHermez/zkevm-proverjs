@@ -17,20 +17,9 @@ Total: 1696
 
 include "sha256/sha256.circom";
 include "bitify.circom";
+include "lessthangl.circom";
 include "recursivef.verifier.circom";
 
-template LessThanGoldilocks() {
-    var n = 64;
-    var p = 0xFFFFFFFF00000001;
-    signal input in;
-    signal output out;
-
-    component n2b = Num2Bits(n+1);
-
-    n2b.in <== in + (1<<n) - p;
-
-    out <== 1-n2b.out[n];
-}
 
 template Main() {
     signal output publicsHash;
@@ -129,10 +118,8 @@ template Main() {
         }
     }
 
-    signal isValidOldStateRoot[4];
     for (var i = 0; i < 4; i++) {
-        isValidOldStateRoot[i] <== LessThanGoldilocks()(publics[0 + 2*i] + (1 << 32) * publics[0 + 2*i + 1]);
-        isValidOldStateRoot[i] === 1;
+        _<== LessThanGoldilocks()(publics[0 + 2*i] + (1 << 32) * publics[0 + 2*i + 1]);
     }
 
     signal n2bOldAccInputHash[8][32];
@@ -170,10 +157,8 @@ template Main() {
         }
     }
 
-    signal isValidNewStateRoot[4];
     for (var i = 0; i < 4; i++) {
-        isValidNewStateRoot[i] <== LessThanGoldilocks()(publics[19 + 2*i] + (1 << 32)*publics[19 + 2*i + 1]);
-        isValidNewStateRoot[i] === 1;
+        _<== LessThanGoldilocks()(publics[19 + 2*i] + (1 << 32)*publics[19 + 2*i + 1]);
     }
 
     signal n2bNewAccInputHash[8][32];
