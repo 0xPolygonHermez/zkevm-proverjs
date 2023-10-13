@@ -187,7 +187,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             console.log(`  found helper ${method.substring(5)} => ${method}`);
         }
     }
-    ctx.helpers = customHelpers;
+    ctx.helpers = helpers;
 
     try {
     for (let step = 0; step < stepsN; step++) {
