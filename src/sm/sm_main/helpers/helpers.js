@@ -12,9 +12,9 @@ module.exports = class myHelper {
     ///////////// MODEXP
 
     /**
-     *
-     * @param a
-     * @param b
+     * Compares two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
      * @returns 1 if a > b, -1 if a < b, 0 if a == b.
      */
     compare(a, b) {
@@ -31,14 +31,23 @@ module.exports = class myHelper {
         return 0;
     }
 
-    // it sets a.length = 0 if a = [0n]
+    /**
+     * Removes leading zeros from a.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @returns a with leading zeros removed. It sets a.length = 0 if a = [0n]
+     */
     trim(a) {
         let i = a.length;
         while (a[--i] === 0n);
         a.length = i + 1;
     }
 
-    // Assumes a >= b
+    /**
+     * Computes the subtraction of two unsigned integers a,b represented as arrays of BigInts. Assumes a >= b.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns a - b.
+     */
     _MP_sub(a, b) {
         const alen = a.length;
         const blen = b.length;
@@ -67,6 +76,13 @@ module.exports = class myHelper {
         this.trim(result);
         return result;
     }
+
+    /**
+     * Computes the subtraction of two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns a - b.
+     */
     MP_sub(a, b) {
         let result;
         if (this.compare(a, b) >= 0) {
@@ -81,28 +97,12 @@ module.exports = class myHelper {
         return result;
     }
 
-    MP_long_mul(a, b) {
-        const alen = a.length;
-        const blen = b.length;
-        const len = alen + blen;
-        const result = new Array(len).fill(0n);
-        let product;
-        let carry;
-        let ai;
-        let bj;
-        for (let i = 0; i < alen; i++) {
-            ai = a[i];
-            for (let j = 0; j < blen; j++) {
-                bj = b[j];
-                product = ai * bj + result[i + j];
-                carry = product / this.base;
-                result[i + j] = product - carry * this.base;
-                result[i + j + 1] += carry;
-            }
-        }
-        this.trim(result);
-        return result;
-    }
+    /**
+     * Computes the multiplication of an unsigned integer represented as an array of BigInts and an unsigned integer represented as a BigInt.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as a BigInt.
+     * @returns a * b.
+     */
     MP_short_mul(a, b) {
         const alen = a.length;
         const len = alen;
@@ -123,6 +123,12 @@ module.exports = class myHelper {
         return result;
     }
 
+    /**
+     * Computes the normalisation of two unsigned integers a,b as explained here https://www.codeproject.com/Articles/1276311/Multiple-Precision-Arithmetic-Division-Algorithm.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns Normalised a and b to achieve better performance for MPdiv.
+     */
     normalize(a, b) {
         let bm = b[b.length - 1];
         let shift = 1n; // shift cannot be larger than log2(base) - 1
@@ -136,6 +142,12 @@ module.exports = class myHelper {
         return [a, b, shift];
     }
 
+    /**
+     * Computes the division of two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns [quotient, remainder] of a / b.
+     */
     _MPdiv(a, b) {
         let shift;
         [a, b, shift] = this.normalize(a, b);
@@ -192,6 +204,12 @@ module.exports = class myHelper {
         return [quotient, remainder];
     }
 
+    /**
+     * Computes the division of an unsigned integer represented as an array of BigInts and an unsigned integer represented as a BigInt.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as a BigInt.
+     * @returns [quotient, remainder] of a / b.
+     */
     _MPdiv_short(a, b) {
         let a_l = a.length;
         let quotient = [];
@@ -209,6 +227,12 @@ module.exports = class myHelper {
         return [quotient, remainder];
     }
 
+    /**
+     * Computes the division of two unsigned integers represented as arrays of BigInts.
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @sets ctx.quotient and ctx.remainder.
+     */
     eval_MPdiv(ctx, tag) {
         const addr1 = Number(this.evalCommand(ctx, tag.params[0]));
         const len1 = Number(this.evalCommand(ctx, tag.params[1]));
@@ -230,26 +254,56 @@ module.exports = class myHelper {
         ctx.remainder = rem;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Quotient chunk at the given position.
+     */
     eval_receiveQuotientChunk(ctx, tag) {
         const pos = Number(this.evalCommand(ctx, tag.params[0]));
         const quoi = ctx.quotient[pos];
         return quoi;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Remainder chunk at the given position.
+     */
     eval_receiveRemainderChunk(ctx, tag) {
         const pos = Number(this.evalCommand(ctx, tag.params[0]));
         const remi = ctx.remainder[pos];
         return remi;
     }
-    
+
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the quotient.
+     */
     eval_receiveLenQuotient(ctx) {
         return ctx.quotient.length;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the remainder.
+     */
     eval_receiveLenRemainder(ctx) {
         return ctx.remainder.length;
     }
 
+    /**
+     * Computes the division of an unsigned integer represented as an array of BigInts and an unsigned integer represented as a BigInt.
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @sets ctx.quotient_short and ctx.remainder_short.
+     */
     eval_MPdiv_short(ctx, tag) {
         const addr1 = Number(this.evalCommand(ctx, tag.params[0]));
         const len1 = Number(this.evalCommand(ctx, tag.params[1]));
@@ -266,39 +320,46 @@ module.exports = class myHelper {
         ctx.remainder_short = rem;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Short quotient chunk at the given position.
+     */
     eval_receiveQuotientChunk_short(ctx, tag) {
         const pos = Number(this.evalCommand(ctx, tag.params[0]));
         const quoi = ctx.quotient_short[pos];
         return quoi;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Short remainder chunk at the given position.
+     */
     eval_receiveRemainderChunk_short(ctx) {
         const remi = ctx.remainder_short;
         return remi;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the short quotient.
+     */
     eval_receiveLenQuotient_short(ctx) {
         return ctx.quotient_short.length;
     }
 
     ///////////// PAIRINGS
 
-    eval_fpBN254add(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        const a = this.evalCommand(ctxFullFe, tag.params[0]);
-        const b = this.evalCommand(ctxFullFe, tag.params[1]);
-
-        return ctx.FpBN254.add(a, b);
-    }
-
-    eval_fpBN254sub(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        const a = this.evalCommand(ctxFullFe, tag.params[0]);
-        const b = this.evalCommand(ctxFullFe, tag.params[1]);
-
-        return ctx.FpBN254.sub(a, b);
-    }
-
+    /**
+     * Computes the inverse of the given Fp element.
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
     eval_fpBN254inv(ctx, tag) {
         const ctxFullFe = { ...ctx, fullFe: true };
         const a = this.evalCommand(ctxFullFe, tag.params[0]);
@@ -306,45 +367,11 @@ module.exports = class myHelper {
         return ctx.FpBN254.inv(a);
     }
 
-    eval_log2(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        let a = this.evalCommand(ctxFullFe, tag.params[0]);
-
-        if (a === 0n) return 0;
-
-        let r = 1;
-        while (a > 1n) {
-            a >>= 1n;
-            r += 1;
-        }
-
-        return r;
-    }
-
-    eval_FpBN254eq0(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        let a = this.evalCommand(ctxFullFe, tag.params[0]);
-        a = ctx.FpBN254.normalize(a, ctx.FpBN254.p);
-
-        return ctx.FpBN254.isZero(a);
-    }
-
-    eval_FpBN254eq1(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        let a = this.evalCommand(ctxFullFe, tag.params[0]);
-        a = ctx.FpBN254.normalize(a, ctx.FpBN254.p);
-
-        return ctx.FpBN254.eq(a, 1n);
-    }
-
-    eval_FpBN254neq0(ctx, tag) {
-        return !this.eval_FpBN254eq0(ctx, tag);
-    }
-
-    eval_FpBN254neq1(ctx, tag) {
-        return !this.eval_FpBN254eq1(ctx, tag);
-    }
-
+    /**
+     * Computes the "real" part of the inverse of the given Fp2 element.
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
     eval_fp2InvBN254_x(ctx, tag) {
         const ctxFullFe = { ...ctx, fullFe: true };
         const a = this.evalCommand(ctxFullFe, tag.params[0]);
@@ -354,6 +381,11 @@ module.exports = class myHelper {
         return ctx.FpBN254.div(a, den);
     }
 
+    /**
+     * Computes the "imaginary" part of the inverse of the given Fp2 element.
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
     eval_fp2InvBN254_y(ctx, tag) {
         const ctxFullFe = { ...ctx, fullFe: true };
         const a = this.evalCommand(ctxFullFe, tag.params[0]);
