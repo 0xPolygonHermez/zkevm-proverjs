@@ -27,7 +27,6 @@ const opCreate = ['CREATE', 'CREATE2'];
 const zeroCostOp = ['STOP', 'REVERT', 'RETURN'];
 const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', 'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance', 'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_change_l2_block', 'invalidRLP'];
 
-// TODO: gas cost of last opcode should be fixed
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
  * for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
@@ -198,7 +197,7 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onStartBlock(ctx) {
-        // If it's not the frist change L2 block transaction, we must finish previous block
+        // If it is not the first change L2 block transaction, we must finish previous block
         if (this.currentBlock.parent_hash) {
             this.onFinishBlock(ctx);
         }
@@ -221,7 +220,8 @@ class FullTracer {
             gas_used: Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed')),
             timestamp: Number(getVarFromCtx(ctx, true, 'timestamp')),
             block_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
-            ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'historicGER')),
+            ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree')),
+            block_hash_l1: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockchashL1InfoTree')),
             logs: [],
         });
         // Append logs correctly formatted to block response logs
@@ -266,13 +266,14 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onProcessTx(ctx) {
-        // detect if is a change L2 block transaction
+        // detect if it is a change L2 block transaction
         if (Number(getVarFromCtx(ctx, false, 'isChangeL2BlockTx')) || (this.isForced && this.txIndex === 0)) {
             this.onStartBlock(ctx);
             if (!this.isForced) {
                 return;
             }
         }
+
         // Fill context object
         const context = {};
         context.type = Number(getVarFromCtx(ctx, false, 'isCreateContract')) ? 'CREATE' : 'CALL';
@@ -384,6 +385,7 @@ class FullTracer {
      */
     onFinishTx(ctx) {
         const response = this.currentBlock.responses[this.txIndex];
+
         if (typeof response.call_trace === 'undefined') {
             return;
         }
@@ -447,11 +449,11 @@ class FullTracer {
             if (response.error === '') {
                 response.error = lastOpcodeCall.error;
             }
-        }
 
-        // set flags has_gasprice_opcode and has_balance_opcode
-        this.finalTrace.responses[this.finalTrace.responses.length - 1].has_gasprice_opcode = this.hasGaspriceOpcode;
-        this.finalTrace.responses[this.finalTrace.responses.length - 1].has_balance_opcode = this.hasBalanceOpcode;
+            // set flags has_gasprice_opcode and has_balance_opcode
+            response.has_gasprice_opcode = this.hasGaspriceOpcode;
+            response.has_balance_opcode = this.hasBalanceOpcode;
+        }
 
         // Append logs correctly formatted to response logs
         this.logs = this.logs.filter((n) => n); // Remove null values

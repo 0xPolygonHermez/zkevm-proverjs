@@ -112,7 +112,9 @@
     "test:counters:storage": "mocha test/counters/storage.js",
     "test:all-inputs": "mocha --timeout 0 --max-old-space-size=8000 tools/run-test/run-inputs-mocha.test.js",
     "test:full-tracer": "node --max-old-space-size=16000 tools/full-tracer-tests/full-tracer-tests.js",
-    "eslint:tracer": "npx eslint src/sm/sm_main/debug/**.js"
+    "eslint:tracer": "npx eslint src/sm/sm_main/debug/**.js",
+    "eslint:sm_main": "npx eslint src/sm/sm_main/sm_main_exec.js",
+    "eslint": "npm run eslint:tracer && npm run eslint:sm_main"
   },
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
