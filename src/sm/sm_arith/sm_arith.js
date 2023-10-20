@@ -131,9 +131,6 @@ module.exports.execute = async function (pols, input) {
         // by default valueLtPrime must be one
         pols.valueLtPrime[i] = 0n;
         pols.chunkLtPrime[i] = 0n;
-        pols.resultEq3[i] = 0n;
-        pols.resultEq4[i] = 0n;
-        pols.resultEq5[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {

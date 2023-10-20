@@ -1228,6 +1228,36 @@ function inputToZkasm() {
     return zkasmCode;
 }
 
+function prepareInput32bits(input) {
+    let input16bits = [];
+    for (let i = 0; i < input.length; i++) {
+        let keyvalue = {};
+        for (let key of Object.keys(input[i])) {
+            if (['x1', 'y1', 'x2', 'y2', 'x3', 'y3'].includes(key)) {
+                keyvalue[key] = to32bitsRegisters(input[i][key]);
+            } else {
+                keyvalue[key] = input[i][key];
+            }
+        }
+        input16bits.push({...keyvalue, selEq4: 0n, selEq5: 0n, selEq6: 0n});
+    }
+
+    return input16bits;
+}
+
+function to32bitsRegisters(value) {
+    if (typeof value !== 'bigint') {
+        value = BigInt(value);
+    }
+
+    let parts = [];
+    for (let part = 0; part < 8; ++part) {
+        parts.push(value & 0xffffffffn);
+        value = value >> 32n;
+    }
+    return parts;
+}
+
 async function loadPil(pilFile) {
     const pil = await compile(Fr, pilFile, null, {defines: { N: 2 ** 18 }});
 /*
@@ -1254,7 +1284,7 @@ describe("test plookup operations", async function () {
 
         await global.buildConstants(constPols.Global);
         await arith.buildConstants(constPols.Arith);
-        await arith.execute(cmPols.Arith, input);
+        await arith.execute(cmPols.Arith, prepareInput32bits(input));
 
         const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
 
