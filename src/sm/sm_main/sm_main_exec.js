@@ -2588,8 +2588,8 @@ function eval_functionCall(ctx, tag) {
         return eval_inverseFpEc(ctx, tag);
     } else if (tag.funcName == "inverseFnEc") {
         return eval_inverseFnEc(ctx, tag);
-    } else if (tag.funcName == "sqrtFpEc") {
-        return eval_sqrtFpEc(ctx, tag);
+    } else if (tag.funcName == "sqrtFpEcParity") {
+        return eval_sqrtFpEcParity(ctx, tag);
     } else if (tag.funcName == "dumpRegs") {
         return eval_dumpRegs(ctx, tag);
     } else if (tag.funcName == "dump") {
@@ -2895,13 +2895,17 @@ function eval_inverseFnEc(ctx, tag) {
     return ctx.Fnec.inv(a);
 }
 
-function eval_sqrtFpEc(ctx, tag) {
+function eval_sqrtFpEcParity(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
+    const parity = evalCommand(ctx, tag.params[1]);
     const r = ctx.Fec.sqrt(a);
     if (r === null) {
         return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
     }
-    return r;
+    if ((r & 0x01n) === parity)  {
+        return r;
+    }
+    return ctx.Fec.neg(r);
 }
 
 function eval_xAddPointEc(ctx, tag) {
@@ -2926,7 +2930,7 @@ function eval_AddPointEc(ctx, tag, dbl)
     const y1 = evalCommand(ctx, tag.params[1]);
     const x2 = evalCommand(ctx, tag.params[dbl ? 0 : 2]);
     const y2 = evalCommand(ctx, tag.params[dbl ? 1 : 3]);
-
+    let s;
     if (dbl) {
         // Division by zero must be managed by ROM before call ARITH
         const divisor = ctx.Fec.add(y1, y1)

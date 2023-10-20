@@ -38,7 +38,7 @@ jobs:
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests
           git checkout test-vectors
-          cd ../../../../zkevm-proverjs
+          cd ../../../../zkevm-proverjs-internal
       - name: setup zkevm-proverjs
         run: |
           npm i
