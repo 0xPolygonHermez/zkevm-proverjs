@@ -3,7 +3,7 @@ zkEVM proof generator reference written in Javascript
 
 ## General info
 
-To build and run the files in this repository requires a Linux environment with at least 500GB+ of RAM. The build process has been tested on Ubuntu 22.04.
+To build and run the files in this repository requires a Linux environment with at least **500GB+ of RAM**. The build process has been tested on Ubuntu 22.04.
 
 ## Requirements
 
@@ -26,13 +26,15 @@ To install the dependencies, run the following command:
 npm install
 ```
 
+> If you desire to build the configuration files for a specific forkId, checkout to the desired `tag` first. E.g `v2.0.0-fork.5` or `v1.1.0-fork.4`.
+
 To build the configuration files required to run the prover, run the following command:
 
 ```sh
 npm run buildsetup
 ```
 
->> The whole process can take more than a day to run, and it will require downloading and compiling several dependencies, including a massive file with 388GB (powersOfTau).
+> The whole process can take more than a day to run, and it will require downloading and compiling several dependencies, including a massive file with 388GB (powersOfTau).
 
 To build and test the configuration files run the following command:
 
