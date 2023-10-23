@@ -130,6 +130,12 @@ For example:
 ./move-files.sh ./build ../zkevm-prover/config
 ```
 
+And change the following line in the Prover config file to:
+
+```json
+"runKeccakScriptGenerator": true,
+```
+
 ## Usage
 
 Basic usage:
