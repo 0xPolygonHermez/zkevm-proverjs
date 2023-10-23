@@ -2,18 +2,21 @@
 /*
     Equations:
 
-    EQ0: A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
+    EQ0:  A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
 
-    EQ1: s * x2 - s * x1 - y2 + y1 + (q0 * p)   lambda - ADD
-    EQ2: 2 * s * y1 - 3 * x1 * x1 + (q0 * p)    lambda - DBL
-    EQ3: s * s - x1 - x2 - x3 + (q1 * p)        x3
-    EQ4: s * x1 - s * x3 - y1 - y3 + (q2 * p)   y3
-    EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
-    EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
-	EQ7:  x1 + x2 - x3 + (q1 * p)
-	EQ8:  y1 + y2 - y3 + (q2 * p)
-	EQ9:  x1 - x2 - x3 + (q1 * p)
-	EQ10: y1 - y2 - y3 + (q2 * p)
+    EQ1:  s * x2 - s * x1 - y2 + y1 + (q0 * p)   lambda - ADD
+    EQ2:  2 * s * y1 - 3 * x1 * x1 + (q0 * p)    lambda - DBL
+    EQ3:  s * s - x1 - x2 - x3 + (q1 * p)        x3
+    EQ3:  s * x1 - s * x3 - y1 - y3 + (q2 * p)   y3
+
+    EQ4:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
+    EQ4:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
+
+	EQ5:  x1 + x2 - x3 + (q1 * p)
+	EQ5:  y1 + y2 - y3 + (q2 * p)
+
+	EQ6:  x1 - x2 - x3 + (q1 * p)
+	EQ6:  y1 - y2 - y3 + (q2 * p)
 
 */
 include "global.pil";
@@ -45,23 +48,23 @@ namespace Arith(%N);
     resultEq2 * (1 - resultEq2) = 0;
 
     // FEATURE:
+    //      · Verify that the x1,x2 are different when adding different elliptic curve points (EQ1,EQ3,EQ4).
 
-    // PRE: x1, x2 are alias free
+    // PRE: 
+    //      · x1, x2 are alias free
 
-    // Verify that the x1 x2 are different when using the add function on elliptic curve with different points.
-
-    // In the first 16 clocks of 32 clocks cycle contains: x2[0]-x1[0], x2[1]-x1[1], ..., x2[15]-x1[15]
-    // In last 16 clocks of 32 clocks cycle all values was 0.
-    pol xDeltaChunk = <%- clksel(['x2[0..15]'], 'Global.CLK32') %>
+    // In the first 16 clocks of 32-clock cycle we have: x2[0]-x1[0], x2[1]-x1[1], ..., x2[15]-x1[15]
+    // In the last  16 clocks of 32-clock cycle we set all values to 0.
+    pol xDeltaChunk = <%- clksel(['x2[0..15]',], 'Global.CLK32') %>
                     - <%- clksel(['x1[0..15]'], 'Global.CLK32', ' - ') %>;
 
-    // Inverse of current xDeltaChunk. Used to verify that xDeltaChunk was ≠ 0 ==> x1[i] ≠ x2[i].
-    // This inverse only calculated one clock by cycle when selEq[1] = 1.
+    // Inverse of current xDeltaChunk. Used to verify that xDeltaChunk is ≠ 0, i.e., when x1[i] ≠ x2[i].
+    // This inverse only needs to be calculated one time by cycle.
     pol commit xDeltaChunkInverse;
 
-    // Intermediate pol to define that in the current chunks of x1 and x2 are differents.
+    // Intermediate pol to indicate that x1 is different from x2 in the current chunk.
     // IMPORTANT: xChunkDifferent == 1 ==> x1[i] ≠ x2[i]
-    //            xChunkDifferent == 0 no implies anything, x1[i] ≠ x2[i] or x1[i] == x2[i].
+    //            xChunkDifferent == 0 does not imply anything, x1[i] ≠ x2[i] or x1[i] == x2[i].
     // xChunkDifferent was binary, only when xDeltaChunkInverse === inv(xDeltaChunk), its value is 1.
     pol xChunkDifferent = xDeltaChunk * xDeltaChunkInverse;
 
@@ -85,7 +88,7 @@ namespace Arith(%N);
     // Binary constraint
     xAreDifferent * (1 - xAreDifferent) = 0;
 
-    // In first clock of 16 clocks cycle, xAreDifferent should not be considered
+    // In first clock of 16-clock cycle, xAreDifferent should not be considered
     // Constraint to force next value of xAreDifferent
 
     xAreDifferent' = xAreDifferent * (1 - Global.CLK32[0] - Global.CLK32[16]) + xChunkDifferent;
@@ -106,65 +109,106 @@ namespace Arith(%N);
     // (A) forbidden, executor must control this situation, because expending an
     // unnecessary inverse.
 
-   (xAreDifferent - selEq[1]) * Global.CLK32[16] = 0;
+    (xAreDifferent - selEq[1]) * Global.CLK32[16] = 0;
 
     // COST:   2 commit, 2 im, 0 constant, 4 constraints
 
 
-
     // FEATURE:
     //
-    // Verify that the result of the addition is free of aliases, means x3 ∊ [0, FPEC-1] and y3 ∊ [0, FPEC-1]
+    // Verify that the result of Secp256k1 addition (EQ1/EQ2,EQ3,EQ4) is free of aliases, i.e. that x3,y3 ∊ [0, p-1]
+    // Verify that the result of 𝔽p² = 𝔽p[u]/(u² + 1) multiplication, addition and subtraction (EQ5,EQ6 || EQ7,EQ8 || EQ9,EQ10)
+    // is free of aliases, i.e. that x3,y3 ∊ [0, p-1]
     //
-    // FPEC: 0xffffffffffffffffffffffffffffffffffffffffffffffffffff fffe 0000 fc2fn
+    // Here, p refers, respectively, to the base field order of any of the following elliptic curves:
     //
-    // Approach, compare from most significant chunk to less significant chunk of x3,y3 (A). On each chunk,
-    // a chunkLtPrime indicates if the chunk is minor than the FPEC chunk. The valueLtPrime indicates when any
-    // previous chunk was minor than the FPEC chunk, and this implies that x3,y3 is minor than prime.
+    // Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF fffe 0000 fc2f
+    // BN254:      0x3064 4e72 e131 a029 b850 45b6 8181 585d 9781 6a91 6871 ca8d 3c20 8c16 d87c fd47
     //
-    // (A) on first 16 clocks of 32 clocks cycle is verified x3
-    //     on last  16 clocks of 32 clocks cycle is verified y3
+    // Strategy: Compare from the most significant chunk to the least significant chunk of x3 and y3 (A). On each chunk,
+    // chunkLtPrime indicates whether the chunk is smaller than the FPEC chunk. valueLtPrime indicates if any
+    // previous chunk was smaller than the FPEC chunk, which implies that x3 and y3 are smaller than prime.
     //
-    //    k x chunks equals (B) ===>  1 x chunk minor ===>  (15 - k) x any 16 bits value
+    // (A) In the first 16 clocks of 32-clock cycle, it is verified that x3 ∊ [0, p-1]
+    //     In the last  16 clocks of 32-clock cycle, it is verified that y3 ∊ [0, p-1]
     //
-    // (B) really I must verify that chunk are equal or minor, never greater at this point. If malicious prover (MAP)
-    // said is equal but it's minor, is its problem. At the end, it needs at least one minor chunk to be minor value.
+    //    k x chunks equals (B) ==> 1 x chunk lower ==> (15 - k) x any 16 bits value
     //
-    //    k x chunks ∊ [0,chunkPrime] => 1 x chunk ∊ [0, chunkPrime-1] => (15 - k) x chunk ∊ [0, 0xFFFF]
+    // (B) I must verify that the chunks are equal or smaller, never greater at this point. If a malicious prover (MP)
+    // claims they are equal when they are actually smaller, that's its issue. At the end, there must be at least one
+    // smaller chunk to ensure a smaller value.
     //
-    //                                 CLK0            CLK12   CLK13   CLK14   CLK15
-    //   max(chunkPrime(0..15))     = [0xFFFF, ..... , 0xFFFF, 0xFFFE, 0xFFFF, 0xFC2F]
-    //   max(chunkPrime(0..15) - 1) = [0xFFFE, ..... , 0xFFFE, 0xFFFD, 0xFFFE, 0xFC2E]
+    //    k x chunks = chunkPrime ==> 1 x chunk ∊ [0, chunkPrime-1] ==> (15 - k) x chunk ∊ [0, 0xFFFF]
     //
-    //   differents max range [0xFFFF, 0xFFFE, 0xFFFD, 0xFC2F, 0xFC2E]
-    //                                                                   CLK14 CLK15
-    // FPEC: 0xffffffffffffffffffffffffffffffffffffffffffffffffffff fffe f000 fc2f
-    // V :   0xffffffffffffffffffffffffffffffffffffffffffffffffffff fffe f001 0000
+    //                             CLK0    CLK1    CLK2    CLK3    CLK4    CLK5    CLK6    CLK7    CLK8    CLK9   CLK10   CLK11   CLK12   CLK13   CLK14   CLK15
+    //   chunkPrime(0..15)     = [0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFE, 0xFFFF, 0xFC2F]
+    //   chunkPrime(0..15) - 1 = [0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFD, 0xFFFE, 0xFC2E]
+    //   chunkPrime(0..15)     = [0x3064, 0x4e72, 0xe131, 0xa029, 0xb850, 0x45b6, 0x8181, 0x585d, 0x9781, 0x6a91, 0x6871, 0xca8d, 0x3c20, 0x8c16, 0xd87c, 0xfd47]
+    //   chunkPrime(0..15) - 1 = [0x3063, 0x4e71, 0xe130, 0xa028, 0xb84f, 0x45b5, 0x8180, 0x585c, 0x9780, 0x6a90, 0x6870, 0xca8c, 0x3c1f, 0x8c15, 0xd87b, 0xfd46]
     //
-    //   RANGE_SEL  P_RANGE     BASE
-    //   0          [0,0xFFFF]  CLK0,...,CLK12
-    //   1          [0,0xFFFE]  CLK13
-    //   2          [0,0xFFFD]
-    //   3          [0,0xFC2F]  CLK15
-    //   4          [0,0xFC2E]
-    //   5          [0,0xF000]  CLK14
-    //   6          [0,0xEFFF]
+    //   different Secp256k1 prime chunks [0xFFFF, 0xFFFE, 0xFFFD, 0xFC2F, 0xFC2E]
+    //   different BN254 prime chunks [0x3064, 0x4e72, 0xe131, 0xa029, 0xb850, 0x45b6, 0x8181, 0x585d, 0x9781, 0x6a91, 0x6871, 0xca8d, 0x3c20, 0x8c16, 0xd87c, 0xfd47,
+    //                                 0x3063, 0x4e71, 0xe130, 0xa028, 0xb84f, 0x45b5, 0x8180, 0x585c, 0x9780, 0x6a90, 0x6870, 0xca8c, 0x3c1f, 0x8c15, 0xd87b, 0xfd46]
+
+    //              CLK0   CLK1  CLK2  CLK3  CLK4  CLK5  CLK6  CLK7  CLK8  CLK9  CLK10 CLK11 CLK12 CLK13 CLK14 CLK15
+    // Secp256k1:  0xFFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  fffe  FFFF  fc2f
+    // BN254:      0x3064  4e72  e131  a029  b850  45b6  8181  585d  9781  6a91  6871  ca8d  3c20  8c16  d87c  fd47
     //
-    //   pRange = (CLK13 + 3 * CLK15 + 5 * CLK14 + chunkLtPrime) * (1 - valueLtPrime)
+    //                 RANGE_SEL  P_RANGE     BASE
+    //              /      0      [0,0xFFFF]  CLK0, ..., CLK12, CLK14
+    //              |      1      [0,0xFFFE]  CLK13
+    //   Secp256k1  |      2      [0,0xFFFD]
+    //              |      3      [0,0xFC2F]  CLK15
+    //              \      4      [0,0xFC2E]
+    //              /      5      [0,0x3064]  CLK0
+    //              |      6      [0,0x3063]
+    //              |      7      [0,0x4e72]  CLK1
+    //              |      8      [0,0x4e71]
+    //              |      9      [0,0xe131]  CLK2
+    //              |     10      [0,0xe130]
+    //              |     11      [0,0xa029]  CLK3
+    //              |     12      [0,0xa028]
+    //              |     13      [0,0xb850]  CLK4
+    //              |     14      [0,0xb84f]
+    //              |     15      [0,0x45b6]  CLK5
+    //              |     16      [0,0x45b5]
+    //              |     17      [0,0x8181]  CLK6
+    //              |     18      [0,0x8180]
+    //              |     19      [0,0x585d]  CLK7
+    //    BN254     |     20      [0,0x585c]
+    //              |     21      [0,0x9781]  CLK8
+    //              |     22      [0,0x9780]
+    //              |     23      [0,0x6a91]  CLK9
+    //              |     24      [0,0x6a90]
+    //              |     25      [0,0x6871]  CLK10
+    //              |     26      [0,0x6870]
+    //              |     27      [0,0xca8d]  CLK11
+    //              |     28      [0,0xca8c]
+    //              |     29      [0,0x3c20]  CLK12
+    //              |     30      [0,0x3c1f]
+    //              |     31      [0,0x8c16]  CLK13
+    //              |     32      [0,0x8c15]
+    //              |     33      [0,0xd87c]  CLK14
+    //              |     34      [0,0xd87b]
+    //              |     35      [0,0xfd47]  CLK15
+    //              \     36      [0,0xfd46]
     //
-    //   CLK     pRange            pRange
-    //           [chunkLtPrime == 0]   [chunkLtPrime == 1]
+    //   pRangeSecp256k1 = (CLK13 + 3 * CLK15 + chunkLtPrime) * selEq[3]
+    //   pRangeBN254 = (5 * CLK0 + 7 * CLK1 + 9 * CLK2 + 11 * CLK3 + 13 * CLK4 + 15 * CLK5 + 17 * CLK6 + 19 * CLK7 + 21 * CLK8 + 23 * CLK9 + 25 * CLK10 + 27 * CLK11 + 29 * CLK12 + 31 * CLK13 + 33 * CLK14 + 35 * CLK15) * (selEq[4] + selEq[5] + selEq[6])
+    //   pRange =  (pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime)
     //
-    //   0       0 + 3 * 0 + 0 = 0     0 + 3 * 0 + 1 = 1
-    //   :               :
-    //   12      0 + 3 * 0 + 0 = 0     0 + 3 * 0 + 1 = 1
-    //   13      1 + 3 * 0 + 0 = 1     1 + 3 * 0 + 1 = 2
-    //   14      0 + 3 * 0 + 0 = 0     0 + 3 * 0 + 1 = 1
-    //   15      0 + 3 * 1 + 0 = 3     0 + 3 * 1 + 1 = 4
+    //   CLK                pRange                            pRange
+    //           [selEq[3] = 1, chunkLtPrime = 0]   [selEq[3] = 1, chunkLtPrime = 1]
     //
-    //   pRange = (CLK13 + 3 * CLK15 + chunkLtPrime) * (1 - valueLtPrime)
     //
-    //   valueLtPrime' = valueLtPrime * (1 - CLK0 + CLK16) + chunkLtPrime
+    //   0              0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
+    //   :                      :                               :
+    //   12             0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
+    //   13             1 + 3 * 0 + 0 = 1               1 + 3 * 0 + 1 = 2
+    //   14             0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
+    //   15             0 + 3 * 1 + 0 = 3               0 + 3 * 1 + 1 = 4
+    //
+    //   valueLtPrime' = valueLtPrime * (1 - CLK0 - CLK16) + chunkLtPrime
     //
     //   valueLtPrime  chunkLtPrime  CLK0+CLK16  valueLtPrime'
     //
@@ -178,10 +222,11 @@ namespace Arith(%N);
     //         1             0           1            0            OK
     //         1             1           1            1            OK (E)
     //
-    //   (D) when valueLtPrime == 0 ==> chunkLtPrime must be zero, if not FAILS
-    //   (E) on clocks 0 and 16, previous value of valueLtPrime isn't considered
+    //   (D) when valueLtPrime = 0 ==> chunkLtPrime must be zero, if not it FAILS
+    //   (E) on clocks 0 and 16, current value of valueLtPrime isn't considered
     //
     //
+    //    Examples (Secp256k1 prime):
     //                                ┌──────── pRange
     //              ┌── max_value     │  ┌───── chunkLtPrime
     //              │     ┌─ example  │  │  ┌── valueLtPrime
@@ -210,36 +255,55 @@ namespace Arith(%N);
     //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
     //    CLK16   0xFFFF  0xFFFF      0  0  1
 
-    // indicates that any previous chunk was minor and the rest of previous are
-    // equal o minors than the FPEC chunk. If selEq[3] = 0, it must be 0.
+    // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime. 
+    // If selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
     pol commit valueLtPrime;
 
-    // indicates that current was minor than the FPEC chunk. If selEq[3] = 0 or
-    // valuePtPrime = 1, it must be 0.
+    // chunkLtPrime indicates whether the current value chunk is smaller than the prime chunk.
+    // If selEq[3],selEq[4],selEq[5],selEq[6] = 0 or valueLtPrime = 1, it must be 0.
     pol commit chunkLtPrime;
 
     // binary constraints
     chunkLtPrime * (1 - chunkLtPrime) = 0;
     valueLtPrime * (1 - valueLtPrime) = 0;
 
-    // Constraint over next value of valueLtPrime. At begining of each 16 clock cycle
-    // ignore valueLtPrime because it is refers previous value.
+    // This constraint applies to the next value of valueLtPrime. At the beginning of each 16-clock cycle,
+    // valueLtPrime is ignored because it refers to the previous value.
     valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
 
-    // constraint to verify at end of 16 clock cycle than valueLtPrime is 1. this constraint
-    // applies when selEq[3] = 1.
-    (valueLtPrime' - selEq[3]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
-
+    // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1. 
+    // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6] equals 1.
+    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
     pol constant RANGE_SEL; // 0:2**16,
                             // 1:2**16-1,0
                             // 2:2**16-2,0:2
                             // 3:2**16-976,0:976
                             // 4:2**16-977,0:977
+                            // -----------------------------------------------------------------------
+                            // 5:2**16-53147,0:53147    16:2**16-47688,0:47688  27:2**16-13682,0:13682
+                            // 6:2**16-53146,0:53146    17:2**16-32382,0:32382  28:2**16-13681,0:13681                      
+                            // 7:2**16-45453,0:45453    18:2**16-32381,0:32381  29:2**16-50143,0:50143
+                            // 8:2**16-45452,0:45452    19:2**16-42914,0:42914  30:2**16-50142,0:50142
+                            // 9:2**16-7886,0:7886      20:2**16-42913,0:42913  31:2**16-29673,0:29673
+                            // 10:2**16-7885,0:7885     21:2**16-26750,0:26750  32:2**16-29672,0:29672
+                            // 11:2**16-24534,0:24534   22:2**16-26749,0:26749  33:2**16-10115,0:10115
+                            // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
+                            // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
+                            // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
+                            // 15:2**16-47689,0:47689   26:2**16-38797,0:38797                                                
 
-    // logout with pRange as first column
-
-    {(Global.CLK32[13] + Global.CLK32[29] + (Global.CLK32[15] + Global.CLK32[31]) * 3 + chunkLtPrime) * (selEq[3] - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
+    // range to be looked up for each chunk and for each prime
+    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * selEq[3];
+    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18]) 
+                        + 11 * (Global.CLK32[3] + Global.CLK32[19]) + 13 * (Global.CLK32[4] + Global.CLK32[20]) + 15 * (Global.CLK32[5] + Global.CLK32[21])
+                        + 17 * (Global.CLK32[6] + Global.CLK32[22]) + 19 * (Global.CLK32[7] + Global.CLK32[23]) + 21 * (Global.CLK32[8] + Global.CLK32[24])
+                        + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
+                        + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
+                        + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[4] + selEq[5] + selEq[6]);
+    
+    // lookup with RANGE_SEL as first column and BYTE2 as second column
+    {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
 
     /****
     *

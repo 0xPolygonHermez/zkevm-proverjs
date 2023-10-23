@@ -187,7 +187,6 @@ module.exports.execute = async function (pols, input) {
             q2 += 2n ** 258n;
         }
         else if (input[i].selEq4) {
-            // EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
             let pq1 = x1 * x2 - y1 * y2 - x3;
             q1 = -(pq1/pBN254);
             if ((pq1 + pBN254*q1) != 0n) {
@@ -196,7 +195,6 @@ module.exports.execute = async function (pols, input) {
             // offset
             q1 += 2n ** 258n;
 
-            // EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
             let pq2 = y1 * x2 + x1 * y2 - y3;
             q2 = -(pq2/pBN254);
             if ((pq2 + pBN254*q2) != 0n) {
@@ -206,7 +204,6 @@ module.exports.execute = async function (pols, input) {
             q2 += 2n ** 258n;
         }
         else if (input[i].selEq5) {
-            // EQ7:  x1 + x2 - x3  + (q1 * p)
             let pq1 = x1 + x2 - x3;
             q1 = -(pq1/pBN254);
             if ((pq1 + pBN254*q1) != 0n) {
@@ -215,7 +212,6 @@ module.exports.execute = async function (pols, input) {
             // offset
             q1 += 2n ** 258n;
 
-            // EQ8:  y1 + y2 - y3 + (q2 * p)
             let pq2 = y1 + y2 - y3;
             q2 = -(pq2/pBN254);
             if ((pq2 + pBN254*q2) != 0n) {
@@ -225,7 +221,6 @@ module.exports.execute = async function (pols, input) {
             q2 += 2n ** 258n;
         }
         else if (input[i].selEq6) {
-            // EQ9:  x1 - x2 - x3  + (q1 * p)
             let pq1 = x1 - x2 - x3;
             q1 = -(pq1/pBN254);
             if ((pq1 + pBN254*q1) != 0n) {
@@ -234,7 +229,6 @@ module.exports.execute = async function (pols, input) {
             // offset
             q1 += 2n ** 258n;
 
-            // EQ10:  y1 - y2 - y3 + (q2 * p)
             let pq2 = y1 - y2 - y3;
             q2 = -(pq2/pBN254);
             if ((pq2 + pBN254*q2) != 0n) {
