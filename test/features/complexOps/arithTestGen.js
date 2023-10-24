@@ -111,7 +111,8 @@ let values = [
         B: 0n,
         C: 1n,
         D: 0n,
-    }]
+    }
+]
 
 
 const P_BN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
@@ -131,11 +132,41 @@ class ArithEqs {
 }
 
 arithEqs = new ArithEqs();
-    // return ctx.FpBN254.sub(ctx.FpBN254.mul(x1,x2), ctx.FpBN254.mul(y1, y2));
-    // return ctx.FpBN254.add(ctx.FpBN254.mul(x1,y2), ctx.FpBN254.mul(x2, y1));
+
+
 for (const eq of ['ARITH_BN254_MULFP2','ARITH_BN254_ADDFP2','ARITH_BN254_SUBFP2']) {
+    let input = {
+        x1: 0n,
+        y1: 0n,
+        x2: 0n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    };
+    console.log(eq);
+    if (eq === 'ARITH_BN254_MULFP2') {
+        input.selEq4 = 1n;
+    } else if (eq === 'ARITH_BN254_ADDFP2') {
+        input.selEq5 = 1n;
+    } else if (eq === 'ARITH_BN254_SUBFP2') {
+        input.selEq6 = 1n;
+    }
     for (const value of values) {
+        input.x1 = value.A;
+        input.y1 = value.B;
+        input.x2 = value.C;
+        input.y2 = value.D;
         const [E, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
+        input.x3 = E;
+        input.y3 = op;
+        // console.log(input,","); // This is for the arithemetic tests
         const regs = {...value, E};
         for (const reg in regs) {
             console.log(`\t\t${regs[reg]}n => ${reg}`);

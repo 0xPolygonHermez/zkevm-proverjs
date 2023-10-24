@@ -1,9 +1,8 @@
 /*
 * code generated with arith_eq_gen.js
-* equation: x1-x2-x3+p*q1-p*offset
+* equation: x1-x2-x3+p*q1
 * 
 * p=0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-* offset=0x40000000000000000000000000000000000000000000000000000000000000000
 */
 
 module.exports.calculate = function (p, step, _o)
@@ -208,8 +207,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[4][_o] ) +
 		(0xe131n  * p.q1[3][_o] ) +
 		(0x4e72n  * p.q1[2][_o] ) +
-		(0x3064n  * p.q1[1][_o] )
-		    - 0x3f51cn);
+		(0x3064n  * p.q1[1][_o] ));
 
 	case 17: return (
 		(0x8c16n  * p.q1[15][_o]) +
@@ -225,8 +223,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[5][_o] ) +
 		(0xe131n  * p.q1[4][_o] ) +
 		(0x4e72n  * p.q1[3][_o] ) +
-		(0x3064n  * p.q1[2][_o] )
-		    - 0x361f0n);
+		(0x3064n  * p.q1[2][_o] ));
 
 	case 18: return (
 		(0x3c20n  * p.q1[15][_o]) +
@@ -241,8 +238,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[6][_o] ) +
 		(0xe131n  * p.q1[5][_o] ) +
 		(0x4e72n  * p.q1[4][_o] ) +
-		(0x3064n  * p.q1[3][_o] )
-		    - 0x23058n);
+		(0x3064n  * p.q1[3][_o] ));
 
 	case 19: return (
 		(0xca8dn  * p.q1[15][_o]) +
@@ -256,8 +252,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[7][_o] ) +
 		(0xe131n  * p.q1[6][_o] ) +
 		(0x4e72n  * p.q1[5][_o] ) +
-		(0x3064n  * p.q1[4][_o] )
-		    - 0xf080n );
+		(0x3064n  * p.q1[4][_o] ));
 
 	case 20: return (
 		(0x6871n  * p.q1[15][_o]) +
@@ -270,8 +265,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[8][_o] ) +
 		(0xe131n  * p.q1[7][_o] ) +
 		(0x4e72n  * p.q1[6][_o] ) +
-		(0x3064n  * p.q1[5][_o] )
-		    - 0x32a34n);
+		(0x3064n  * p.q1[5][_o] ));
 
 	case 21: return (
 		(0x6a91n  * p.q1[15][_o]) +
@@ -283,8 +277,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[9][_o] ) +
 		(0xe131n  * p.q1[8][_o] ) +
 		(0x4e72n  * p.q1[7][_o] ) +
-		(0x3064n  * p.q1[6][_o] )
-		    - 0x1a1c4n);
+		(0x3064n  * p.q1[6][_o] ));
 
 	case 22: return (
 		(0x9781n  * p.q1[15][_o]) +
@@ -295,8 +288,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[10][_o]) +
 		(0xe131n  * p.q1[9][_o] ) +
 		(0x4e72n  * p.q1[8][_o] ) +
-		(0x3064n  * p.q1[7][_o] )
-		    - 0x1aa44n);
+		(0x3064n  * p.q1[7][_o] ));
 
 	case 23: return (
 		(0x585dn  * p.q1[15][_o]) +
@@ -306,8 +298,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[11][_o]) +
 		(0xe131n  * p.q1[10][_o]) +
 		(0x4e72n  * p.q1[9][_o] ) +
-		(0x3064n  * p.q1[8][_o] )
-		    - 0x25e04n);
+		(0x3064n  * p.q1[8][_o] ));
 
 	case 24: return (
 		(0x8181n  * p.q1[15][_o]) +
@@ -316,8 +307,7 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[12][_o]) +
 		(0xe131n  * p.q1[11][_o]) +
 		(0x4e72n  * p.q1[10][_o]) +
-		(0x3064n  * p.q1[9][_o] )
-		    - 0x16174n);
+		(0x3064n  * p.q1[9][_o] ));
 
 	case 25: return (
 		(0x45b6n  * p.q1[15][_o]) +
@@ -325,41 +315,35 @@ module.exports.calculate = function (p, step, _o)
 		(0xa029n  * p.q1[13][_o]) +
 		(0xe131n  * p.q1[12][_o]) +
 		(0x4e72n  * p.q1[11][_o]) +
-		(0x3064n  * p.q1[10][_o])
-		    - 0x20604n);
+		(0x3064n  * p.q1[10][_o]));
 
 	case 26: return (
 		(0xb850n  * p.q1[15][_o]) +
 		(0xa029n  * p.q1[14][_o]) +
 		(0xe131n  * p.q1[13][_o]) +
 		(0x4e72n  * p.q1[12][_o]) +
-		(0x3064n  * p.q1[11][_o])
-		    - 0x116d8n);
+		(0x3064n  * p.q1[11][_o]));
 
 	case 27: return (
 		(0xa029n  * p.q1[15][_o]) +
 		(0xe131n  * p.q1[14][_o]) +
 		(0x4e72n  * p.q1[13][_o]) +
-		(0x3064n  * p.q1[12][_o])
-		    - 0x2e140n);
+		(0x3064n  * p.q1[12][_o]));
 
 	case 28: return (
 		(0xe131n  * p.q1[15][_o]) +
 		(0x4e72n  * p.q1[14][_o]) +
-		(0x3064n  * p.q1[13][_o])
-		    - 0x280a4n);
+		(0x3064n  * p.q1[13][_o]));
 
 	case 29: return (
 		(0x4e72n  * p.q1[15][_o]) +
-		(0x3064n  * p.q1[14][_o])
-		    - 0x384c4n);
+		(0x3064n  * p.q1[14][_o]));
 
 	case 30: return (
-		(0x3064n  * p.q1[15][_o])
-		    - 0x139c8n);
+		(0x3064n  * p.q1[15][_o]));
 
 	case 31: return (
-		    - 0xc190n );
+		0x0n    );
 	}
 	return 0n;
 }

@@ -3,7 +3,7 @@
 * equation: x1*x2-y1*y2-x3+p*q1-p*offset
 * 
 * p=0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-* offset=0x40000000000000000000000000000000000000000000000000000000000000000
+* offset=0x20000000000000000000000000000000000000000000000000000000000000000
 */
 
 module.exports.calculate = function (p, step, _o)
@@ -209,7 +209,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[3][_o]  - p.y1[13][_o] * p.y2[3][_o]  + 0xe131n  * p.q1[3][_o] ) +
 		(p.x1[14][_o] * p.x2[2][_o]  - p.y1[14][_o] * p.y2[2][_o]  + 0x4e72n  * p.q1[2][_o] ) +
 		(p.x1[15][_o] * p.x2[1][_o]  - p.y1[15][_o] * p.y2[1][_o]  + 0x3064n  * p.q1[1][_o] )
-		    - 0x3f51cn);
+		    - 0x1fa8en);
 
 	case 17: return (
 		(p.x1[2][_o]  * p.x2[15][_o] - p.y1[2][_o]  * p.y2[15][_o] + 0x8c16n  * p.q1[15][_o]) +
@@ -226,7 +226,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[4][_o]  - p.y1[13][_o] * p.y2[4][_o]  + 0xe131n  * p.q1[4][_o] ) +
 		(p.x1[14][_o] * p.x2[3][_o]  - p.y1[14][_o] * p.y2[3][_o]  + 0x4e72n  * p.q1[3][_o] ) +
 		(p.x1[15][_o] * p.x2[2][_o]  - p.y1[15][_o] * p.y2[2][_o]  + 0x3064n  * p.q1[2][_o] )
-		    - 0x361f0n);
+		    - 0x1b0f8n);
 
 	case 18: return (
 		(p.x1[3][_o]  * p.x2[15][_o] - p.y1[3][_o]  * p.y2[15][_o] + 0x3c20n  * p.q1[15][_o]) +
@@ -242,7 +242,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[5][_o]  - p.y1[13][_o] * p.y2[5][_o]  + 0xe131n  * p.q1[5][_o] ) +
 		(p.x1[14][_o] * p.x2[4][_o]  - p.y1[14][_o] * p.y2[4][_o]  + 0x4e72n  * p.q1[4][_o] ) +
 		(p.x1[15][_o] * p.x2[3][_o]  - p.y1[15][_o] * p.y2[3][_o]  + 0x3064n  * p.q1[3][_o] )
-		    - 0x23058n);
+		    - 0x1182cn);
 
 	case 19: return (
 		(p.x1[4][_o]  * p.x2[15][_o] - p.y1[4][_o]  * p.y2[15][_o] + 0xca8dn  * p.q1[15][_o]) +
@@ -257,7 +257,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[6][_o]  - p.y1[13][_o] * p.y2[6][_o]  + 0xe131n  * p.q1[6][_o] ) +
 		(p.x1[14][_o] * p.x2[5][_o]  - p.y1[14][_o] * p.y2[5][_o]  + 0x4e72n  * p.q1[5][_o] ) +
 		(p.x1[15][_o] * p.x2[4][_o]  - p.y1[15][_o] * p.y2[4][_o]  + 0x3064n  * p.q1[4][_o] )
-		    - 0xf080n );
+		    - 0x7840n );
 
 	case 20: return (
 		(p.x1[5][_o]  * p.x2[15][_o] - p.y1[5][_o]  * p.y2[15][_o] + 0x6871n  * p.q1[15][_o]) +
@@ -271,7 +271,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[7][_o]  - p.y1[13][_o] * p.y2[7][_o]  + 0xe131n  * p.q1[7][_o] ) +
 		(p.x1[14][_o] * p.x2[6][_o]  - p.y1[14][_o] * p.y2[6][_o]  + 0x4e72n  * p.q1[6][_o] ) +
 		(p.x1[15][_o] * p.x2[5][_o]  - p.y1[15][_o] * p.y2[5][_o]  + 0x3064n  * p.q1[5][_o] )
-		    - 0x32a34n);
+		    - 0x1951an);
 
 	case 21: return (
 		(p.x1[6][_o]  * p.x2[15][_o] - p.y1[6][_o]  * p.y2[15][_o] + 0x6a91n  * p.q1[15][_o]) +
@@ -284,7 +284,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[8][_o]  - p.y1[13][_o] * p.y2[8][_o]  + 0xe131n  * p.q1[8][_o] ) +
 		(p.x1[14][_o] * p.x2[7][_o]  - p.y1[14][_o] * p.y2[7][_o]  + 0x4e72n  * p.q1[7][_o] ) +
 		(p.x1[15][_o] * p.x2[6][_o]  - p.y1[15][_o] * p.y2[6][_o]  + 0x3064n  * p.q1[6][_o] )
-		    - 0x1a1c4n);
+		    - 0xd0e2n );
 
 	case 22: return (
 		(p.x1[7][_o]  * p.x2[15][_o] - p.y1[7][_o]  * p.y2[15][_o] + 0x9781n  * p.q1[15][_o]) +
@@ -296,7 +296,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[9][_o]  - p.y1[13][_o] * p.y2[9][_o]  + 0xe131n  * p.q1[9][_o] ) +
 		(p.x1[14][_o] * p.x2[8][_o]  - p.y1[14][_o] * p.y2[8][_o]  + 0x4e72n  * p.q1[8][_o] ) +
 		(p.x1[15][_o] * p.x2[7][_o]  - p.y1[15][_o] * p.y2[7][_o]  + 0x3064n  * p.q1[7][_o] )
-		    - 0x1aa44n);
+		    - 0xd522n );
 
 	case 23: return (
 		(p.x1[8][_o]  * p.x2[15][_o] - p.y1[8][_o]  * p.y2[15][_o] + 0x585dn  * p.q1[15][_o]) +
@@ -307,7 +307,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[10][_o] - p.y1[13][_o] * p.y2[10][_o] + 0xe131n  * p.q1[10][_o]) +
 		(p.x1[14][_o] * p.x2[9][_o]  - p.y1[14][_o] * p.y2[9][_o]  + 0x4e72n  * p.q1[9][_o] ) +
 		(p.x1[15][_o] * p.x2[8][_o]  - p.y1[15][_o] * p.y2[8][_o]  + 0x3064n  * p.q1[8][_o] )
-		    - 0x25e04n);
+		    - 0x12f02n);
 
 	case 24: return (
 		(p.x1[9][_o]  * p.x2[15][_o] - p.y1[9][_o]  * p.y2[15][_o] + 0x8181n  * p.q1[15][_o]) +
@@ -317,7 +317,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[11][_o] - p.y1[13][_o] * p.y2[11][_o] + 0xe131n  * p.q1[11][_o]) +
 		(p.x1[14][_o] * p.x2[10][_o] - p.y1[14][_o] * p.y2[10][_o] + 0x4e72n  * p.q1[10][_o]) +
 		(p.x1[15][_o] * p.x2[9][_o]  - p.y1[15][_o] * p.y2[9][_o]  + 0x3064n  * p.q1[9][_o] )
-		    - 0x16174n);
+		    - 0xb0ban );
 
 	case 25: return (
 		(p.x1[10][_o] * p.x2[15][_o] - p.y1[10][_o] * p.y2[15][_o] + 0x45b6n  * p.q1[15][_o]) +
@@ -326,7 +326,7 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[12][_o] - p.y1[13][_o] * p.y2[12][_o] + 0xe131n  * p.q1[12][_o]) +
 		(p.x1[14][_o] * p.x2[11][_o] - p.y1[14][_o] * p.y2[11][_o] + 0x4e72n  * p.q1[11][_o]) +
 		(p.x1[15][_o] * p.x2[10][_o] - p.y1[15][_o] * p.y2[10][_o] + 0x3064n  * p.q1[10][_o])
-		    - 0x20604n);
+		    - 0x10302n);
 
 	case 26: return (
 		(p.x1[11][_o] * p.x2[15][_o] - p.y1[11][_o] * p.y2[15][_o] + 0xb850n  * p.q1[15][_o]) +
@@ -334,32 +334,32 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[13][_o] * p.x2[13][_o] - p.y1[13][_o] * p.y2[13][_o] + 0xe131n  * p.q1[13][_o]) +
 		(p.x1[14][_o] * p.x2[12][_o] - p.y1[14][_o] * p.y2[12][_o] + 0x4e72n  * p.q1[12][_o]) +
 		(p.x1[15][_o] * p.x2[11][_o] - p.y1[15][_o] * p.y2[11][_o] + 0x3064n  * p.q1[11][_o])
-		    - 0x116d8n);
+		    - 0x8b6cn );
 
 	case 27: return (
 		(p.x1[12][_o] * p.x2[15][_o] - p.y1[12][_o] * p.y2[15][_o] + 0xa029n  * p.q1[15][_o]) +
 		(p.x1[13][_o] * p.x2[14][_o] - p.y1[13][_o] * p.y2[14][_o] + 0xe131n  * p.q1[14][_o]) +
 		(p.x1[14][_o] * p.x2[13][_o] - p.y1[14][_o] * p.y2[13][_o] + 0x4e72n  * p.q1[13][_o]) +
 		(p.x1[15][_o] * p.x2[12][_o] - p.y1[15][_o] * p.y2[12][_o] + 0x3064n  * p.q1[12][_o])
-		    - 0x2e140n);
+		    - 0x170a0n);
 
 	case 28: return (
 		(p.x1[13][_o] * p.x2[15][_o] - p.y1[13][_o] * p.y2[15][_o] + 0xe131n  * p.q1[15][_o]) +
 		(p.x1[14][_o] * p.x2[14][_o] - p.y1[14][_o] * p.y2[14][_o] + 0x4e72n  * p.q1[14][_o]) +
 		(p.x1[15][_o] * p.x2[13][_o] - p.y1[15][_o] * p.y2[13][_o] + 0x3064n  * p.q1[13][_o])
-		    - 0x280a4n);
+		    - 0x14052n);
 
 	case 29: return (
 		(p.x1[14][_o] * p.x2[15][_o] - p.y1[14][_o] * p.y2[15][_o] + 0x4e72n  * p.q1[15][_o]) +
 		(p.x1[15][_o] * p.x2[14][_o] - p.y1[15][_o] * p.y2[14][_o] + 0x3064n  * p.q1[14][_o])
-		    - 0x384c4n);
+		    - 0x1c262n);
 
 	case 30: return (
 		(p.x1[15][_o] * p.x2[15][_o] - p.y1[15][_o] * p.y2[15][_o] + 0x3064n  * p.q1[15][_o])
-		    - 0x139c8n);
+		    - 0x9ce4n );
 
 	case 31: return (
-		    - 0xc190n );
+		    - 0x60c8n );
 	}
 	return 0n;
 }

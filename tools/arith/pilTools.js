@@ -1,3 +1,12 @@
+/*
+TODO
+----
+The code 	case 31: return (
+		    + 0xffffn );
+
+Raises an error due to type conversion in the "+" operator, it should be: case 31: return 0xffffn;
+*/
+
 const ejs = require('ejs');
 const fs = require('fs');
 

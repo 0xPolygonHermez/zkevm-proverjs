@@ -2,22 +2,26 @@
 /*
     Equations:
 
-    EQ0:  A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
+    EQ0:   A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)   - selEq[0]
 
-    EQ1:  s * x2 - s * x1 - y2 + y1 + (q0 * p)   lambda - ADD
-    EQ2:  2 * s * y1 - 3 * x1 * x1 + (q0 * p)    lambda - DBL
-    EQ3:  s * s - x1 - x2 - x3 + (q1 * p)        x3
-    EQ3:  s * x1 - s * x3 - y1 - y3 + (q2 * p)   y3
+    EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)   lambda - ADD  - selEq[1]
+    EQ2:   2 * s * y1 - 3 * x1 * x1 + (q0 * p1)    lambda - DBL  - selEq[2]
+    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)        x3            - selEq[3]
+    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)   y3            - selEq[3]
 
-    EQ4:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
-    EQ4:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
+    EQ5:   x1 * x2 - y1 * y2 - x3 + (q1 * p2)                    - selEq[4]
+    EQ6:   y1 * x2 + x1 * y2 - y3 + (q2 * p2)                    - selEq[4]
 
-	EQ5:  x1 + x2 - x3 + (q1 * p)
-	EQ5:  y1 + y2 - y3 + (q2 * p)
+	EQ7:   x1 + x2 - x3 + (q1 * p2)                              - selEq[5]
+	EQ8:   y1 + y2 - y3 + (q2 * p2)                              - selEq[5]
 
-	EQ6:  x1 - x2 - x3 + (q1 * p)
-	EQ6:  y1 - y2 - y3 + (q2 * p)
+	EQ9:   x1 - x2 - x3 + (q1 * p2)                              - selEq[6]
+	EQ10:  y1 - y2 - y3 + (q2 * p2)                              - selEq[6]
 
+    where p1 refers to the base field order of:
+        · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
+    and p2 refers to the base field order of:
+        · BN254:      0x3064 4E72 E131 A029 B850 45B6 8181 585D 9781 6A91 6871 CA8D 3C20 8C16 D87C FD47
 */
 include "global.pil";
 
@@ -122,8 +126,8 @@ namespace Arith(%N);
     //
     // Here, p refers, respectively, to the base field order of any of the following elliptic curves:
     //
-    // Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF fffe 0000 fc2f
-    // BN254:      0x3064 4e72 e131 a029 b850 45b6 8181 585d 9781 6a91 6871 ca8d 3c20 8c16 d87c fd47
+    // Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
+    // BN254:      0x3064 4E72 E131 A029 B850 45B6 8181 585D 9781 6A91 6871 CA8D 3C20 8C16 D87C FD47
     //
     // Strategy: Compare from the most significant chunk to the least significant chunk of x3 and y3 (A). On each chunk,
     // chunkLtPrime indicates whether the chunk is smaller than the FPEC chunk. valueLtPrime indicates if any
@@ -355,94 +359,89 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ1: s * x2 - s * x1 - y2 + y1 + (q0 * p)
+    * EQ1: s * x2 - s * x1 - y2 + y1 - p * (q0 - offset)
     *
     *******/
 
-    <%- equation('pol eq1_## =', 's*x2-s*x1-y2+y1+p*q0-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
-                                                                   offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq1_## =', 's*x2-s*x1-y2+y1-p*q0+p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
+                                                                   offset:0x10000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     /*******
     *
-    * EQ2:  2 * s * y1 - 3 * x1 * x1 + (q0 * p)
+    * EQ2:  2 * s * y1 - 3 * x1 * x1 + p * (q0 - offset)
     *
     *******/
 
     <%- equation('pol eq2_## =', 's*y1+s*y1-x1*x1-x1*x1-x1*x1+p*q0-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
-                                                                               offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+                                                                               offset:0x20000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     /*******
     *
-    * EQ3:  s * s - x1 - x2 - x3 + (q1 * p)
+    * EQ3:  s * s - x1 - x2 - x3 - p * (q1 - offset)
     *
     *******/
 
-    <%- equation('pol eq3_## =', 's*s-x1-x2-x3+p*q1-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
+    <%- equation('pol eq3_## =', 's*s-x1-x2-x3-p*q1+p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
                                                                 offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     /*******
     *
-    * EQ4:  s * x1 - s * x3 - y1 - y3 + (q2 * p)
+    * EQ4:  s * x1 - s * x3 - y1 - y3 + p * (q2 - offset)
     *
     *******/
 
     <%- equation('pol eq4_## =', 's*x1-s*x3-y1-y3+p*q2-p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
-                                                                   offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+                                                                   offset:0x10000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     /*******
     *
-    * EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
+    * EQ5:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset)
     *
     *******/
 
     <%- equation('pol eq5_## =', 'x1*x2-y1*y2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+                                                                  offset:0x20000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     /*******
     *
-    * EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
+    * EQ6:  y1 * x2 + x1 * y2 - y3 - p * q2
     *
     *******/
 
-    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3-p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
     /*******
     *
-    * EQ7:  x1 + x2 - x3 + (q1 * p)
+    * EQ7:  x1 + x2 - x3 - p * q1
     *
     *******/
 
-    <%- equation('pol eq7_## =', 'x1+x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq7_## =', 'x1+x2-x3-p*q1', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
     /*******
     *
-    * EQ8:  y1 + y2 - y3 + (q2 * p)
+    * EQ8:  y1 + y2 - y3 - p * q2
     *
     *******/
 
-    <%- equation('pol eq8_## =', 'y1+y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq8_## =', 'y1+y2-y3-p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
 
     /*******
     *
-    * EQ9:  x1 - x2 - x3 + (q1 * p)
+    * EQ9:  x1 - x2 - x3 + p * q1
     *
     *******/
 
-    <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
     /*******
     *
-    * EQ10:  y1 - y2 - y3 + (q2 * p)
+    * EQ10:  y1 - y2 - y3 + p * q2
     *
     *******/
 
-    <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
@@ -480,6 +479,5 @@ namespace Arith(%N);
     selEq[4] * (eq6 + carry[2]) = selEq[4] * carry[2]' * 2**16;
     selEq[5] * (eq7 + carry[1]) = selEq[5] * carry[1]' * 2**16;
     selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;
-    // selEq[6] * (eq9 + eq10 + carry[1] + carry[2]) = selEq[6] * (carry[1]' + carry[2]') * 2**16;
     selEq[6] * (eq9 + carry[1]) = selEq[6] * carry[1]' * 2**16;
     selEq[6] * (eq10 + carry[2]) = selEq[6] * carry[2]' * 2**16;
