@@ -25,7 +25,13 @@ const opIncContext = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE', 'CREATE'
 const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
 const zeroCostOp = ['STOP', 'REVERT', 'RETURN'];
-const responseErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce', 'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance', 'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_change_l2_block', 'invalidRLP'];
+const responseErrors = [
+    'OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO',
+    'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce',
+    'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance',
+    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_change_l2_block',
+    'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
+];
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
@@ -201,12 +207,15 @@ class FullTracer {
         if (this.currentBlock.parent_hash) {
             this.onFinishBlock(ctx);
         }
+
         this.currentBlock = {
             parent_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
         };
+
+        this.verbose.printBlock(`start ${1 + Number(getVarFromCtx(ctx, true, 'blockNum'))}`);
     }
 
     /**
@@ -255,6 +264,8 @@ class FullTracer {
         this.txIndex = 0;
         // Reset logs
         this.logs = [];
+
+        this.verbose.printBlock(`finish ${this.currentBlock.block_number}`);
     }
 
     /**
@@ -721,13 +732,14 @@ class FullTracer {
         singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
 
         // Get prev step
-        const prevStep = this.full_trace[this.full_trace.length - 2];
+        const prevStep = this.call_trace[this.call_trace.length - 1];
 
         // Add contract info
         singleInfo.contract = {};
         singleInfo.contract.address = bnToPaddedHex(getVarFromCtx(ctx, false, 'txDestAddr'), 40);
         singleInfo.contract.caller = bnToPaddedHex(getVarFromCtx(ctx, false, 'txSrcAddr'), 40);
         singleInfo.contract.value = getVarFromCtx(ctx, false, 'txValue').toString();
+
         // Only set contract data param if it has changed (new context created or context terminated) to not overflow the trace
         if (prevStep && (opIncContext.includes(prevStep.opcode) || zeroCostOp.includes(prevStep.opcode))) {
             const calldataCTX = getVarFromCtx(ctx, false, 'calldataCTX');
@@ -802,6 +814,7 @@ class FullTracer {
             singleCallTrace.contract.gas = this.txGAS[this.depth]; // execute_trace does not have contracts property
             // take gas when a new context is created
         }
+
         // Set contract params depending on current call type
         singleCallTrace.contract.type = this.callData[ctx.CTX].type;
         if (singleCallTrace.contract.type === 'DELEGATECALL') {
@@ -831,6 +844,11 @@ class FullTracer {
         let slotStorageHex;
 
         const keyType = fea2scalar(_fieldElement, _keyType);
+
+        // not take into account keys tha tdo not belong to the touched tree or state tree
+        if (Scalar.gt(keyType, Constants.SMT_KEY_TOUCHED_SLOTS)) {
+            return;
+        }
 
         if (Scalar.eq(keyType, Constants.SMT_KEY_TOUCHED_SLOTS) || Scalar.eq(keyType, Constants.SMT_KEY_SC_STORAGE)) {
             const slotStorage = fea2scalar(_fieldElement, _slot);
