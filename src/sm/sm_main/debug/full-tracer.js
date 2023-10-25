@@ -732,7 +732,7 @@ class FullTracer {
         singleInfo.state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
 
         // Get prev step
-        const prevStep = this.call_trace[this.call_trace.length - 1];
+        const prevStep = this.full_trace[this.full_trace.length - 1];
 
         // Add contract info
         singleInfo.contract = {};
