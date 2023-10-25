@@ -2477,6 +2477,57 @@ const input = [
     },
 ];
 
+const badInput = [
+    // Complex multiplication tests
+    { // x3 and y3 with a good result plus p
+        x1: 2999113016370801447448637477310555551699411366746876888402482806647931650955n,
+        y1: 15111836776712714633472521107426170732646708720491125290424115686452538044788n,
+        x2: 1615640209694347989024567018706328391116430477872687075840266591062548700110n,
+        y2: 1361179629352358267333550734567663993971386151768430307761609245213368478601n,
+        x3: 36658351440239936849590897127478542023393561083223880406529686971256106101628n,
+        y3: 27516076164800766020097173353437946279097808300673443143088938472077191849753n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 1n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Complex addition tests
+    { // x3 and y3 with a good result plus p
+        x1: 2999113016370801447448637477310555551699411366746876888402482806647931650955n,
+        y1: 15111836776712714633472521107426170732646708720491125290424115686452538044788n,
+        x2: 1615640209694347989024567018706328391116430477872687075840266591062548700110n,
+        y2: 1361179629352358267333550734567663993971386151768430307761609245213368478601n,
+        x3: 26502996097904424658719610241274159031512153001917387626931787292355706559648n,
+        y3: 38361259277904348123052477587251109815314406029557379260874762826311132731972n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 1n,
+        selEq6: 0n,
+    },
+    // Complex subtraction tests
+    { // x3 and y3 with a good result plus p
+        x1: 2999113016370801447448637477310555551699411366746876888402482806647931650955n,
+        y1: 15111836776712714633472521107426170732646708720491125290424115686452538044788n,
+        x2: 1615640209694347989024567018706328391116430477872687075840266591062548700110n,
+        y2: 1361179629352358267333550734567663993971386151768430307761609245213368478601n,
+        x3: 23271715678515728680670476203861502249279292046172013475251254110230609159428n,
+        y3: 35638900019199631588385376118115781827371633726020518645351544335884395774770n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 1n,
+    },
+];
+
 function inputToZkasm() {
     let zkasmCode = '';
     let index = 0;
@@ -2554,12 +2605,30 @@ describe("test plookup operations", async function () {
 
         const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
 
+        assert.lengthOf(res, 0, "Pil does not pass");
+
         if (res.length != 0) {
-            console.log("Pil does not pass");
             for (let i = 0; i < res.length; i++) {
                 console.log(res[i]);
             }
-            assert(0);
+        }
+    });
+
+    it("It should create the pols of two programs and fail the pil verification", async () => {
+        const pil = await loadPil("pil/arith.pil");
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
+
+        await global.buildConstants(constPols.Global);
+        await arith.buildConstants(constPols.Arith);
+        await arith.execute(cmPols.Arith, prepareInput32bits(badInput));
+
+        const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
+
+        assert.isAtLeast(res.length, 1, "Pil should not pass");
+
+        for (let i = 0; i < res.length; i++) {
+            console.log(res[i]);
         }
     });
 });
