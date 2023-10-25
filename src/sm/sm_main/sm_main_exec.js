@@ -23,7 +23,13 @@ const { SMT } = require('@0xpolygonhermez/zkevm-commonjs');
 const { Database } = require('@0xpolygonhermez/zkevm-commonjs');
 const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 const { byteArray2HexString, hexString2byteArray } = require('@0xpolygonhermez/zkevm-commonjs').utils;
-const { encodedStringToArray, decodeCustomRawTxProverMethod } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
+const {
+    encodedStringToArray,
+    decodeCustomRawTxProverMethod,
+    decodeChangeL2BlockTx,
+} = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
+
+const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 
 const FullTracer = require('./debug/full-tracer');
 const Prints = require('./debug/prints');
@@ -2645,26 +2651,33 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
 
     const txs = encodedStringToArray(batchL2Data);
     console.log('Number of transactions: ', txs.length);
-
+    console.log('--------------------------');
     for (let i = 0; i < txs.length; i++) {
-        console.log('\nTxNumber: ', i);
         const rawTx = txs[i];
-        const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
-        const digest = ethers.utils.keccak256(infoTx.rlpSignData);
-        const from = ethers.utils.recoverAddress(digest, {
-            r: infoTx.txDecoded.r,
-            s: infoTx.txDecoded.s,
-            v: infoTx.txDecoded.v,
-        });
+        if (rawTx.startsWith(`0x${ConstantsCommon.TX_CHANGE_L2_BLOCK.toString(16).padStart(2, '0')}`)) {
+            console.log(`Tx ${i} --> new Block L2`);
+            const txDecoded = await decodeChangeL2BlockTx(rawTx);
+            console.log(txDecoded);
+        } else {
+            const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
-        infoTx.txDecoded.from = from;
+            const digest = ethers.utils.keccak256(infoTx.rlpSignData);
+            const from = ethers.utils.recoverAddress(digest, {
+                r: infoTx.txDecoded.r,
+                s: infoTx.txDecoded.s,
+                v: infoTx.txDecoded.v,
+            });
 
-        if (getNameSelector) {
-            infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+            infoTx.txDecoded.from = from;
+
+            if (getNameSelector) {
+                infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+            }
+            console.log(`Tx ${i} --> new Tx`);
+            console.log(infoTx.txDecoded);
         }
-
-        console.log(infoTx.txDecoded);
+        console.log('--------------------------');
     }
 
     console.log('/////////////////////////////');
