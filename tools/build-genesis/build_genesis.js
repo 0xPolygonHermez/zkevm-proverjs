@@ -1,20 +1,22 @@
-const fs = require("fs");
-const path = require("path");
-const ethers = require("ethers");
+/* eslint-disable guard-for-in */
+const fs = require('fs');
+const path = require('path');
+const ethers = require('ethers');
 const {
-    Database, ZkEVMDB, processorUtils, smtUtils, getPoseidon,
+    Database, ZkEVMDB, processorUtils, smtUtils, getPoseidon, Constants,
 } = require('@0xpolygonhermez/zkevm-commonjs');
 
 // paths files
-const pathInput = path.join(__dirname, "./input_gen.json");
-const pathOutput = path.join(__dirname, "./input_executor.json");
+const pathInput = path.join(__dirname, './input_gen.json');
+const pathOutput = path.join(__dirname, './input_executor.json');
 
-async function main(){
+async function main() {
     // build poseidon
     const poseidon = await getPoseidon();
-    const F = poseidon.F;
+    const { F } = poseidon;
 
     // read generate input
+    // eslint-disable-next-line global-require, import/no-dynamic-require
     const generateData = require(pathInput);
 
     // mapping wallets
@@ -22,25 +24,28 @@ async function main(){
 
     for (let i = 0; i < generateData.genesis.length; i++) {
         const {
-            address, pvtKey
+            address, pvtKey,
         } = generateData.genesis[i];
 
         const newWallet = new ethers.Wallet(pvtKey);
         walletMap[address] = newWallet;
     }
 
+    // buils tx changeL2BLock
+    const rawChangeL2BlockTx = `0x${processorUtils.serializeChangeL2Block(generateData.tx[0])}`;
+
     // build tx
     const tx = {
-        to: generateData.tx.to,
-        nonce: generateData.tx.nonce,
-        value: ethers.utils.parseUnits(generateData.tx.value, 'wei'),
-        gasLimit: generateData.tx.gasLimit,
-        gasPrice: ethers.utils.parseUnits(generateData.tx.gasPrice, 'wei'),
-        chainId: generateData.tx.chainId,
-        data: generateData.tx.data || '0x',
+        to: generateData.tx[1].to,
+        nonce: generateData.tx[1].nonce,
+        value: ethers.utils.parseUnits(generateData.tx[1].value, 'wei'),
+        gasLimit: generateData.tx[1].gasLimit,
+        gasPrice: ethers.utils.parseUnits(generateData.tx[1].gasPrice, 'wei'),
+        chainId: generateData.tx[1].chainId,
+        data: generateData.tx[1].data || '0x',
     };
 
-    const rawTxEthers = await walletMap[generateData.tx.from].signTransaction(tx);
+    const rawTxEthers = await walletMap[generateData.tx[1].from].signTransaction(tx);
     const customRawTx = processorUtils.rawTxToCustomRawTx(rawTxEthers);
 
     // create a zkEVMDB and build a batch
@@ -55,15 +60,24 @@ async function main(){
         null,
         null,
         generateData.chainID,
-        generateData.forkID
+        generateData.forkID,
     );
 
     // start batch
     const batch = await zkEVMDB.buildBatch(
-        generateData.timestamp,
+        generateData.timestampLimit,
         generateData.sequencerAddr,
-        smtUtils.stringToH4(generateData.globalExitRoot)
+        smtUtils.stringToH4(generateData.l1InfoRoot),
+        generateData.isForced,
+        Constants.DEFAULT_MAX_TX,
+        {
+            skipVerifyL1InfoRoot: false,
+        },
+        {},
     );
+
+    // add changeL2BlockTx to the batch
+    batch.addRawTx(rawChangeL2BlockTx);
 
     // add tx to batch
     batch.addRawTx(customRawTx);
@@ -78,7 +92,10 @@ async function main(){
 
     // print new states
     const updatedAccounts = batch.getUpdatedAccountsBatch();
+
     const newLeafs = {};
+
+    // eslint-disable-next-line no-restricted-syntax
     for (const item in updatedAccounts) {
         const address = item;
         const account = updatedAccounts[address];
