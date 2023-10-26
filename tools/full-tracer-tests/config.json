@@ -1,8 +1,13 @@
 [
-	   {
-        "folderName": "stCallCodes",
-        "traceMethod": "defaultTracer",
-        "isEthereumTest": true
+    {
+        "testName": "erc20",
+        "testToDebug": 0,
+        "traceMethod": "defaultTracer"
+    },
+    {
+        "folderName": "calldata",
+        "traceMethod": "callTracer",
+        "isEthereumTest": false
     },
     {
         "testName": "op-invalid",

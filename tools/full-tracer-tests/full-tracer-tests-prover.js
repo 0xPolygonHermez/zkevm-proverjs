@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable max-len */
 /* eslint-disable no-loop-func */
 /* eslint-disable no-undef */
@@ -20,6 +21,7 @@ const chalk = require('chalk');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const { Scalar } = require('ffjavascript');
+const zkasm = require('@0xpolygonhermez/zkasmcom');
 const smMain = require('../../src/sm/sm_main/sm_main');
 
 const CHAIN_ID = 1000;
@@ -308,7 +310,7 @@ function compareFullTracer(geth, fullTracer, i) {
     const callData = [];
     let ctx = 0;
     let currentStep = 0;
-    for (const step of fullTracer.call_trace.steps) {
+    for (const step of fullTracer.full_trace.steps) {
         // Previous step analysis
         if (currentStep > 0) {
             const previousStep = fullTracer.full_trace.steps[currentStep - 1];
@@ -480,27 +482,31 @@ function compareDefaultTracer(geth, fullTracer, i) {
     //     newFT.returnValue = '00';
     // }
     let currentStep = 0;
+    const memDiffs = {};
     // Fill steps array
     for (const step of fullTracer.full_trace.steps) {
+        if (typeof memDiffs[step.depth] === 'undefined') {
+            memDiffs[step.depth] = [];
+        }
         const newStep = {
             pc: Number(step.pc),
-            op: step.op,
-            gas: Number(step.remaining_gas),
+            op: opcodes[step.op][0],
+            gas: Number(step.gas),
             gasCost: Number(step.gas_cost),
-            memory: step.memory.toString('hex'),
+            memory: memDiffs[step.depth],
             stack: step.stack,
             depth: step.depth,
             // returndata?
         };
-        if (Number(step.memory_size) > 0) {
-            newStep.memSize = Number(step.memory_size);
-        }
+
         // Split memory in hunks of 32 bytes
-        if (!_.isEmpty(newStep.memory)) {
-            newStep.memory = newStep.memory.match(/.{64}/g);
-        } else {
-            newStep.memory = [];
+        let currMem = step.memory.toString('hex');
+        if (!_.isEmpty(currMem)) {
+            currMem = currMem.padStart(step.memory_size * 2, '0');
+            currMem = currMem.match(/.{64}/g);
+            memDiffs[step.depth] = currMem.concat(memDiffs[step.depth]);
         }
+        newStep.memory = memDiffs[step.depth];
         // Remove leading zeros from stack
         newStep.stack = newStep.stack.map((x) => {
             let r = `0x${x.replace(/^0+/, '')}`;
@@ -510,16 +516,18 @@ function compareDefaultTracer(geth, fullTracer, i) {
         if (Number(step.gas_refund) > 0) {
             newStep.refund = Number(step.gas_refund);
         }
-        if (step.storage) {
-            newStep.storage = step.storage;
-        }
         if (step.error !== 'ROM_ERROR_NO_ERROR') {
             newStep.error = step.error;
         }
         if (newStep.op === 'SHA3') {
             newStep.op = 'KECCAK256';
         }
-
+        if (newStep.op === 'SLOAD' || newStep.op === 'SSTORE') {
+            newStep.storage = {};
+            for (const [key, value] of Object.entries(step.storage)) {
+                newStep.storage[key.padStart(64, '0')] = value.padStart(64, '0');
+            }
+        }
         newFT.structLogs.push(newStep);
         if (currentStep > 0) {
             const prevStep = newFT.structLogs[currentStep - 1];
@@ -530,7 +538,7 @@ function compareDefaultTracer(geth, fullTracer, i) {
 
         currentStep++;
     }
-    fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
+    fs.writeFileSync(path.join(__dirname, `ft-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
 }
@@ -762,8 +770,7 @@ function formatInput(jsInput, txHash) {
             disable_stack: 0,
             enable_memory: 1,
             enable_return_data: 1,
-            tx_hash_to_generate_execute_trace: Buffer.from(txHash.slice(2), 'hex'),
-            tx_hash_to_generate_call_trace: Buffer.from(txHash.slice(2), 'hex'),
+            tx_hash_to_generate_full_trace: Buffer.from(txHash.slice(2), 'hex'),
         },
     };
 }
