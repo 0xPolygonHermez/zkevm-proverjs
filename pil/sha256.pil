@@ -1,0 +1,10 @@
+include "global.pil";
+
+namespace Sha256(%N);
+
+	pol commit inputs[3], output;
+	pol constant KOP, INPUT[3], OUTPUT[2];
+	pol constant OP;
+	pol constant CARRY_ENABLED;
+
+	{ OP, inputs[0], inputs[1], inputs[2], output, inputs[0]' * CARRY_ENABLED } in { KOP, INPUT[0], INPUT[1], INPUT[2], OUTPUT[0], OUTPUT[1] };
