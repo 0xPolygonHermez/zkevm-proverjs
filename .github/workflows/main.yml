@@ -5,7 +5,7 @@ name: Main CI
 
 on:
   pull_request:
-    branches: 
+    branches:
       - main
       - develop
   push:
@@ -27,8 +27,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - name: eslint
-        run: npm run eslint
       - name: Clone repos
         run: |
           cd ..
@@ -45,3 +43,5 @@ jobs:
         run: |
           chmod -R 777 tools
           npm run test:full-tracer
+      - name: eslint:tracer
+        run: npm run eslint:tracer
