@@ -631,23 +631,23 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
 
                     let res = {};
-                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(Constants.SMT_KEY_BALANCE)){
+                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
                         res.value = input.stateOverride[addressHex].balance.startsWith("0x") ?
                         Scalar.e(input.stateOverride[addressHex].balance, 16) : Scalar.e(input.stateOverride[addressHex].balance);
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(Constants.SMT_KEY_NONCE)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(ConstantsCommon.SMT_KEY_NONCE)){
                         res.value = input.stateOverride[addressHex].nonce.startsWith("0x") ?
                         Scalar.e(input.stateOverride[addressHex].nonce.startsWith("0x"), 16) : Scalar.e(input.stateOverride[addressHex].nonce.startsWith("0x"));
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(Constants.SMT_KEY_SC_CODE)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_CODE)){
                         res.value = Scalar.e(await hashContractBytecode(input.stateOverride[addressHex].code),16);
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(Constants.SMT_KEY_SC_LENGTH)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_LENGTH)){
                         res.value = Scalar.e(input.stateOverride[addressHex].code.replace('0x','').length/2);
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)){
                         if (input.stateOverride[addressHex].state[keyStorage]){
                             res.value = Scalar.e(input.stateOverride[addressHex].state[keyStorage], 16);
                         } else {
                             res.value = Scalar.e(0);
                         }
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)
                     && input.stateOverride[addressHex].stateDiff[keyStorage]){
                         res.value = Scalar.e(input.stateOverride[addressHex].stateDiff[keyStorage], 16);
                     } else {
@@ -698,15 +698,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
                     const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
                     const keyType = fea2scalar(ctx.Fr, ctx.B)
-                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(Constants.SMT_KEY_BALANCE)){
+                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
                         input.stateOverride[addressHex].balance = safeFea2scalar(Fr, ctx.D).toString();
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(Constants.SMT_KEY_NONCE)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(ConstantsCommon.SMT_KEY_NONCE)){
                         input.stateOverride[addressHex].nonce = safeFea2scalar(Fr, ctx.D).toString();
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(Constants.SMT_KEY_SC_CODE)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_CODE)){
                         input.stateOverride[addressHex].code = input.contractsBytecode["0x" + safeFea2scalar(Fr, ctx.D).toString(16)];
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)){
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)){
                         input.stateOverride[addressHex].state[keyStorage] = safeFea2scalar(Fr, ctx.D).toString();
-                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)
                     && input.stateOverride[addressHex].stateDiff[keyStorage]){
                         input.stateOverride[addressHex].stateDiff[keyStorage] = safeFea2scalar(Fr, ctx.D).toString();
                     }
