@@ -16,14 +16,21 @@ const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
 const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { byteArray2HexString, hexString2byteArray } = require("@0xpolygonhermez/zkevm-commonjs").utils;
-const { encodedStringToArray, decodeCustomRawTxProverMethod} = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
+const {
+    encodedStringToArray,
+    decodeCustomRawTxProverMethod,
+    decodeChangeL2BlockTx,
+} = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
+
+const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { lstat } = require("fs");
 const MyHelperClass = require("./helpers/helpers");
-const { Constants } = require("@0xpolygonhermez/zkevm-commonjs");
+const Constants = require('./const-sm-main-exec');
+
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -2520,36 +2527,43 @@ async function eventsAsyncTracer(ctx, cmds) {
 }
 
 async function printBatchL2Data(batchL2Data, getNameSelector) {
-    console.log("/////////////////////////////");
-    console.log("/////// BATCH L2 DATA ///////");
-    console.log("/////////////////////////////\n");
+    console.log('/////////////////////////////');
+    console.log('/////// BATCH L2 DATA ///////');
+    console.log('/////////////////////////////\n');
 
     const txs = encodedStringToArray(batchL2Data);
-    console.log("Number of transactions: ", txs.length);
-
-    for (let i = 0; i < txs.length; i++){
-        console.log("\nTxNumber: ", i);
+    console.log('Number of transactions: ', txs.length);
+    console.log('--------------------------');
+    for (let i = 0; i < txs.length; i++) {
         const rawTx = txs[i];
-        const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
-        const digest = ethers.utils.keccak256(infoTx.rlpSignData);
-        const from = ethers.utils.recoverAddress(digest, {
-                    r: infoTx.txDecoded.r,
-                    s: infoTx.txDecoded.s,
-                    v: infoTx.txDecoded.v,
-        });
+        if (rawTx.startsWith(`0x${ConstantsCommon.TX_CHANGE_L2_BLOCK.toString(16).padStart(2, '0')}`)) {
+            console.log(`Tx ${i} --> new Block L2`);
+            const txDecoded = await decodeChangeL2BlockTx(rawTx);
+            console.log(txDecoded);
+        } else {
+            const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
-        infoTx.txDecoded.from = from;
+            const digest = ethers.utils.keccak256(infoTx.rlpSignData);
+            const from = ethers.utils.recoverAddress(digest, {
+                r: infoTx.txDecoded.r,
+                s: infoTx.txDecoded.s,
+                v: infoTx.txDecoded.v,
+            });
 
-        if (getNameSelector) {
-            infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+            infoTx.txDecoded.from = from;
+
+            if (getNameSelector) {
+                infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+            }
+            console.log(`Tx ${i} --> new Tx`);
+            console.log(infoTx.txDecoded);
         }
-
-        console.log(infoTx.txDecoded);
+        console.log('--------------------------');
     }
 
-    console.log("/////////////////////////////");
-    console.log("/////////////////////////////\n");
+    console.log('/////////////////////////////');
+    console.log('/////////////////////////////\n');
 }
 
 function evalCommands(ctx, cmds) {
@@ -2764,11 +2778,17 @@ function eval_logical_operation(ctx, tag)
 }
 
 function eval_getMemValue(ctx, tag) {
-    // to be compatible with
-    if (ctx.fullFe) {
-        return fea2scalar(ctx.Fr, ctx.mem[tag.offset])
+    let addr = tag.offset;
+
+    if (tag.useCTX === 1) {
+        addr += Number(ctx.CTX) * 0x40000;
     }
-    return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset]);
+
+    if (ctx.fullFe) {
+        return fea2scalar(ctx.Fr, ctx.mem[addr]);
+    }
+
+    return safeFea2scalar(ctx.Fr, ctx.mem[addr]);
 }
 
 function eval_functionCall(ctx, tag) {
@@ -2783,16 +2803,20 @@ function eval_functionCall(ctx, tag) {
         }
     }
 
-    if (tag.funcName == "getSequencerAddr") {
+    if (tag.funcName == 'getSequencerAddr') {
         return eval_getSequencerAddr(ctx, tag);
-    } else if (tag.funcName == "getTimestampLimit") {
+    } if (tag.funcName == 'getTimestampLimit') {
         return eval_getTimestampLimit(ctx, tag);
-    } else if (tag.funcName == "getIsForced") {
+    } if (tag.funcName == 'getIsForced') {
         return eval_getIsForced(ctx, tag);
-    } else if (tag.funcName == "getHistoricGERRoot") {
-        return eval_getHistoricGERRoot(ctx, tag);
-    } else if (tag.funcName == "getNewGERRoot") {
-        return eval_getNewGERRoot(ctx, tag);
+    } if (tag.funcName == 'getL1InfoRoot') {
+        return eval_getL1InfoRoot(ctx, tag);
+    } if (tag.funcName == 'getL1InfoGER') {
+        return eval_getL1InfoGER(ctx, tag);
+    } if (tag.funcName == 'getL1InfoBlockHash') {
+        return eval_getL1InfoBlockHash(ctx, tag);
+    } if (tag.funcName == 'getL1InfoTimestamp') {
+        return eval_getL1InfoTimestamp(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
@@ -2885,31 +2909,59 @@ function eval_getTxsLen(ctx, tag) {
 
 function eval_getSmtProof(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    const smtProof = ctx.input.smtProofs[Number(evalCommand(ctx, tag.params[0]))][Number(evalCommand(ctx, tag.params[1]))];
-    return scalar2fea(ctx.Fr, Scalar.e(smtProof));
+
+    const index = Number(evalCommand(ctx, tag.params[0]));
+    const level = Number(evalCommand(ctx, tag.params[1]));
+
+    const leafValue = (ctx.input.skipVerifyL1InfoRoot === true)
+        ? Constants.MOCK_VALUE_SMT_PROOF
+        : ctx.input.l1InfoTree[index].smtProof[level];
+
+    return scalar2fea(ctx.Fr, Scalar.e(leafValue));
 }
 
-function eval_getHistoricGERRoot(ctx, tag) {
+function eval_getL1InfoRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.historicGERRoot));
+
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.l1InfoRoot));
 }
 
-function eval_getNewGERRoot(ctx, tag) {
+function eval_getL1InfoGER(ctx, tag) {
     if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    const currentTx = Number(evalCommand(ctx, tag.params[0]));
-    // If is forced return historicGERRoot, else tx's GER
-    const newGER = ctx.input.isForced ? ctx.input.
-    historicGERRoot :ctx.input.GERS[currentTx]
-    return scalar2fea(ctx.Fr, Scalar.e(newGER));
+
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const gerL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].globalExitRoot;
+
+    return scalar2fea(ctx.Fr, Scalar.e(gerL1InfoTree));
+}
+
+function eval_getL1InfoBlockHash(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const blockHashL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].blockHash;
+
+    return scalar2fea(ctx.Fr, Scalar.e(blockHashL1InfoTree));
+}
+
+function eval_getL1InfoTimestamp(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const timestampL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].timestamp;
+
+    return scalar2fea(ctx.Fr, Scalar.e(timestampL1InfoTree));
 }
 
 function eval_getTimestampLimit(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
     return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_getIsForced(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
     return [ctx.Fr.e(ctx.input.isForced), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 

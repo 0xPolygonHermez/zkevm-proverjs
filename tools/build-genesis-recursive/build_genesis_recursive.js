@@ -1,20 +1,21 @@
-const fs = require("fs");
-const path = require("path");
-const ethers = require("ethers");
+const fs = require('fs');
+const path = require('path');
+const ethers = require('ethers');
 const {
-    MemDB, ZkEVMDB, processorUtils, smtUtils, getPoseidon,
+    MemDB, ZkEVMDB, processorUtils, smtUtils, getPoseidon, Constants,
 } = require('@0xpolygonhermez/zkevm-commonjs');
 
 // paths files
-const pathInput = path.join(__dirname, "./input_gen_recursive.json");
-const pathOutput = path.join(__dirname, "./aggregate-batches.json");
+const pathInput = path.join(__dirname, './input_gen_recursive.json');
+const pathOutput = path.join(__dirname, './aggregate-batches.json');
 
-async function main(){
+async function main() {
     // build poseidon
     const poseidon = await getPoseidon();
-    const F = poseidon.F;
+    const { F } = poseidon;
 
     // read generate input
+    // eslint-disable-next-line global-require, import/no-dynamic-require
     const generateData = require(pathInput);
 
     // mapping wallets
@@ -22,7 +23,7 @@ async function main(){
 
     for (let i = 0; i < generateData.genesis.length; i++) {
         const {
-            address, pvtKey
+            address, pvtKey,
         } = generateData.genesis[i];
 
         const newWallet = new ethers.Wallet(pvtKey);
@@ -40,46 +41,57 @@ async function main(){
         null,
         null,
         generateData.chainID,
-        generateData.forkID
+        generateData.forkID,
     );
 
     // Build batches
     let updatedAccounts = {};
 
-    for (let i = 0; i < generateData.batches.length; i++){
+    for (let i = 0; i < generateData.batches.length; i++) {
         const genBatchData = generateData.batches[i];
 
         // start batch
         const batch = await zkEVMDB.buildBatch(
-            genBatchData.timestamp,
+            genBatchData.timestampLimit,
             genBatchData.sequencerAddr,
-            smtUtils.stringToH4(genBatchData.globalExitRoot)
+            smtUtils.stringToH4(genBatchData.l1InfoRoot),
+            generateData.isForced,
+            Constants.DEFAULT_MAX_TX,
+            {
+                skipVerifyL1InfoRoot: false,
+            },
+            {},
         );
 
-        for (let j = 0; j < genBatchData.txs.length; j++){
+        for (let j = 0; j < genBatchData.txs.length; j++) {
             const genTx = genBatchData.txs[j];
 
-            // build tx
-            const tx = {
-                to: genTx.to,
-                nonce: genTx.nonce,
-                value: ethers.utils.parseUnits(genTx.value, 'wei'),
-                gasLimit: genTx.gasLimit,
-                gasPrice: ethers.utils.parseUnits(genTx.gasPrice, 'wei'),
-                chainId: genTx.chainId,
-                data: genTx.data || '0x',
-            };
+            if (genTx.type === Constants.TX_CHANGE_L2_BLOCK) {
+                const rawChangeL2BlockTx = `0x${processorUtils.serializeChangeL2Block(genTx)}`;
+                batch.addRawTx(rawChangeL2BlockTx);
+            } else {
+                // build tx
+                const tx = {
+                    to: genTx.to,
+                    nonce: genTx.nonce,
+                    value: ethers.utils.parseUnits(genTx.value, 'wei'),
+                    gasLimit: genTx.gasLimit,
+                    gasPrice: ethers.utils.parseUnits(genTx.gasPrice, 'wei'),
+                    chainId: genTx.chainId,
+                    data: genTx.data || '0x',
+                };
 
-            const rawTxEthers = await walletMap[genTx.from].signTransaction(tx);
-            const customRawTx = processorUtils.rawTxToCustomRawTx(rawTxEthers);
+                const rawTxEthers = await walletMap[genTx.from].signTransaction(tx);
+                const customRawTx = processorUtils.rawTxToCustomRawTx(rawTxEthers);
 
-            // add tx to batch
-            batch.addRawTx(customRawTx);
+                // add tx to batch
+                batch.addRawTx(customRawTx);
+            }
         }
 
         // build batch
         await batch.executeTxs();
-        updatedAccounts = { ...updatedAccounts, ...batch.getUpdatedAccountsBatch()};
+        updatedAccounts = { ...updatedAccounts, ...batch.getUpdatedAccountsBatch() };
         // consolidate state
         await zkEVMDB.consolidate(batch);
         // get stark input for each batch
@@ -90,6 +102,7 @@ async function main(){
 
     // print new states
     const newLeafs = {};
+    // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const item in updatedAccounts) {
         const address = item;
         const account = updatedAccounts[address];
@@ -111,11 +124,10 @@ async function main(){
     // write aggregate batches
     const initialNumBatch = 1;
     const finalNumBatch = zkEVMDB.lastBatch;
-    const aggregatorAddress = generateData.aggregatorAddress;
+    const { aggregatorAddress } = generateData;
 
     const outVerifyRecursive = await zkEVMDB.verifyMultipleBatches(initialNumBatch, finalNumBatch, aggregatorAddress);
     fs.writeFileSync(pathOutput, JSON.stringify(outVerifyRecursive, null, 2));
 }
-
 
 main();
