@@ -589,6 +589,8 @@ namespace Main(%N);
     pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
     pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
 
+    // We group arithmetic operations by the number of inputs they have
+    // 1] 5 inputs (A * B + C = D * 2^256 + E)
     arithEq0 {  1, 0, 0, 0, 0, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
@@ -596,7 +598,7 @@ namespace Main(%N);
         D0, D1, D2, D3, D4, D5, D6, D7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq0 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], rith.selEq[6],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -604,6 +606,7 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
+    // 2] 6 inputs (Point addition, complex multiplication, complex addition, complex subtraction)
     arithEq1 + arithEq3 + arithEq4 + arithEq5 {
         0, arithEq1, 0, arithEq1, arithEq3, arithEq4, arithEq5,
         A0, A1, A2, A3, A4, A5, A6, A7,
@@ -622,6 +625,7 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
+    // 3] 4 inputs (Point doubling)
     arithEq2 { 0, 0, 1, 1, 0, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,

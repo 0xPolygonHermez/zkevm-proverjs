@@ -40,6 +40,7 @@
   "timestampLimit": 1944498031,
   "chainID": 1000,
   "forkID": 7,
+  "contractsBytecode": {},
   "expectedLeafs": {
     "0x617b3a3528f9cdd6630fd3301b9c8911f7bf063d": {
       "balance": "997000000000000000000",
