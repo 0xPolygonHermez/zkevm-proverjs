@@ -2,6 +2,7 @@ const {fea2scalar} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 // all arith sources and tools on https://github.com/hermeznetwork/sm_arith.git
 
+
 const arithEq0 = require('./sm_arith_eq0');
 const arithEq1 = require('./sm_arith_eq1');
 const arithEq2 = require('./sm_arith_eq2');
@@ -254,6 +255,63 @@ module.exports.execute = async function (pols, input) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
         }
+        else if (input[i].selEq4) {
+            // EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
+            let pq1 = x1 * x2 - y1 * y2 - x3;
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+            // offset
+            q1 += 2n ** 258n;
+
+            // EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
+            let pq2 = y1 * x2 + x1 * y2 - y3;
+            q2 = -(pq2/pBN254);
+            if ((pq2 + pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+            // offset
+            q2 += 2n ** 258n;
+        }
+        else if (input[i].selEq5) {
+            // EQ7:  x1 + x2 - x3  + (q1 * p)
+            let pq1 = x1 + x2 - x3;
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+            // offset
+            q1 += 2n ** 258n;
+
+            // EQ8:  y1 + y2 - y3 + (q2 * p)
+            let pq2 = y1 + y2 - y3;
+            q2 = -(pq2/pBN254);
+            if ((pq2 + pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+            // offset
+            q2 += 2n ** 258n;
+        }
+        else if (input[i].selEq6) {
+            // EQ9:  x1 - x2 - x3  + (q1 * p)
+            let pq1 = x1 - x2 - x3;
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+            // offset
+            q1 += 2n ** 258n;
+
+            // EQ10:  y1 - y2 - y3 + (q2 * p)
+            let pq2 = y1 - y2 - y3;
+            q2 = -(pq2/pBN254);
+            if ((pq2 + pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+            // offset
+            q2 += 2n ** 258n;
+        }
         else {
             q1 = 0n;
             q2 = 0n;
@@ -356,6 +414,24 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq1[offset + 31] = ((pols.selEq[1][offset] && pols.selEq[3][offset]) || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]) ? 1n : 0n;
         pols.resultEq2[offset + 31] = (pols.selEq[2][offset] && pols.selEq[3][offset]) ? 1n : 0n;
     }
+}
+
+function inputFeaTo16bits(input, N, names) {
+    for (let i = 0; i < input.length; i++) {
+        for (const name of names) {
+            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
+        }
+    }
+}
+
+function splitFeaTo16bits(chunks) {
+    let res = [];
+    for(const chunk of chunks) {
+        res.push(chunk % 2n**16n);
+        res.push((chunk / 2n**16n) >> 0n);
+    }
+    console.log(res);
+    return res;
 }
 
 function inputFeaTo16bits(input, N, names) {

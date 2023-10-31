@@ -3,7 +3,6 @@
 * equation: x1*x2-y1*y2-x3+p*q1-p*offset
 * 
 * p=0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-* offset=0x20000000000000000000000000000000000000000000000000000000000000000
 */
 
 module.exports.calculate = function (p, step, _o)
@@ -210,7 +209,6 @@ module.exports.calculate = function (p, step, _o)
 		(p.x1[14][_o] * p.x2[2][_o]  - p.y1[14][_o] * p.y2[2][_o]  + 0x4e72n  * p.q1[2][_o] ) +
 		(p.x1[15][_o] * p.x2[1][_o]  - p.y1[15][_o] * p.y2[1][_o]  + 0x3064n  * p.q1[1][_o] )
 		    - 0x1fa8en);
-
 	case 17: return (
 		(p.x1[2][_o]  * p.x2[15][_o] - p.y1[2][_o]  * p.y2[15][_o] + 0x8c16n  * p.q1[15][_o]) +
 		(p.x1[3][_o]  * p.x2[14][_o] - p.y1[3][_o]  * p.y2[14][_o] + 0x3c20n  * p.q1[14][_o]) +
@@ -360,6 +358,7 @@ module.exports.calculate = function (p, step, _o)
 
 	case 31: return (
 		    - 0x60c8n );
+
 	}
 	return 0n;
 }

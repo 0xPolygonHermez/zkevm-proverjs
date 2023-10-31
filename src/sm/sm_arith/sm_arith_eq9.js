@@ -239,7 +239,6 @@ module.exports.calculate = function (p, step, _o)
 		(0xe131n  * p.q1[5][_o] ) +
 		(0x4e72n  * p.q1[4][_o] ) +
 		(0x3064n  * p.q1[3][_o] ));
-
 	case 19: return (
 		(0xca8dn  * p.q1[15][_o]) +
 		(0x6871n  * p.q1[14][_o]) +
