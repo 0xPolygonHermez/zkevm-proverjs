@@ -22,6 +22,28 @@ module.exports.buildConstants = async function (pols) {
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
+    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, [0xFFFF,0xFFFE,0xFFFD,0xFC2F,0xFC2E,
+                        0x3064,0x3063,0x4E72,0x4E71,0xE131,0xE130,0xA029,0xA028,0xB850,
+                        0xB84F,0x45B6,0x45B5,0x8181,0x8180,0x585D,0x585C,0x9781,0x9780,
+                        0x6A91,0x6A90,0x6871,0x6870,0xCA8D,0xCA8C,0x3C20,0x3C1F,0x8C16,
+                        0x8C15,0xD87C,0xD87B,0xFD47,0xFD46]);
+}
+
+function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
+    let i = 0;
+    let valueIndex = 0;
+    while (i < N) {
+        const from = i;
+        while ((i - from) <= maxValues[valueIndex] && i < N) {
+            pol[i] = BigInt(valueIndex);
+            ++i;
+        }
+        while ((i - from) < cycle && i < N) {
+            pol[i] = paddingValue;
+            ++i;
+        }
+        valueIndex = valueIndex < maxValues.length ? valueIndex + 1: 0;
+    }
 }
 
 function buildByte2Bits16(pols, N) {
@@ -107,6 +129,12 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq0[i] = 0n;
         pols.resultEq1[i] = 0n;
         pols.resultEq2[i] = 0n;
+        pols.xDeltaChunkInverse[i] = 0n;
+        pols.xAreDifferent[i] = 0n;
+
+        // by default valueLtPrime must be one
+        pols.valueLtPrime[i] = 0n;
+        pols.chunkLtPrime[i] = 0n;
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
@@ -119,23 +147,37 @@ module.exports.execute = async function (pols, input) {
         let x3 = fea2scalar(Fr, input[i]["x3"]);
         let y3 = fea2scalar(Fr, input[i]["y3"]);
 
+        // In the following, recall that we can only work with unsiged integers of 256 bits.
+        // Therefore, as the quotient needs to be represented in our VM, we need to know
+        // the worst negative case and add an offset so that the resulting name is never negative.
+        // Then, this offset is also added in the PIL constraint to ensure the equality.
+        // Note: Since we can choose whether the quotient is positive or negative, we choose it so
+        //       that the added offset is the lowest.
         if (input[i].selEq1) {
-            s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
-            let pq0 = s * x2 - s * x1 - y2 + y1;
-            q0 = -(pq0/pFec);
-            if ((pq0 + pFec*q0) != 0n) {
+            let pq0;
+            if (Fec.eq(x2, x1)) {
+                throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
+            } else {
+                s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
+                pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are ±(pFec-1)*(2^256-1) + (2^256 - 1)
+            }
+            q0 = pq0/pFec;
+            if ((pq0 - pFec*q0) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q0 the residual is not zero (diff point)`);
             }
-            q0 += 2n ** 258n;
+            // offset
+            q0 += 2n ** 256n;
         }
         else if (input[i].selEq2) {
             s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
-            let pq0 = s * 2n * y1 - 3n * x1 * x1;
+            let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2**256-1)**2,2*(pFec-1)*(2**256-1)}
+                                                  // with |-3*(2**256-1)**2| > 2*(pFec-1)*(2**256-1)
             q0 = -(pq0/pFec);
             if ((pq0 + pFec*q0) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q0 the residual is not zero (same point)`);
             }
-            q0 += 2n ** 258n;
+            // offset
+            q0 += 2n ** 257n;
         }
         else {
             s = 0n;
@@ -143,19 +185,75 @@ module.exports.execute = async function (pols, input) {
         }
 
         if (input[i].selEq3) {
-            let pq1 = s * s - x1 - x2 - x3;
-            q1 = -(pq1/pFec);
-            if ((pq1 + pFec*q1) != 0n) {
+            let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(2**256-1),(pFec-1)**2}
+                                            // with (pFec-1)**2 > |-3*(2**256-1)|
+            q1 = pq1/pFec;
+            if ((pq1 - pFec*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
+            // offset
             q1 += 2n ** 258n;
 
-            let pq2 = s * x1 - s * x3 - y1 - y3;
+            let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(pFec+1)*(2**256-1),(pFec-1)*(2**256-1)}
+                                                 // with |-(pFec+1)*(2**256-1)| > (pFec-1)*(2**256-1)
             q2 = -(pq2/pFec);
             if ((pq2 + pFec*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
-            q2 += 2n ** 258n;
+            // offset
+            q2 += 2n ** 256n;
+        }
+        else if (input[i].selEq4) {
+            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-(2**256-1)**2+(2**256-1),(2**256-1)**2}
+                                              // with |-(2**256-1)**2+(2**256-1)| > (2**256-1)**2
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+            // offset
+            q1 += 2n ** 257n;
+
+            let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(2**256-1),2*(2**256-1)**2}
+                                              // with 2*(2**256-1)**2 > |-(2**256-1)|
+                                              // No offset is needed!
+            q2 = pq2/pBN254;
+            if ((pq2 - pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+        }
+        else if (input[i].selEq5) {
+            let pq1 = x1 + x2 - x3; // Worst values are {-(2**256-1),2*(2**256-1)}
+                                    // with 2*(2**256-1) > |-(2**256-1)|
+                                    // No offset is needed!
+            q1 = pq1/pBN254;
+            if ((pq1 - pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+
+            let pq2 = y1 + y2 - y3; // Worst values are {-(2**256-1),2*(2**256-1)}
+                                    // with 2*(2**256-1) > |-(2**256-1)|
+                                    // No offset is needed!
+            q2 = pq2/pBN254;
+            if ((pq2 - pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
+        }
+        else if (input[i].selEq6) {
+            let pq1 = x1 - x2 - x3; // Worst values are {-2*(2**256-1),(2**256-1)}
+                                    // with |-2*(2**256-1)| > (2**256-1)
+                                    // No offset is needed!
+            q1 = -(pq1/pBN254);
+            if ((pq1 + pBN254*q1) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
+            }
+
+            let pq2 = y1 - y2 - y3; // Worst values are {-2*(2**256-1),(2**256-1)}
+                                    // with |-2*(2**256-1)| > (2**256-1)
+                                    // No offset is needed!
+            q2 = -(pq2/pBN254);
+            if ((pq2 + pBN254*q2) != 0n) {
+                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
+            }
         }
         else if (input[i].selEq4) {
             // EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
@@ -224,21 +322,62 @@ module.exports.execute = async function (pols, input) {
         input[i]['_q2'] = to16bitsRegisters(q2);
     }
 
+    const chunksPrimeSecp256k1 = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
+                            0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn ];
+    const chunksPrimeBN254     = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn, 
+                            0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
     for (let i = 0; i < input.length; i++) {
         let offset = i * 32;
+        let xAreDifferent = false;
+        let valueLtPrime;
         for (let step = 0; step < 32; ++step) {
-            for (let j = 0; j < 16; j++) {
-                pols.x1[j][offset + step] = BigInt(input[i]["_x1"][j])
-                pols.y1[j][offset + step] = BigInt(input[i]["_y1"][j])
-                pols.x2[j][offset + step] = BigInt(input[i]["_x2"][j])
-                pols.y2[j][offset + step] = BigInt(input[i]["_y2"][j])
-                pols.x3[j][offset + step] = BigInt(input[i]["_x3"][j])
-                pols.y3[j][offset + step] = BigInt(input[i]["_y3"][j])
-                pols.s[j][offset + step]  = BigInt(input[i]["_s"][j])
-                pols.q0[j][offset + step] = BigInt(input[i]["_q0"][j])
-                pols.q1[j][offset + step] = BigInt(input[i]["_q1"][j])
-                pols.q2[j][offset + step] = BigInt(input[i]["_q2"][j])
+            const index = offset + step;
+            const nextIndex = (index + 1) % N;
+            const step16 = step % 16;
+            if (step16 === 0) {
+                valueLtPrime = false;
             }
+            for (let j = 0; j < 16; j++) {
+                pols.x1[j][index] = BigInt(input[i]["_x1"][j])
+                pols.y1[j][index] = BigInt(input[i]["_y1"][j])
+                pols.x2[j][index] = BigInt(input[i]["_x2"][j])
+                pols.y2[j][index] = BigInt(input[i]["_y2"][j])
+                pols.x3[j][index] = BigInt(input[i]["_x3"][j])
+                pols.y3[j][index] = BigInt(input[i]["_y3"][j])
+                pols.s[j][index]  = BigInt(input[i]["_s"][j])
+                pols.q0[j][index] = BigInt(input[i]["_q0"][j])
+                pols.q1[j][index] = BigInt(input[i]["_q1"][j])
+                pols.q2[j][index] = BigInt(input[i]["_q2"][j])
+            }
+            pols.selEq[0][index] = BigInt(input[i].selEq0);
+            pols.selEq[1][index] = BigInt(input[i].selEq1);
+            pols.selEq[2][index] = BigInt(input[i].selEq2);
+            pols.selEq[3][index] = BigInt(input[i].selEq3);
+            pols.selEq[4][index] = BigInt(input[i].selEq4);
+            pols.selEq[5][index] = BigInt(input[i].selEq5);
+            pols.selEq[6][index] = BigInt(input[i].selEq6);
+
+            // selEq1 (addition different points) is select need to check that points are diferent
+            if (pols.selEq[1][index] && step < 16) {
+                if (xAreDifferent === false) {
+                    const delta = Fr.sub(pols.x2[step][index], pols.x1[step][index]);
+                    pols.xDeltaChunkInverse[index] = Fr.isZero(delta) ? 0n : Fr.inv(delta);
+                    xAreDifferent = Fr.isZero(delta) ? false : true;
+                }
+                pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
+            }
+
+            // If either selEq3,selEq4,selEq5,selEq6 is selected, we need to ensure that x3, y3 is alias free.
+            // Recall that selEq3 work over the Secp256k1 curve, and selEq4,selEq5,selEq6 work over the BN254 curve.
+            if (pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index]) {
+                const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
+                const chunkPrime = pols.selEq[3][index] ? chunksPrimeSecp256k1[step16] : chunksPrimeBN254[step16];
+                const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
+                valueLtPrime = valueLtPrime || chunkLtPrime;
+                pols.chunkLtPrime[index] = chunkLtPrime ? 1n : 0n;
+                pols.valueLtPrime[nextIndex] = valueLtPrime ? 1n : 0n;
+            }
+
             pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
             pols.selEq[1][offset + step] = BigInt(input[i].selEq1);
             pols.selEq[2][offset + step] = BigInt(input[i].selEq2);
@@ -265,13 +404,34 @@ module.exports.execute = async function (pols, input) {
                 let carryIndex = eqIndexToCarryIndex[eqIndex];
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
+                if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n) {
+                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
+                }
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
         }
         pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
-        pols.resultEq1[offset + 31] = (pols.selEq[1][offset] || pols.selEq[3][offset] || pols.selEq[4][offset] || pols.selEq[5][offset]) ? 1n : 0n;
-        pols.resultEq2[offset + 31] = pols.selEq[2][offset] ? 1n : 0n;
+        pols.resultEq1[offset + 31] = ((pols.selEq[1][offset] && pols.selEq[3][offset]) || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]) ? 1n : 0n;
+        pols.resultEq2[offset + 31] = (pols.selEq[2][offset] && pols.selEq[3][offset]) ? 1n : 0n;
     }
+}
+
+function inputFeaTo16bits(input, N, names) {
+    for (let i = 0; i < input.length; i++) {
+        for (const name of names) {
+            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
+        }
+    }
+}
+
+function splitFeaTo16bits(chunks) {
+    let res = [];
+    for(const chunk of chunks) {
+        res.push(chunk % 2n**16n);
+        res.push((chunk / 2n**16n) >> 0n);
+    }
+    console.log(res);
+    return res;
 }
 
 function inputFeaTo16bits(input, N, names) {
@@ -307,7 +467,7 @@ function to16bitsRegisters(value) {
 
     let parts = [];
     for (let part = 0; part < 16; ++part) {
-        parts.push(value & (part < 15 ? 0xFFFFn:0xFFFFFn));
+        parts.push(part < 15 ? (value & 0xFFFFn) : value);
         value = value >> 16n;
     }
     return parts;

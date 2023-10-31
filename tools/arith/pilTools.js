@@ -18,20 +18,20 @@ function join(values, glue)
     return expandTerms(values).join(glue);
 }
 
-function clksel(values, clkname)
+function clksel(values, clkname, sep = ' + ')
 {
     clkname = clkname || 'CLK';
 
     let clkindex = 0;
-    let sep = '';
+    let _sep = '';
     let s = '';
     expandTerms(values).forEach((value) => {
         if (clkindex && !(clkindex % 8)) {
             s += '\n\t  ';
         }
-        s += sep + `${value}*${clkname}[${clkindex}]`;
+        s += _sep + `${value}*${clkname}[${clkindex}]`;
         ++clkindex;
-        sep = ' + ';
+        _sep = sep;
     });
     return s;
 }
@@ -50,7 +50,7 @@ function nameToIndex(name, index, config = {}, cls = '')
     else {
         name += '[' + index + ']';
     }
-    name = name.trim();
+    // name = name.trim();
 
     let res;
     if (prefix && '+-*'.indexOf(name[0]) === 0) {
@@ -107,10 +107,10 @@ function equationPols(name, products, sums, constValues, config = {})
     */
 
     let s = '';
-    let tab = config.tab || '\t';
-    let ln = config.ln || '\n';
-    let lntab = ln+tab;
-    let endEq = config.endEq || (';');
+    let tab = config.tab ?? '\t';
+    let ln = config.ln ?? '\n';
+    let lntab = config.lntab ?? ln+tab;
+    let endEq = config.endEq ?? (';' + ln);
     let def;
     const chunkSize = config.chunkSize || 16;
     const chunkSize2 = chunkSize * 2;
@@ -123,6 +123,7 @@ function equationPols(name, products, sums, constValues, config = {})
         let defbody = '';
 
         // for (j=Math.max(0, i-15); j<= upTo; ++j) {
+        let count = 0;
         for (j=0; j<= upTo; ++j) {
             let _prods = '';
             products.forEach((prod, index) => {
@@ -148,6 +149,7 @@ function equationPols(name, products, sums, constValues, config = {})
                     // s += operation + op1.value;
                 }
                 else {
+                    ++count;
                     _prods += operation + valueToString(op1.value, config) + ' * ' + valueToString(op2.value, config);
                 }
             });
@@ -158,6 +160,7 @@ function equationPols(name, products, sums, constValues, config = {})
             }
         }
         let _sums = '';
+        count += oneProducts.length;
         oneProducts.forEach((sum) => {
             _sums += ` ${sum.substr(0,1)} `+ sum;
             empty = false;
@@ -171,6 +174,7 @@ function equationPols(name, products, sums, constValues, config = {})
                 // s += ` ${sum.substr(0,1)} ${sum.substr(1)}[${i}]`;
                 let op = resolveArrayIndex(sum.substr(1), i, constValues, config);
                 if (!op.constant || op.value !== 0n) {
+                    ++count;
                     _sums += ` ${sum.substr(0,1)} `+ valueToString(op.value, config);
                 }
                 empty = false;
@@ -179,6 +183,9 @@ function equationPols(name, products, sums, constValues, config = {})
         if (_sums.length) {
             defbody += lntab+tab+_sums;
         }
+        // remove + when is first operation (+ something == something)
+        defbody = defbody.replace(/^\s*\+/,x => x.slice(0,-1));
+        if (count === 1) defbody = ' '+defbody.trim();
         s += def + (defbody.length ? defbody : (lntab + tab + valueToString(0n, config))) + endEq;
     }
     return s;
@@ -292,9 +299,15 @@ function expandArrayRange (value) {
         let result = [];
         let fromIndex = parseInt(m[1]);
         let toIndex = parseInt(m[2]);
-        for (index = fromIndex; index <= toIndex; ++index ) {
-            let name = nameToIndex(value.substring(0, m.index), index);
-            result.push(name + value.substring(m.index + m[0].length));
+        if (fromIndex != toIndex) {
+            let index = fromIndex;
+            const delta = fromIndex < toIndex ? 1:-1;
+            while (true) {
+                let name = nameToIndex(value.substring(0, m.index), index);
+                result.push(name + value.substring(m.index + m[0].length));
+                if (index === toIndex) break;
+                index += delta;
+            }
         }
         return result;
     }
@@ -385,12 +398,13 @@ function generateJavaScript(eq, constants, info, config) {
         constSuffix: 'n',
         constBase: 16,
         constPad: 8,
+        lntab: '\n\t\t',
         pad: 12
     };
     let startEq = 'case ##: return (';
 
     code = '/*\n* '+info.split('\n').join('\n* ')+'\n*/\n\n';
-    code += 'module.exports.calculate = function (p, step, _o)\n{\n\tswitch(step) {\n\t';
+    code += 'module.exports.calculate = function (p, step, _o)\n{\n\tswitch(step) {\n\t\t';
     code += equation(startEq, eq, constants, jsConfig);
     code += '\t}\n\treturn 0n;\n}\n';
     return code;
@@ -406,7 +420,7 @@ function generateCpp(eq, constants, info, config, name) {
         constPad: 8,
         pad: 12
     };
-    let startEq = 'case ##: \n\t\treturn (';
+    let startEq = '\tcase ##: \n\t\treturn (';
     code = '/* '+info.split('\n').join('\n* ')+'\n*/\n\n';
     code += '#include <stdint.h>\n\n';
     // code += 'typedef struct { uint64_t *x1[16]; uint64_t *y1[16]; uint64_t *x2[16]; uint64_t *y2[16]; uint64_t *x3[16]; uint64_t *y3[16]; uint64_t *s[16]; uint64_t *q0[16]; uint64_t *q1[16]; uint64_t *q2[16]; } ArithPols;\n';
@@ -426,5 +440,5 @@ module.exports = {
     join: join,
     expandTerms: expandTerms,
     generatePilFromTemplate: generatePilFromTemplate,
-    generatePilHelpers: generatePilHelpers
-  };
+    generatePilHelpers: generatePilHelpers,
+};
