@@ -31,6 +31,7 @@ const { lstat } = require("fs");
 const MyHelperClass = require("./helpers/helpers");
 const Constants = require('./const-sm-main-exec');
 
+
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
 
@@ -624,39 +625,66 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
                 if (l.sRD == 1) {
-                    const Kin0 = [
-                        ctx.C[0],
-                        ctx.C[1],
-                        ctx.C[2],
-                        ctx.C[3],
-                        ctx.C[4],
-                        ctx.C[5],
-                        ctx.C[6],
-                        ctx.C[7],
-                    ];
+                    const address = fea2scalar(ctx.Fr, ctx.A);
+                    const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
+                    const keyType = fea2scalar(ctx.Fr, ctx.B);
+                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
 
-                    const Kin1 = [
-                        ctx.A[0],
-                        ctx.A[1],
-                        ctx.A[2],
-                        ctx.A[3],
-                        ctx.A[4],
-                        ctx.A[5],
-                        ctx.B[0],
-                        ctx.B[1]
-                    ];
+                    let res = {};
+                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(Constants.SMT_KEY_BALANCE)){
+                        res.value = input.stateOverride[addressHex].balance.startsWith("0x") ?
+                        Scalar.e(input.stateOverride[addressHex].balance, 16) : Scalar.e(input.stateOverride[addressHex].balance);
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(Constants.SMT_KEY_NONCE)){
+                        res.value = input.stateOverride[addressHex].nonce.startsWith("0x") ?
+                        Scalar.e(input.stateOverride[addressHex].nonce.startsWith("0x"), 16) : Scalar.e(input.stateOverride[addressHex].nonce.startsWith("0x"));
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(Constants.SMT_KEY_SC_CODE)){
+                        res.value = Scalar.e(await hashContractBytecode(input.stateOverride[addressHex].code),16);
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(Constants.SMT_KEY_SC_LENGTH)){
+                        res.value = Scalar.e(input.stateOverride[addressHex].code.replace('0x','').length/2);
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)){
+                        if (input.stateOverride[addressHex].state[keyStorage]){
+                            res.value = Scalar.e(input.stateOverride[addressHex].state[keyStorage], 16);
+                        } else {
+                            res.value = Scalar.e(0);
+                        }
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)
+                    && input.stateOverride[addressHex].stateDiff[keyStorage]){
+                        res.value = Scalar.e(input.stateOverride[addressHex].stateDiff[keyStorage], 16);
+                    } else {
+                        const Kin0 = [
+                            ctx.C[0],
+                            ctx.C[1],
+                            ctx.C[2],
+                            ctx.C[3],
+                            ctx.C[4],
+                            ctx.C[5],
+                            ctx.C[6],
+                            ctx.C[7],
+                        ];
 
-                    const keyI = poseidon(Kin0);
-                    const key = poseidon(Kin1, keyI);
+                        const Kin1 = [
+                            ctx.A[0],
+                            ctx.A[1],
+                            ctx.A[2],
+                            ctx.A[3],
+                            ctx.A[4],
+                            ctx.A[5],
+                            ctx.B[0],
+                            ctx.B[1]
+                        ];
 
-                    // commented since readings are done directly in the smt
-                    // const keyS = Fr.toString(key, 16).padStart(64, "0");
-                    // if (typeof ctx.sto[keyS] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
+                        const keyI = poseidon(Kin0);
+                        const key = poseidon(Kin1, keyI);
 
-                    // fi = scalar2fea(Fr, Scalar.e("0x" + ctx.sto[ keyS ]));
-                    const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
+                        // commented since readings are done directly in the smt
+                        // const keyS = Fr.toString(key, 16).padStart(64, "0");
+                        // if (typeof ctx.sto[keyS] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
+
+                        // fi = scalar2fea(Fr, Scalar.e("0x" + ctx.sto[ keyS ]));
+                        res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
+                    }
+
                     incCounter = res.proofHashCounter + 2;
-
                     // save readWriteAddress
                     if (fullTracer){
                         fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, res.value);
@@ -666,6 +694,23 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
                 if (l.sWR == 1) {
+                    const address = fea2scalar(ctx.Fr, ctx.A);
+                    const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
+                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
+                    const keyType = fea2scalar(ctx.Fr, ctx.B)
+                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(Constants.SMT_KEY_BALANCE)){
+                        input.stateOverride[addressHex].balance = safeFea2scalar(Fr, ctx.D).toString();
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(Constants.SMT_KEY_NONCE)){
+                        input.stateOverride[addressHex].nonce = safeFea2scalar(Fr, ctx.D).toString();
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(Constants.SMT_KEY_SC_CODE)){
+                        input.stateOverride[addressHex].code = input.contractsBytecode["0x" + safeFea2scalar(Fr, ctx.D).toString(16)];
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)){
+                        input.stateOverride[addressHex].state[keyStorage] = safeFea2scalar(Fr, ctx.D).toString();
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(Constants.SMT_KEY_SC_STORAGE)
+                    && input.stateOverride[addressHex].stateDiff[keyStorage]){
+                        input.stateOverride[addressHex].stateDiff[keyStorage] = safeFea2scalar(Fr, ctx.D).toString();
+                    }
+
                     ctx.lastSWrite = {};
 
                     const Kin0 = [
