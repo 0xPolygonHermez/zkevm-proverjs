@@ -1,19 +1,18 @@
-include "padding_kkbit.pil";
+include "padding_sha256bit.pil";
 
-namespace PaddingKK(%N);
+namespace PaddingSha256(%N);
 
     // Polynomials that are used to compute a hash chunk
     pol commit freeIn;
     pol constant r8Id;
-    pol commit connected; // 0 if is the first block of a hash and 1 if is not the first
+    pol commit connected;
     pol commit addr;
 
     pol constant lastBlock;
-    pol constant lastBlockLatch;
     pol constant r8valid;
 
     // rem: It can be different only the first byte of a new Hash.
-    pol commit rem;  // remaining bytes to the end
+    pol commit rem;
 
     rem' * (1-lastHash) = (rem-1)*(1-lastHash);
 
@@ -22,10 +21,21 @@ namespace PaddingKK(%N);
     remIsZero*rem = 0;
 
     pol commit spare;
-    pol lastHash = lastBlock*(spare + remIsZero);
-    pol lastHashLatch = lastBlockLatch * (spare + remIsZero);
+    pol lastHash = lastBlock*lengthSection;  // 1 in the last row of the last block of a hash
     spare' = (spare + remIsZero)*(1-lastHash);
     spare * (1 - spare) = 0;
+
+    pol constant PREV_LENGTH_SECTION;
+    pol commit lengthSection;
+    pol commit accLength;
+    pol constant LENGTH_WEIGTH;
+    pol startLengthSection = (spare + remIsZero)*PREV_LENGTH_SECTION;
+    lengthSection' = (lengthSection + startLengthSection)*(1-lastHash);
+    lengthSection * (1-lengthSection) = 0;
+
+    pol freeIn_LENGTH_WEIGTH = freeIn * LENGTH_WEIGTH;
+    accLength' = accLength*(1-lastHash) + lengthSection'*freeIn_LENGTH_WEIGTH';
+    (accLength - len)*lastHash = 0;
 
     pol commit lastHashLen;
     pol commit lastHashDigest;
@@ -33,10 +43,7 @@ namespace PaddingKK(%N);
     lastHashLen * (1 - lastHashLen) = 0;
     lastHashDigest * (1 - lastHashDigest) = 0;
 
-    lastHashLen * (1 - lastHashLatch) = 0;
-    lastHashDigest * (1 - lastHashLatch) = 0;
-
-    pol aFreeIn = (1 - (remIsZero + spare))*freeIn + remIsZero + lastHash*0x80;
+    pol aFreeIn = (1 - (remIsZero + spare))*freeIn + remIsZero*0x80;
     r8valid {aFreeIn, r8Id, connected} in { PaddingKKBit.r8, PaddingKKBit.r8Id, PaddingKKBit.connected };
 
     connected' * ( 1-lastBlock) = connected * (1-lastBlock);
@@ -44,7 +51,7 @@ namespace PaddingKK(%N);
 
     pol constant sOutId;
 
-    lastHashLatch {
+    lastHash {
         hash0,
         hash1,
         hash2,
@@ -84,7 +91,7 @@ namespace PaddingKK(%N);
     (hash7' - hash7) * (1-lastHash) = 0;
 
     (addr' -addr) * (1-lastHash) = 0;
-    (addr' - 1 -addr) * lastHashLatch = 0;
+    (addr' - 1 -addr) * (lastHash - forceLastHash) = 0;
 
     pol commit incCounter;
     // if lastHash=0 && lastBLock=0 then incCounter'=incCounter
