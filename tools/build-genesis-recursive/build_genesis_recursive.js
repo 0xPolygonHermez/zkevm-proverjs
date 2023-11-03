@@ -55,7 +55,7 @@ async function main() {
             genBatchData.timestampLimit,
             genBatchData.sequencerAddr,
             smtUtils.stringToH4(genBatchData.l1InfoRoot),
-            generateData.isForced,
+            generateData.forcedBlockHashL1,
             Constants.DEFAULT_MAX_TX,
             {
                 skipVerifyL1InfoRoot: false,

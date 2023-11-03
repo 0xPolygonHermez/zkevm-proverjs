@@ -192,7 +192,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         });
         for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
             if (!method.startsWith('eval_')) continue;
-            console.log(`  found helper ${method.substring(5)} => ${method}`);
+            // console.log(`  found helper ${method.substring(5)} => ${method}`);
         }
     }
     ctx.helpers = helpers;
@@ -2807,8 +2807,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getSequencerAddr(ctx, tag);
     } if (tag.funcName == 'getTimestampLimit') {
         return eval_getTimestampLimit(ctx, tag);
-    } if (tag.funcName == 'getIsForced') {
-        return eval_getIsForced(ctx, tag);
+    } if (tag.funcName == 'getForcedBlockHashL1') {
+        return eval_getForcedBlockHashL1(ctx, tag);
     } if (tag.funcName == 'getL1InfoRoot') {
         return eval_getL1InfoRoot(ctx, tag);
     } if (tag.funcName == 'getL1InfoGER') {
@@ -2959,10 +2959,10 @@ function eval_getTimestampLimit(ctx, tag) {
     return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getIsForced(ctx, tag) {
+function eval_getForcedBlockHashL1(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
-    return [ctx.Fr.e(ctx.input.isForced), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.forcedBlockHashL1));
 }
 
 function eval_eventLog(ctx, tag) {

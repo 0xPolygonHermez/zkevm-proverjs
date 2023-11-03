@@ -68,7 +68,7 @@ async function main() {
         generateData.timestampLimit,
         generateData.sequencerAddr,
         smtUtils.stringToH4(generateData.l1InfoRoot),
-        generateData.isForced,
+        generateData.forcedBlockHashL1,
         Constants.DEFAULT_MAX_TX,
         {
             skipVerifyL1InfoRoot: false,
