@@ -525,7 +525,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     } else if (l.binOpcode == 1) { // SUB
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
-                        const c = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), MASK_64);
+                        const c = Scalar.band(Scalar.add(Scalar.sub(a, b), P2_64), MASK_64);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 2) { // LT
@@ -533,6 +533,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.lt(a, b);
                         fi = scalar2fea(Fr, c);scalar2fea
+                        nHits ++;
+                    } else if (l.binOpcode == 3) { // SLT
+                        let a = safeFea2scalar(Fr, ctx.A);
+                        if (Scalar.geq(a, P2_63)) a = Scalar.sub(a, P2_64);
+                        let b = safeFea2scalar(Fr, ctx.B);
+                        if (Scalar.geq(b, P2_63)) b = Scalar.sub(b, P2_64);
+                        const c = Scalar.lt(a, b);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 4) { // EQ
                         const a = safeFea2scalar(Fr, ctx.A);
@@ -559,7 +567,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else {
-                        throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
+                        throw new Error(`Invalid Binary operation ${l.binOpcode} ${sourceRef}`);
                     }
                 }
 
