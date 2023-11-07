@@ -143,6 +143,40 @@ module.exports = class myHelper {
     }
 
     /**
+     * Computes the next digit of the quotient.
+     * @param an - Unsigned integer represented as an array of BigInts. This is the current dividend.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns The next digit of the quotient.
+     */
+    findQn(an, b) {
+        const b_l = b.length;
+        const bm = b[b_l - 1];
+        if (this.compare(an, b) === -1) {
+            return 0n;
+        }
+
+        const n = an.length;
+        let aguess = [];
+        if (an[n-1] < bm) {
+            aguess = [an[n-2], an[n-1]];
+        } else {
+            aguess = [an[n-1]];
+        }
+
+        if (an[n-1] < bm) {
+            return this._MPdiv_short(aguess, bm)[0][0]; // this is always a single digit
+        } else if (an[n-1] === bm) {
+            if (b_l < n) {
+                return this.base - 1n;
+            } else {
+                return 1n;
+            }
+        } else {
+            return 1n;
+        }
+    }
+
+    /**
      * Computes the division of two unsigned integers represented as arrays of BigInts.
      * @param a - Unsigned integer represented as an array of BigInts.
      * @param b - Unsigned integer represented as an array of BigInts.
@@ -152,7 +186,6 @@ module.exports = class myHelper {
         let shift;
         [a, b, shift] = this.normalize(a, b);
         let a_l = a.length;
-        const b_l = b.length;
         let quotient = [];
         let remainder = [];
         let an = [];
@@ -160,31 +193,10 @@ module.exports = class myHelper {
             an.unshift(a[--a_l]);
         }
 
-        const bm = b[b_l - 1];
         let test;
-        let aguess;
         let qn;
-        let n;
         while (a_l >= 0) {
-            n = an.length;
-            if (an[n - 1] < bm) {
-                aguess = [an[n - 2], an[n - 1]];
-            } else {
-                aguess = [an[n - 1]];
-            }
-
-            if (an[n - 1] < bm) {
-                qn = this._MPdiv_short(aguess, bm)[0][0]; // this is always a single digit
-            } else if (an[n - 1] === bm) {
-                if (b_l < n) {
-                    qn = this.base - 1n;
-                } else {
-                    qn = 1n;
-                }
-            } else {
-                qn = 1n;
-            }
-
+            qn = this.findQn(an,b);
             test = this.MP_short_mul(b, qn);
             while (this.compare(test, an) === 1) {
                 // maximum 2 iterations
