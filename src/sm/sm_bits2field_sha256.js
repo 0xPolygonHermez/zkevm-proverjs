@@ -1,4 +1,4 @@
-const SlotSize = 100000; // TODO Fix
+const SlotSize = 31487; // TODO Fix
 const bitsPerField = 6;
 
 module.exports.buildConstants = async function (pols) {
@@ -76,6 +76,9 @@ module.exports.execute = async function (pols, input) {
 
     for (let i = 0; i < nSlots; i++) {
         const sha256FSlot = [];
+        const stIn = [];
+        const stOut = [];
+        const rIn = [];
         for (let j = 0; j < 1024; j++) {
             for (let k = 0; k < bitsPerField; k++) {
                 if (j < 256) {
@@ -90,7 +93,13 @@ module.exports.execute = async function (pols, input) {
                 pols.packField[p] = accField;
                 p += 1;
             }
-            sha256FSlot.push(accField);
+            if (j < 256) {
+                stIn.push(accField);
+            } else if (j < 512) {
+                stOut.push(accField);
+            } else {
+                rIn.push(accField);
+            }
         }
         for (let j = 1024 * bitsPerField; j < SlotSize; j++) {
             pols.bit[p] = 0n;
@@ -98,7 +107,7 @@ module.exports.execute = async function (pols, input) {
             p += 1;
         }
 
-        required.Sha256F.push(sha256FSlot);
+        required.Sha256F.push([stIn, rIn]);
     }
 
     while (p < N) {

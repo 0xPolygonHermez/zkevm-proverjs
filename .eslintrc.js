@@ -6,6 +6,7 @@ module.exports = {
         es2020: true,
         node: true,
         mocha: true,
+        'es2020': true,
     },
     extends: 'airbnb-base',
     rules: {

@@ -135,6 +135,23 @@ async function run() {
         console.log("Storage...");
         await smStorage.buildConstants(constPols.Storage);
     }
+    if (constPols.PaddingSha256) {
+        console.log("PaddingSha256...");
+        await smPaddingSha256.buildConstants(constPols.PaddingSha256);
+    }
+    if (constPols.PaddingSha256Bit) {
+        console.log("PaddingSha256Bit...");
+        await smPaddingKKBit.buildConstants(constPols.PaddingSha256Bit);
+    }
+    if (constPols.Bits2FieldSha256) {
+        console.log("Bits2FieldSha256...");
+        await smBits2FieldSha256.buildConstants(constPols.Bits2FieldSha256);
+    }
+    if (constPols.Sha256F) {
+        console.log("Sha256F...");
+        await smKeccakF.buildConstants(constPols.Sha256F);
+    }
+
 
     if (typeof outputTextDir === 'string') {
         let index = 0;

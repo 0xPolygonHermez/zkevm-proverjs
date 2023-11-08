@@ -11,7 +11,7 @@ const {
 const smPaddingSha256 = require('../../src/sm/sm_padding_sha256');
 const smPaddingSha256Bit = require('../../src/sm/sm_padding_sha256bit/sm_padding_sha256bit');
 const smBits2FieldSha256 = require('../../src/sm/sm_bits2field_sha256');
-// const smSha256F = require('../../src/sm/sm_sha256/sm_sha256');
+const smSha256F = require('../../src/sm/sm_sha256f/sm_sha256f');
 const smGlobal = require('../../src/sm/sm_global');
 const { sha256 } = require('../../src/sm/sm_padding_sha256bit/sha256');
 
@@ -67,25 +67,25 @@ describe('test padding sha256', async function () {
         await smPaddingSha256.buildConstants(constPols.PaddingSha256);
         await smPaddingSha256Bit.buildConstants(constPols.PaddingSha256Bit);
         await smBits2FieldSha256.buildConstants(constPols.Bits2FieldSha256);
-        // await smSha256F.buildConstants(constPols.Sha256F);
+        await smSha256F.buildConstants(constPols.Sha256F);
         await smGlobal.buildConstants(constPols.Global);
-
+/*
         for (let i = 0; i < constPols.$$array.length; i++) {
             const arr = constPols.$$array[i];
             for (let j = 0; j < arr.length; j++) {
-                assert(typeof (arr[j]) === 'bigint',`const pol: ${i} w: ${j} desc: ${constPols.$$defArray[i]}`);
+                assert(typeof (arr[j]) === 'bigint', `const pol: ${i} w: ${j} desc: ${JSON.stringify(constPols.$$defArray[i], null, 1)}`);
             }
         }
-
+*/
         const requiredSha256 = await smPaddingSha256.execute(cmPols.PaddingSha256, input);
         const requiredSha256bit = await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit);
         const requiredBits2FieldSha256 = await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256bit.Bits2FieldSha256);
-        // await smSha256F.execute(cmPols.KeccakF, requiredBits2FieldSha256.KeccakF);
+        await smSha256F.execute(cmPols.Sha256F, requiredBits2FieldSha256.Sha256F);
 
         for (let i = 0; i < cmPols.$$array.length; i++) {
             const arr = cmPols.$$array[i];
             for (let j = 0; j < arr.length; j++) {
-                assert(typeof (arr[j]) === 'bigint', `pol: ${i} w: ${j} desc: ${cmPols.$$defArray[i]}`);
+                assert(typeof (arr[j]) === 'bigint', `pol: ${i} w: ${j} desc: ${JSON.stringify(cmPols.$$defArray[i], null, 1)}`);
             }
         }
 

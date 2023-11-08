@@ -53,6 +53,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Binary: [],
         PaddingKK: [],
         PaddingPG: [],
+        PaddingSha256: [],
         PoseidonG: [],
         Mem: [],
         MemAlign: [],
@@ -111,6 +112,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         mem: [],
         hashK: [],
         hashP: [],
+        hashS: [],
         pols: pols,
         input: input,
         vars:[],
@@ -549,7 +551,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
+            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||
+            l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest ||
+            l.hashS || l.hashS1 || l.hashSLen || l.hashSDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -789,6 +793,30 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         throw new Error(`digest(${addr}) not calculated. Call hashKlen to finish digest ${sourceRef}`);
                     }
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
+                    nHits++;
+                }
+                if (l.hashS || l.hashS1) {
+                    if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
+                    const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const pos = fe2n(Fr, ctx.HASHPOS, ctx);
+                    if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS(${addr}) ${sourceRef}`);
+                    if (pos+size > ctx.hashS[addr].data.length) throw new Error(`Accessing hashS(${addr}) out of bounds (${pos+size} > ${ctx.hashS[addr].data.length}) ${sourceRef}`);
+                    let s = Scalar.zero;
+                    for (let k=0; k<size; k++) {
+                        if (typeof ctx.hashS[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashS(${addr}) not defined place ${pos+k} ${sourceRef}`);
+                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashS[addr].data[pos + k]));
+                    }
+                    fi = scalar2fea(Fr, s);
+                    nHits++;
+                }
+                if (l.hashSDigest == 1) {
+                    if (typeof ctx.hashS[addr] === "undefined") {
+                        throw new Error(`digest sha256(${addr}) not defined ${sourceRef}`);
+                    }
+                    if (typeof ctx.hashS[addr].digest === "undefined") {
+                        throw new Error(`digest sha256(${addr}) not calculated. Call hashSlen to finish digest ${sourceRef}`);
+                    }
+                    fi = scalar2fea(Fr, ctx.hashS[addr].digest);
                     nHits++;
                 }
                 if (l.hashP || l.hashP1) {
@@ -1256,6 +1284,86 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incCounter = Math.ceil((ctx.hashK[addr].data.length + 1) / 136)
         } else {
             pols.hashKDigest[i] = 0n;
+        }
+
+
+        if (l.hashS || l.hashS1) {
+            if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
+            pols.hashS[i] = l.hashS ? 1n : 0n;
+            pols.hashS1[i] = l.hashS1 ? 1n : 0n;
+            const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const pos = fe2n(Fr, ctx.HASHPOS, ctx);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS ${sourceRef}`);
+            const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const maskByte = Scalar.e("0xFF");
+            for (let k=0; k<size; k++) {
+                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
+                const bh = ctx.hashS[addr].data[pos + k];
+                if (typeof bh === "undefined") {
+                    ctx.hashS[addr].data[pos + k] = bm;
+                } else if (bm != bh) {
+                    throw new Error(`HashS(${addr}) do not match, pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
+                }
+            }
+            const paddingA = Scalar.shr(a, size * 8);
+            if (!Scalar.isZero(paddingA)) {
+                throw new Error(`HashS(${addr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
+            }
+
+            if ((typeof ctx.hashS[addr].reads[pos] !== "undefined") &&
+                (ctx.hashS[addr].reads[pos] != size))
+            {
+                throw new Error(`HashS(${addr}) diferent read sizes (${ctx.hashS[addr].reads[pos]} != ${size}) in the same position ${pos} ${sourceRef}`)
+            }
+            ctx.hashS[addr].reads[pos] = size;
+            ctx.hashS[addr].sourceRef = sourceRef;
+            incHashPos = size;
+        } else {
+            pols.hashS[i] = 0n;
+            pols.hashS1[i] = 0n;
+        }
+
+        if (l.hashSLen) {
+            pols.hashSLen[i] = 1n;
+            const lm = fe2n(Fr, op0, ctx);
+            // If it's undefined compute hash of 0 bytes
+            if(typeof ctx.hashS[addr] === "undefined") {
+                // len must be 0
+                if (lm != 0) throw new Error(`HashSLen(${addr}) length does not match is ${lm} and should be 0 ${sourceRef}`);
+                ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false};
+                ctx.hashS[addr].digest = `0x${createHash('sha256').update(Uint8Array.from([])).digest('hex')}`;
+            }
+            ctx.hashS[addr].sourceRef = sourceRef;
+
+            if (ctx.hashS[addr].lenCalled) {
+                throw new Error(`Call HASHSLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+            ctx.hashS[addr].lenCalled = true;
+            const lh = ctx.hashS[addr].data.length;
+            if (lm != lh) throw new Error(`HashSLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
+            if (typeof ctx.hashS[addr].digest === "undefined") {
+                ctx.hashS[addr].digest = `0x${createHash('sha256').update(Uint8Array.from(ctx.hashS[addr].data)).digest('hex')}`;
+            }
+        } else {
+            pols.hashSLen[i] = 0n;
+        }
+
+        if (l.hashSDigest) {
+            pols.hashSDigest[i] = 1n;
+            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            if (typeof ctx.hashS[addr].digest === "undefined") {
+                throw new Error(`HASHSDIGEST(${addr}) cannot load sha256 from DB ${sourceRef}`);
+            }
+            if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashS[addr].digest))) {
+                throw new Error(`HashSDigest(${addr}) doesn't match ${sourceRef}`);
+            }
+            if (ctx.hashS[addr].digestCalled) {
+                throw new Error(`Call HASHSDIGEST(${addr}) more than once: ${sourceRef}`);
+            }
+            ctx.hashS[addr].digestCalled = true;
+            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1) / 136)
+        } else {
+            pols.hashSDigest[i] = 0n;
         }
 
         if (l.hashP || l.hashP1) {
@@ -2128,7 +2236,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
         }
 
-        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest) {
+        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDiges) {
             pols.incCounter[i] = Fr.e(incCounter);
         } else {
             pols.incCounter[i] = Fr.zero;
@@ -2144,6 +2252,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         } else {
             pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
+        }
+
+        if (l.hashSDigest) {
+            if (skipCounters) {
+                pols.cntSha256F[nexti] = pols.cntSha256F[i];
+            } else {
+                pols.cntSha256F[nexti] = pols.cntSha256F[i] + BigInt(incCounter);
+            }
+        } else {
+            pols.cntSha256F[nexti] = pols.cntSha256F[i];
         }
 
         if (l.hashPDigest) {
@@ -2226,8 +2344,42 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             console.log('WARNING:'+msg)
         }
+    }
 
-        required.PaddingKK.push(h);
+
+    for (let i=0; i<ctx.hashS.length; i++) {
+        if (typeof ctx.hashS[i] === 'undefined') {
+            const nextAddr = Object.keys(ctx.hashS)[i];
+            throw new Error(`Reading hashS(${i}) not defined, next defined was ${nextAddr} on ${ctx.hashS[nextAddr].sourceRef||''}`);
+        }
+        const h = {
+            data: ctx.hashS[i].data,
+            reads: [],
+            digestCalled: ctx.hashS[i].digestCalled,
+            lenCalled: ctx.hashS[i].lenCalled
+        }
+        let p= 0;
+        while (p<ctx.hashS[i].data.length) {
+            if (ctx.hashS[i].reads[p]) {
+                h.reads.push(ctx.hashS[i].reads[p]);
+                p += ctx.hashS[i].reads[p];
+            } else {
+                h.reads.push(1);
+                p += 1;
+            }
+        }
+        if (p!= ctx.hashS[i].data.length) {
+            throw new Error(`Reading hashS(${i}) out of limits (${p} != ${ctx.hashS[i].data.length})`);
+        }
+        if (checkHashNoDigest && !ctx.hashS[i].digestCalled) {
+            const msg = `Reading hashS(${i}) not call to hashSDigest, last access on ${ctx.hashS[i].sourceRef||''}`;
+            if (checkHashNoDigest === ErrorCheck) {
+                throw new Error('ERROR:'+msg);
+            }
+            console.log('WARNING:'+msg)
+        }
+
+        required.PaddingSha256.push(h);
     }
 
     for (let i=0; i<ctx.hashP.length; i++) {
@@ -3379,7 +3531,7 @@ function printRegs(Fr, ctx) {
     console.log(ctx.fileName + ":" + ctx.line);
 }
 
-function printReg4(Fr, name, V) {
+function printReg8(Fr, name, V) {
     printReg(Fr, name+"7", V[7], true);
     printReg(Fr, name+"6", V[6], true);
     printReg(Fr, name+"5", V[5], true);
@@ -3393,7 +3545,6 @@ function printReg4(Fr, name, V) {
 
 
 function printReg4(Fr, name, V) {
-
     printReg(Fr, name+"3", V[3], true);
     printReg(Fr, name+"2", V[2], true);
     printReg(Fr, name+"1", V[1], true);

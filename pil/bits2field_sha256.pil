@@ -1,4 +1,4 @@
-// include "sha256f.pil";
+include "sha256f.pil";
 
 namespace Bits2FieldSha256(%N);
     pol constant FieldLatch;  // [0:=11,1]
@@ -10,4 +10,4 @@ namespace Bits2FieldSha256(%N);
     packField' = (1-FieldLatch)*packField + bit'*Factor';
     bit *(1-bit) = 0;
 
-//    FieldLatch*(packField - Sha256F.inputs[0]) = 0;
+    FieldLatch*(packField - Sha256F.input[0]) = 0;
