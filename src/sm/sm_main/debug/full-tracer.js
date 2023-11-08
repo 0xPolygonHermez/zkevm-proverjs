@@ -478,7 +478,7 @@ class FullTracer {
             // set logIndex
             singleLog.index = i;
             // store log
-            this.finalTrace.responses[this.txCount].logs.push(singleLog);
+            response.logs.push(singleLog);
         }
 
         // create directory if it does not exist

@@ -1007,6 +1007,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.mWR[i] = 0n;
         }
 
+        // overwrite 'op' when hiting 'checkFirstTxType' label
+        if ((Number(ctx.zkPC) === rom.labels.checkFirstTxType) && input.l1InfoTree.skipFirstChangeL2Block === true) {
+            [op0, op1, op2, op3, op4, op5, op6, op7] =
+                [
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                ];
+        }
+
         if (l.SRD || l.sWR) {
             if (!Fr.isZero(ctx.A[7]) || !Fr.isZero(ctx.A[6]) || !Fr.isZero(ctx.A[5])) {
                 const values = '0x' + ([ctx.A[7], ctx.A[6], ctx.A[5]].map(x => x.toString(16)).join(',0x'));
@@ -1820,6 +1835,29 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
              pols.C6[i],
              pols.C7[i]
             ];
+
+            // Set C register with input.l1InfoRoot to process unsigned transactions
+            if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
+                const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
+                [pols.C0[nexti],
+                    pols.C1[nexti],
+                    pols.C2[nexti],
+                    pols.C3[nexti],
+                    pols.C4[nexti],
+                    pols.C5[nexti],
+                    pols.C6[nexti],
+                    pols.C7[nexti],
+                ] = [
+                    feaL1InfoRoot[0],
+                    feaL1InfoRoot[1],
+                    feaL1InfoRoot[2],
+                    feaL1InfoRoot[3],
+                    feaL1InfoRoot[4],
+                    feaL1InfoRoot[5],
+                    feaL1InfoRoot[6],
+                    feaL1InfoRoot[7],
+                ];
+            }
         }
 
         if (l.setD == 1) {
