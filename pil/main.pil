@@ -9,6 +9,7 @@ include "padding_pg.pil";
 include "storage.pil";
 include "padding_kk.pil";
 include "mem.pil";
+include "padding_sha256.pil";
 
 namespace Main(%N);
 
@@ -72,7 +73,7 @@ namespace Main(%N);
     pol commit isNeg;
 
     /// Counters
-    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, sha256F, cntPoseidonG, cntPaddingPG;
+    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntSha256F, cntPoseidonG, cntPaddingPG;
     pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntSha256F, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
@@ -525,13 +526,13 @@ namespace Main(%N);
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
-        inCntArith, inCntBinary, inCntKeccakF, inSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
+        inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
-        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
+        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
 
@@ -739,7 +740,7 @@ namespace Main(%N);
         addr,
         op0
     } is
-    PaddingSha256.PaddingSha256 {
+    PaddingSha256.lastHashLen {
         PaddingSha256.addr,
         PaddingSha256.len
     };

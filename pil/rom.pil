@@ -11,7 +11,7 @@ namespace Rom(%N);
     pol constant offset;
 
     pol constant inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR ,inRCX;
-    pol constant inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG;
+    pol constant inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG, inCntSha256F;
     pol constant incStack;
     pol constant binOpcode;
     pol constant jmpAddr, elseAddr;
