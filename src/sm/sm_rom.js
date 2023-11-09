@@ -76,6 +76,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.inCntMemAlign[i] = rom.program[pIndex].inCntMemAlign ? F.e(rom.program[pIndex].inCntMemAlign) : F.zero;
         pols.inCntPaddingPG[i] = rom.program[pIndex].inCntPaddingPG ? F.e(rom.program[pIndex].inCntPaddingPG) : F.zero;
         pols.inCntPoseidonG[i] = rom.program[pIndex].inCntPoseidonG ? F.e(rom.program[pIndex].inCntPoseidonG) : F.zero;
+        pols.inCntSha256F[i] = rom.program[pIndex].inCntSha256F ? F.e(rom.program[pIndex].inCntSha256F) : F.zero;
 
         /*
             code generated with:

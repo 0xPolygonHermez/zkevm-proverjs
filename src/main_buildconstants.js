@@ -20,6 +20,10 @@ const smPaddingPG = require("./sm/sm_padding_pg.js");
 const smPoseidonG = require("./sm/sm_poseidong.js");
 const smRom = require("./sm/sm_rom.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
+const smSha256F = require("./sm/sm_sha256f/sm_sha256f.js");
+const smBits2FieldSha256 = require("./sm/sm_bits2field_sha256.js");
+const smPaddingSha256 = require("./sm/sm_padding_sha256.js");
+const smPaddingSha256Bit = require("./sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
 
 const { F1Field } = require("ffjavascript");
 
@@ -141,7 +145,7 @@ async function run() {
     }
     if (constPols.PaddingSha256Bit) {
         console.log("PaddingSha256Bit...");
-        await smPaddingKKBit.buildConstants(constPols.PaddingSha256Bit);
+        await smPaddingSha256Bit.buildConstants(constPols.PaddingSha256Bit);
     }
     if (constPols.Bits2FieldSha256) {
         console.log("Bits2FieldSha256...");
@@ -149,9 +153,8 @@ async function run() {
     }
     if (constPols.Sha256F) {
         console.log("Sha256F...");
-        await smKeccakF.buildConstants(constPols.Sha256F);
+        await smSha256F.buildConstants(constPols.Sha256F);
     }
-
 
     if (typeof outputTextDir === 'string') {
         let index = 0;
