@@ -1,6 +1,7 @@
 const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
+const { createHash } = require('node:crypto');
 
 const {
     scalar2fea,
@@ -220,6 +221,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.cntArith = pols.cntArith[i];
         ctx.cntBinary = pols.cntBinary[i];
         ctx.cntKeccakF = pols.cntKeccakF[i];
+        ctx.cntSha256F = pols.cntSha256F[i];
         ctx.cntMemAlign = pols.cntMemAlign[i];
         ctx.cntPoseidonG = pols.cntPoseidonG[i];
         ctx.cntPaddingPG = pols.cntPaddingPG[i];
@@ -462,6 +464,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inCntKeccakF[i] = Fr.e(l.inCntKeccakF);
         } else {
             pols.inCntKeccakF[i] = Fr.zero;
+        }
+
+        if (l.inCntSha256F) {
+            op0 = Fr.add(op0, Fr.mul(Fr.e(l.inCntSha256F), Fr.e(ctx.cntSha256F)));
+            pols.inCntSha256F[i] = Fr.e(l.inCntSha256F);
+        } else {
+            pols.inCntSha256F[i] = Fr.zero;
         }
 
         if (l.inCntPoseidonG) {
@@ -2422,6 +2431,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntArith: ctx.cntArith,
         cntBinary: ctx.cntBinary,
         cntKeccakF: ctx.cntKeccakF,
+        cntSha256F: ctx.cntSha256F,
         cntMemAlign: ctx.cntMemAlign,
         cntPoseidonG: ctx.cntPoseidonG,
         cntPaddingPG: ctx.cntPaddingPG,
@@ -2699,6 +2709,7 @@ function initState(Fr, pols, ctx) {
     pols.cntArith[0] = 0n;
     pols.cntBinary[0] = 0n;
     pols.cntKeccakF[0] = 0n;
+    pols.cntSha256F[0] = 0n;
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
@@ -2872,6 +2883,8 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.cntBinary);
     } else if (tag.regName == "CNT_KECCAK_F") {
         return Scalar.e(ctx.cntKeccakF);
+    } else if (tag.regName == 'CNT_SHA256_F') {
+        return Scalar.e(ctx.cntSha256F);
     } else if (tag.regName == "CNT_MEM_ALIGN") {
         return Scalar.e(ctx.cntMemAlign);
     } else if (tag.regName == "CNT_PADDING_PG") {
