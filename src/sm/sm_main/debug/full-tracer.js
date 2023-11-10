@@ -209,7 +209,7 @@ class FullTracer {
         }
 
         this.currentBlock = {
-            parent_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
+            parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
@@ -224,15 +224,16 @@ class FullTracer {
      */
     onFinishBlock(ctx) {
         this.currentBlock = Object.assign(this.currentBlock, {
-            receipts_root: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR')),
             block_number: Number(getVarFromCtx(ctx, true, 'blockNum')),
-            gas_used: Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed')),
             timestamp: Number(getVarFromCtx(ctx, true, 'timestamp')),
-            block_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
             ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree')),
             block_hash_l1: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockchashL1InfoTree')),
+            gas_used: Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed')),
+            block_info_root: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR')),
+            block_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
             logs: [],
         });
+
         // Append logs correctly formatted to block response logs
         this.logs = this.logs.filter((n) => n); // Remove null values
         // Put all logs in an array
@@ -471,10 +472,15 @@ class FullTracer {
         }
         // Sort auxLogs by index
         auxLogs.sort((a, b) => a.index - b.index);
+
+        // filder txIndex logs
+        const finalLogs = auxLogs.filter((log) => log.tx_index === this.txIndex);
+
         // Update index to be sequential
         // eslint-disable-next-line no-restricted-syntax
-        for (let i = 0; i < auxLogs.length; i++) {
-            const singleLog = auxLogs[i];
+        response.logs = [];
+        for (let i = 0; i < finalLogs.length; i++) {
+            const singleLog = finalLogs[i];
             // set logIndex
             singleLog.index = i;
             // store log
@@ -498,6 +504,7 @@ class FullTracer {
         // Clean aux array for next iteration
         this.full_trace = [];
         this.callData = [];
+        // this.logs = [];
         this.hasGaspriceOpcode = false;
         this.hasBalanceOpcode = false;
     }
