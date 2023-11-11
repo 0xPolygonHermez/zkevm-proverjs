@@ -19,7 +19,6 @@ template Main() {
     signal input a_publics[44];
 
     signal input a_root1[4];
-    signal input a_root2[4];
     signal input a_root3[4];
     signal input a_root4[4];
 
@@ -57,7 +56,6 @@ template Main() {
     signal input b_publics[44];
 
     signal input b_root1[4];
-    signal input b_root2[4];
     signal input b_root3[4];
     signal input b_root4[4];
     signal input b_evals[118][3];
@@ -95,7 +93,6 @@ template Main() {
         vA.publics[i] <== a_publics[i];
     }
     vA.root1 <== a_root1;
-    vA.root2 <== a_root2;
     vA.root3 <== a_root3;
     vA.root4 <== a_root4;
     vA.evals <== a_evals;
@@ -139,7 +136,6 @@ template Main() {
         vB.publics[i] <== b_publics[i];
     }
     vB.root1 <== b_root1;
-    vB.root2 <== b_root2;
     vB.root3 <== b_root3;
     vB.root4 <== b_root4;
     vB.evals <== b_evals;

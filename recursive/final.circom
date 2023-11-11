@@ -28,7 +28,6 @@ template Main() {
 
     signal input publics[44];
     signal input root1;
-    signal input root2;
     signal input root3;
     signal input root4;
 
@@ -68,7 +67,6 @@ template Main() {
     component sv = StarkVerifier();
     sv.publics <== publics;
     sv.root1 <== root1;
-    sv.root2 <== root2;
     sv.root3 <== root3;
     sv.root4 <== root4;
 

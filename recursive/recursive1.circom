@@ -9,7 +9,6 @@ template Main() {
     signal input rootC[4];
 
     signal input root1[4];
-    signal input root2[4];
     signal input root3[4];
     signal input root4[4];
     signal input evals[146][3]; // Evaluations of the set polynomials at a challenge value z and gz
@@ -47,7 +46,6 @@ template Main() {
 
     vA.publics <== publics;
     vA.root1 <== root1;
-    vA.root2 <== root2;
     vA.root3 <== root3;
     vA.root4 <== root4;
     vA.evals <== evals;

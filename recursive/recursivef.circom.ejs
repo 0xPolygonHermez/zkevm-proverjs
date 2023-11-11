@@ -9,7 +9,6 @@ template Main() {
     signal input publics[44];
 
     signal input root1[4];
-    signal input root2[4];
     signal input root3[4];
     signal input root4[4];
 
@@ -46,7 +45,6 @@ template Main() {
         sv.publics[i] <== publics[i];
     }
     sv.root1 <== root1;
-    sv.root2 <== root2;
     sv.root3 <== root3;
     sv.root4 <== root4;
     sv.evals <== evals;
