@@ -815,6 +815,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         const c = Scalar.bxor(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
+                    } else if (l.binOpcode == 8) { // XOR
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
+                        const c = lt4(a, b);
+                        fi = scalar2fea(Fr, c);
+                        nHits ++;
                     } else {
                         throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
                     }
@@ -1575,6 +1581,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.binOpcode[i] = 7n;
                 pols.carry[i] = 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 7, type: 1});
+            } else if (l.binOpcode == 8) { // LT4
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const expectedC = lt4(a,b);
+                if (!Scalar.eq(c, expectedC)) {
+                    const _a = a.toString(16).padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_');
+                    const _b = b.toString(16).padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_');
+                    throw new Error(`LT4 does not match ${expectedC} vs ${c} (A: ${_a}, B:${_b}) ${sourceRef}`);
+                }
+                pols.binOpcode[i] = 8n;
+                pols.carry[i] = c;
+                required.Binary.push({a: a, b: b, c: c, opcode: 8, type: 1});
             } else {
                 throw new Error(`Invalid bin opcode (${l.binOpcode}) ${sourceRef}`);
             }
@@ -3344,4 +3363,14 @@ function safeFea2scalar(Fr, arr) {
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+function lt4 (a, b) {
+    const MASK64 = 0xFFFFFFFFFFFFFFFFn;
+    for (let index = 0; index < 4; ++index) {
+        if (Scalar.lt(Scalar.band(Scalar.shr(a, 64 * index), MASK64), Scalar.band(Scalar.shr(b, 64 * index), MASK64)) == false) {
+            return 0n;
+        }
+    }
+    return 1n;
 }

@@ -475,7 +475,7 @@ const input = [
     /////////
     // LT4
     /////////
-    // w=48
+    // w=48 (+0)
     {
         a: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         b: "FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001",
@@ -484,7 +484,7 @@ const input = [
         opcode: "8",
         type: 1,
     },
-    // w=49
+    // w=49 (+1)
     {
         a: "FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000",
         b: "FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001",
@@ -493,7 +493,7 @@ const input = [
         opcode: "8",
         type: 1,
     },
-    // w=50
+    // w=50 (+2)
     {
         a: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         b: "000000000000000000000000000000000000000000000000FFFFFFFF00000001",
@@ -501,112 +501,197 @@ const input = [
         carry: 0,
         opcode: "8",
         type: 1,
+    },
+    // w=51 (+3)
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        c: "1",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
+    // w=52 (+4)
+    {
+        a: "FFEFFFFFFFFFFFFF000000000000000000000000000000000000000000000000",
+        b: "FFFEFFFFFFFFFFFF000000000000000000000000000000000000000000000000",
+        c: "0",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=53 (+5)
+    {
+        a: "FFEFFFFFFFFFFFFF00000000000000000000000000000000FFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFF00000000000000000000000000000000FFFEFFFFFFFFFFFF",
+        c: "0",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=54 (+6)
+    {
+        a: "FFEFFFFFFFFFFFFF0000000000000000FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFF0000000000000000FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF",
+        c: "0",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=55 (+7)
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF0000000000000000FFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF0000000000000000FFFEFFFFFFFFFFFF",
+        c: "0",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=56 (+8)
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF0000000000000000",
+        b: "FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF0000000000000000",
+        c: "0",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=57 (+9)
+    {
+        a: "0000000000000000FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "0000000000000000FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF",
+        c: "0",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=58 (+10)
+    {
+        a: "FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000",
+        b: "FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001",
+        c: "1",
+        carry: 1,
+        opcode: "8",
+        type: 2,
     }
 ]
 
 const error_input = [
-    // w=0
+    // w=0 Binary.w=[0..15]
     {
         a: "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         b: "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         c: "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE",
-        opcode: "0",
+        carry: 0n,
+        opcode: "0", // ADD
         type: 1,
     },
-    // w=1
+    // w=1 Binary.w=[16..31]
     {
         a: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         b: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         c: "1",
-        opcode: "1",
+        carry: 0n,
+        opcode: "1", // SUB
         type: 1,
     },
-    // w=2
+    // w=2 Binary.w=[32..47]
     {
         a: "0",
         b: "1",
         c: "0",
-        opcode: "2",
+        carry: 1n,
+        opcode: "2", // LT
         type: 1,
     },
-    // w=3
+    // w=3 Binary.w=[48..63]
     {
         a: "1",
         b: "0",
         c: "1",
-        opcode: "2",
+        carry: 0n,
+        opcode: "2", // LT
         type: 1,
     },
-    // w=4
+    // w=4 Binary.w=[64..79]
     {
         a: "8000000000000000000000000000000000000000000000000000000000000000",
         b: "0000000000000000000000000000000000000000000000000000000000000000",
         c: "0",
-        opcode: "3",
+        carry: 0n,
+        opcode: "3", // SLT
         type: 1,
     },
-    // w=5
+    // w=5 Binary.w=[80..95]
     {
         a: "0000000000000000000000000000000000000000000000000000000000000000",
         b: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
         c: "1",
-        opcode: "3",
+        carry: 0n,
+        opcode: "3", // SLT
         type: 1,
     },
-    // w=6
+    // w=6 Binary.w=[96..111]
     {
         a: "FF00",
         b: "FF00",
         c: "0",
-        opcode: "4",
+        carry: 1n,
+        opcode: "4", // EQ
         type: 1,
     },
-    // w=7
+    // w=7 Binary.w=[112..127]
     {
         a: "FF00",
         b: "00FF",
         c: "1",
-        opcode: "4",
+        carry: 0n,
+        opcode: "4", // EQ
         type: 1,
     },
-    // w=8
+    // w=8 Binary.w=[128..143]
     {
         a: "FF00",
         b: "FFF00",
         c: "100",
-        opcode: "4",
+        carry: 0n,
+        opcode: "4", // EQ
         type: 1,
     },
-    // w=9
+    // w=9 Binary.w=[144,159]
 {
         a: "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
         b: "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
         c: "0E0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
-        opcode: "5",
+        carry: 1n,
+        opcode: "5", // AND
         type: 1,
     },
-    // w=10
+    // w=10 Binary.w=[160..175]
     {
         a: "b01465104267f84effb2ed7b9c1d7ec65f4652652b2367e75549a06e692cb53f",
         b: "b486e735789b55a76376c3478ae4bc588d0740184aa0873dd0386392daed8db5",
         c: "a496e7357afffdeffff6ef7f9efdfededf47527d6ba3e7ffd579e3fefbedbdbf",
-        opcode: "6",
+        carry: 0n,
+        opcode: "6", // OR
         type: 1,
     },
-    // w=11
+    // w=11 Binary.w=[176..191]
     {
         a: "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
         b: "F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0",
         c: "EFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-        opcode: "7",
+        carry: 0n,
+        opcode: "7",  // XOR
         type: 1,
     },
-    // w=12
+    // w=12 Binary.w=[192..207]
     {
         a: "00FF",
         b: "FF00",
         c: "1000000000000000000000000000000000000000000000000000000000000001",
-        opcode: "2",
+        carry: 1n,
+        opcode: "2",  // LT
         type: 1,
     }
 ]
@@ -620,7 +705,7 @@ describe("test plookup operations", async function () {
 
     const N = 2**22;
     let constPols, cmPols;
-    before(async function () {
+    async function preparePilFromString() {
         // pil = await compile(Fr, "pil/binary.pil", null, {defines: { N }});
         pil = await compile(Fr, ['include "pil/binary.pil";',
             'namespace Main(2**22);',
@@ -649,7 +734,13 @@ describe("test plookup operations", async function () {
             '   Binary.b[0], Binary.b[1], Binary.b[2], Binary.b[3], Binary.b[4], Binary.b[5], Binary.b[6], Binary.b[7],',
             '   Binary.lOpcode, Binary.lCout',
             '};'].join("\n"), null, {compileFromString: true, defines: { N }});
-
+        await buildConstants();
+    }
+    async function preparePil() {
+        pil = await compile(Fr, "pil/binary.pil", null, {defines: { N }});
+        await buildConstants();
+    }
+    async function buildConstants() {
         constPols = newConstantPolsArray(pil);
         await smGlobal.buildConstants(constPols.Global);
         await smBinary.buildConstants(constPols.Binary);
@@ -661,10 +752,9 @@ describe("test plookup operations", async function () {
                 }
             }
         }
+    }
 
-    });
-
-    function execMain (cmPols, input) {
+    function smMainExecute (cmPols, input) {
         // fill main inputs
         const MASK32 = (2n ** 32n - 1n);
         for (let index = 0; index < input.length; ++index) {
@@ -677,12 +767,10 @@ describe("test plookup operations", async function () {
             cmPols.Main.bin[index] = input[index].type == 1 ? 1n : 0n;
             cmPols.Main.range[index] = input[index].type == 2 ? 1n : 0n;
             cmPols.Main.carry[index] = BigInt(input[index].carry ?? 0n)
-            console.log('CARRY', index, input[index].carry ,cmPols.Main.carry[index]);
             cmPols.Main.binOpcode[index] = BigInt(input[index].opcode)
         }
 
         const N = cmPols.Main.bin.length;
-        console.log(`N=${N}`);
         for (let index = input.length; index < N; ++index) {
             for (let k = 0; k < 8; ++k) {
                 cmPols.Main.A[k][index] = 0n;
@@ -697,10 +785,11 @@ describe("test plookup operations", async function () {
     }
 
     it("It should verify the binary operations pil", async () => {
+        await preparePilFromString();
         cmPols = newCommitPolsArray(pil);
 
         await smBinary.execute(cmPols.Binary, input);
-        execMain(cmPols, input);
+        smMainExecute(cmPols, input);
 
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
@@ -721,35 +810,89 @@ describe("test plookup operations", async function () {
         }
     });
 
-/*
+    function includes(res, value) {
+        const index = res.indexOf(value);
+        assert(index !== -1, "not found "+value);
+        res.splice(index, 1);
+    }
+
     it("It should fail tests", async () => {
+        await preparePilFromString();
+
         cmPols = newCommitPolsArray(pil);
 
         await smBinary.execute(cmPols.Binary, error_input);
+        smMainExecute(cmPols, error_input);
 
         let res = await verifyPil(Fr, pil, cmPols, constPols, { continueOnError: true })
+        res = res.map(x => x.split('/').slice(-1)[0]);
         for (let i = 0; i < res.length; i++) {
             console.log(res[i]);
         }
         expect(res.length).to.not.eq(0);
 
-        const plookupLine = pil.plookupIdentities[0].line;
-        const prefix = 'binary.pil:'+plookupLine+':  plookup not found ';
-        const suffix = ' (continue)';
+        const plookupLine1 = pil.plookupIdentities[0].line;
+        const prefix1 = 'binary.pil:'+plookupLine1+':  plookup not found ';
+        const plookupLine2 = pil.plookupIdentities[1].line;
+        const prefix2 = 'binary.pil:'+plookupLine2+':  plookup not found ';
+        const suffix = '';
 
-        expect(res[0]).to.equal(prefix + 'w=31 values: 1,0,15,15,1,0,15,0' + suffix);
-        expect(res[1]).to.equal(prefix + 'w=32 values: 0,1,255,255,0,0,1,0' + suffix);
-        expect(res[2]).to.equal(prefix + 'w=95 values: 1,2,0,0,1,1,0,1' + suffix);
-        expect(res[3]).to.equal(prefix + 'w=127 values: 1,2,0,0,0,1,1,0' + suffix);
-        expect(res[4]).to.equal(prefix + 'w=159 values: 1,3,128,0,0,1,0,1' + suffix);
-        expect(res[5]).to.equal(prefix + 'w=191 values: 1,3,0,255,1,1,1,0' + suffix);
-        expect(res[6]).to.equal(prefix + 'w=223 values: 1,4,0,0,1,1,0,1' + suffix);
-        expect(res[7]).to.equal(prefix + 'w=255 values: 1,4,0,0,0,1,1,0' + suffix);
-        expect(res[8]).to.equal(prefix + 'w=257 values: 0,4,255,255,1,0,1,1' + suffix);
-        expect(res[9]).to.equal(prefix + 'w=319 values: 1,5,15,15,0,0,14,0' + suffix);
-        expect(res[10]).to.equal(prefix + 'w=351 values: 1,6,176,180,0,0,164,0' + suffix);
-        expect(res[11]).to.equal(prefix + 'w=383 values: 1,7,15,240,0,0,239,0' + suffix);
-        expect(res[12]).to.equal(prefix + 'w=384 values: 0,2,255,0,0,0,16,0' + suffix);
-    })*/
+        // P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_C, P_FLAGS
+        includes(res, prefix1 + 'w=16 values: 1:0,1,255,255,0,1,0' + suffix);
+        includes(res, prefix2 + 'w=15 values: 1:1,0,15,15,1,15,0' + suffix);
+        includes(res, prefix2 + 'w=47 values: 1:1,2,0,0,1,0,3' + suffix);
+        includes(res, prefix2 + 'w=63 values: 1:1,2,0,0,0,1,2' + suffix);
+        includes(res, prefix2 + 'w=79 values: 1:1,3,128,0,0,0,3' + suffix);
+        includes(res, prefix2 + 'w=95 values: 1:1,3,0,255,1,1,2' + suffix);
+        includes(res, prefix2 + 'w=111 values: 1:1,4,0,0,0,0,3' + suffix);
+        includes(res, prefix2 + 'w=127 values: 1:1,4,0,0,1,1,2' + suffix);
+        includes(res, prefix2 + 'w=128 values: 1:0,4,255,255,0,1,0' + suffix);
+        includes(res, prefix2 + 'w=159 values: 1:1,5,15,15,1,14,1' + suffix);
+        includes(res, prefix2 + 'w=175 values: 1:1,6,176,180,0,164,0' + suffix);
+        includes(res, prefix2 + 'w=191 values: 1:1,7,15,240,0,239,0' + suffix);
+
+        const pPrefix1 = '(string):4:  permutation not found ';
+        const pPrefix2 = '(string):4:  permutation failed. Remaining ';
+
+        //  lOpcode, a[0..7], b[0..7], c[0..7], lCout
+
+        // c[0]
+        includes(res, pPrefix1 + 'w=2 values: 1:2,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix2 +   '1 values: 1:2,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1');
+
+        // c[0]
+        includes(res, pPrefix1 + 'w=3 values: 1:2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +   '1 values: 1:2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0');
+
+        // c[0]
+        includes(res, pPrefix1 + 'w=4 values: 1:3,0,0,0,0,0,0,0,2147483648,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +   '1 values: 1:3,0,0,0,0,0,0,0,2147483648,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1');
+
+        // c[0]
+        includes(res, pPrefix1 + 'w=5 values: 1:3,0,0,0,0,0,0,0,0,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +   '1 values: 1:3,0,0,0,0,0,0,0,0,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,0,0,0,0,0,0,0,0,0');
+
+        // c[0]
+        includes(res, pPrefix1 + 'w=6 values: 1:4,65280,0,0,0,0,0,0,0,65280,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix2 +   '1 values: 1:4,65280,0,0,0,0,0,0,0,65280,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1');
+
+        // c[0]
+        includes(res, pPrefix1 + 'w=7 values: 1:4,65280,0,0,0,0,0,0,0,255,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +   '1 values: 1:4,65280,0,0,0,0,0,0,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0');
+
+        // c[0] 0xFF00 EQ 0xFFF00 = 0x100
+        includes(res, pPrefix1 + 'w=8 values: 1:4,65280,0,0,0,0,0,0,0,1048320,0,0,0,0,0,0,0,256,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +   '1 values: 1:4,65280,0,0,0,0,0,0,0,1048320,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0');
+
+        // c[7] 0 vs 0x10000000 (268435456)
+        includes(res, pPrefix1 + 'w=12 values: 1:2,255,0,0,0,0,0,0,0,65280,0,0,0,0,0,0,0,1,0,0,0,0,0,0,268435456,1');
+        includes(res, pPrefix2 +    '1 values: 1:2,255,0,0,0,0,0,0,0,65280,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1');
+
+        for (let i = 0; i < res.length; i++) {
+            console.log(res[i]);
+        }
+        expect(res.length).to.eq(0);
+
+    })
 
 });

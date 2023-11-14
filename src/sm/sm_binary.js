@@ -25,13 +25,12 @@ module.exports.buildConstants = async function (pols) {
     buildP_LAST(pols.P_LAST, P_LAST_SIZE, REG_SIZE * REG_SIZE * CIN_SIZE, N);
     buildP_OPCODE(pols.P_OPCODE, REG_SIZE * REG_SIZE * CIN_SIZE * P_LAST_SIZE, N);
 
-    buildP_C_P_COUT_P_USE_CARRY(
+    buildP_C_P_FLAGS(
         pols.P_CIN,
         pols.P_LAST,
         pols.P_OPCODE,
-        pols.P_USE,
+        pols.P_FLAGS,
         pols.P_C,
-        pols.P_COUT,
         N);
 }
 
@@ -125,59 +124,61 @@ function buildP_LAST(pol, pol_size, accumulated_size, N) {
         * 0 -> C
         * 0 -> COUT
  */
-function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use, pol_c, pol_cout, N) {
+function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opc, pol_flags, pol_c, N) {
     // All opcodes
     let carry = 0;
+    let cout;
     for (let i = 0; i < N; i++) {
         const pol_a = BigInt((i >> 8) & 0xFF);
         const pol_b = BigInt(i & 0xFF);
+        let useCarry = 0n;
+        let usePreviousAreLt4 = 0n;
+        let reset4 = pol_opc[i] === 8n ? 1n : 0n;
         switch (pol_opc[i]) {
             // ADD   (OPCODE = 0)
             case 0n:
                 let sum = pol_cin[i] + pol_a + pol_b;
                 pol_c[i] = sum & 255n;
-                pol_cout[i] = sum >> 8n;
-                pol_use[i] = 0n;
+                cout = sum >> 8n;
                 break;
             // SUB   (OPCODE = 1)
             case 1n:
                 if (pol_a - pol_cin[i] >= pol_b) {
                     pol_c[i] = pol_a - pol_cin[i] - pol_b;
-                    pol_cout[i] = 0n;
+                    cout = 0n;
                 } else {
                     pol_c[i] =  255n - pol_b + pol_a - pol_cin[i] + 1n;
-                    pol_cout[i] = 1n;
+                    cout = 1n;
                 }
-                pol_use[i] = 0n;
                 break;
             // LT    (OPCODE = 2)
             // LT4   (OPCODE = 8)
             case 2n:
             case 8n:
                 if (pol_a < pol_b) {
-                    pol_cout[i] = 1n;
+                    cout = 1n;
                     pol_c[i] = pol_last[i] ? 1n : 0n;
                 } else if (pol_a == pol_b) {
-                    pol_cout[i] = pol_cin[i];
+                    cout = pol_cin[i];
                     pol_c[i] = pol_last[i] ? pol_cin[i] : 0n;
                 } else {
-                    pol_cout[i] = 0n;
+                    cout = 0n;
                     pol_c[i] = 0n;
                 }
-                const useValue = pol_opc[i] === 2n ? 1n : (pol_cout[i] + 1n);
-                pol_use[i] = pol_last[i] ? useValue : 0n;
+                useCarry = (pol_last[i] && (pol_opc[i] === 2n || cout === 0n)) ? 1n : 0n;
+                usePreviousAreLt4 = (pol_last[i] && pol_opc[i] === 8n && cout === 1n) ? 1n : 0n;
                 break;
             // SLT   (OPCODE = 3)
             case 3n:
                 if (!pol_last[i]) {
                     if (pol_a < pol_b) {
-                        pol_cout[i] = 1n;
+                        cout = 1n;
                         pol_c[i] = 0n;
                     } else if (pol_a == pol_b) {
-                        pol_cout[i] = pol_cin[i];
+                        cout = pol_cin[i];
                         pol_c[i] = 0n;
                     } else {
-                        pol_cout[i] = 0n;
+                        cout = 0n;
                         pol_c[i] = 0n;
                     }
                 } else {
@@ -185,72 +186,69 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use, pol_c,
                     let sig_b = pol_b >> 7n;
                     // A Negative ; B Positive
                     if (sig_a > sig_b) {
-                        pol_cout[i] = 1n;
+                        cout = 1n;
                         pol_c[i] = 1n;
                         // A Positive ; B Negative
                     } else if (sig_a < sig_b) {
-                        pol_cout[i] = 0n;
+                        cout = 0n;
                         pol_c[i] = 0n;
                         // A and B equals
                     } else {
                         if (pol_a < pol_b) {
-                            pol_cout[i] = 1n;
+                            cout = 1n;
                             pol_c[i] = 1n;
                         } else if (pol_a == pol_b) {
-                            pol_cout[i] = pol_cin[i];
+                            cout = pol_cin[i];
                             pol_c[i] = pol_cin[i];
                         } else {
-                            pol_cout[i] = 0n;
+                            cout = 0n;
                             pol_c[i] = 0n;
                         }
                     }
                 }
-                pol_use[i] = pol_last[i] ? 1n : 0n;
+                useCarry = pol_last[i] ? 1n : 0n;
                 break;
             // EQ    (OPCODE = 4)
             case 4n:
                 if (pol_a == pol_b && pol_cin[i] == 0n) {
-                    pol_cout[i] = 0n;
+                    cout = 0n;
                     pol_c[i] = pol_last[i] ? 1n : 0n;
                 } else {
-                    pol_cout[i] = 1n;
+                    cout = 1n;
                     pol_c[i] = 0n
                 }
-                if (pol_last[i]) pol_cout[i] = (1n - pol_cout[i]);
-                pol_use[i] = pol_last[i] ? 1n : 0n;
+                if (pol_last[i]) cout = (1n - cout);
+                useCarry = pol_last[i] ? 1n : 0n;
                 break;
 
             // AND   (OPCODE = 5)
             case 5n:
                 pol_c[i] = pol_a & pol_b;
                 if (pol_cin[i] == 0n && pol_c[i] == 0n) {
-                    pol_cout[i] = 0n;
+                    cout = 0n;
                 } else {
-                    pol_cout[i] = 1n;
+                    cout = 1n;
                 }
-                pol_use[i] = 0n;
                 break;
 
             // OR    (OPCODE = 6)
             case 6n:
                 pol_c[i] = pol_a | pol_b;
-                pol_cout[i] = 0n;
-                pol_use[i] = 0n;
+                cout = 0n;
                 break;
 
             // XOR   (OPCODE = 7)
             case 7n:
                 pol_c[i] = pol_a ^ pol_b;
-                pol_cout[i] = 0n;
-                pol_use[i] = 0n;
+                cout = 0n;
                 break;
 
 
             default:
                 pol_c[i] = 0n;
-                pol_cout[i] = 0n;
-                pol_use[i] = 0n;
+                cout = 0n;
         }
+        pol_flags[i] = cout + 2n * useCarry  + 4n * usePreviousAreLt4 + 8n * reset4;
     }
 }
 
@@ -285,6 +283,7 @@ module.exports.execute = async function (pols, input) {
         pols.lOpcode[i] = 0n;
         pols.useCarry[i] = 0n;
         pols.usePreviousAreLt4[i] = 0n;
+        pols.reset4[i] = 0n;
         pols.previousAreLt4[i] = 0n;
         pols.resultBinOp[i] = 0n;
         pols.resultValidRange[i] = 0n;
@@ -296,19 +295,23 @@ module.exports.execute = async function (pols, input) {
     for (var i = 0; i < input.length; i++) {
         if (i % 10000 === 0) console.log(`Computing binary pols ${i}/${input.length}`);
 
+        const opcode = BigInt(input[i].opcode);
+        const reset4 = opcode === 8n ? 1n : 0n;
         let previousAreLt4 = 0n;
         for (var j = 0; j < STEPS; j++) {
             const last = (j == (STEPS - 1)) ? 1n : 0n;
             const index = i * STEPS + j;
-            pols.opcode[index] = BigInt(input[i].opcode);
 
+            pols.opcode[index] = opcode;
             let cIn = 0n;
             let cOut = 0n;
             const reset = (j == 0) ? 1n:0n;
+            const resetCarry = ((reset === 1n) || (reset4 === 1n && ((j % 4) == 0))) ? 1n : 0n;
             let useCarry = 0n;
             let usePreviousAreLt4 = 0n;
+
             for (let k = 0; k < 2; ++k) {
-                cIn = (k == 0) ? pols.cIn[index] : cOut;
+                cIn = k == 0 ? pols.cIn[index] : cOut;
                 const byteA = BigInt(input[i]["a_bytes"][j * 2 + k]);
                 const byteB = BigInt(input[i]["b_bytes"][j * 2 + k]);
                 const byteC = BigInt(input[i]["c_bytes"][j * 2 + k]);
@@ -357,10 +360,13 @@ module.exports.execute = async function (pols, input) {
                         if (lastByte) {
                             if (opcode == 2n || cOut == 0n) {
                                 useCarry = 1n;
+                                pols.freeInC[1][index] = BigInt(input[i]["c_bytes"][0]);
                             } else {
                                 usePreviousAreLt4 = 1n;
+                                // SPECIAL CASE: using a runtime value previousAreLt4, but lookup table was static, means in
+                                // this case put expected value, because when rebuild c using correctly previousAreLt4 no freeInC.
+                                pols.freeInC[1][index] = cOut;
                             }
-                            pols.freeInC[1][index] = BigInt(input[i]["c_bytes"][0]);
                         }
                         break;
 
@@ -439,12 +445,6 @@ module.exports.execute = async function (pols, input) {
                         break;
                 }
 
-                if (byteIndex == 7) {
-                    previousAreLt4 = cOut;
-                } else if (byteIndex == 15 || byteIndex == 23) {
-                    previousAreLt4 = previousAreLt4 * cOut;
-                }
-
                 // setting carries
                 if (k == 0) {
                     pols.cMiddle[index] = cOut;
@@ -452,8 +452,15 @@ module.exports.execute = async function (pols, input) {
                     pols.cOut[index] = cOut;
                 }
             }
+            if (j % 16 == 3) {
+                previousAreLt4 = cOut;
+            } else if (j % 16 == 7 || j % 16 == 11) {
+                previousAreLt4 = previousAreLt4 * cOut;
+            }
+
             pols.useCarry[index] = useCarry;
             pols.usePreviousAreLt4[index] = usePreviousAreLt4;
+            pols.reset4[index] = reset4;
 
             const nextIndex = (index + 1) % N;
             const nextReset = (nextIndex % STEPS) == 0 ? 1n:0n;
@@ -464,10 +471,10 @@ module.exports.execute = async function (pols, input) {
             if (nextReset) {
                 pols.cIn[nextIndex] = 0n;
             } else {
-                pols.cIn[nextIndex] = pols.cOut[index];
+                pols.cIn[nextIndex] = (reset4 === 1n && (index % 4) === 3) ? 0n : pols.cOut[index];
             }
-            pols.lCout[nextIndex] = pols.cOut[index]
-            pols.lOpcode[nextIndex] = pols.opcode[index]
+            pols.lCout[nextIndex] = usePreviousAreLt4 ? previousAreLt4 : pols.cOut[index];
+            pols.lOpcode[nextIndex] = pols.opcode[index];
 
             pols.a[0][nextIndex] = pols.a[0][index] * (1n - reset) + pols.freeInA[0][index] * FACTOR[0][index] + 256n * pols.freeInA[1][index] * FACTOR[0][index];
             pols.b[0][nextIndex] = pols.b[0][index] * (1n - reset) + pols.freeInB[0][index] * FACTOR[0][index] + 256n * pols.freeInB[1][index] * FACTOR[0][index];
@@ -496,6 +503,17 @@ module.exports.execute = async function (pols, input) {
     }
     console.log(`Binary-used-steps:${input.length * STEPS} (${input.length}x32)`);
 
+    /*
+    for (let index = 0; index < 49; ++index) {
+        const nextIndex = (index + 1) % N;
+        const info = `w:${index.toString(10).padStart(3)} opcode:${pols.opcode[index]} cIn:${pols.cIn[index]} cMiddle:${pols.cMiddle[index]} cOut:${pols.cOut[index]} reset4:${pols.reset4[index]}`
+                    +` A:${toStringItems(pols.freeInA, index, 2)} B:${toStringItems(pols.freeInB, index, 2)} C:${toStringItems(pols.freeInC, index,2)}`
+                    +` usePreviousAreLt4:${pols.usePreviousAreLt4[index]} useCarry:${pols.useCarry[index]} previousAreLt4:${pols.previousAreLt4[index]}`;
+
+        console.log(info.replace(/[a-zA-Z_][_a-zA-Z0-9]*:/g, x => "\x1B[1;35m"+x.slice(0, -1)+"\x1B[0;36m:\x1B[0m"));
+        if ((index % 16) === 15) console.log();
+    }*/
+
     for (let index = input.length * STEPS; index < N; index++) {
         const nextIndex = (index + 1) % N;
         const reset = (index % STEPS) == 0 ? 1n : 0n;
@@ -511,22 +529,13 @@ module.exports.execute = async function (pols, input) {
             pols.c[j][nextIndex] = pols.c[j][index] * (1n - reset) + pols.freeInC[0][index] * FACTOR[j][index] + 256n * pols.freeInC[1][index] * FACTOR[j][index];
         }
     }
-/*
-    for (let index = 783; index < 801; ++index) {
-        console.log('a = '+toStringItems(pols.a, index));
-        console.log('b = '+toStringItems(pols.b, index));
-        console.log('c = '+toStringItems(pols.c, index));
-        console.log(`${index} ${index%16} freeInA = ${toStringItems(pols.freeInA, index, 2)} freeInB = ${toStringItems(pols.freeInB, index, 2)} freeInC = ${toStringItems(pols.freeInC, index)}`);
-        console.log(`${index} ${index%16} useCarry = ${pols.useCarry[index]} usePreviousAreLt4 = ${pols.usePreviousAreLt4[index]} previousAreLt4 = ${pols.previousAreLt4[index]} cIn = ${pols.cIn[index]} cMiddle = ${pols.cMiddle[index]} cOut = ${pols.cOut[index]}`);
-    }
-*/
 }
 
 function toStringItems(pol, index, length = 8, sep = '|') {
     const count = pol.length;
     const values = [];
     for (let j = 0; j < count; ++j) {
-        values.push(pol[j][index].toString(16).padStart(length, '0'));
+        values.push(pol[j][index].toString(16).toUpperCase().padStart(length, '0'));
     }
     return values.join(sep);
 }

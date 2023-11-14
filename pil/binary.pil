@@ -30,8 +30,7 @@ namespace Binary(%N);
     //  Global.BYTE      (8  bits) Input B
     //  ==== OUT ======
     //  P_C         (8 bits) Output C
-    //  P_COUT      (1  bits) Carry out
-    //  P_USE_CARRY (2  bits) Use carry out or ge4
+    //  P_FLAGS     (4  bits) Carry out, use Carry, use PreviousLt4, reset4
     //  ==== TOTAL ====
     //  4 + 1 + 1 + 8 + 8 = 22 bits
     //  ==============================================================
@@ -41,8 +40,8 @@ namespace Binary(%N);
     //  FACTOR1 | 0x0 | 0x0     | 0x1 | 0x10000 | ... | 0x0 | 0x0
     //  ...
     //  FACTOR7 | 0x0 | 0x0     | 0x0 | 0x0     | ... | 0x1 | 0x10000
-    pol constant P_OPCODE, P_CIN, P_LAST, P_USE;
-    pol constant P_C, P_COUT;
+    pol constant P_OPCODE, P_CIN, P_LAST;
+    pol constant P_C, P_FLAGS;
 
     pol RESET = Global.CLK32[0] + Global.CLK32[16];
     pol constant FACTOR[8];
@@ -65,9 +64,48 @@ namespace Binary(%N);
     pol commit opcode;
     pol commit cIn, cMiddle, cOut;
     pol commit lCout,lOpcode;
-    pol commit previousAreLt4;
 
-    pol commit useCarry, usePreviousAreLt4;
+
+    //  LT4 (opcode = 8)
+    //
+    //  Instruction operate over 4 chunks of 64 bits, divide the 256-bit values on 4 chunks of 64 bits and verifies
+    //  that ALL "a" chunks are LESS THAN "b" chunks, one to one (first chunk a vs first chunk b, second chunch a vs second chunk b,...)
+    //
+    //  examples:
+    //      0x0FFF...FFFF 0FFF...FFFF 0FFF...FFFF 0FFF...FFFF LT4 0xFFFF...FFFF FFFF...FFFF FFFF...FFFF FFFF...FFFF = 1
+    //      0x0FFF...FFFF 0FFF...FFFF FFFF...FFFF 0FFF...FFFF LT4 0xFFFF...FFFF FFFF...FFFF FFFF...FFFF FFFF...FFFF = 0
+    //
+    //  usePreviousAreLt4: (binary value *) to indicate use previousAreLt4 as result, only active in last byte, on LT4 operation and cOut = 1.
+    //                     if cOut is 1, means last chunk is LT, for this reason result is if previous are LT too.
+    //                     if cOut is 0, means last chunk isn't LT, don't matter previous LT, result is cOut, 0.
+    //
+    //  previousAreLt4:    (binary value **) to indicate if previous LT chunk comparations are LT or no, only use for three firsts chunks.
+    //                     Before first comparation is 0, and is set with result of first comparation. After that value is propagated,
+    //                     on next comparations second and third chunks, result of LT (cOut) is multiplied by this value, to force zero
+    //                     if previous or current result of LT are zero, as AND operator.
+    //
+    //                          first chunk --> previousAreLt4 = cOut
+    //                         second chunk --> previousAreLt4 = previousAreLt4 * cOut
+    //                          third chunk --> previousAreLt4 = previousAreLt4 * cOut
+    //                         fourth chunk --> no affects to previousAreLt4
+    //
+    // reset4             (binary value *) flag to indicate that carry was reset each 4 clocks
+    //
+    // NOTE: (*) to validate usePreviousAreLt4, reset4 uses a composition (reset4 * 4 + usePreviousAreLt4 * 2 + useCarry) over P_FLAGS,
+    // MUST check that these THREE pols are binary
+    //
+    // NOTE: (**) binary is checked by lookup values
+
+    pol commit usePreviousAreLt4;
+    pol commit previousAreLt4;
+    pol commit reset4;
+    pol commit useCarry;
+
+    usePreviousAreLt4 * (1 - usePreviousAreLt4) = 0;
+    previousAreLt4 * (1 - previousAreLt4) = 0;
+    reset4 * (1 - reset4) = 0;
+    useCarry * (1 - useCarry) = 0;
+
     pol commit resultBinOp;
     pol commit resultValidRange;
 
@@ -80,12 +118,19 @@ namespace Binary(%N);
 
     (opcode' - opcode) * ( 1 - RESET' ) = 0;
 
-    cIn' = cOut * ( 1 - RESET' );
+    // RESET = Global.CLK32[0] + Global.CLK32[16];
 
-    // each 4 clocks this sm was processed 8 bytes = 64 bits, last clock isn't relevant
-    // last clock cOut it's ignored because:
-    // - last cout == 0 => means LT4 = 0 (at least last A chunk of 64 isn't less than B, if previous chunks are less than B, it doesn't matter.
-    // - last cout == 1 => means last A chuck is less than B, in this path result only deepends of ge4 value.
+    pol resetCarry = RESET' + reset4 * (Global.CLK32[3] + Global.CLK32[7] + Global.CLK32[11] +
+                                       Global.CLK32[19] + Global.CLK32[23] + Global.CLK32[27]);
+
+    cIn' = cOut * ( 1 - resetCarry );
+
+    // LT4_PROPAGATE (pol constant binary)
+    //
+    // Each 4 clocks this sm was processed 8 bytes = 64 bits, last clock isn't relevant last clock cOut it's ignored because:
+    //
+    //   last cout == 0 => means LT4 = 0 (at least last A chunk of 64 isn't less than B, if previous chunks are less than B, it doesn't matter.
+    //   last cout == 1 => means last A chuck is less than B, in this path result only deepends of ge4 value.
 
     pol LT4_PROPAGATE = /* NO 0-2,3 */ +  Global.CLK32[4] + Global.CLK32[5] + Global.CLK32[6] + /* NO 7 */ + Global.CLK32[8] + Global.CLK32[9]
                         + Global.CLK32[10] + /* NO 11 */ + Global.CLK32[12] + Global.CLK32[13] + Global.CLK32[14] + Global.CLK32[15]
@@ -99,12 +144,11 @@ namespace Binary(%N);
     lCout' = cOut + usePreviousAreLt4 * (previousAreLt4 - cOut);
     lOpcode' = opcode;
 
-    useCarry * (1 - useCarry) = 0;
-    usePreviousAreLt4 * (1 - usePreviousAreLt4) = 0;
-    previousAreLt4 * (1 - previousAreLt4) = 0;
+    {0, opcode, freeInA[0], freeInB[0], cIn, freeInC[0], cMiddle + 8 * reset4}
+    in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_C, P_FLAGS};
 
-    {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE, P_C, P_COUT};
-    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry + 2 * usePreviousAreLt4, freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE, P_C, P_COUT};
+    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, freeInC[1], cOut + 2 * useCarry + 4 * usePreviousAreLt4 + 8 * reset4}
+    in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_C, P_FLAGS};
 
     a[0]' = a[0] * (1 - RESET) + freeInA[0] * FACTOR[0] + 256 * freeInA[1] * FACTOR[0];
     a[1]' = a[1] * (1 - RESET) + freeInA[0] * FACTOR[1] + 256 * freeInA[1] * FACTOR[1];
