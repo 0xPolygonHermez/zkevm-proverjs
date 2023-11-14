@@ -433,10 +433,14 @@ namespace Main(%N);
 
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
-        op0, op1, op2, op3, op4, op5, op6, op7
+        op0, op1, op2, op3, op4, op5, op6, op7,
+        %GL_L, %GL_H, %GL_L, %GL_H, %GL_L, %GL_H, %GL_L, %GL_H,
+        8, 1
     } is
     Binary.resultValidRange {
-        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7]
+        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7],
+        Binary.b[0], Binary.b[1], Binary.b[2], Binary.b[3], Binary.b[4], Binary.b[5], Binary.b[6], Binary.b[7],
+        Binary.lOpcode, Binary.lCout
     };
 
 /////////

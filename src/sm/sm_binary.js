@@ -29,7 +29,7 @@ module.exports.buildConstants = async function (pols) {
         pols.P_CIN,
         pols.P_LAST,
         pols.P_OPCODE,
-        pols.P_USE_CARRY,
+        pols.P_USE,
         pols.P_C,
         pols.P_COUT,
         N);
@@ -125,7 +125,7 @@ function buildP_LAST(pol, pol_size, accumulated_size, N) {
         * 0 -> C
         * 0 -> COUT
  */
-function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, pol_c, pol_cout, N) {
+function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use, pol_c, pol_cout, N) {
     // All opcodes
     let carry = 0;
     for (let i = 0; i < N; i++) {
@@ -137,7 +137,7 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                 let sum = pol_cin[i] + pol_a + pol_b;
                 pol_c[i] = sum & 255n;
                 pol_cout[i] = sum >> 8n;
-                pol_use_carry[i] = 0n;
+                pol_use[i] = 0n;
                 break;
             // SUB   (OPCODE = 1)
             case 1n:
@@ -148,10 +148,12 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                     pol_c[i] =  255n - pol_b + pol_a - pol_cin[i] + 1n;
                     pol_cout[i] = 1n;
                 }
-                pol_use_carry[i] = 0n;
+                pol_use[i] = 0n;
                 break;
             // LT    (OPCODE = 2)
+            // LT4   (OPCODE = 8)
             case 2n:
+            case 8n:
                 if (pol_a < pol_b) {
                     pol_cout[i] = 1n;
                     pol_c[i] = pol_last[i] ? 1n : 0n;
@@ -162,7 +164,8 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                     pol_cout[i] = 0n;
                     pol_c[i] = 0n;
                 }
-                pol_use_carry[i] = pol_last[i] ? 1n : 0n;
+                const useValue = pol_opc[i] === 2n ? 1n : (pol_cout[i] + 1n);
+                pol_use[i] = pol_last[i] ? useValue : 0n;
                 break;
             // SLT   (OPCODE = 3)
             case 3n:
@@ -202,7 +205,7 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                         }
                     }
                 }
-                pol_use_carry[i] = pol_last[i] ? 1n : 0n;
+                pol_use[i] = pol_last[i] ? 1n : 0n;
                 break;
             // EQ    (OPCODE = 4)
             case 4n:
@@ -214,9 +217,9 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                     pol_c[i] = 0n
                 }
                 if (pol_last[i]) pol_cout[i] = (1n - pol_cout[i]);
-                pol_use_carry[i] = pol_last[i] ? 1n : 0n;
-
+                pol_use[i] = pol_last[i] ? 1n : 0n;
                 break;
+
             // AND   (OPCODE = 5)
             case 5n:
                 pol_c[i] = pol_a & pol_b;
@@ -225,25 +228,28 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                 } else {
                     pol_cout[i] = 1n;
                 }
-                pol_use_carry[i] = 0n;
+                pol_use[i] = 0n;
                 break;
+
             // OR    (OPCODE = 6)
             case 6n:
                 pol_c[i] = pol_a | pol_b;
                 pol_cout[i] = 0n;
-                pol_use_carry[i] = 0n;
+                pol_use[i] = 0n;
                 break;
+
             // XOR   (OPCODE = 7)
             case 7n:
                 pol_c[i] = pol_a ^ pol_b;
                 pol_cout[i] = 0n;
-                pol_use_carry[i] = 0n;
+                pol_use[i] = 0n;
                 break;
-            // NOP   (OPCODE = 8)
+
+
             default:
                 pol_c[i] = 0n;
                 pol_cout[i] = 0n;
-                pol_use_carry[i] = 0n;
+                pol_use[i] = 0n;
         }
     }
 }
@@ -278,6 +284,8 @@ module.exports.execute = async function (pols, input) {
         pols.lCout[i] = 0n;
         pols.lOpcode[i] = 0n;
         pols.useCarry[i] = 0n;
+        pols.usePreviousAreLt4[i] = 0n;
+        pols.previousAreLt4[i] = 0n;
         pols.resultBinOp[i] = 0n;
         pols.resultValidRange[i] = 0n;
     }
@@ -287,6 +295,8 @@ module.exports.execute = async function (pols, input) {
     // Process all the inputs
     for (var i = 0; i < input.length; i++) {
         if (i % 10000 === 0) console.log(`Computing binary pols ${i}/${input.length}`);
+
+        let previousAreLt4 = 0n;
         for (var j = 0; j < STEPS; j++) {
             const last = (j == (STEPS - 1)) ? 1n : 0n;
             const index = i * STEPS + j;
@@ -296,6 +306,7 @@ module.exports.execute = async function (pols, input) {
             let cOut = 0n;
             const reset = (j == 0) ? 1n:0n;
             let useCarry = 0n;
+            let usePreviousAreLt4 = 0n;
             for (let k = 0; k < 2; ++k) {
                 cIn = (k == 0) ? pols.cIn[index] : cOut;
                 const byteA = BigInt(input[i]["a_bytes"][j * 2 + k]);
@@ -303,13 +314,16 @@ module.exports.execute = async function (pols, input) {
                 const byteC = BigInt(input[i]["c_bytes"][j * 2 + k]);
                 const resetByte = reset && k == 0;
                 const lastByte = last && k == 1;
+                const byteIndex = j * 2 + k;
+
                 pols.freeInA[k][index] = byteA;
                 pols.freeInB[k][index] = byteB;
                 pols.freeInC[k][index] = byteC;
 
-                // carry management
+                // ONLY for carry, ge4 management
 
-                switch (BigInt(input[i].opcode)) {
+                const opcode = BigInt(input[i].opcode);
+                switch (opcode) {
 
                     // ADD   (OPCODE = 0)
                     case 0n:
@@ -328,6 +342,8 @@ module.exports.execute = async function (pols, input) {
 
                     // LT    (OPCODE = 2)
                     case 2n:
+                    // LT4   (OPCODE = 8)
+                    case 8n:
                         if (resetByte) {
                             pols.freeInC[0][index] = BigInt(input[i]["c_bytes"][STEPS-1]); // Only change the freeInC when reset or Last
                         }
@@ -339,7 +355,11 @@ module.exports.execute = async function (pols, input) {
                             cOut = 0n;
                         }
                         if (lastByte) {
-                            useCarry = 1n;
+                            if (opcode == 2n || cOut == 0n) {
+                                useCarry = 1n;
+                            } else {
+                                usePreviousAreLt4 = 1n;
+                            }
                             pols.freeInC[1][index] = BigInt(input[i]["c_bytes"][0]);
                         }
                         break;
@@ -401,6 +421,7 @@ module.exports.execute = async function (pols, input) {
                             pols.freeInC[k][index] = BigInt(input[i]["c_bytes"][0]); // Only change the freeInC when reset or Last
                         }
                         break;
+
                     // AND    (OPCODE = 5)
                     case 5n:
                         // setting carry if result of AND was non zero
@@ -411,10 +432,17 @@ module.exports.execute = async function (pols, input) {
                         }
 
                         break;
+
                     default:
                         cIn = 0n;
                         cOut = 0n;
                         break;
+                }
+
+                if (byteIndex == 7) {
+                    previousAreLt4 = cOut;
+                } else if (byteIndex == 15 || byteIndex == 23) {
+                    previousAreLt4 = previousAreLt4 * cOut;
                 }
 
                 // setting carries
@@ -425,9 +453,13 @@ module.exports.execute = async function (pols, input) {
                 }
             }
             pols.useCarry[index] = useCarry;
+            pols.usePreviousAreLt4[index] = usePreviousAreLt4;
 
             const nextIndex = (index + 1) % N;
             const nextReset = (nextIndex % STEPS) == 0 ? 1n:0n;
+
+            pols.previousAreLt4[nextIndex] = previousAreLt4;
+
             // We can set the cIn and the LCin when RESET =1
             if (nextReset) {
                 pols.cIn[nextIndex] = 0n;
@@ -441,14 +473,14 @@ module.exports.execute = async function (pols, input) {
             pols.b[0][nextIndex] = pols.b[0][index] * (1n - reset) + pols.freeInB[0][index] * FACTOR[0][index] + 256n * pols.freeInB[1][index] * FACTOR[0][index];
 
             c0Temp[index] = pols.c[0][index] * (1n - reset) + pols.freeInC[0][index] * FACTOR[0][index] + 256n * pols.freeInC[1][index] * FACTOR[0][index];
-            pols.c[0][nextIndex] = pols.useCarry[index] ? pols.cOut[index] : c0Temp[index];
+            pols.c[0][nextIndex] = pols.useCarry[index] ? pols.cOut[index] : (pols.usePreviousAreLt4[index] ? pols.previousAreLt4[index] : c0Temp[index]);
 
             if (index % 10000 === 0) console.log(`Computing final binary pols ${index}/${N}`);
 
             for (let k = 1; k < REGISTERS_NUM; k++) {
                 pols.a[k][nextIndex] = pols.a[k][index] * (1n - reset) + pols.freeInA[0][index] * FACTOR[k][index] + 256n * pols.freeInA[1][index] * FACTOR[k][index];
                 pols.b[k][nextIndex] = pols.b[k][index] * (1n - reset) + pols.freeInB[0][index] * FACTOR[k][index] + 256n * pols.freeInB[1][index] * FACTOR[k][index];
-                if (last && useCarry) {
+                if (last && (useCarry || usePreviousAreLt4)) {
                     pols.c[k][nextIndex] = 0n;
                 } else {
                     pols.c[k][nextIndex] = pols.c[k][index] * (1n - reset) + pols.freeInC[0][index] * FACTOR[k][index] + 256n * pols.freeInC[1][index] * FACTOR[k][index];
@@ -479,7 +511,26 @@ module.exports.execute = async function (pols, input) {
             pols.c[j][nextIndex] = pols.c[j][index] * (1n - reset) + pols.freeInC[0][index] * FACTOR[j][index] + 256n * pols.freeInC[1][index] * FACTOR[j][index];
         }
     }
+/*
+    for (let index = 783; index < 801; ++index) {
+        console.log('a = '+toStringItems(pols.a, index));
+        console.log('b = '+toStringItems(pols.b, index));
+        console.log('c = '+toStringItems(pols.c, index));
+        console.log(`${index} ${index%16} freeInA = ${toStringItems(pols.freeInA, index, 2)} freeInB = ${toStringItems(pols.freeInB, index, 2)} freeInC = ${toStringItems(pols.freeInC, index)}`);
+        console.log(`${index} ${index%16} useCarry = ${pols.useCarry[index]} usePreviousAreLt4 = ${pols.usePreviousAreLt4[index]} previousAreLt4 = ${pols.previousAreLt4[index]} cIn = ${pols.cIn[index]} cMiddle = ${pols.cMiddle[index]} cOut = ${pols.cOut[index]}`);
+    }
+*/
 }
+
+function toStringItems(pol, index, length = 8, sep = '|') {
+    const count = pol.length;
+    const values = [];
+    for (let j = 0; j < count; ++j) {
+        values.push(pol[j][index].toString(16).padStart(length, '0'));
+    }
+    return values.join(sep);
+}
+
 
 function prepareInput256bits(input, N) {
     // Process all the inputs

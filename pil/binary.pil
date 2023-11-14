@@ -10,6 +10,7 @@
         - [X] AND   (OPCODE = 5)
         - [X] OR    (OPCODE = 6)
         - [X] XOR   (OPCODE = 7)
+        - [X] LT4   (OPCODE = 8)
 */
 
 include "global.pil";
@@ -22,7 +23,7 @@ namespace Binary(%N);
     //  Plockup polinomials
     //  ==============================================================
     //  ==== IN ====
-    //  P_OPCODE         (3  bits) Operation code
+    //  P_OPCODE         (4  bits) Operation code
     //  P_CIN            (1  bits) Carry in
     //  P_LAST           (1  bits) Last byte
     //  Global.BYTE_2A   (8  bits) Input A
@@ -30,9 +31,9 @@ namespace Binary(%N);
     //  ==== OUT ======
     //  P_C         (8 bits) Output C
     //  P_COUT      (1  bits) Carry out
-    //  P_USE_CARRY (1  bits) Carry out
+    //  P_USE_CARRY (2  bits) Use carry out or ge4
     //  ==== TOTAL ====
-    //  3 + 1 + 1 + 8 + 8 = 21 bits
+    //  4 + 1 + 1 + 8 + 8 = 22 bits
     //  ==============================================================
     //  NAME    | 0 | 1 | 2 | 3 | ... | 32 |
     //  ==============================================================
@@ -40,7 +41,7 @@ namespace Binary(%N);
     //  FACTOR1 | 0x0 | 0x0     | 0x1 | 0x10000 | ... | 0x0 | 0x0
     //  ...
     //  FACTOR7 | 0x0 | 0x0     | 0x0 | 0x0     | ... | 0x1 | 0x10000
-    pol constant P_OPCODE, P_CIN, P_LAST, P_USE_CARRY;
+    pol constant P_OPCODE, P_CIN, P_LAST, P_USE;
     pol constant P_C, P_COUT;
 
     pol RESET = Global.CLK32[0] + Global.CLK32[16];
@@ -64,8 +65,9 @@ namespace Binary(%N);
     pol commit opcode;
     pol commit cIn, cMiddle, cOut;
     pol commit lCout,lOpcode;
+    pol commit previousAreLt4;
 
-    pol commit useCarry;
+    pol commit useCarry, usePreviousAreLt4;
     pol commit resultBinOp;
     pol commit resultValidRange;
 
@@ -80,11 +82,29 @@ namespace Binary(%N);
 
     cIn' = cOut * ( 1 - RESET' );
 
-    lCout' = cOut;
+    // each 4 clocks this sm was processed 8 bytes = 64 bits, last clock isn't relevant
+    // last clock cOut it's ignored because:
+    // - last cout == 0 => means LT4 = 0 (at least last A chunk of 64 isn't less than B, if previous chunks are less than B, it doesn't matter.
+    // - last cout == 1 => means last A chuck is less than B, in this path result only deepends of ge4 value.
+
+    pol LT4_PROPAGATE = /* NO 0-2,3 */ +  Global.CLK32[4] + Global.CLK32[5] + Global.CLK32[6] + /* NO 7 */ + Global.CLK32[8] + Global.CLK32[9]
+                        + Global.CLK32[10] + /* NO 11 */ + Global.CLK32[12] + Global.CLK32[13] + Global.CLK32[14] + Global.CLK32[15]
+                        /* NO 16-18,19 */ +  Global.CLK32[20] + Global.CLK32[21] + Global.CLK32[22] + /* NO 23 */ + Global.CLK32[24] + Global.CLK32[25]
+                        + Global.CLK32[26] + /* NO 27 */ + Global.CLK32[28] + Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31];
+
+    pol cOut23 = (Global.CLK32[7] + Global.CLK32[11] + Global.CLK32[23] + Global.CLK32[27]) * cOut;
+
+    previousAreLt4' = (Global.CLK32[3] + Global.CLK32[19]) * cOut + previousAreLt4 * (LT4_PROPAGATE + cOut23);
+
+    lCout' = cOut + usePreviousAreLt4 * (previousAreLt4 - cOut);
     lOpcode' = opcode;
 
-    {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
-    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    useCarry * (1 - useCarry) = 0;
+    usePreviousAreLt4 * (1 - usePreviousAreLt4) = 0;
+    previousAreLt4 * (1 - previousAreLt4) = 0;
+
+    {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE, P_C, P_COUT};
+    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry + 2 * usePreviousAreLt4, freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE, P_C, P_COUT};
 
     a[0]' = a[0] * (1 - RESET) + freeInA[0] * FACTOR[0] + 256 * freeInA[1] * FACTOR[0];
     a[1]' = a[1] * (1 - RESET) + freeInA[0] * FACTOR[1] + 256 * freeInA[1] * FACTOR[1];
@@ -105,7 +125,7 @@ namespace Binary(%N);
     b[7]' = b[7] * (1 - RESET) + freeInB[0] * FACTOR[7] + 256 * freeInB[1] * FACTOR[7];
 
     pol c0Temp = c[0] * (1 - RESET) + freeInC[0] * FACTOR[0] + 256 * freeInC[1] * FACTOR[0];
-    c[0]' = useCarry * (cOut - c0Temp ) + c0Temp;
+    c[0]' = useCarry * (cOut - c0Temp ) + usePreviousAreLt4 * (previousAreLt4 - c0Temp ) + c0Temp;
 
     c[1]' = c[1] * (1 - RESET) + freeInC[0] * FACTOR[1] + 256 * freeInC[1] * FACTOR[1];
     c[2]' = c[2] * (1 - RESET) + freeInC[0] * FACTOR[2] + 256 * freeInC[1] * FACTOR[2];
@@ -115,4 +135,4 @@ namespace Binary(%N);
     c[6]' = c[6] * (1 - RESET) + freeInC[0] * FACTOR[6] + 256 * freeInC[1] * FACTOR[6];
 
     pol c7Temp = c[7] * (1 - RESET) + freeInC[0] * FACTOR[7] + 256 * freeInC[1] * FACTOR[7];
-    c[7]' = (1 - useCarry) * c7Temp;
+    c[7]' = (1 - useCarry - usePreviousAreLt4) * c7Temp;

@@ -1,6 +1,6 @@
 const fs = require("fs")
 const { compile } = require("pilcom");
-const starkInfoGen = require("../../node_modules/pil-stark/src/starkinfo.js");
+const starkInfoGen = require("../../node_modules/pil-stark/src/stark/stark_info.js");
 const { F1Field } = require("ffjavascript");
 const { title } = require("process");
 const F = new F1Field("0xFFFFFFFF00000001");
@@ -70,6 +70,10 @@ async function main(){
         l2' = 2 * l2 + l1 + L1;
         pol l3l2 = l3 * l2;
         l3' = l3l2 * l1 + L1;
+    `)});
+    table.push({title: 'BASE + 1 pol constant alias', ...await pilInfo(
+        codeBase +`
+        pol constant L3; pol L2 = L1 + L1; l1 * l1 = L2;
     `)});
     table.push({title: 'BASE + 1 plookup (1 column)', ...await pilInfo(
         codeBase +`
@@ -170,6 +174,29 @@ async function main(){
         codeBase +`
         l3 {l1, l2} is l2 {L1, L1};
         l1 {l2, l3} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 3 permutation check (2 columns + leftsel + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1, l2} is l2 {l2, L1};
+        l1 {l2, l3} is l3 {L1, l3};
+        l2 {l2, l3} is l1 {l1, l2};
+    `)});
+
+    table.push({title: 'BASE + 2 permutation check (2 columns + leftsel+ + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1, l2} is l2 {L1, L1};
+        l1+l2 {l2, l3} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 2 permutation check (2 columns + leftsel* + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1, l2} is l2 {L1, L1};
+        l1*l2 {l2, l3} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 2 permutation check (2 columns + leftsel* + rightsel)', ...await pilInfo(
+        codeBase +`
+        pol l1l2 = l1*l2;
+        l3 {l1, l2} is l2 {L1, L1};
+        l1l2 {l2, l3} is l3 {L1, L1};
     `)});
 
     const titleWidth = Math.max(...table.map((x) => x.title.length));

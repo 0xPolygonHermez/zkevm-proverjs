@@ -1,4 +1,7 @@
 namespace Global(%N);
+    constant %GL_H = 0xFFFFFFFF;
+    constant %GL_L = 0x00000001;
+
     pol constant L1;    // 1, 0, 0, 0, 0,
     pol constant LLAST; // 0,0,0,0,0, ...., 0, 1
     pol constant BYTE;
