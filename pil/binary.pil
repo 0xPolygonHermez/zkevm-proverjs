@@ -91,8 +91,9 @@ namespace Binary(%N);
     //
     // reset4             (binary value *) flag to indicate that carry was reset each 4 clocks
     //
-    // NOTE: (*) to validate usePreviousAreLt4, reset4 uses a composition (reset4 * 4 + usePreviousAreLt4 * 2 + useCarry) over P_FLAGS,
-    // MUST check that these THREE pols are binary
+    // NOTE: (*) to validate flags usePreviousAreLt4, reset4, useCarry and cOut use a composition:
+    //           (cout + 2 * useCarry + 4 *  usePreviousAreLt4 + 8 * reset4) in P_FLAGS.
+    //           with optimization this flags MUST BE constrainet to binary.
     //
     // NOTE: (**) binary is checked by lookup values
 
@@ -105,6 +106,7 @@ namespace Binary(%N);
     previousAreLt4 * (1 - previousAreLt4) = 0;
     reset4 * (1 - reset4) = 0;
     useCarry * (1 - useCarry) = 0;
+    cOut * (1 - cOut) = 0;
 
     pol commit resultBinOp;
     pol commit resultValidRange;
@@ -168,6 +170,13 @@ namespace Binary(%N);
     b[6]' = b[6] * (1 - RESET) + freeInB[0] * FACTOR[6] + 256 * freeInB[1] * FACTOR[6];
     b[7]' = b[7] * (1 - RESET) + freeInB[0] * FACTOR[7] + 256 * freeInB[1] * FACTOR[7];
 
+    // In last clock when useCarry o usePreviousAreLt4, the value of c[0] needs to change
+    // to result (0 or 1). First clock, freeInC must be changed to match with lookup
+    // because lookup is a static table (has a 0 for comparators), but useCarry or
+    // usePreviousAreLt4 are dynamic. Otherwise they are enabled only in last byte
+    // (verified lookup only enabled when P_LAST = 1). In last byte only FACTOR[7]
+    // is active, and freeInC only affects to c[7]'
+
     pol c0Temp = c[0] * (1 - RESET) + freeInC[0] * FACTOR[0] + 256 * freeInC[1] * FACTOR[0];
     c[0]' = useCarry * (cOut - c0Temp ) + usePreviousAreLt4 * (previousAreLt4 - c0Temp ) + c0Temp;
 
@@ -177,6 +186,11 @@ namespace Binary(%N);
     c[4]' = c[4] * (1 - RESET) + freeInC[0] * FACTOR[4] + 256 * freeInC[1] * FACTOR[4];
     c[5]' = c[5] * (1 - RESET) + freeInC[0] * FACTOR[5] + 256 * freeInC[1] * FACTOR[5];
     c[6]' = c[6] * (1 - RESET) + freeInC[0] * FACTOR[6] + 256 * freeInC[1] * FACTOR[6];
+
+    // In last byte when useCarry o usePreviousAreLt4, freeInC must be changed to match with lookup
+    // because lookup is a static table, but useCarry and usePreviousAreLt4 are dynamic.
+    // Otherwise useCarry and usePreviousAreLt4 only are enabled in last byte (verified lookup only
+    // enabled when P_LAST = 1). In last byte only FACTOR[7] is active, and freeInC only affects to c[7]'
 
     pol c7Temp = c[7] * (1 - RESET) + freeInC[0] * FACTOR[7] + 256 * freeInC[1] * FACTOR[7];
     c[7]' = (1 - useCarry - usePreviousAreLt4) * c7Temp;

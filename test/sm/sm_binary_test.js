@@ -659,7 +659,7 @@ const error_input = [
         type: 1,
     },
     // w=9 Binary.w=[144,159]
-{
+    {
         a: "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
         b: "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
         c: "0E0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
@@ -693,7 +693,124 @@ const error_input = [
         carry: 1n,
         opcode: "2",  // LT
         type: 1,
-    }
+    },
+    // w=13 Binary.w=[208..223]
+    {
+        a: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        b: "FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001",
+        c: "0",
+        carry: 1,
+        opcode: "8", // LT4
+        type: 1,
+    },
+    // w=14 Binary.w=[224..239]
+    {
+        a: "FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000",
+        b: "FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001",
+        c: "1000000000000000000000000000000000000000000000000000000000000001",
+        carry: 1,
+        opcode: "8", // LT4
+        type: 1,
+    },
+    // w=15 Binary.w=[240..255]
+    {
+        a: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        b: "000000000000000000000000000000000000000000000000FFFFFFFF00000001",
+        c: "1",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=16 Binary.w=[256..271]
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        c: "0",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
+    // w=17 Binary.w=[272..287]
+    {
+        a: "FFEFFFFFFFFFFFFF000000000000000000000000000000000000000000000000",
+        b: "FFFEFFFFFFFFFFFF000000000000000000000000000000000000000000000000",
+        c: "0000000000000000000000000000000000000000000000000000000000000001",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=18 Binary.w=[288..303]
+    {
+        a: "FFEFFFFFFFFFFFFF00000000000000000000000000000000FFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFF00000000000000000000000000000000FFFEFFFFFFFFFFFF",
+        c: "1",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
+    // w=19 Binary.w=[304..320]
+    {
+        a: "FFEFFFFFFFFFFFFF0000000000000000FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFF0000000000000000FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF",
+        c: "1",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=20
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF0000000000000000FFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF0000000000000000FFFEFFFFFFFFFFFF",
+        c: "1",
+        carry: 0,
+        opcode: "8",
+        type: 1,
+    },
+    // w=21
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF0000000000000000",
+        b: "FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF0000000000000000",
+        c: "1",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
+    // w=22
+    {
+        a: "0000000000000000FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "0000000000000000FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF",
+        c: "1",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
+    // w=23
+    {
+        a: "FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000",
+        b: "FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001",
+        c: "1000000000000000000000000000000000000000000000000000000000000001",
+        carry: 1,
+        opcode: "8",
+        type: 2,
+    },
+    // w=24 Binary.w=[256..271]
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF",
+        b: "FFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        c: "1000000000000000000000000000000000000000000000000000000000000000",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
+    // w=25
+    {
+        a: "FFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFF0000000000000000",
+        b: "FFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFEFFFFFFFFFFFF0000000000000000",
+        c: "1000000000000000000000000000000000000000000000000000000000000000",
+        carry: 1,
+        opcode: "8",
+        type: 1,
+    },
 ]
 
 
@@ -785,6 +902,7 @@ describe("test plookup operations", async function () {
     }
 
     it("It should verify the binary operations pil", async () => {
+        generateZkasmLt4Test(input.filter(x => x.opcode == 8));
         await preparePilFromString();
         cmPols = newCommitPolsArray(pil);
 
@@ -814,6 +932,17 @@ describe("test plookup operations", async function () {
         const index = res.indexOf(value);
         assert(index !== -1, "not found "+value);
         res.splice(index, 1);
+    }
+
+    function generateZkasmLt4Test(inputs) {
+
+        for (const _input of inputs) {
+            console.log(['    0x'+_input.a.padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_')+'n => A',
+                         '    0x'+_input.b.padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_')+'n => B',
+                         `    ${_input.carry} :LT4,${_input.carry?'JMPNC':'JMPC'}(OpBinLt4__CarryTestFail)`,
+                         `    $ => A :LT4,${_input.carry?'JMPNC':'JMPC'}(OpBinLt4__CarryTestFail)`,
+                         `    ${_input.carry} :ASSERT`, ''].join("\n"));
+        }
     }
 
     it("It should fail tests", async () => {
@@ -850,6 +979,12 @@ describe("test plookup operations", async function () {
         includes(res, prefix2 + 'w=159 values: 1:1,5,15,15,1,14,1' + suffix);
         includes(res, prefix2 + 'w=175 values: 1:1,6,176,180,0,164,0' + suffix);
         includes(res, prefix2 + 'w=191 values: 1:1,7,15,240,0,239,0' + suffix);
+
+        // P_C 0 vs 1 ==> 1,8,255,0,0,0,10 OK ==> (P_CIN=0 && !(A < B) ==> P_C = 0)
+        includes(res, prefix2 + 'w=255 values: 1:1,8,255,0,0,1,10' + suffix);
+
+        // P_C 0 vs 1 ==> 1:1,8,0,0,0,0,10 OK ==> (P_CIN=0 && !(A < B) ==> P_C = 0)
+        includes(res, prefix2 + 'w=367 values: 1:1,8,0,0,0,1,10' + suffix);
 
         const pPrefix1 = '(string):4:  permutation not found ';
         const pPrefix2 = '(string):4:  permutation failed. Remaining ';
@@ -888,7 +1023,58 @@ describe("test plookup operations", async function () {
         includes(res, pPrefix1 + 'w=12 values: 1:2,255,0,0,0,0,0,0,0,65280,0,0,0,0,0,0,0,1,0,0,0,0,0,0,268435456,1');
         includes(res, pPrefix2 +    '1 values: 1:2,255,0,0,0,0,0,0,0,65280,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1');
 
+        // LT4 c[0] 0 vs 1
+        includes(res, pPrefix1 + 'w=13 values: 1:8,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,1,4294967295,1,4294967295,1,4294967295,1,4294967295,0,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix2 +    '1 values: 1:8,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,1,4294967295,1,4294967295,1,4294967295,1,4294967295,0,0,0,0,0,0,0,0,0');
+
+        // LT4 c[7] 0 vs 0x10000000 (268435456)
+        includes(res, pPrefix1 + 'w=14 values: 1:8,0,4294967295,0,4294967295,0,4294967295,0,4294967295,1,4294967295,1,4294967295,1,4294967295,1,4294967295,1,0,0,0,0,0,0,268435456,1');
+        includes(res, pPrefix2 +    '1 values: 1:8,0,4294967295,0,4294967295,0,4294967295,0,4294967295,1,4294967295,1,4294967295,1,4294967295,1,4294967295,1,0,0,0,0,0,0,0,1');
+
+        // LT4 carry 1 vs 0
+        includes(res, pPrefix1 + 'w=15 values: 1:8,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,1,4294967295,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +    '1 values: 1:8,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,1,4294967295,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0');
+
+        // LT4 carry 1 vs 0
+        includes(res, pPrefix1 + 'w=17 values: 1:8,0,0,0,0,0,0,4294967295,4293918719,0,0,0,0,0,0,4294967295,4294901759,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +    '1 values: 1:8,0,0,0,0,0,0,4294967295,4293918719,0,0,0,0,0,0,4294967295,4294901759,0,0,0,0,0,0,0,0,0');
+
+        // LT4 C[0] 1 vs 0 , carry 1 vs 0
+        includes(res, pPrefix1 + 'w=18 values: 1:8,4294967295,4293918719,0,0,0,0,4294967295,4293918719,4294967295,4294901759,0,0,0,0,4294967295,4294901759,1,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix2 +    '1 values: 1:8,4294967295,4293918719,0,0,0,0,4294967295,4293918719,4294967295,4294901759,0,0,0,0,4294967295,4294901759,0,0,0,0,0,0,0,0,0');
+
+        // LT4 carry 1 vs 0
+        includes(res, pPrefix1 + 'w=19 values: 1:8,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4293918719,4294967295,4294901759,4294967295,4294901759,0,0,4294967295,4294901759,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +    '1 values: 1:8,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4293918719,4294967295,4294901759,4294967295,4294901759,0,0,4294967295,4294901759,0,0,0,0,0,0,0,0,0');
+
+        // LT4 carry 1 vs 0
+        includes(res, pPrefix1 + 'w=20 values: 1:8,4294967295,4293918719,0,0,4294967295,4293918719,4294967295,4293918719,4294967295,4294901759,0,0,4294967295,4294901759,4294967295,4294901759,1,0,0,0,0,0,0,0,0');
+        includes(res, pPrefix2 +    '1 values: 1:8,4294967295,4293918719,0,0,4294967295,4293918719,4294967295,4293918719,4294967295,4294901759,0,0,4294967295,4294901759,4294967295,4294901759,0,0,0,0,0,0,0,0,0');
+
+        // LT4 C[0] 0 vs 1/0 , C[7] 0 vs 0/0x10000000, carry 0 vs 1/1 (NOTE: 268435456 = 0x10000000)
+        includes(res, pPrefix1 + 'w=21 values: 1:8,0,0,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4294901759,4294967295,4294901759,4294967295,4294901759,1,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix1 + 'w=25 values: 1:8,0,0,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4294901759,4294967295,4294901759,4294967295,4294901759,0,0,0,0,0,0,0,268435456,1');
+        includes(res, pPrefix2 +    '2 values: 1:8,0,0,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4294901759,4294967295,4294901759,4294967295,4294901759,0,0,0,0,0,0,0,0,0');
+
+        // LT4 C[0] 1 vs 0 , carry 1 vs 0
+        includes(res, pPrefix1 + 'w=22 values: 1:8,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4294901759,4294967295,4294901759,4294967295,4294901759,0,0,1,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix2 +    '1 values: 1:8,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,0,0,4294967295,4294901759,4294967295,4294901759,4294967295,4294901759,0,0,0,0,0,0,0,0,0,0,0');
+
+        // LT4 C[0] 1 vs 0/0, C[7] 0 vs 0/0x10000000 (NOTE: 268435456 = 0x10000000)
+        includes(res, pPrefix1 + 'w=16 values: 1:8,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294901759,0,0,0,0,0,0,0,0,1');
+        includes(res, pPrefix1 + 'w=24 values: 1:8,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294901759,0,0,0,0,0,0,0,268435456,1');
+        includes(res, pPrefix2 +    '2 values: 1:8,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,4294967295,4293918719,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294967295,4294901759,1,0,0,0,0,0,0,0,1');
+
+
+/*
+binary.pil:150:  plookup not found w=255 values: 1:1,8,255,0,0,1,10
+binary.pil:150:  plookup not found w=367 values: 1:1,8,0,0,0,1,10
+
+*/
         for (let i = 0; i < res.length; i++) {
+            if (i === 0) {
+                console.log('######################## NON EXPECTED ERRORS ######################');
+            }
             console.log(res[i]);
         }
         expect(res.length).to.eq(0);
