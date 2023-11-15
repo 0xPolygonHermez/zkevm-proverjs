@@ -1285,7 +1285,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashPDigest || l.sWR) {
             const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
+            required.Binary.push({a: op, b: 0xFFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001n, c: 1n, opcode: 8, type: 2});
         }
 
         if (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5) {

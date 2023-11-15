@@ -902,7 +902,7 @@ describe("test plookup operations", async function () {
     }
 
     it("It should verify the binary operations pil", async () => {
-        generateZkasmLt4Test(input.filter(x => x.opcode == 8));
+        // generateZkasmLt4Test(input.filter(x => x.opcode == 8));
         await preparePilFromString();
         cmPols = newCommitPolsArray(pil);
 
