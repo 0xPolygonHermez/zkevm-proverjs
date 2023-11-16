@@ -43,6 +43,8 @@ namespace Binary(%N);
 
     pol RESET = Global.CLK8[0] + Global.CLK8[4];
     pol constant FACTOR[2];
+    pol constant P_OP32BITS;
+
 
     // ############################################################
     // COMMIT POLINOMIALS
@@ -81,8 +83,17 @@ namespace Binary(%N);
     lCout' = cOut;
     lOpcode' = opcode;
 
-    {0, opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
-    {resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT};
+    // current operation is 32-bits
+    pol commit op32bits;
+
+    // CLK8[0] Byte 0, Byte 1
+    // CLK8[1] Byte 2, Byte 3
+    // CLK8[2] Byte 4, Byte 5 |
+    // CLK8[3] Byte 6, Byte 7 | zero on 32 bits operations
+
+    // Global.CLK8[2] + Global.CLK8[6]
+    {op32bits * (Global.CLK8[2] + Global.CLK8[3] + Global.CLK8[6] + Global.CLK8[7]), opcode, freeInA[0], freeInB[0], cIn, 0, freeInC[0], cMiddle, op32bits} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT, P_OP32BITS};
+    {op32bits * (Global.CLK8[2] + Global.CLK8[6]) + resultValidRange' + resultBinOp', opcode, freeInA[1], freeInB[1], cMiddle, useCarry ,freeInC[1], cOut, op32bits} in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_USE_CARRY, P_C, P_COUT, P_OP32BITS};
 
     a[0]' = a[0] * (1 - RESET) + freeInA[0] * FACTOR[0] + 256 * freeInA[1] * FACTOR[0];
     a[1]' = a[1] * (1 - RESET) + freeInA[0] * FACTOR[1] + 256 * freeInA[1] * FACTOR[1];

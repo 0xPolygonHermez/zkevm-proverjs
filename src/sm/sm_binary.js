@@ -32,6 +32,7 @@ module.exports.buildConstants = async function (pols) {
         pols.P_USE_CARRY,
         pols.P_C,
         pols.P_COUT,
+        pols.P_OP32BITS,
         N);
 }
 
@@ -125,9 +126,10 @@ function buildP_LAST(pol, pol_size, accumulated_size, N) {
         * 0 -> C
         * 0 -> COUT
  */
-function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, pol_c, pol_cout, N) {
+function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, pol_c, pol_cout, pol_32bits, N) {
     // All opcodes
     let carry = 0;
+
     for (let i = 0; i < N; i++) {
         const pol_a = BigInt((i >> 8) & 0xFF);
         const pol_b = BigInt(i & 0xFF);
@@ -138,6 +140,15 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                 pol_c[i] = sum & 255n;
                 pol_cout[i] = sum >> 8n;
                 pol_use_carry[i] = 0n;
+                pol_32bits[i] = 0n;
+                break;
+            // ADD32   (OPCODE = 8)
+            case 8n:
+                let sum32 = pol_cin[i] + pol_a + pol_b;
+                pol_c[i] = pol_last[i] ? 0n : sum32 & 255n;
+                pol_cout[i] = pol_last[i] ? pol_cin[i] : sum32 >> 8n;
+                pol_use_carry[i] = 0n;
+                pol_32bits[i] = 1n;
                 break;
             // SUB   (OPCODE = 1)
             case 1n:
@@ -149,6 +160,7 @@ function buildP_C_P_COUT_P_USE_CARRY(pol_cin, pol_last, pol_opc, pol_use_carry, 
                     pol_cout[i] = 1n;
                 }
                 pol_use_carry[i] = 0n;
+                pol_32bits[i] = 0n;
                 break;
             // LT    (OPCODE = 2)
             case 2n:
