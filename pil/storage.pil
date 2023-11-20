@@ -159,7 +159,7 @@ namespace Storage(%N);
     rkeyBit' = setRkeyBit * (op0-rkeyBit) + rkeyBit;
     rkeyBit * (1 - rkeyBit) = 0;
 
-    level = setLevel * (op0-level) + level;
+    level' = setLevel * (op0-level) + level;
 
     // Instruction that guarantees that op = hash(hl, hr); the poseidon SM will do the work; the result will be feeded by free
     hash {

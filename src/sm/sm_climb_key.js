@@ -52,7 +52,7 @@ module.exports.buildConstants = async function (pols) {
                 pols.FACTOR[row] = factors[row % 4];
 
                 // { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT }
-                if (times === 0) console.log('PL 1:'+[pols.T_CLKEYSEL[row], pols.T_LEVEL[row], pols.T_CHUNK_VALUE[row], pols.T_CARRYLT_IN[row], pols.T_CARRYLT_OUT[row]].join(','));
+                // if (times === 0) console.log('PL 1:'+[pols.T_CLKEYSEL[row], pols.T_LEVEL[row], pols.T_CHUNK_VALUE[row], pols.T_CARRYLT_IN[row], pols.T_CARRYLT_OUT[row]].join(','));
             }
             if (carryIn < upToCarryIn) {
                 ++carryIn;
