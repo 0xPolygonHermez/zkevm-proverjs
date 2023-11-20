@@ -94,15 +94,16 @@ module.exports.execute = async function (pols, input) {
         const bit = BigInt(input[i].bit);
         let value = key[zlevel];
 
+        console.log(`INPUT #${i}: level:${level} bit:${bit} key:${key.join(',')} value:${value}/0x${value.toString(16)}`);
         let carry = bit;
         let lt = 0n;
         for (let clock = 0; clock < 4; ++clock) {
             const row = i * 4 + clock;
-            const chunkValue = value && 0x3FFFFn;
+            const chunkValue = value & 0x3FFFFn;
             const chunkValueCarry = chunkValue * 2n + carry;
             const glChunk = GL_CHUNKS[clock];
 
-            value = value << 18n;
+            value = value >> 18n;
 
             if (clock == 3) {
                 key[zlevel] = key[zlevel] * 2n + bit;
@@ -125,6 +126,8 @@ module.exports.execute = async function (pols, input) {
             pols.keySel2[row] = (clock === 3 && zlevel === 2) ? 1n : 0n;
             pols.keySel3[row] = (clock === 3 && zlevel === 3) ? 1n : 0n;
             pols.result[row] = clock === 2 ? 1n : 0n;
+            console.log(`TRACE w=${row} key:${pols.key0[row]},${pols.key1[row]},${pols.key2[row]},${pols.key3[row]} level:${pols.level[row]} value:0x${value.toString(16)} keyInChunk:0x${pols.keyInChunk[row].toString(16)} keyIn:0x${pols.keyIn[row].toString(16)}`+
+                         ` bit:${pols.bit[row]} carryLt:${pols.carryLt[row]} keySel:${pols.keySel0[row]},${pols.keySel1[row]},${pols.keySel2[row]},${pols.keySel3[row]} result:${pols.result[row]}`);
         }
     }
 }

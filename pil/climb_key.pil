@@ -64,14 +64,14 @@ keySel0' * (key0' - 2 * key0 - bit) + keySel1' * (key1' - 2 * key1 - bit) + keyS
 
 // keyIn[CLK3] = keyx[CLK2] (keyInChunks are valid and could rebuild keyx)
 // keyIn' - keyx = 0
-keyIn' - keySel0' * key0 - keySel1' * key1 - keySel2' * key2 - keySel3' * key3 = 0;
+CLK2 * keyIn' - keySel0' * key0 - keySel1' * key1 - keySel2' * key2 - keySel3' * key3 = 0;
 
 pol constant FACTOR;
 
-keyIn' = keyIn + FACTOR * keyInChunk;
+keyIn' = (1 - CLK3) * keyIn + FACTOR' * keyInChunk';
 
 // latch during all cycle
-(1 - CLK0) * (bit' - bit) = 0;
+(1 - CLK3) * (bit' - bit) = 0;
 
 pol constant T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT;
 
