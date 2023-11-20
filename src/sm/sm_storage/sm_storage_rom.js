@@ -133,6 +133,8 @@ class StorageRom
             process.exit(-1);
         }
 
+        // TODO: review lines padding !!!
+
         for (let i=0; i<j.program.length; i++) {
             let romLine = new StorageRomLine;
 
@@ -206,7 +208,6 @@ class StorageRom
             {
                 romLine.CONST = j.program[i].CONST;
             }
-
             this.line.push(romLine);
         }
     }

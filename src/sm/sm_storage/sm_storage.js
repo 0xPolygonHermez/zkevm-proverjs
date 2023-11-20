@@ -24,6 +24,7 @@ module.exports.buildConstants = async function (pols) {
     for (let i=0; i<polSize; i++) {
         const romLine = i % rom.line.length;
         const l = rom.line[romLine];
+        // if (i < rom.line.length) console.log({_:romLine, ...l});
 
         pols.CONST[i] = l.CONST ? fr.e(BigInt(l.CONST)) : fr.zero;
 
@@ -43,7 +44,7 @@ module.exports.buildConstants = async function (pols) {
         pols.IN_LEVEL[i] = l.inLEVEL ? BigInt(l.inLEVEL):0n;
 
         /*
-            code generated with:
+            code NO generated with:
             node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow" -B -e -p "l."
         */
 
@@ -57,18 +58,20 @@ module.exports.buildConstants = async function (pols) {
             + (l.climbBitN ? (2n**6n  * BigInt(l.climbBitN)) : 0n)
             + (l.jmpz ? (2n**7n  * BigInt(l.jmpz)) : 0n)
             + (l.jmp ? (2n**8n  * BigInt(l.jmp)) : 0n)
-            + (l.setHashLeft ? (2n**9n  * BigInt(l.setHashLeft)) : 0n)
-            + (l.setHashRight ? (2n**10n * BigInt(l.setHashRight)) : 0n)
-            + (l.setLevel ? (2n**11n * BigInt(l.setLevel)) : 0n)
-            + (l.setNewRoot ? (2n**12n * BigInt(l.setNewRoot)) : 0n)
-            + (l.setOldRoot ? (2n**13n * BigInt(l.setOldRoot)) : 0n)
-            + (l.setRkey ? (2n**14n * BigInt(l.setRkey)) : 0n)
-            + (l.setRkeyBit ? (2n**15n * BigInt(l.setRkeyBit)) : 0n)
-            + (l.setSiblingRkey ? (2n**16n * BigInt(l.setSiblingRkey)) : 0n)
-            + (l.setSiblingValueHash ? (2n**17n * BigInt(l.setSiblingValueHash)) : 0n)
-            + (l.setValueHigh ? (2n**18n * BigInt(l.setValueHigh)) : 0n)
-            + (l.setValueLow ? (2n**19n * BigInt(l.setValueLow)) : 0n);
+            + (l.setHASH_LEFT ? (2n**9n  * BigInt(l.setHASH_LEFT)) : 0n)
+            + (l.setHASH_RIGHT ? (2n**10n * BigInt(l.setHASH_RIGHT)) : 0n)
+            + (l.setLEVEL ? (2n**11n * BigInt(l.setLEVEL)) : 0n)
+            + (l.setNEW_ROOT ? (2n**12n * BigInt(l.setNEW_ROOT)) : 0n)
+            + (l.setOLD_ROOT ? (2n**13n * BigInt(l.setOLD_ROOT)) : 0n)
+            + (l.setRKEY ? (2n**14n * BigInt(l.setRKEY)) : 0n)
+            + (l.setRKEY_BIT ? (2n**15n * BigInt(l.setRKEY_BIT)) : 0n)
+            + (l.setSIBLING_RKEY ? (2n**16n * BigInt(l.setSIBLING_RKEY)) : 0n)
+            + (l.setSIBLING_VALUE_HASH ? (2n**17n * BigInt(l.setSIBLING_VALUE_HASH)) : 0n)
+            + (l.setVALUE_HIGH ? (2n**18n * BigInt(l.setVALUE_HIGH)) : 0n)
+            + (l.setVALUE_LOW ? (2n**19n * BigInt(l.setVALUE_LOW)) : 0n);
+        // if (i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
     }
+    console.log('StorageRom Done');
 }
 
 module.exports.execute = async function (pols, action) {

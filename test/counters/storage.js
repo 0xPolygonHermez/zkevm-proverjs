@@ -10,7 +10,7 @@ describe("Test Storage Counters", async function () {
 
     it("Verify Storage Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/storage.zkasm", true,
-            { defines: {N: 2 ** 18},
+            { defines: {N: 2 ** 22},
               namespaces: ['Global', 'Main', 'Storage', 'ClimbKey'],
               verbose: true,
               color: true,

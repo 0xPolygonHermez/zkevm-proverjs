@@ -1,6 +1,6 @@
 const fs = require("fs")
 const { compile } = require("pilcom");
-const starkInfoGen = require("../../node_modules/pil-stark/src/starkinfo.js");
+const starkInfoGen = require("../../node_modules/pil-stark/src/stark/stark_info.js");
 const { F1Field } = require("ffjavascript");
 const { title } = require("process");
 const F = new F1Field("0xFFFFFFFF00000001");
@@ -132,6 +132,14 @@ async function main(){
     table.push({title: 'BASE + 1 permutation check (3 columns)', ...await pilInfo(
         codeBase +`
         {l1, l2, l3} is {L1, L1, L1};
+    `)});
+    table.push({title: 'BASE + 1 permutation check (3 columns one im = prod)', ...await pilInfo(
+        codeBase +`
+        pol l1l3 = l1*l3; pol l1l2 = l1*l2; {l1, l1l2, l1l3} is {L1, L1, L1};
+    `)});
+    table.push({title: 'BASE + 1 permutation check (3 columns one commit = prod)', ...await pilInfo(
+        codeBase +`
+        pol l1l3 = l1*l3; pol commit l1l2; l1l2 = l1*l2; {l1, l1l2, l1l3} is {L1, L1, L1};
     `)});
     table.push({title: 'BASE + 1 permutation check (2 columns + leftsel)', ...await pilInfo(
         codeBase +`

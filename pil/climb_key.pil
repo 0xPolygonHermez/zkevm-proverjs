@@ -68,7 +68,8 @@ CLK2 * keyIn' - keySel0' * key0 - keySel1' * key1 - keySel2' * key2 - keySel3' *
 
 pol constant FACTOR;
 
-keyIn' = (1 - CLK3) * keyIn + FACTOR' * keyInChunk';
+// FACTOR [2**18, 2**36, 2**54, 1]
+keyIn' = (1 - CLK3) * keyIn + FACTOR * keyInChunk';
 
 // latch during all cycle
 (1 - CLK3) * (bit' - bit) = 0;
@@ -93,4 +94,4 @@ result * (1 - CLK2) = 0;
 
 pol clkeySel = CLK1 + 2 * CLK2 + 3 * CLK3 + 2**2 * keySel0 + 2**3 * keySel1 + 2**4 * keySel2 + 2**5 * keySel3; // keySelx is zero on CLK0,CLK1,CLK2
 
-{ clkeySel, level * CLK3, keyInChunk, CLK0 * (bit - carryLt) + carryLt, carryLt' } in { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT };
+{ clkeySel, level * CLK3, keyInChunk, CLK0 * (bit - carryLt) + carryLt, (1 - CLK3) * carryLt' } in { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT };

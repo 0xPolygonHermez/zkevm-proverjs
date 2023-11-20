@@ -10,13 +10,17 @@ module.exports.buildConstants = async function (pols) {
     const carryInSizes = [2, 2, 2, 2];
     const levelSizes = [1, 1, 1, 256];
     const chunkSizes = [2**18, 2**18, 2**18, 2**10];
-    const factors = [1n, 2n**18n, 2n**36n, 2n**54n];
+    const factors = [2n**18n, 2n**36n, 2n**54n, 1n];
     let level = 0;
     let ltIn = 0;
     let carryIn = 0;
 
+    console.log('N:'+N);
+    let times = 0;
     while (row < N) {
-        for (let clock = 0; clock < 4 && row < N; ++clock) {
+        let clock = 0;
+        while (clock < 4 && row < N) {
+            console.log(`FIXED row:${row} clock:${clock}`);
             const upToLtIn = ltInSizes[clock] - 1;
             const upToCarryIn = carryInSizes[clock] - 1;
             const upToLevel = levelSizes[clock] - 1;
@@ -24,39 +28,50 @@ module.exports.buildConstants = async function (pols) {
             const glChunk = GL_CHUNKS[clock];
 
             const carryLtIn = BigInt(carryIn + 2 * ltIn);
-            const clkeySel = BigInt(clock + (clock === 3 ? 4 << keyIndex : 0));
+            const clkeySel = BigInt(clock + (clock === 3 ? 4 << (level % 4) : 0));
             const _level = BigInt(level);
 
             // Fill all chunk values
+            console.log(`FIXED row:${row} clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${upToChunk-1}`);
             for (let chunk = 0; chunk < upToChunk; ++chunk) {
-                ++row;
-                if (row === N) break;
                 const result = 2 * chunk + carryIn;
                 const carryOut = (clock < 4 && result > upToChunk) ? 1: 0;
                 const chunkResult = result % (upToChunk + 1);
                 const ltOut = chunkResult > glChunk ? 0 : (chunkResult == glChunk ? ltIn : 1);
+                if (clock ===3 && (ltOut !== 1 || carryOut == 1)) {
+                    console.log(`FIXED clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${chunk-1}`);
+                    break;
+                }
+                ++row;
+                if (row === N) break;
                 pols.T_CLKEYSEL[row] = clkeySel;
                 pols.T_CHUNK_VALUE[row] = BigInt(chunk);
                 pols.T_CARRYLT_IN[row] = carryLtIn;
-                pols.T_CARRYLT_OUT[row] = BigInt(carryOut + 2 * ltOut);
+                pols.T_CARRYLT_OUT[row] = clock == 3 ? 0n : BigInt(carryOut + 2 * ltOut);
                 pols.T_LEVEL[row] = _level;
-                pols.FACTOR[row] = factors[clock];
-            }
+                pols.FACTOR[row] = factors[row % 4];
 
-            while (level <= upToLevel) {
-                if (carryIn < upToCarryIn) {
-                    ++carryIn;
-                    continue;
-                }
-                carryIn = 0;
-                if (ltIn < upToLtIn) {
-                    ++ltIn;
-                    continue;
-                }
-                ltIn = 0;
-                ++level;
+                // { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT }
+                if (times === 0) console.log('PL 1:'+[pols.T_CLKEYSEL[row], pols.T_LEVEL[row], pols.T_CHUNK_VALUE[row], pols.T_CARRYLT_IN[row], pols.T_CARRYLT_OUT[row]].join(','));
             }
+            if (carryIn < upToCarryIn) {
+                ++carryIn;
+                continue;
+            }
+            carryIn = 0;
+            if (ltIn < upToLtIn) {
+                ++ltIn;
+                continue;
+            }
+            ltIn = 0;
+            if (level < upToLevel) {
+                ++level;
+                continue;
+            }
+            level = 0;
+            ++clock;
         }
+        ++times;
     }
 }
 
@@ -100,8 +115,8 @@ module.exports.execute = async function (pols, input) {
         for (let clock = 0; clock < 4; ++clock) {
             const row = i * 4 + clock;
             const chunkValue = value & 0x3FFFFn;
-            const chunkValueCarry = chunkValue * 2n + carry;
             const glChunk = GL_CHUNKS[clock];
+            let chunkValueCarry = chunkValue * 2n + carry;
 
             value = value >> 18n;
 
@@ -119,6 +134,9 @@ module.exports.execute = async function (pols, input) {
             pols.bit[row] = bit;
             pols.carryLt[row] = carry + 2n * lt;
             carry = chunkValueCarry > 0x3FFFFn ? 1n : 0n;
+
+            // only compare 18 bits
+            chunkValueCarry = chunkValueCarry & 0x3FFFFn;
             lt = chunkValueCarry < glChunk ? 1n : (chunkValueCarry == glChunk ? lt : 0n);
 
             pols.keySel0[row] = (clock === 3 && zlevel === 0) ? 1n : 0n;
