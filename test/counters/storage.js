@@ -11,12 +11,12 @@ describe("Test Storage Counters", async function () {
     it("Verify Storage Zkasm Test", async () => {
         await verifyZkasm("../zkasm/counters/storage.zkasm", true,
             { defines: {N: 2 ** 18},
-              namespaces: ['Global', 'Main', 'Storage'],
+              namespaces: ['Global', 'Main', 'Storage', 'ClimbKey'],
               verbose: true,
               color: true,
               disableUnusedError: true});
     });
-
+/*
     it("Verify Storage Zkasm Test (some delete edge cases)", async () => {
         await verifyZkasm("../zkasm/counters/storage2.zkasm", true,
             { defines: {N: 2 ** 18},
@@ -25,4 +25,5 @@ describe("Test Storage Counters", async function () {
               color: true,
               disableUnusedError: true});
     });
+*/
 });

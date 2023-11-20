@@ -22,6 +22,7 @@ const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
 const smStorage = require("../src/sm/sm_storage/sm_storage.js");
+const smClimbKey = require("../src/sm/sm_climb_key.js");
 const { config } = require("yargs");
 
 module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
@@ -116,11 +117,21 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.buildConstants(constPols.Binary);
     }
 
+    if (constPols.ClimbKey) {
+        console.log("Const ClimbKey...");
+        await smClimbKey.buildConstants(constPols.ClimbKey);
+    }
+
     if (constPols !== false) {
         for (let i=0; i<constPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
-                if (typeof constPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+                const type = typeof constPols.$$array[i][j];
+                if (type !== 'bigint') {
+                    if (type === 'undefined') {
+                        throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` );
+                    } else {
+                        throw new Error(`Polinomial not valid type (${type}) on ${constPols.$$defArray[i].name} at ${j}` );
+                    }
                 }
             }
         }
@@ -193,11 +204,23 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
         }
 
+        if (cmPols.ClimbKey) {
+            console.log("Exec ClimbKey...");
+            await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey || []);
+        } else if (verifyPilFlag && requiredStorage.ClimbKey && requiredStorage.ClimbKey.length) {
+            console.log(`WARNING: Namespace ClimbKey isn't included, but there are ${requiredStorage.ClimbKey.length} ClimbKey operations`);
+        }
+
         if (!mainConfig.debug) {
             for (let i=0; i<cmPols.$$array.length; i++) {
                 for (let j=0; j<N; j++) {
-                    if (typeof cmPols.$$array[i][j] === "undefined") {
-                        throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                    const type = typeof cmPols.$$array[i][j];
+                    if (type !== 'bigint') {
+                        if (type === 'undefined') {
+                            throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}`);
+                        } else {
+                            throw new Error(`Polinomial not valid type (${type}) on ${cmPols.$$defArray[i].name} at ${j}` );
+                        }
                     }
                 }
             }

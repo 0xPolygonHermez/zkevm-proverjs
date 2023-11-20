@@ -7,16 +7,16 @@ class StorageRomLine
         this.fileName = "";
 
         // Instructions
-        this.iJmpz = false;
-        this.iJmp = false;
-        this.iRotateLevel = false;
-        this.iHash = false;
-        this.iHashType = 0;
-        this.iClimbRkey = false;
-        this.iClimbSiblingRkey = false;
-        this.iClimbSiblingRkeyN = false;
-        this.iLatchGet = false;
-        this.iLatchSet = false;
+        this.jmpz = false;
+        this.jmp = false;
+        this.rotateLevel = false;
+        this.hash = false;
+        this.hashType = 0;
+        this.climbRkey = false;
+        this.climbSiblingRkey = false;
+        this.climbBitN = false;
+        this.latchGet = false;
+        this.latchSet = false;
 
         // Selectors
         this.inFREE = false;
@@ -28,6 +28,7 @@ class StorageRomLine
         this.inRKEY = false;
         this.inSIBLING_RKEY = false;
         this.inSIBLING_VALUE_HASH = false;
+        this.inLEVEL = false;
 
         // Setters
         this.setRKEY = false;
@@ -138,18 +139,20 @@ class StorageRom
             // Mandatory fields
             romLine.line = j.program[i].line;
             romLine.fileName = j.program[i].fileName;
+            romLine.lineStr = j.program[i].lineStr;
 
             // Instructions
-            if (j.program[i].hasOwnProperty("iJmpz")) romLine.iJmpz = true;
-            if (j.program[i].hasOwnProperty("iJmp")) romLine.iJmp = true;
-            if (j.program[i].hasOwnProperty("iRotateLevel")) romLine.iRotateLevel = true;
-            if (j.program[i].hasOwnProperty("iHash")) romLine.iHash = true;
-            if (j.program[i].hasOwnProperty("iHashType")) romLine.iHashType = j.program[i].iHashType;
-            if (j.program[i].hasOwnProperty("iClimbRkey")) romLine.iClimbRkey = true;
-            if (j.program[i].hasOwnProperty("iClimbSiblingRkey")) romLine.iClimbSiblingRkey = true;
-            if (j.program[i].hasOwnProperty("iClimbSiblingRkeyN")) romLine.iClimbSiblingRkeyN = true;
-            if (j.program[i].hasOwnProperty("iLatchGet")) romLine.iLatchGet = true;
-            if (j.program[i].hasOwnProperty("iLatchSet")) romLine.iLatchSet = true;
+            if (j.program[i].hasOwnProperty("jmpz")) romLine.jmpz = true;
+            if (j.program[i].hasOwnProperty("jmp")) romLine.jmp = true;
+            if (j.program[i].hasOwnProperty("hash")) romLine.hash = true;
+            if (j.program[i].hasOwnProperty("hashType")) romLine.hashType = j.program[i].hashType;
+
+            if (j.program[i].climbRkey) romLine.climbRkey = BigInt(j.program[i].climbRkey);
+            if (j.program[i].climbSiblingRkey) romLine.climbSiblingRkey = BigInt(j.program[i].climbSiblingRkey);
+            if (j.program[i].climbBitN) romLine.climbBitN = BigInt(j.program[i].climbBitN);
+
+            if (j.program[i].hasOwnProperty("latchGet")) romLine.latchGet = true;
+            if (j.program[i].hasOwnProperty("latchSet")) romLine.latchSet = true;
 
             // Selectors
             if (j.program[i].hasOwnProperty("inFREE")) romLine.inFREE = true;
@@ -162,6 +165,7 @@ class StorageRom
             if (j.program[i].hasOwnProperty("inSIBLING_RKEY")) romLine.inSIBLING_RKEY = true;
             if (j.program[i].hasOwnProperty("inSIBLING_VALUE_HASH")) romLine.inSIBLING_VALUE_HASH = true;
             if (j.program[i].hasOwnProperty("inROTL_VH")) romLine.inROTL_VH = true;
+            if (j.program[i].hasOwnProperty("inLEVEL")) romLine.inLEVEL = true;
 
             // Setters
             if (j.program[i].hasOwnProperty("setRKEY")) romLine.setRKEY = true;
@@ -177,14 +181,14 @@ class StorageRom
             if (j.program[i].hasOwnProperty("setSIBLING_VALUE_HASH")) romLine.setSIBLING_VALUE_HASH = true;
 
             // Jump parameters
-            if (romLine.iJmp || romLine.iJmpz)
+            if (romLine.jmp || romLine.jmpz)
             {
                 romLine.addressLabel = j.program[i].addressLabel;
                 romLine.address = j.program[i].address;
             }
 
             // inFREE parameters
-            if (romLine.inFREE)
+            if (romLine.inFREE && j.program[i].freeInTag)
             {
                 romLine.op = j.program[i].freeInTag.op;
                 if (romLine.op=="functionCall")
