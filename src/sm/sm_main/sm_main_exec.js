@@ -3116,7 +3116,7 @@ function eval_getSmtProof(ctx, tag) {
     const index = Number(evalCommand(ctx, tag.params[0]));
     const level = Number(evalCommand(ctx, tag.params[1]));
 
-    const leafValue = (ctx.input.skipVerifyL1InfoRoot === true)
+    const leafValue = (ctx.input.l1InfoTree.skipVerifyL1InfoRoot === true)
         ? Constants.MOCK_VALUE_SMT_PROOF
         : ctx.input.l1InfoTree[index].smtProof[level];
 
