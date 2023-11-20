@@ -1,3 +1,4 @@
+/* eslint-disable multiline-comment-style */
 /* eslint-disable no-undef */
 /* eslint-disable max-len */
 /* eslint-disable no-continue */
@@ -27,7 +28,7 @@ const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
@@ -48,9 +49,12 @@ async function main() {
         console.log('Starting traces comparator');
         const failedTests = [];
         const noExecTests = noExec['breaks-computation'].concat(noExec['not-supported']);
-        // Write tracer output to file
+        // Write tracer outputs to files
         if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
             fs.mkdirSync(path.join(__dirname, 'geth-traces'));
+        }
+        if (!fs.existsSync(path.join(__dirname, 'ft-traces'))) {
+            fs.mkdirSync(path.join(__dirname, 'ft-traces'));
         }
         // Compile rom file
         const zkasmFile = path.join(__dirname, '../../node_modules/@0xpolygonhermez/zkevm-rom/main/main.zkasm');
@@ -72,7 +76,7 @@ async function main() {
                 console.log(chalk.green(`Checking ${test.testName}-${test.id}`));
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
-                || t.name === `${test.folderName}/${test.testName}`).length > 0) {
+                    || t.name === `${test.folderName}/${test.testName}`).length > 0) {
                     continue;
                 }
                 // Find test from folder if not regen
@@ -86,11 +90,13 @@ async function main() {
                     }
                 });
                 if (regen || (!isEthereumTest && gethTraces.length !== test.txs.length) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
-                // Configure genesis for test
-                    await configureGenesis(test, isEthereumTest);
+                    // Configure genesis for test
+                    const isGethSupported = await configureGenesis(test, isEthereumTest);
+                    if (!isGethSupported) {
+                        continue;
+                    }
 
                     // Init geth node
-
                     await startGeth();
 
                     // Run txs
@@ -106,7 +112,7 @@ async function main() {
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
                     const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i, testName);
-                    if (!_.isEmpty(changes) && !includesInvalidOpcode(ftTraces[i].execution_trace) && !includesInvalidError(changes, ftTraces[i].execution_trace)) {
+                    if (!_.isEmpty(changes) && !includesInvalidOpcode(ftTraces[i].call_trace.steps) && !includesInvalidError(changes, ftTraces[i].call_trace)) {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
@@ -130,7 +136,7 @@ async function main() {
     }
 }
 
-function includesInvalidError(changes, executorTrace) {
+function includesInvalidError(changes, callTrace) {
     for (const error of invalidErrors) {
         if (JSON.stringify(changes).includes(error)) {
             console.log(`Invalid error found: ${error}`);
@@ -139,7 +145,7 @@ function includesInvalidError(changes, executorTrace) {
         }
     }
 
-    if (JSON.stringify(executorTrace).includes('invalidCodeStartsEF')) {
+    if (JSON.stringify(callTrace).includes('invalidCodeStartsEF')) {
         console.log('Invalid error found: invalidCodeStartsEF');
 
         return true;
@@ -164,6 +170,9 @@ function includesInvalidOpcode(steps) {
 }
 function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName) {
     if (!folderName) {
+        if (invalidTests.includes(`${testName}.json`)) {
+            return [];
+        }
         let test = isEthereumTest ? [JSON.parse(fs.readFileSync(testPath))][0] : [JSON.parse(fs.readFileSync(testPath))[testToDebug]];
         if (isEthereumTest) {
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
@@ -196,6 +205,9 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             let j = 0;
             for (const [key, value] of Object.entries(test)) {
                 if (!key.includes('Berlin')) {
+                    continue;
+                }
+                if (value.network !== 'Berlin') {
                     continue;
                 }
                 let inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
@@ -363,7 +375,7 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
                 } else {
                     callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(previousStep.gas_cost)).toString(16)}`;
                 }
-            // Detect failed create2
+                // Detect failed create2
             } else if (opCreate.includes(previousStep.opcode) && previousStep.depth === step.depth) {
                 callData[ctx + 1] = {
                     from: previousStep.contract.address,
@@ -390,7 +402,7 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
                     }
                 }
                 calls.push(callData[ctx + 1]);
-            // Detect failed op call
+                // Detect failed op call
             } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth) {
                 callData[ctx + 1] = {
                     from: previousStep.contract.address,
@@ -437,7 +449,7 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
             console.log("Can't decode revert reason");
         }
     }
-    fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
+    fs.writeFileSync(path.join(__dirname, `ft-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
 }
@@ -517,22 +529,25 @@ async function compareDefaultTracer(geth, fullTracer, i) {
         structLogs: [],
     };
     // Format return value to match geth. If return is all zeros, set to '00'
-    if (newFT.returnValue.match(/^0+$/)) {
-        newFT.returnValue = '00';
-    }
+    // if (newFT.returnValue.match(/^0+$/)) {
+    //     newFT.returnValue = '00';
+    // }
+    let currentStep = 0;
     // Fill steps array
-    for (const step of fullTracer.execution_trace) {
+    for (const step of fullTracer.call_trace.steps) {
         const newStep = {
             pc: step.pc,
             op: step.opcode,
             gas: Number(step.gas),
             gasCost: Number(step.gas_cost),
             memory: step.memory,
-            // memSize?
             stack: step.stack,
             depth: step.depth,
             returnData: step.return_data,
         };
+        if (Number(step.memory_size) > 0) {
+            newStep.memSize = Number(step.memory_size);
+        }
         if (Number(step.gas_refund) > 0) {
             newStep.refund = Number(step.gas_refund);
         }
@@ -545,10 +560,17 @@ async function compareDefaultTracer(geth, fullTracer, i) {
         if (newStep.op === 'SHA3') {
             newStep.op = 'KECCAK256';
         }
-
         newFT.structLogs.push(newStep);
+        if (currentStep > 0) {
+            const prevStep = newFT.structLogs[currentStep - 1];
+            if (newStep.op === 'STOP' && opCall.includes(prevStep.op)) {
+                newFT.structLogs.pop();
+            }
+        }
+
+        currentStep++;
     }
-    fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
+    fs.writeFileSync(path.join(__dirname, `ft-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
 }
@@ -676,7 +698,7 @@ async function runTxs(test) {
                 value: ethers.utils.parseEther(txTest.value),
                 gasLimit: ethers.BigNumber.from(txTest.gasLimit).toHexString(),
                 gasPrice: ethers.BigNumber.from(txTest.gasPrice).toHexString(),
-                data: txTest.data,
+                data: formatNotOddData(txTest.data),
             };
             const signature = {
                 v: Number(txTest.v),
@@ -696,7 +718,7 @@ async function runTxs(test) {
                 to: txTest.to,
                 nonce: Number(txTest.nonce),
                 value: ethers.utils.parseUnits(String(txTest.value), 'wei'),
-                data: txTest.data,
+                data: formatNotOddData(txTest.data),
                 gasLimit: Number(txTest.gasLimit),
                 gasPrice: Number(txTest.gasPrice),
                 chainId: Number(txTest.chainId),
@@ -742,7 +764,7 @@ async function runTxsFromEthTest(test) {
         gasPrice: Number(txTest.gasPrice),
         chainId: CHAIN_ID,
     };
-        // Check deploy
+    // Check deploy
     if (tx.to === '0x' || tx.to === '') {
         delete tx.to;
     }
@@ -750,6 +772,7 @@ async function runTxsFromEthTest(test) {
     try {
         sentTx = await (await wallet.sendTransaction(tx)).wait();
     } catch (e) {
+        console.log(e.message);
         sentTx = e;
     }
     console.log(`New tx hash: ${sentTx.transactionHash}`);
@@ -774,6 +797,7 @@ function getPvtKeyfromTest(test, address) {
  * @param {Object} test containing the genesis of the geth instance to configure
  */
 async function configureGenesis(test, isEthereumTest) {
+    let isGethSupported = true;
     const genesis = {
         config: {
             chainId: CHAIN_ID,
@@ -801,8 +825,13 @@ async function configureGenesis(test, isEthereumTest) {
 
     if (isEthereumTest) {
         for (const account of Object.keys(test.pre)) {
+            const nonce = Number(test.pre[account].nonce);
+            if (nonce > 2 ** 32) {
+                isGethSupported = false;
+                break;
+            }
             genesis.alloc[account.slice(2)] = {
-                nonce: String(Number(test.pre[account].nonce)),
+                nonce: String(nonce),
                 balance: String(BigInt(test.pre[account].balance)),
                 code: test.pre[account].code,
                 storage: test.pre[account].storage,
@@ -810,8 +839,13 @@ async function configureGenesis(test, isEthereumTest) {
         }
     } else {
         for (const account of test.genesis) {
+            const nonce = Number(account.nonce);
+            if (nonce > 2 ** 32) {
+                isGethSupported = false;
+                break;
+            }
             genesis.alloc[account.address.slice(2)] = {
-                nonce: String(account.nonce),
+                nonce: String(nonce),
                 balance: String(account.balance),
                 code: account.bytecode,
                 storage: account.storage,
@@ -819,6 +853,8 @@ async function configureGenesis(test, isEthereumTest) {
         }
     }
     fs.writeFileSync(path.join(__dirname, 'genesis.json'), JSON.stringify(genesis, null, 2));
+
+    return isGethSupported;
 }
 
 /**
@@ -839,4 +875,13 @@ function sleep(ms) {
         setTimeout(resolve, ms);
     });
 }
+
+function formatNotOddData(data) {
+    if (data && data.length % 2 !== 0) {
+        return `0x0${data.slice(2)}`;
+    }
+
+    return data;
+}
+
 main();
