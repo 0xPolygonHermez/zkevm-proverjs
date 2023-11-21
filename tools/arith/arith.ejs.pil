@@ -54,7 +54,7 @@ namespace Arith(%N);
     // FEATURE:
     //      · Verify that the x1,x2 are different when adding different elliptic curve points (EQ1,EQ3,EQ4).
 
-    // PRE: 
+    // PRE:
     //      · x1, x2 are alias free
 
     // In the first 16 clocks of 32-clock cycle we have: x2[0]-x1[0], x2[1]-x1[1], ..., x2[15]-x1[15]
@@ -259,7 +259,7 @@ namespace Arith(%N);
     //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
     //    CLK16   0xFFFF  0xFFFF      0  0  1
 
-    // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime. 
+    // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime.
     // If selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
     pol commit valueLtPrime;
 
@@ -275,7 +275,7 @@ namespace Arith(%N);
     // valueLtPrime is ignored because it refers to the previous value.
     valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
 
-    // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1. 
+    // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
     // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6] equals 1.
     (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
@@ -286,7 +286,7 @@ namespace Arith(%N);
                             // 4:2**16-977,0:977
                             // -----------------------------------------------------------------------
                             // 5:2**16-53147,0:53147    16:2**16-47688,0:47688  27:2**16-13682,0:13682
-                            // 6:2**16-53146,0:53146    17:2**16-32382,0:32382  28:2**16-13681,0:13681                      
+                            // 6:2**16-53146,0:53146    17:2**16-32382,0:32382  28:2**16-13681,0:13681
                             // 7:2**16-45453,0:45453    18:2**16-32381,0:32381  29:2**16-50143,0:50143
                             // 8:2**16-45452,0:45452    19:2**16-42914,0:42914  30:2**16-50142,0:50142
                             // 9:2**16-7886,0:7886      20:2**16-42913,0:42913  31:2**16-29673,0:29673
@@ -295,17 +295,17 @@ namespace Arith(%N);
                             // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
                             // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
                             // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
-                            // 15:2**16-47689,0:47689   26:2**16-38797,0:38797                                                
+                            // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
 
     // range to be looked up for each chunk and for each prime
     pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * selEq[3];
-    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18]) 
+    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18])
                         + 11 * (Global.CLK32[3] + Global.CLK32[19]) + 13 * (Global.CLK32[4] + Global.CLK32[20]) + 15 * (Global.CLK32[5] + Global.CLK32[21])
                         + 17 * (Global.CLK32[6] + Global.CLK32[22]) + 19 * (Global.CLK32[7] + Global.CLK32[23]) + 21 * (Global.CLK32[8] + Global.CLK32[24])
                         + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
                         + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
                         + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[4] + selEq[5] + selEq[6]);
-    
+
     // lookup with RANGE_SEL as first column and BYTE2 as second column
     {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
 
@@ -442,61 +442,6 @@ namespace Arith(%N);
     *******/
 
     <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
-
-    /*******
-    *
-    * EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
-    *
-    *******/
-
-    <%- equation('pol eq5_## =', 'x1*x2-y1*y2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
-
-    /*******
-    *
-    * EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
-    *
-    *******/
-
-    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
-
-    /*******
-    *
-    * EQ7:  x1 + x2 - x3 + (q1 * p)
-    *
-    *******/
-
-    <%- equation('pol eq7_## =', 'x1+x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
-
-    /*******
-    *
-    * EQ8:  y1 + y2 - y3 + (q2 * p)
-    *
-    *******/
-
-    <%- equation('pol eq8_## =', 'y1+y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
-
-
-    /*******
-    *
-    * EQ9:  x1 - x2 - x3 + (q1 * p)
-    *
-    *******/
-
-    <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
-
-    /*******
-    *
-    * EQ10:  y1 - y2 - y3 + (q2 * p)
-    *
-    *******/
-
-    <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;

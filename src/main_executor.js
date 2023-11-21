@@ -20,6 +20,10 @@ const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
 const smPoseidonG = require("./sm/sm_poseidong.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
+const smPaddingSha256 = require("./sm/sm_padding_sha256.js");
+const smPaddingSha256Bit = require("./sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
+const smBits2FieldSha256 = require("./sm/sm_bits2fieldsha256.js");
+const smSha256F = require("./sm/sm_sha256f/sm_sha256f.js");
 
 
 const argv = require("yargs")
@@ -205,6 +209,20 @@ async function run() {
         if (cmPols.KeccakF) {
             console.log("KeccakF...");
             await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF || []);
+        }
+
+        if (cmPols.PaddingSha256) console.log("PaddingSha256...");
+        const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
+
+        if (cmPols.PaddingSha256Bit) console.log("PaddingSha256bit...");
+        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
+
+        if (cmPols.Bits2FieldSha256) console.log("Bits2FieldSha256...");
+        const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
+
+        if (cmPols.Sha256F) {
+            console.log("Sha256F...");
+            await smSha256F.execute(cmPols.Sha256F, requiredBits2Field.Sha256F || []);
         }
 
         if (cmPols.PaddingPG) console.log("PaddingPG...");

@@ -1,0 +1,21 @@
+include "global.pil";
+
+namespace Sha256F(%N);
+
+	pol commit input[3], output;
+	pol constant kGateType, kA, kB, kC, kOut, kCarryOut;
+	pol constant Conn[4];
+	// 0 -> XOR
+	// 1 -> CH
+	// 2 -> MAJ
+	// 3 -> ADD
+	pol constant GATE_TYPE;
+	pol constant CARRY_ENABLED;  	// 1 WHEN ADD
+
+	{ GATE_TYPE, input[0], input[1], input[2], output, input[2]' * CARRY_ENABLED } in { kGateType, kA, kB, kC, kOut, kCarryOut };
+
+
+    {input[0], input[1], input[2], output} connect {Conn[0], Conn[1], Conn[2], Conn[3]};
+
+    Global.L1 * input[0] = 0;
+    Global.L1 * (2**6-1-input[1]) = 0;

@@ -21,6 +21,10 @@ const smPaddingPG = require(smPath + "sm_padding_pg.js");
 const smPoseidonG = require(smPath + "sm_poseidong.js");
 const smRom = require(smPath + "sm_rom.js");
 const smStorage = require(smPath + "sm_storage/sm_storage.js");
+const smPaddingSha256 = require(smPath + "sm_padding_sha256.js");
+const smPaddingSha256Bit = require(smPath + "sm_padding_sha256bit/sm_padding_sha256bit.js");
+const smBits2FieldSha256 = require(smPath + "sm_bits2field_sha256.js");
+const smSha256F = require(smPath + "sm_sha256f/sm_sha256f.js");
 
 describe("test main sm", async function () {
     this.timeout(10000000);
@@ -49,6 +53,16 @@ describe("test main sm", async function () {
         await smBits2Field.buildConstants(constPols.Bits2Field);
         console.log("Const KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
+
+        console.log("Const PaddingSha256...");
+        await smPaddingSha256.buildConstants(constPols.PaddingSha256);
+        console.log("Const PaddingSha256Bit...");
+        await smPaddingSha256Bit.buildConstants(constPols.PaddingSha256Bit);
+        console.log("Const Bits2FieldSha256...");
+        await smBits2FieldSha256.buildConstants(constPols.Bits2FieldSha256);
+        console.log("Const Sha256F...");
+        await smSha256F.buildConstants(constPols.Sha256F);
+
         console.log("Const Mem...");
         await smMem.buildConstants(constPols.Mem);
         console.log("Const PaddingPG...");
