@@ -137,76 +137,78 @@ class StorageRom
 
         for (let i=0; i<j.program.length; i++) {
             let romLine = new StorageRomLine;
+            const l = j.program[i];
+
 
             // Mandatory fields
-            romLine.line = j.program[i].line;
-            romLine.fileName = j.program[i].fileName;
-            romLine.lineStr = j.program[i].lineStr;
+            romLine.line = l.line;
+            romLine.fileName = l.fileName;
+            romLine.lineStr = l.lineStr;
 
             // Instructions
-            if (j.program[i].hasOwnProperty("jmpz")) romLine.jmpz = true;
-            if (j.program[i].hasOwnProperty("jmp")) romLine.jmp = true;
-            if (j.program[i].hasOwnProperty("hash")) romLine.hash = true;
-            if (j.program[i].hasOwnProperty("hashType")) romLine.hashType = j.program[i].hashType;
+            if (l.hasOwnProperty("jmpz")) romLine.jmpz = true;
+            if (l.hasOwnProperty("jmp")) romLine.jmp = true;
+            if (l.hasOwnProperty("hash")) romLine.hash = true;
+            if (l.hasOwnProperty("hashType")) romLine.hashType = l.hashType;
 
-            if (j.program[i].climbRkey) romLine.climbRkey = BigInt(j.program[i].climbRkey);
-            if (j.program[i].climbSiblingRkey) romLine.climbSiblingRkey = BigInt(j.program[i].climbSiblingRkey);
-            if (j.program[i].climbBitN) romLine.climbBitN = BigInt(j.program[i].climbBitN);
+            if (l.climbRkey) romLine.climbRkey = BigInt(l.climbRkey);
+            if (l.climbSiblingRkey) romLine.climbSiblingRkey = BigInt(l.climbSiblingRkey);
+            if (l.climbBitN) romLine.climbBitN = BigInt(l.climbBitN);
 
-            if (j.program[i].hasOwnProperty("latchGet")) romLine.latchGet = true;
-            if (j.program[i].hasOwnProperty("latchSet")) romLine.latchSet = true;
+            if (l.hasOwnProperty("latchGet")) romLine.latchGet = true;
+            if (l.hasOwnProperty("latchSet")) romLine.latchSet = true;
 
             // Selectors
-            if (j.program[i].hasOwnProperty("inFREE")) romLine.inFREE = true;
-            if (j.program[i].hasOwnProperty("inOLD_ROOT")) romLine.inOLD_ROOT = true;
-            if (j.program[i].hasOwnProperty("inNEW_ROOT")) romLine.inNEW_ROOT = true;
-            if (j.program[i].hasOwnProperty("inVALUE_LOW")) romLine.inVALUE_LOW = true;
-            if (j.program[i].hasOwnProperty("inVALUE_HIGH")) romLine.inVALUE_HIGH = true;
-            if (j.program[i].hasOwnProperty("inRKEY")) romLine.inRKEY = true;
-            if (j.program[i].hasOwnProperty("inRKEY_BIT")) romLine.inRKEY_BIT = true;
-            if (j.program[i].hasOwnProperty("inSIBLING_RKEY")) romLine.inSIBLING_RKEY = true;
-            if (j.program[i].hasOwnProperty("inSIBLING_VALUE_HASH")) romLine.inSIBLING_VALUE_HASH = true;
-            if (j.program[i].hasOwnProperty("inROTL_VH")) romLine.inROTL_VH = true;
-            if (j.program[i].hasOwnProperty("inLEVEL")) romLine.inLEVEL = true;
+            if (l.inFREE) romLine.inFREE = BigInt(l.inFREE);
+            if (l.inOLD_ROOT) romLine.inOLD_ROOT = BigInt(l.inOLD_ROOT);
+            if (l.inNEW_ROOT) romLine.inNEW_ROOT = BigInt(l.inNEW_ROOT);
+            if (l.inVALUE_LOW) romLine.inVALUE_LOW = BigInt(l.inVALUE_LOW);
+            if (l.inVALUE_HIGH) romLine.inVALUE_HIGH = BigInt(l.inVALUE_HIGH);
+            if (l.inRKEY) romLine.inRKEY = BigInt(l.inRKEY);
+            if (l.inRKEY_BIT) romLine.inRKEY_BIT = BigInt(l.inRKEY_BIT);
+            if (l.inSIBLING_RKEY) romLine.inSIBLING_RKEY = BigInt(l.inSIBLING_RKEY);
+            if (l.inSIBLING_VALUE_HASH) romLine.inSIBLING_VALUE_HASH = BigInt(l.inSIBLING_VALUE_HASH);
+            if (l.inROTL_VH) romLine.inROTL_VH = BigInt(l.inROTL_VH);
+            if (l.inLEVEL) romLine.inLEVEL = BigInt(l.inLEVEL);
 
             // Setters
-            if (j.program[i].hasOwnProperty("setRKEY")) romLine.setRKEY = true;
-            if (j.program[i].hasOwnProperty("setRKEY_BIT")) romLine.setRKEY_BIT = true;
-            if (j.program[i].hasOwnProperty("setVALUE_LOW")) romLine.setVALUE_LOW = true;
-            if (j.program[i].hasOwnProperty("setVALUE_HIGH")) romLine.setVALUE_HIGH = true;
-            if (j.program[i].hasOwnProperty("setLEVEL")) romLine.setLEVEL = true;
-            if (j.program[i].hasOwnProperty("setOLD_ROOT")) romLine.setOLD_ROOT = true;
-            if (j.program[i].hasOwnProperty("setNEW_ROOT")) romLine.setNEW_ROOT = true;
-            if (j.program[i].hasOwnProperty("setHASH_LEFT")) romLine.setHASH_LEFT = true;
-            if (j.program[i].hasOwnProperty("setHASH_RIGHT")) romLine.setHASH_RIGHT = true;
-            if (j.program[i].hasOwnProperty("setSIBLING_RKEY")) romLine.setSIBLING_RKEY = true;
-            if (j.program[i].hasOwnProperty("setSIBLING_VALUE_HASH")) romLine.setSIBLING_VALUE_HASH = true;
+            if (l.hasOwnProperty("setRKEY")) romLine.setRKEY = true;
+            if (l.hasOwnProperty("setRKEY_BIT")) romLine.setRKEY_BIT = true;
+            if (l.hasOwnProperty("setVALUE_LOW")) romLine.setVALUE_LOW = true;
+            if (l.hasOwnProperty("setVALUE_HIGH")) romLine.setVALUE_HIGH = true;
+            if (l.hasOwnProperty("setLEVEL")) romLine.setLEVEL = true;
+            if (l.hasOwnProperty("setOLD_ROOT")) romLine.setOLD_ROOT = true;
+            if (l.hasOwnProperty("setNEW_ROOT")) romLine.setNEW_ROOT = true;
+            if (l.hasOwnProperty("setHASH_LEFT")) romLine.setHASH_LEFT = true;
+            if (l.hasOwnProperty("setHASH_RIGHT")) romLine.setHASH_RIGHT = true;
+            if (l.hasOwnProperty("setSIBLING_RKEY")) romLine.setSIBLING_RKEY = true;
+            if (l.hasOwnProperty("setSIBLING_VALUE_HASH")) romLine.setSIBLING_VALUE_HASH = true;
 
             // Jump parameters
             if (romLine.jmp || romLine.jmpz)
             {
-                romLine.addressLabel = j.program[i].addressLabel;
-                romLine.address = j.program[i].address;
+                romLine.addressLabel = l.addressLabel;
+                romLine.address = l.address;
             }
 
             // inFREE parameters
-            if (romLine.inFREE && j.program[i].freeInTag)
+            if (romLine.inFREE && l.freeInTag)
             {
-                romLine.op = j.program[i].freeInTag.op;
+                romLine.op = l.freeInTag.op;
                 if (romLine.op=="functionCall")
                 {
-                    romLine.funcName = j.program[i].freeInTag.funcName;
-                    for (let p=0; p<j.program[i].freeInTag.params.length; p++)
+                    romLine.funcName = l.freeInTag.funcName;
+                    for (let p=0; p<l.freeInTag.params.length; p++)
                     {
-                        romLine.params.push(j.program[i].freeInTag.params[p].num);
+                        romLine.params.push(l.freeInTag.params[p].num);
                     }
                 }
             }
 
             // Constant
-            if (j.program[i].hasOwnProperty("CONST"))
+            if (l.hasOwnProperty("CONST"))
             {
-                romLine.CONST = j.program[i].CONST;
+                romLine.CONST = l.CONST;
             }
             this.line.push(romLine);
         }

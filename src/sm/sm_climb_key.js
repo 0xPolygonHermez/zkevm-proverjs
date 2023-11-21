@@ -148,4 +148,15 @@ module.exports.execute = async function (pols, input) {
                          ` bit:${pols.bit[row]} carryLt:${pols.carryLt[row]} keySel:${pols.keySel0[row]},${pols.keySel1[row]},${pols.keySel2[row]},${pols.keySel3[row]} result:${pols.result[row]}`);
         }
     }
+    // filling the rest of trace to pass the constraints
+
+    let row = input.length * 4;
+    while (row < N) {
+        pols.keySel0[row+3] = 1n;
+        pols.carryLt[row+1] = 2n;
+        pols.carryLt[row+2] = 2n;
+        pols.carryLt[row+3] = 2n;
+        row = row + 4;
+    }
+
 }

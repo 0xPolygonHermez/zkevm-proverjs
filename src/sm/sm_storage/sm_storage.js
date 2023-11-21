@@ -96,7 +96,6 @@ module.exports.execute = async function (pols, action) {
     let actionListEmpty = (action.length==0); // becomes true when we run out of actions
 
     logger("actionListEmpty="+actionListEmpty);
-
     const ctx = new SmtActionContext(isLogging);
 
     if (!actionListEmpty) {
@@ -114,6 +113,7 @@ module.exports.execute = async function (pols, action) {
 
         // Set the next evaluation index, which will be 0 when we reach the last evaluation
         let nexti = (i+1)%polSize;
+        if (i == 65) debugger;
 
         if (isLogging) {
             if (rom.line[l].funcName!="isAlmostEndPolynomial") {
@@ -474,98 +474,95 @@ module.exports.execute = async function (pols, action) {
         // If a constant is provided, set op to the constant
         if (rom.line[l].CONST != "")
         {
-            op[0] = fr.e(rom.line[l].CONST);
-            pols.const[i] = op[0]
+            op[0] = fr.add(op[0], fr.e(rom.line[l].CONST));
+            pols.const[i] = fr.e(rom.line[l].CONST);
         }
 
         // If inOLD_ROOT then op=OLD_ROOT
         if (rom.line[l].inOLD_ROOT)
         {
-            op[0] = pols.oldRoot0[i];
-            op[1] = pols.oldRoot1[i];
-            op[2] = pols.oldRoot2[i];
-            op[3] = pols.oldRoot3[i];
-            pols.inOldRoot[i] = 1n;
+            pols.inOldRoot[i] = fr.e(rom.line[l].inOLD_ROOT);
+            op[0] = fr.add(op[0], fr.mul(pols.inOldRoot[i], pols.oldRoot0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inOldRoot[i], pols.oldRoot1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inOldRoot[i], pols.oldRoot2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inOldRoot[i], pols.oldRoot3[i]));
         }
 
         // If inNEW_ROOT then op=NEW_ROOT
         if (rom.line[l].inNEW_ROOT)
         {
-            op[0] = pols.newRoot0[i];
-            op[1] = pols.newRoot1[i];
-            op[2] = pols.newRoot2[i];
-            op[3] = pols.newRoot3[i];
-            pols.inNewRoot[i] = 1n;
+            pols.inNewRoot[i] = fr.e(rom.line[l].inNEW_ROOT)
+            op[0] = fr.add(op[0], fr.mul(pols.inNewRoot[i], pols.newRoot0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inNewRoot[i], pols.newRoot1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inNewRoot[i], pols.newRoot2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inNewRoot[i], pols.newRoot3[i]));
         }
 
         // If inRKEY_BIT then op=RKEY_BIT
         if (rom.line[l].inRKEY_BIT)
         {
-            op[0] = pols.rkeyBit[i];
-            op[1] = fr.zero;
-            op[2] = fr.zero;
-            op[3] = fr.zero;
-            pols.inRkeyBit[i] = 1n;
+            pols.inRkeyBit[i] = fr.e(rom.line[l].inRKEY_BIT);
+            op[0] = fr.add(op[0], fr.mul(pols.inRkeyBit[i], pols.rkeyBit[i]));
         }
 
         // If inVALUE_LOW then op=VALUE_LOW
         if (rom.line[l].inVALUE_LOW)
         {
-            op[0] = pols.valueLow0[i];
-            op[1] = pols.valueLow1[i];
-            op[2] = pols.valueLow2[i];
-            op[3] = pols.valueLow3[i];
-            pols.inValueLow[i] = 1n;
+            pols.inValueLow[i] = fr.e(rom.line[l].inVALUE_LOW);
+            op[0] = fr.add(op[0], fr.mul(pols.inValueLow[i], pols.valueLow0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inValueLow[i], pols.valueLow1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inValueLow[i], pols.valueLow2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inValueLow[i], pols.valueLow3[i]));
         }
 
         // If inVALUE_HIGH then op=VALUE_HIGH
         if (rom.line[l].inVALUE_HIGH)
         {
-            op[0] = pols.valueHigh0[i];
-            op[1] = pols.valueHigh1[i];
-            op[2] = pols.valueHigh2[i];
-            op[3] = pols.valueHigh3[i];
-            pols.inValueHigh[i] = 1n;
+            pols.inValueHigh[i] = fr.e(rom.line[l].inVALUE_HIGH);
+            op[0] = fr.add(op[0], fr.mul(pols.inValueHigh[i], pols.valueHigh0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inValueHigh[i], pols.valueHigh1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inValueHigh[i], pols.valueHigh2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inValueHigh[i], pols.valueHigh3[i]));
         }
 
         // If inRKEY then op=RKEY
         if (rom.line[l].inRKEY)
         {
-            op[0] = pols.rkey0[i];
-            op[1] = pols.rkey1[i];
-            op[2] = pols.rkey2[i];
-            op[3] = pols.rkey3[i];
-            pols.inRkey[i] = 1n;
+            pols.inRkey[i] = fr.e(rom.line[l].inRKEY);
+            op[0] = fr.add(op[0], fr.mul(pols.inRkey[i], pols.rkey0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inRkey[i], pols.rkey1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inRkey[i], pols.rkey2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inRkey[i], pols.rkey3[i]));
         }
 
         // If inSIBLING_RKEY then op=SIBLING_RKEY
         if (rom.line[l].inSIBLING_RKEY)
         {
-            op[0] = pols.siblingRkey0[i];
-            op[1] = pols.siblingRkey1[i];
-            op[2] = pols.siblingRkey2[i];
-            op[3] = pols.siblingRkey3[i];
-            pols.inSiblingRkey[i] = 1n;
+            pols.inSiblingRkey[i] = fr.e(rom.line[l].inSIBLING_RKEY)
+            op[0] = fr.add(op[0], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey3[i]));
         }
 
         // If inSIBLING_VALUE_HASH then op=SIBLING_VALUE_HASH
         if (rom.line[l].inSIBLING_VALUE_HASH)
         {
-            op[0] = pols.siblingValueHash0[i];
-            op[1] = pols.siblingValueHash1[i];
-            op[2] = pols.siblingValueHash2[i];
-            op[3] = pols.siblingValueHash3[i];
-            pols.inSiblingValueHash[i] = 1n;
+            pols.inSiblingValueHash[i] = fr.e(rom.line[l].inSIBLING_VALUE_HASH);
+            op[0] = fr.add(op[0], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash3[i]));
         }
 
         // If inROTL_VH then op=rotate_left(VALUE_HIGH)
         if (rom.line[l].inROTL_VH)
         {
-            op[0] = pols.valueHigh3[i];
-            op[1] = pols.valueHigh0[i];
-            op[2] = pols.valueHigh1[i];
-            op[3] = pols.valueHigh2[i];
-            pols.inRotlVh[i] = 1n;
+            pols.inRotlVh[i] = fr.e(rom.line[l].inROTL_VH);
+            op[0] = fr.add(op[0], fr.mul(pols.inRotlVh[i], pols.valueHigh3[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inRotlVh[i], pols.valueHigh0[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inRotlVh[i], pols.valueHigh1[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inRotlVh[i], pols.valueHigh2[i]));
         }
 
         // If inROTL_VH then op=rotate_left(VALUE_HIGH)
