@@ -1,0 +1,9 @@
+{
+  "from": "0x4d5cf5032b2a844602278b01199ed191a86c93ff",
+  "gas": "0x989680",
+  "gasUsed": "0x989680",
+  "input": "0x5f6003015f55",
+  "error": "invalid opcode: PUSH0",
+  "value": "0x0",
+  "type": "CREATE"
+}

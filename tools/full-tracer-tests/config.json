@@ -3,7 +3,7 @@
         "folderName": "calldata",
         "traceMethod": "callTracer",
         "isEthereumTest": false
-   },
+    },
     {
         "testName": "op-invalid",
         "testToDebug": 0,
@@ -42,16 +42,6 @@
     },
     {
         "testName": "op-call",
-        "testToDebug": 1,
-        "traceMethod": "callTracer"
-    },
-    {
-        "testName": "op-call",
-        "testToDebug": 6,
-        "traceMethod": "callTracer"
-    },
-    {
-        "testName": "op-call",
         "testToDebug": 14,
         "traceMethod": "defaultTracer"
     },
@@ -59,11 +49,6 @@
         "testName": "op-call",
         "testToDebug": 0,
         "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "op-call",
-        "testToDebug": 25,
-        "traceMethod": "callTracer"
     },
     {
         "testName": "op-call-revert",

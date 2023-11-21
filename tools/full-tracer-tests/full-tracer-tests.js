@@ -534,7 +534,7 @@ async function compareDefaultTracer(geth, fullTracer, i) {
     // }
     let currentStep = 0;
     // Fill steps array
-    for (const step of fullTracer.call_trace.steps) {
+    for (const step of fullTracer.execution_trace) {
         const newStep = {
             pc: step.pc,
             op: step.opcode,
