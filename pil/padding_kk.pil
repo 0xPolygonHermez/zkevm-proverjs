@@ -5,7 +5,7 @@ namespace PaddingKK(%N);
     // Polynomials that are used to compute a hash chunk
     pol commit freeIn;
     pol constant r8Id;
-    pol commit connected; // 0 if is the first block of a hash and 1 if is not the first
+    pol commit connected;
     pol commit addr;
 
     pol constant lastBlock;
@@ -13,7 +13,7 @@ namespace PaddingKK(%N);
     pol constant r8valid;
 
     // rem: It can be different only the first byte of a new Hash.
-    pol commit rem;  // remaining bytes to the end
+    pol commit rem;
 
     rem' * (1-lastHash) = (rem-1)*(1-lastHash);
 
