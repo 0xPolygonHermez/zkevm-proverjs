@@ -17,6 +17,7 @@ const { newCommitPolsArray, compile } = require('pilcom');
 const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 const _ = require('lodash');
 const chalk = require('chalk');
+const zkasm = require('@0xpolygonhermez/zkasmcom');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const { Scalar } = require('ffjavascript');
