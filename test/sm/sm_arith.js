@@ -7,6 +7,33 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 const global = require("../../src/sm/sm_global.js");
 const arith = require("../../src/sm/sm_arith/sm_arith.js");
 
+const Fr = new F1Field(0xFFFFFFFF00000001n);
+const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
+
+function addDiffPoint(x1, y1, x2, y2) {
+    const s = Fec.mul(Fec.sub(y2,y1),Fec.inv(Fec.sub(x2,x1)));
+    const x3 = Fec.sub(Fec.sub(Fec.square(s), x1), x2);
+    const y3 = Fec.sub(Fec.sub(Fec.mul(s, x1), Fec.mul(s, x3)), y1);
+    return {x3, y3};
+}
+
+function dblPoint(x1, y1) {
+    const s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
+    const x3 = Fec.sub(Fec.sub(Fec.square(s), x1), x1);
+    const y3 = Fec.sub(Fec.sub(Fec.mul(s, x1), Fec.mul(s, x3)), y1);
+    return {x3, y3};
+}
+
+function addPoint(p) {
+    const same = (typeof p.x2 === 'undefined' && typeof p.y2 === 'undefined');
+    let res = {...p, selEq0:0n, selEq3: 1n};
+
+    if (same) {
+        return {...res, x2: p.x1, y2: p.y1, selEq1: 0n, selEq2: 1n, ... dblPoint(p.x1, p.y1)};
+    }
+    return {...res, selEq1: 1n, selEq2: 0n, ... addDiffPoint(p.x1, p.y1, p.x2, p.y2)};
+}
+
 const input = [
     // w = 0 .. 31
     {
@@ -1164,6 +1191,23 @@ const input = [
         selEq1: 1n,
         selEq2: 0n,
         selEq3: 1n
+    },
+    // w = 2848 .. 2912
+    {
+        ...addPoint({x1: 0x5084b41bacf4508b34867aaa2cf5a12d5ec4ba38c9b02656079361bb48dfd587n,
+                     y1: 0x34a9631a1d980d31619aa6c8552927475db6f5606891f5606e79e97f91470e89n,
+                     x2: 0xD084b41bacf4508b34867aaa2cf5a12d5ec4ba38c9b02656079361bb48dfd587n,
+                     y2: 0x458f0e6bddf226252d8acdec7d55c35a907e4ae83ecbf6a4ed98f6fa084240ddn})
+    },
+    {
+        ...addPoint({x1: 0x5084b41bacf4508b34867aaa2cf5a12d5ec4ba38c9b02656079361bb48dfd587n,
+                     y1: 0x34a9631a1d980d31619aa6c8552927475db6f5606891f5606e79e97f91470e89n,
+                     x2: 0x5084b41bacf4508b34867aaa2cf5a12d5ec4ba38c9b02656079361bb0000d587n,
+                     y2: 0x458f0e6bddf226252d8acdec7d55c35a907e4ae83ecbf6a4ed98f6fa084240ddn})
+    },
+    {
+        ...addPoint({x1: 0x5084b41bacf4508b34867aaa2cf5a12d5ec4ba38c9b02656079361bb48dfd587n,
+                     y1: 0x34a9631a1d980d31619aa6c8552927475db6f5606891f5606e79e97f91470e89n})
     }
 ]
 
@@ -1184,13 +1228,27 @@ function inputToZkasm() {
     return zkasmCode;
 }
 
+async function loadPil(pilFile) {
+    const pil = await compile(Fr, pilFile, null, {defines: { N: 2 ** 18 }});
+/*
+    pilLines = fs.readFileSync(pilFile, 'utf8').split("\n");
+    const RANGE_SEL_ID = constPols.$$def.Arith.RANGE_SEL.id;
+    lines[0] = pil.plookupIdentities.filter(x => x.t.length == 2 && pil.expressions[x.t[0]].id == RANGE_SEL_ID &&  pil.expressions[x.t[0]].op == 'const')[0].line;
+    lines[1] = pilLines.findIndex(x => x.replace(/\s/g, '') === "xAreDifferent'=xAreDifferent*(1-Global.CLK32[0]-Global.CLK32[16])+xChunkDifferent;")+1;
+    lines[2] = pilLines.findIndex(x => x.replace(/\s/g, '') === "(valueLtPrime'-selEq[3])*(Global.CLK32[15]+Global.CLK32[31])=0;")+1;
+*/
+    // remove all logups to signed 22 bits, 19 bits to used N 2**18
+    const GL_SIGNED_22BITS_ID = pil.references['Arith.GL_SIGNED_22BITS'].id;
+    const BYTE2_BIT19 = pil.references['Arith.BYTE2_BIT19'].id;
+    pil.plookupIdentities = pil.plookupIdentities.filter(x => !x.t.some(id => ([BYTE2_BIT19, GL_SIGNED_22BITS_ID].includes(pil.expressions[id].id) &&  pil.expressions[id].op == 'const')));
+    return pil;
+}
+
 describe("test plookup operations", async function () {
     this.timeout(10000000);
 
     it("It should create the pols of two programs and verify the pil", async () => {
-        const Fr = new F1Field("0xFFFFFFFF00000001");
-        const pil = await compile(Fr, "pil/arith.pil", null, {defines: { N: 2 ** 23 }});
-
+        const pil = await loadPil("pil/arith.pil");
         constPols = newConstantPolsArray(pil);
         cmPols = newCommitPolsArray(pil);
 

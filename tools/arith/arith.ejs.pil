@@ -30,12 +30,212 @@ namespace Arith(%N);
     pol commit q1[16];
     pol commit q2[16];
 
+    pol commit selEq[4];
+
     pol commit resultEq0;
     pol commit resultEq1;
     pol commit resultEq2;
+
     resultEq0 * (1 - resultEq0) = 0;
     resultEq1 * (1 - resultEq1) = 0;
     resultEq2 * (1 - resultEq2) = 0;
+
+    // FEATURE:
+
+    // PRE: x1, x2 are alias free
+
+    // Verify that the x1 x2 are different when using the add function on elliptic curve with different points.
+
+    // In the first 16 clocks of 32 clocks cycle contains: x2[0]-x1[0], x2[1]-x1[1], ..., x2[15]-x1[15]
+    // In last 16 clocks of 32 clocks cycle all values was 0.
+    pol xDeltaChunk = <%- clksel(['x2[0..15]'], 'Global.CLK32') %>
+                    - <%- clksel(['x1[0..15]'], 'Global.CLK32', ' - ') %>;
+
+    // Inverse of current xDeltaChunk. Used to verify that xDeltaChunk was ≠ 0 ==> x1[i] ≠ x2[i].
+    // This inverse only calculated one clock by cycle when selEq[1] = 1.
+    pol commit xDeltaChunkInverse;
+
+    // Intermediate pol to define that in the current chunks of x1 and x2 are differents.
+    // IMPORTANT: xChunkDifferent == 1 ==> x1[i] ≠ x2[i]
+    //            xChunkDifferent == 0 no implies anything, x1[i] ≠ x2[i] or x1[i] == x2[i].
+    // xChunkDifferent was binary, only when xDeltaChunkInverse === inv(xDeltaChunk), its value is 1.
+    pol xChunkDifferent = xDeltaChunk * xDeltaChunkInverse;
+
+    // Important, binary constraint
+    xChunkDifferent * (1 - xChunkDifferent) = 0;
+
+    // xDeltaChunk  xDeltaChunkInverse  xChunkDifferent
+    // -----------  ------------------  -----------------------
+    //       0             any          0 * any = 0            OK (A)
+    //   x (≠ 0)           0            x * 0 = 0              OK (B)
+    //   x (≠ 0)         inv(x)         x * inv(x) = 1         OK (C)
+    //   x (≠ 0)      y ≠ {inv(x),0}    x * y = k (≠ 0,1)      FAILS (D)
+    //
+    // (A) and (C) are the standard cases, but (B) was introduced to avoid calculate the inverse when
+    // it is not necessary. xChunkDifferent is well calculed because it's 1 only when x ≠ 0 and inverse
+    // it's calculated.
+
+    // xAreDifferent is used to indicate that in current clock we knows that x1 and x2 are different
+    pol commit xAreDifferent;
+
+    // Binary constraint
+    xAreDifferent * (1 - xAreDifferent) = 0;
+
+    // In first clock of 16 clocks cycle, xAreDifferent should not be considered
+    // Constraint to force next value of xAreDifferent
+
+    xAreDifferent' = xAreDifferent * (1 - Global.CLK32[0] - Global.CLK32[16]) + xChunkDifferent;
+
+    // xAreDifferent  CLK0+CLK16  xChunkDifferent  xAreDifferent'
+    // -------------  ----------  ---------------  --------------
+    //        0           0              0            0 OK
+    //        0           0              1            1 OK
+    //        0           1              0            1 OK
+    //        0           1              1            1 OK
+    //        1           0              0            1 OK
+    //        1           0              1            2 FAILS (A)
+    //        1           1              0            1 OK
+    //        1           1              1            1 OK
+    //
+    // xChunkDifferent = 0 ==> (x2[i] - x1[i]) = 0
+    // xChunkDifferent = 1 ==> (x2[i] - x1[i]) ≠ 0  ==> x1 and x2 are different
+    // (A) forbidden, executor must control this situation, because expending an
+    // unnecessary inverse.
+
+   (xAreDifferent - selEq[1]) * Global.CLK32[16] = 0;
+
+    // COST:   2 commit, 2 im, 0 constant, 4 constraints
+
+
+
+    // FEATURE:
+    //
+    // Verify that the result of the addition is free of aliases, means x3 ∊ [0, FPEC-1] and y3 ∊ [0, FPEC-1]
+    //
+    // FPEC: 0xffffffffffffffffffffffffffffffffffffffffffffffffffff fffe 0000 fc2fn
+    //
+    // Approach, compare from most significant chunk to less significant chunk of x3,y3 (A). On each chunk,
+    // a chunkLtPrime indicates if the chunk is minor than the FPEC chunk. The valueLtPrime indicates when any
+    // previous chunk was minor than the FPEC chunk, and this implies that x3,y3 is minor than prime.
+    //
+    // (A) on first 16 clocks of 32 clocks cycle is verified x3
+    //     on last  16 clocks of 32 clocks cycle is verified y3
+    //
+    //    k x chunks equals (B) ===>  1 x chunk minor ===>  (15 - k) x any 16 bits value
+    //
+    // (B) really I must verify that chunk are equal or minor, never greater at this point. If malicious prover (MAP)
+    // said is equal but it's minor, is its problem. At the end, it needs at least one minor chunk to be minor value.
+    //
+    //    k x chunks ∊ [0,chunkPrime] => 1 x chunk ∊ [0, chunkPrime-1] => (15 - k) x chunk ∊ [0, 0xFFFF]
+    //
+    //                                 CLK0            CLK12   CLK13   CLK14   CLK15
+    //   max(chunkPrime(0..15))     = [0xFFFF, ..... , 0xFFFF, 0xFFFE, 0xFFFF, 0xFC2F]
+    //   max(chunkPrime(0..15) - 1) = [0xFFFE, ..... , 0xFFFE, 0xFFFD, 0xFFFE, 0xFC2E]
+    //
+    //   differents max range [0xFFFF, 0xFFFE, 0xFFFD, 0xFC2F, 0xFC2E]
+    //                                                                   CLK14 CLK15
+    // FPEC: 0xffffffffffffffffffffffffffffffffffffffffffffffffffff fffe f000 fc2f
+    // V :   0xffffffffffffffffffffffffffffffffffffffffffffffffffff fffe f001 0000
+    //
+    //   RANGE_SEL  P_RANGE     BASE
+    //   0          [0,0xFFFF]  CLK0,...,CLK12
+    //   1          [0,0xFFFE]  CLK13
+    //   2          [0,0xFFFD]
+    //   3          [0,0xFC2F]  CLK15
+    //   4          [0,0xFC2E]
+    //   5          [0,0xF000]  CLK14
+    //   6          [0,0xEFFF]
+    //
+    //   pRange = (CLK13 + 3 * CLK15 + 5 * CLK14 + chunkLtPrime) * (1 - valueLtPrime)
+    //
+    //   CLK     pRange            pRange
+    //           [chunkLtPrime == 0]   [chunkLtPrime == 1]
+    //
+    //   0       0 + 3 * 0 + 0 = 0     0 + 3 * 0 + 1 = 1
+    //   :               :
+    //   12      0 + 3 * 0 + 0 = 0     0 + 3 * 0 + 1 = 1
+    //   13      1 + 3 * 0 + 0 = 1     1 + 3 * 0 + 1 = 2
+    //   14      0 + 3 * 0 + 0 = 0     0 + 3 * 0 + 1 = 1
+    //   15      0 + 3 * 1 + 0 = 3     0 + 3 * 1 + 1 = 4
+    //
+    //   pRange = (CLK13 + 3 * CLK15 + chunkLtPrime) * (1 - valueLtPrime)
+    //
+    //   valueLtPrime' = valueLtPrime * (1 - CLK0 + CLK16) + chunkLtPrime
+    //
+    //   valueLtPrime  chunkLtPrime  CLK0+CLK16  valueLtPrime'
+    //
+    //         0             0           0            0            OK
+    //         0             1           0            1            OK
+    //         1             0           0            1            OK
+    //         1             1           0            2            FAILS, valueLtPrime not binary (D)
+    //
+    //         0             0           1            0            OK
+    //         0             1           1            1            OK
+    //         1             0           1            0            OK
+    //         1             1           1            1            OK (E)
+    //
+    //   (D) when valueLtPrime == 0 ==> chunkLtPrime must be zero, if not FAILS
+    //   (E) on clocks 0 and 16, previous value of valueLtPrime isn't considered
+    //
+    //
+    //                                ┌──────── pRange
+    //              ┌── max_value     │  ┌───── chunkLtPrime
+    //              │     ┌─ example  │  │  ┌── valueLtPrime
+    //              │     │           │  │  │
+    //    CLK0    0xFFFF  0xFFFF      0  0  0
+    //    CLK1    0xFFFF  0xFF00      1  1  0  // RANGE [0, 0xFFFE]
+    //    CLK2    0xFFFF  0x0000      0  0  1
+    //    CLK3    0xFFFF  0x0000      0  0  1
+    //    CLK4    0xFFFF  0xFFFF      0  0  1
+    //    :
+    //    CLK15   0xFC2F  0xFFFF      0  0  1
+    //    CLK16   0xFFFF  0xFFFF      0  0  1
+    //
+    //
+    //                                ┌──────── pRange
+    //              ┌── max_value     │  ┌───── chunkLtPrime
+    //              │     ┌─ example  │  │  ┌── valueLtPrime
+    //              │     │           │  │  │
+    //    CLK0    0xFFFF  0xFFFF      0  0  0
+    //    CLK1    0xFFFF  0xFFFF      0  0  0
+    //    CLK2    0xFFFF  0xFFFF      0  0  0
+    //    :
+    //    CLK12   0xFFFF  0xFFFF      0  0  0
+    //    CLK13   0xFFFE  0xFFFF      1  0  0    // CLK13 == 1 RANGE [0, 0xFFFE]
+    //    CLK14   0xFFFF  0xFFFF      0  0  0
+    //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
+    //    CLK16   0xFFFF  0xFFFF      0  0  1
+
+    // indicates that any previous chunk was minor and the rest of previous are
+    // equal o minors than the FPEC chunk. If selEq[3] = 0, it must be 0.
+    pol commit valueLtPrime;
+
+    // indicates that current was minor than the FPEC chunk. If selEq[3] = 0 or
+    // valuePtPrime = 1, it must be 0.
+    pol commit chunkLtPrime;
+
+    // binary constraints
+    chunkLtPrime * (1 - chunkLtPrime) = 0;
+    valueLtPrime * (1 - valueLtPrime) = 0;
+
+    // Constraint over next value of valueLtPrime. At begining of each 16 clock cycle
+    // ignore valueLtPrime because it is refers previous value.
+    valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
+
+    // constraint to verify at end of 16 clock cycle than valueLtPrime is 1. this constraint
+    // applies when selEq[3] = 1.
+    (valueLtPrime' - selEq[3]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+
+
+    pol constant RANGE_SEL; // 0:2**16,
+                            // 1:2**16-1,0
+                            // 2:2**16-2,0:2
+                            // 3:2**16-976,0:976
+                            // 4:2**16-977,0:977
+
+    // logout with pRange as first column
+
+    {(Global.CLK32[13] + Global.CLK32[29] + (Global.CLK32[15] + Global.CLK32[31]) * 3 + chunkLtPrime) * (selEq[3] - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
 
     /****
     *
@@ -72,8 +272,6 @@ namespace Arith(%N);
     <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> in Global.BYTE2;
 
     <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> in Global.BYTE2;
-
-    <%- clksel(['x3[0..15]','y3[0..15]'], 'Global.CLK32') %> in Global.BYTE2;
 
     <%- clksel(['s[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> in Global.BYTE2;
 
@@ -128,8 +326,6 @@ namespace Arith(%N);
     pol eq2 = <%- clksel(['eq2_[0..31]'], 'Global.CLK32') %>;
     pol eq3 = <%- clksel(['eq3_[0..31]'], 'Global.CLK32') %>;
     pol eq4 = <%- clksel(['eq4_[0..31]'], 'Global.CLK32') %>;
-
-    pol commit selEq[4];
 
     <%- latch(['selEq[0..3]'],'Global.CLK32[31]') %>
     <%- binary(['selEq[0..3]']) %>
