@@ -503,17 +503,6 @@ module.exports.execute = async function (pols, input) {
     }
     console.log(`Binary-used-steps:${input.length * STEPS} (${input.length}x${STEPS}) use:${Number((input.length * STEPS * 10000/N))/100}%`);
 
-    /*
-    for (let index = 0; index < 49; ++index) {
-        const nextIndex = (index + 1) % N;
-        const info = `w:${index.toString(10).padStart(3)} opcode:${pols.opcode[index]} cIn:${pols.cIn[index]} cMiddle:${pols.cMiddle[index]} cOut:${pols.cOut[index]} reset4:${pols.reset4[index]}`
-                    +` A:${toStringItems(pols.freeInA, index, 2)} B:${toStringItems(pols.freeInB, index, 2)} C:${toStringItems(pols.freeInC, index,2)}`
-                    +` usePreviousAreLt4:${pols.usePreviousAreLt4[index]} useCarry:${pols.useCarry[index]} previousAreLt4:${pols.previousAreLt4[index]}`;
-
-        console.log(info.replace(/[a-zA-Z_][_a-zA-Z0-9]*:/g, x => "\x1B[1;35m"+x.slice(0, -1)+"\x1B[0;36m:\x1B[0m"));
-        if ((index % 16) === 15) console.log();
-    }*/
-
     for (let index = input.length * STEPS; index < N; index++) {
         const nextIndex = (index + 1) % N;
         const reset = (index % STEPS) == 0 ? 1n : 0n;

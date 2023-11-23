@@ -3365,6 +3365,15 @@ function safeFea2scalar(Fr, arr) {
     return fea2scalar(Fr, arr);
 }
 
+/**
+* Computes comparation of 256 bits, these values (a,b) are divided in 4 chunks of 64 bits
+* and compared one-to-one, 4 comparations, lt4 return 1 if ALL chunks of a are less than b.
+* lt = a[0] < b[0] && a[1] < b[1] && a[2] < b[2] && a[3] < b[3]
+*
+* @param a - Scalar
+* @param b - Scalar
+* @returns BigInt
+*/
 function lt4 (a, b) {
     const MASK64 = 0xFFFFFFFFFFFFFFFFn;
     for (let index = 0; index < 4; ++index) {
