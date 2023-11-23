@@ -61,7 +61,7 @@ describe('test padding sha256', async function () {
 
     it('It should create the pols sha256 padding', async () => {
         const Fr = new F1Field('0xFFFFFFFF00000001');
-        const pil = await compile(Fr, 'pil/padding_sha256.pil', null, { defines: { N: 2 ** 20 } });
+        const pil = await compile(Fr, 'pil/padding_sha256.pil', null, { defines: { N: 2 ** 23 } });
         const constPols = newConstantPolsArray(pil);
         const cmPols = newCommitPolsArray(pil);
         await smPaddingSha256.buildConstants(constPols.PaddingSha256);
