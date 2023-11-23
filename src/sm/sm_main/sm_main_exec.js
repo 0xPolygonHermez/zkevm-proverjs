@@ -904,6 +904,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         const c = Scalar.bxor(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
+                    } else if (l.binOpcode == 8) { // XOR
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
+                        const c = lt4(a, b);
+                        fi = scalar2fea(Fr, c);
+                        nHits ++;
                     } else {
                         throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
                     }
@@ -1463,7 +1469,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashPDigest || l.sWR) {
             const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
+            required.Binary.push({a: op, b: 0xFFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001n, c: 1n, opcode: 8, type: 2});
         }
 
         if (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5) {
@@ -1759,6 +1765,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.binOpcode[i] = 7n;
                 pols.carry[i] = 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 7, type: 1});
+            } else if (l.binOpcode == 8) { // LT4
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const expectedC = lt4(a,b);
+                if (!Scalar.eq(c, expectedC)) {
+                    const _a = a.toString(16).padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_');
+                    const _b = b.toString(16).padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_');
+                    throw new Error(`LT4 does not match ${expectedC} vs ${c} (A: ${_a}, B:${_b}) ${sourceRef}`);
+                }
+                pols.binOpcode[i] = 8n;
+                pols.carry[i] = c;
+                required.Binary.push({a: a, b: b, c: c, opcode: 8, type: 1});
             } else {
                 throw new Error(`Invalid bin opcode (${l.binOpcode}) ${sourceRef}`);
             }
@@ -3643,4 +3662,23 @@ function safeFea2scalar(Fr, arr) {
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+/**
+* Computes comparation of 256 bits, these values (a,b) are divided in 4 chunks of 64 bits
+* and compared one-to-one, 4 comparations, lt4 return 1 if ALL chunks of a are less than b.
+* lt = a[0] < b[0] && a[1] < b[1] && a[2] < b[2] && a[3] < b[3]
+*
+* @param a - Scalar
+* @param b - Scalar
+* @returns BigInt
+*/
+function lt4 (a, b) {
+    const MASK64 = 0xFFFFFFFFFFFFFFFFn;
+    for (let index = 0; index < 4; ++index) {
+        if (Scalar.lt(Scalar.band(Scalar.shr(a, 64 * index), MASK64), Scalar.band(Scalar.shr(b, 64 * index), MASK64)) == false) {
+            return 0n;
+        }
+    }
+    return 1n;
 }

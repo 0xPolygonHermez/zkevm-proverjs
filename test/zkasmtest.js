@@ -82,6 +82,7 @@ async function main(){
     let defaultConfig = {
         constants,
         debug,
+        continueOnError: true,
         externalPilVerification
     }
     if (typeof argv.stepsN !== 'undefined') {
