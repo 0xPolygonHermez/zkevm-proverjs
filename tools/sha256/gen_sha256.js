@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const BitsPerField = 6;
+const BitsPerField = 7;
 
 function generateK(ctx) {
     const K = [

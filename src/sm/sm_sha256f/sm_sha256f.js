@@ -6,7 +6,7 @@ const { F1Field } = require('ffjavascript');
 const { getKs, getRoots } = require('pilcom');
 
 const SlotSize = 31487;
-const chunkBits = 6n;
+const chunkBits = 7n;
 
 const GATE_XOR = 0n;
 const GATE_CH = 1n;

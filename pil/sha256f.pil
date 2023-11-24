@@ -18,4 +18,4 @@ namespace Sha256F(%N);
     {input[0], input[1], input[2], output} connect {Conn[0], Conn[1], Conn[2], Conn[3]};
 
     Global.L1 * input[0] = 0;
-    Global.L1 * (2**6-1-input[1]) = 0;
+    Global.L1 * (2**7-1-input[1]) = 0;

@@ -6,7 +6,7 @@ const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 
 const BYTESPERBLOCK = 64;
 const BlockSize = 31487; // TODO
-const bitsPerElement = 6; // todo
+const bitsPerElement = 7; // todo
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();

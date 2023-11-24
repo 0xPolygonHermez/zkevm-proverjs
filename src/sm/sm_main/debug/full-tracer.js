@@ -26,7 +26,7 @@ const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
 const zeroCostOp = ['STOP', 'REVERT', 'RETURN'];
 const responseErrors = [
-    'OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO',
+    'OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'OOCSH',
     'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce',
     'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance',
     'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_change_l2_block',
@@ -346,7 +346,8 @@ class FullTracer {
             cnt_keccak_f: Number(ctx.cntKeccakF),
             cnt_padding_pg: Number(ctx.cntPaddingPG),
             cnt_poseidon_g: Number(ctx.cntPoseidonG),
-            cont_steps: Number(ctx.step),
+            cnt_steps: Number(ctx.step),
+            cnt_sha256_hashes: Number(ctx.cntSha256F),
         };
         // Create current tx object
         this.currentBlock.responses.push(response);
@@ -408,7 +409,8 @@ class FullTracer {
             cnt_keccak_f: Number(ctx.cntKeccakF) - response.txCounters.cnt_keccak_f,
             cnt_padding_pg: Number(ctx.cntPaddingPG) - response.txCounters.cnt_padding_pg,
             cnt_poseidon_g: Number(ctx.cntPoseidonG) - response.txCounters.cnt_poseidon_g,
-            cont_steps: Number(ctx.step) - response.txCounters.cont_steps,
+            cnt_steps: Number(ctx.step) - response.txCounters.cnt_steps,
+            cnt_sha256_hashes: Number(ctx.cntSha256F) - response.txCounters.cnt_sha256_hashes,
         };
 
         // Set consumed tx gas
@@ -542,6 +544,8 @@ class FullTracer {
         this.finalTrace.cnt_poseidon_paddings = Number(ctx.cntPaddingPG);
         this.finalTrace.cnt_poseidon_hashes = Number(ctx.cntPoseidonG);
         this.finalTrace.cnt_steps = Number(ctx.step);
+        this.finalTrace.cnt_sha256_hashes = Number(ctx.cntSha256F);
+
         // If some counter exceed, notify
         if (Number(ctx.cntArith) > Number(getConstantFromCtx(ctx, 'MAX_CNT_ARITH'))) {
             console.log('WARNING: max arith counters exceed');
@@ -563,6 +567,9 @@ class FullTracer {
         }
         if (Number(ctx.step) > Number(getConstantFromCtx(ctx, 'MAX_CNT_STEPS'))) {
             console.log('WARNING: max steps counters exceed');
+        }
+        if (Number(ctx.cntSha256F) > Number(getConstantFromCtx(ctx, 'MAX_CNT_SHA256_F'))) {
+            console.log('WARNING: max sha256 counters exceed');
         }
 
         this.finalTrace.new_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
@@ -716,7 +723,8 @@ class FullTracer {
                 cnt_keccak_f: Number(ctx.cntKeccakF) - prevTraceCall.counters.cnt_keccak_f,
                 cnt_padding_pg: Number(ctx.cntPaddingPG) - prevTraceCall.counters.cnt_padding_pg,
                 cnt_poseidon_g: Number(ctx.cntPoseidonG) - prevTraceCall.counters.cnt_poseidon_g,
-                cont_steps: Number(ctx.step) - prevTraceCall.counters.cont_steps,
+                cnt_steps: Number(ctx.step) - prevTraceCall.counters.cnt_steps,
+                cnt_sha256_hashes: Number(ctx.cntSha256F) - prevTraceCall.counters.cnt_sha256_hashes,
             };
 
             // If gas cost is negative means gas has been added from a deeper context, it should be recalculated
@@ -765,7 +773,8 @@ class FullTracer {
             cnt_keccak_f: Number(ctx.cntKeccakF),
             cnt_padding_pg: Number(ctx.cntPaddingPG),
             cnt_poseidon_g: Number(ctx.cntPoseidonG),
-            cont_steps: Number(ctx.step),
+            cnt_steps: Number(ctx.step),
+            cnt_sha256_hashes: Number(ctx.cntSha256F),
         };
 
         singleInfo.stack = finalStack;

@@ -1376,7 +1376,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`Call HASHSDIGEST(${addr}) more than once: ${sourceRef}`);
             }
             ctx.hashS[addr].digestCalled = true;
-            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1) / 136)
+            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1) / 64)
         } else {
             pols.hashSDigest[i] = 0n;
         }
