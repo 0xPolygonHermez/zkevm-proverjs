@@ -3097,14 +3097,10 @@ function eval_functionCall(ctx, tag) {
         return eval_ARITH_BN254_MULFP2_X(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_MULFP2_Y") {
         return eval_ARITH_BN254_MULFP2_Y(ctx, tag);
-    } else if (tag.funcName == "ARITH_BN254_ADDFP2_X") {
-        return eval_ARITH_BN254_ADDFP2_X(ctx, tag);
-    } else if (tag.funcName == "ARITH_BN254_ADDFP2_Y") {
-        return eval_ARITH_BN254_ADDFP2_Y(ctx, tag);
-    } else if (tag.funcName == "ARITH_BN254_SUBFP2_X") {
-        return eval_ARITH_BN254_SUBFP2_X(ctx, tag);
-    } else if (tag.funcName == "ARITH_BN254_SUBFP2_Y") {
-        return eval_ARITH_BN254_SUBFP2_Y(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_ADDFP2") {
+        return eval_ARITH_BN254_ADDFP2(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_SUBFP2") {
+        return eval_ARITH_BN254_SUBFP2(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -3510,40 +3506,22 @@ function eval_ARITH_BN254_MULFP2_Y(ctx, tag)
     return ctx.FpBN254.add(ctx.FpBN254.mul(x1,y2), ctx.FpBN254.mul(x2, y1));
 }
 
-function eval_ARITH_BN254_ADDFP2_X(ctx, tag)
+function eval_ARITH_BN254_ADDFP2(ctx, tag)
 {
     // const ctxFullFe = {...ctx, fullFe: true};
     const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
-    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[2]));
+    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
 
     return ctx.FpBN254.add(x1,x2);
 }
 
-function eval_ARITH_BN254_ADDFP2_Y(ctx, tag)
-{
-    // const ctxFullFe = {...ctx, fullFe: true};
-    const y1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
-    const y2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[3]));
-
-    return ctx.FpBN254.add(y1,y2);
-}
-
-function eval_ARITH_BN254_SUBFP2_X(ctx, tag)
+function eval_ARITH_BN254_SUBFP2(ctx, tag)
 {
     // const ctxFullFe = {...ctx, fullFe: true};
     const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
-    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[2]));
+    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
 
     return ctx.FpBN254.sub(x1,x2);
-}
-
-function eval_ARITH_BN254_SUBFP2_Y(ctx, tag)
-{
-    // const ctxFullFe = {...ctx, fullFe: true};
-    const y1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
-    const y2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[3]));
-
-    return ctx.FpBN254.sub(y1,y2);
 }
 
 function printRegs(Fr, ctx) {
