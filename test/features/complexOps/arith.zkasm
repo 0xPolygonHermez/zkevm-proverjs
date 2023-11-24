@@ -68,8 +68,8 @@ REDUNDANT_ARITH_BN254_ADDFP2_CHECK:
         ${(A+C) % const.P_BN254} => E
         ${(B+D) % const.P_BN254} :ARITH_BN254_ADDFP2
 
-        ${ARITH_BN254_ADDFP2_X(A,B,C,D)} => E
-        ${ARITH_BN254_ADDFP2_Y(A,B,C,D)} :ARITH_BN254_ADDFP2
+        ${ARITH_BN254_ADDFP2(A,C)} => E
+        ${ARITH_BN254_ADDFP2(B,D)} :ARITH_BN254_ADDFP2
 
         :RETURN
 
@@ -78,8 +78,8 @@ REDUNDANT_ARITH_BN254_SUBFP2_CHECK:
         ${(A + const.P_BN254 - C) % const.P_BN254} => E
         ${(B + const.P_BN254 - D) % const.P_BN254} :ARITH_BN254_SUBFP2
 
-        ${ARITH_BN254_SUBFP2_X(A,B,C,D)} => E
-        ${ARITH_BN254_SUBFP2_Y(A,B,C,D)} :ARITH_BN254_SUBFP2
+        ${ARITH_BN254_SUBFP2(A,C)} => E
+        ${ARITH_BN254_SUBFP2(B,D)} :ARITH_BN254_SUBFP2
 
         :RETURN
 
