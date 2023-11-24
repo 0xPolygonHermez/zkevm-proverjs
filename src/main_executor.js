@@ -221,7 +221,7 @@ async function run() {
 
         if (cmPols.Sha256F) {
             console.log("Sha256F...");
-            await smSha256F.execute(cmPols.Sha256F, requiredBits2Field.Sha256F || []);
+            await smSha256F.execute(cmPols.Sha256F, requiredBits2FieldSha256.Sha256F || []);
         }
 
         if (cmPols.PaddingPG) console.log("PaddingPG...");

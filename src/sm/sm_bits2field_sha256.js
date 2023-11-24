@@ -1,5 +1,5 @@
 const SlotSize = 31487; // TODO Fix
-const bitsPerField = 6;
+const bitsPerField = 7;
 
 module.exports.buildConstants = async function (pols) {
     const N = pols.FieldLatch.length;
