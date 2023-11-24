@@ -452,7 +452,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5, hashS, hashSDigest, hashSLen, hashS1" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1" -b
     */
 
     pol operations =
@@ -717,7 +717,6 @@ namespace Main(%N);
         PaddingKK.hash4, PaddingKK.hash5, PaddingKK.hash6, PaddingKK.hash7,
         PaddingKK.incCounter
     };
-
 
     cntKeccakF' = cntKeccakF*(1-Global.L1) + incCounter*hashKDigest;
 
