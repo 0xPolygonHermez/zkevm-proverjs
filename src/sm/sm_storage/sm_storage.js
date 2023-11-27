@@ -8,6 +8,7 @@ const SmtActionContext = require("./smt_action_context.js");
 const { StorageRomLine } = require("./sm_storage_rom.js");
 const StorageRom = require("./sm_storage_rom.js").StorageRom;
 const StorageRomFile = __dirname + "/storage_sm_rom.json";
+const util = require('util');
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
@@ -44,8 +45,8 @@ module.exports.buildConstants = async function (pols) {
         pols.IN_LEVEL[i] = l.inLEVEL ? BigInt(l.inLEVEL):0n;
 
         /*
-            code NO generated with:
-            node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow" -B -e -p "l."
+            code PARTIAL generated with:
+            node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz" -B -e -p "l."
         */
 
         pols.OPERATION[i] =
@@ -68,8 +69,9 @@ module.exports.buildConstants = async function (pols) {
             + (l.setSIBLING_RKEY ? (2n**16n * BigInt(l.setSIBLING_RKEY)) : 0n)
             + (l.setSIBLING_VALUE_HASH ? (2n**17n * BigInt(l.setSIBLING_VALUE_HASH)) : 0n)
             + (l.setVALUE_HIGH ? (2n**18n * BigInt(l.setVALUE_HIGH)) : 0n)
-            + (l.setVALUE_LOW ? (2n**19n * BigInt(l.setVALUE_LOW)) : 0n);
-        // if (i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
+            + (l.setVALUE_LOW ? (2n**19n * BigInt(l.setVALUE_LOW)) : 0n)
+            + (l.jmpnz ? (2n**20n * BigInt(l.jmpnz)) : 0n);
+        if (i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
     }
     console.log('StorageRom Done');
 }
@@ -101,11 +103,11 @@ module.exports.execute = async function (pols, action) {
     if (!actionListEmpty) {
         ctx.init (fr, action[a]);
     }
+    let dumpedAction = false;
+    let onFinal = false;
     for (let i=0; i<polSize; i++) {
-
         // op is the internal register, reset to 0 at every evaluation
         let op = [fr.zero, fr.zero, fr.zero, fr.zero];
-
         // Current rom line is set by the program counter of this evaluation
         l = pols.pc[i];
         // console.log('RUN: '+rom.line[l].fileName+':'+rom.line[l].line+' '+rom.line[l].lineStr);
@@ -120,7 +122,10 @@ module.exports.execute = async function (pols, action) {
                 rom.line[l].print(l);
             }
         }
-
+        if (!onFinal) {
+            console.log(`LEVEL ${pols.level[i]} ctx.currentLevel:${ctx.currentLevel}`);
+            console.log('TRACE '+l.toString(10).padStart(3)+` ${rom.line[l].fileName.slice(0,-6)}:${rom.line[l].line}`.padEnd(35)+rom.line[l].lineStr);
+        }
         /*************/
         /* Selectors */
         /*************/
@@ -128,8 +133,15 @@ module.exports.execute = async function (pols, action) {
         // When the rom assembler code calls inFREE, it specifies the requested input data
         // using an operation + function name string couple
 
+        if (a !== dumpedAction) {
+            console.log(`************* DUMP ACTION ${a}*********************`);
+            console.log(util.inspect(action[a], false, null,true));
+            dumpedAction = a;
+        }
         if (rom.line[l].inFREE)
         {
+            const currentLevel = Number(pols.level[i]);
+
             if (rom.line[l].op == "functionCall")
             {
                 /* Possible values of mode when action is SMT Set:
@@ -250,28 +262,81 @@ module.exports.execute = async function (pols, action) {
                 // taking into account that the sibling bit is the opposite (1-x) of the value bit
                 else if (rom.line[l].funcName=="GetSiblingHash")
                 {
+                    console.log(currentLevel);
                     if (action[a].bIsSet)
                     {
-                        op[0] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n];
-                        op[1] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+1n];
-                        op[2] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+2n];
-                        op[3] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+3n];
+                        op[0] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
                     }
                     else
                     {
-                        op[0] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n];
-                        op[1] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+1n];
-                        op[2] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+2n];
-                        op[3] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+3n];
+                        op[0] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
                     }
 
                     logger("StorageExecutor GetSiblingHash returns " + fea42String(fr, op));
+                }
+                // Get the sibling hash, obtained from the siblings array of the current level,
+                // taking into account that the sibling bit is the opposite (1-x) of the value bit
+                else if (rom.line[l].funcName=="GetSiblingHash")
+                {
+                    console.log(currentLevel);
+                    if (action[a].bIsSet)
+                    {
+                        op[0] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
+                    }
+                    else
+                    {
+                        op[0] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
+                    }
+
+                    logger("StorageExecutor GetSiblingHash returns " + fea42String(fr, op));
+                }
+                // Get the sibling hash, obtained from the siblings array of the current level,
+                // taking into account that the sibling bit is the opposite (1-x) of the value bit
+                else if (rom.line[l].funcName=="GetSiblingLeftChildHash")
+                {
+                    if (action[a].bIsSet)
+                    {
+                        if (typeof action[a].setResult.siblingsLeftChild === 'undefined') {
+                            console.log(action[a]);
+                        }
+                        op = [...action[a].setResult.siblingsLeftChild[currentLevel]];
+                    }
+                    logger("StorageExecutor GetSiblingLeftChildHash returns " + fea42String(fr, op));
+                }
+
+                // Get the sibling hash, obtained from the siblings array of the current level,
+                // taking into account that the sibling bit is the opposite (1-x) of the value bit
+                else if (rom.line[l].funcName=="GetSiblingRightChildHash")
+                {
+                    if (action[a].bIsSet)
+                    {
+                        op = [...action[a].setResult.siblingsRightChild[currentLevel]];
+                    }
+                    logger("StorageExecutor GetSiblingRightChildHash returns " + fea42String(fr, op));
                 }
 
                 // Value is an u256 split in 8 u32 chuncks, each one stored in the lower 32 bits of an u63 field element
                 // u63 means that it is not an u64, since some of the possible values are lost due to the prime effect
 
                 // Get the lower 4 field elements of the value
+                else if (rom.line[l].funcName=="isValueZero")
+                {
+                    op[0] = (actionListEmpty || a >= action.length || (action[a].bIsSet ? action[a].setResult.newValue : action[a].getResult.value) === 0n) ? 1n : 0n;
+                    logger("StorageExecutor isGet returns " + fea42String(fr, op));
+                }
+
                 else if (rom.line[l].funcName=="GetValueLow")
                 {
                     let fea = scalar2fea(fr, action[a].bIsSet ? action[a].setResult.newValue : action[a].getResult.value);
@@ -282,7 +347,6 @@ module.exports.execute = async function (pols, action) {
 
                     logger("StorageExecutor GetValueLow returns " + fea42String(fr, op));
                 }
-
                 // Get the higher 4 field elements of the value
                 else if (rom.line[l].funcName=="GetValueHigh")
                 {
@@ -373,7 +437,7 @@ module.exports.execute = async function (pols, action) {
                         console.error("Error: StorageExecutor() called with GetLevel but wrong number of parameters=" + rom.line[l].params.length);
                         process.exit(-1);
                     }
-                    // TODO: difference ctx.level vs ctx.currentLevel
+                    // TODO: difference ctx.level vs currentLevel
                     op[0] = fr.e(ctx.level);
 
                     logger("StorageExecutor GetLevel() returns " + fea42String(fr, op));
@@ -383,7 +447,7 @@ module.exports.execute = async function (pols, action) {
                 else if (rom.line[l].funcName=="GetTopTree")
                 {
                     // Return 0 only if we reached the end of the tree, i.e. if the current level is 0
-                    if (ctx.currentLevel > 0)
+                    if (currentLevel > 0)
                     {
                         op[0] = fr.one;
                     }
@@ -396,7 +460,7 @@ module.exports.execute = async function (pols, action) {
                 {
                     // If we have consumed enough key bits to reach the deepest level of the siblings array, then we are at the top of the branch and we can start climing the tree
                     let siblingsSize = action[a].bIsSet ? action[a].setResult.siblings.length : action[a].getResult.siblings.length;
-                    if (ctx.currentLevel > siblingsSize )
+                    if (currentLevel > siblingsSize )
                     {
                         op[0] = fr.one;
                     }
@@ -409,15 +473,16 @@ module.exports.execute = async function (pols, action) {
                 else if (rom.line[l].funcName=="GetNextKeyBit")
                 {
                     // Decrease current level
+                    console.log('ctx.level', ctx.level, currentLevel);
                     ctx.currentLevel--;
-                    if (ctx.currentLevel<0)
+                    if (currentLevel < 0)
                     {
-                        console.error("Error: StorageExecutor.execute() GetNextKeyBit() found ctx.currentLevel<0");
+                        console.error("Error: StorageExecutor.execute() GetNextKeyBit() found currentLevel<0");
                         process.exit(-1);
                     }
 
                     // Get the key bit corresponding to the current level
-                    op[0] = ctx.bits[ctx.currentLevel];
+                    op[0] = ctx.bits[currentLevel];
 
                     logger("StorageExecutor GetNextKeyBit returns " + fea42String(fr, op));
                 }
@@ -425,6 +490,7 @@ module.exports.execute = async function (pols, action) {
                 // Return 1 if we completed all evaluations, except one
                 else if (rom.line[l].funcName=="isAlmostEndPolynomial")
                 {
+                    onFinal = true;
                     // Return one if this is the one before the last evaluation of the polynomials
                     if (i == (polSize-2))
                     {
@@ -590,6 +656,19 @@ module.exports.execute = async function (pols, action) {
             pols.address[i] = BigInt(rom.line[l].address);
             pols.jmpz[i] = 1n;
         }
+        else if (rom.line[l].jmpnz)
+        {
+            if (fr.isZero(op[0]))
+            {
+                pols.pc[nexti] = pols.pc[i] + 1n;
+            }
+            else
+            {
+                pols.pc[nexti] = BigInt(rom.line[l].address);
+            }
+            pols.address[i] = BigInt(rom.line[l].address);
+            pols.jmpnz[i] = 1n;
+        }
         // JMP: Jump always
         else if (rom.line[l].jmp)
         {
@@ -650,8 +729,9 @@ module.exports.execute = async function (pols, action) {
             op[3] = fr.add(op[3],fr.mul(BigInt(rom.line[l].inFREE), pols.free3[i]));
 
             pols.hash[i] = 1n;
-
-
+            const hashLeft = [pols.hashLeft0[i],pols.hashLeft1[i],pols.hashLeft2[i],pols.hashLeft3[i]];
+            const hashRight = [pols.hashRight0[i],pols.hashRight1[i],pols.hashRight2[i],pols.hashRight3[i]];
+            console.log(`HASH${pols.hashType[i]} ${op.slice(0, 4).map(x => x.toString(16).padStart(16,'0')).join('_')} L=${hashLeft.map(x => x.toString(16).padStart(16,'0')).join('_')} R=${hashRight.map(x => x.toString(16).padStart(16,'0')).join('_')}`);
             // console.log('POSEIDON:'+rom.line[l].fileName + ':' + rom.line[l].line+' '+[fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3]].map(x => x.toString(16)).join(','));
             required.PoseidonG.push([fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3], POSEIDONG_PERMUTATION3_ID]);
 
@@ -744,6 +824,19 @@ module.exports.execute = async function (pols, action) {
                 process.exit(-1);
             }
 
+            // Check hash counters
+            if (typeof action[a].getResult.incCounter !== 'undefined' && !fr.eq(action[a].getResult.incCounter, pols.incCounter[i]))
+            {
+                console.error(`Error: StorageExecutor() LATCH GET ${a} counters no match ${action[a].getResult.incCounter} pols.incCounter:${pols.incCounter[i]}`);
+                process.exit(-1);
+            }
+
+            const values = [...oldRoot, pols.rkey0[0], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i],
+                            pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i],
+                            pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
+                            pols.incCounter[i]];
+            console.log(`LATCH_GET input#${a} w=${action[a].main ? action[a].main.w:''} 1:${values.join()}`);
+
             logger("StorageExecutor LATCH GET");
 
             // Increase action
@@ -808,8 +901,21 @@ module.exports.execute = async function (pols, action) {
                 console.error("Error: StorageExecutor() LATCH SET found action " + a + " wrong level=" + pols.level);
                 process.exit(-1);
             }
+            const values = [...oldRoot, pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i],
+                            pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i],
+                            pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
+                            pols.newRoot0[i], pols.newRoot1[i], pols.newRoot2[i], pols.newRoot3[i], pols.incCounter[i]+2n];
+
+            console.log(`LATCH_SET input#${a} w=${action[a].main ? action[a].main.w:''} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH SET");
+
+            // Check hash counters
+            if (typeof action[a].setResult.incCounter !== 'undefined' && !fr.eq(action[a].setResult.incCounter, pols.incCounter[i]))
+            {
+                console.error(`Error: StorageExecutor() LATCH SET ${a}  counters no match ${action[a].setResult.incCounter} pols.incCounter:${pols.incCounter[i]}`);
+                process.exit(-1);
+            }
 
             // Increase action
             a++;
@@ -915,7 +1021,7 @@ module.exports.execute = async function (pols, action) {
             pols.oldRoot1[nexti] = op[1];
             pols.oldRoot2[nexti] = op[2];
             pols.oldRoot3[nexti] = op[3];
-            // console.log('RUN SET_OLD_ROOT: '+op.map(x => x.toString(16)).join(','));
+            console.log(`RUN SET_OLD_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
             pols.setOldRoot[i] = 1n;
         }
         else
@@ -933,6 +1039,7 @@ module.exports.execute = async function (pols, action) {
             pols.newRoot1[nexti] = op[1];
             pols.newRoot2[nexti] = op[2];
             pols.newRoot3[nexti] = op[3];
+            console.log(`RUN SET_NEW_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
             pols.setNewRoot[i] = 1n;
         }
         else
@@ -950,7 +1057,7 @@ module.exports.execute = async function (pols, action) {
             pols.hashLeft1[nexti] = op[1];
             pols.hashLeft2[nexti] = op[2];
             pols.hashLeft3[nexti] = op[3];
-            // console.log('RUN SET_HASH_LEFT: '+op.map(x => x.toString(16)).join(','));
+            console.log('RUN SET_HASH_LEFT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
             pols.setHashLeft[i] = 1n;
         }
         else
@@ -968,7 +1075,7 @@ module.exports.execute = async function (pols, action) {
             pols.hashRight1[nexti] = op[1];
             pols.hashRight2[nexti] = op[2];
             pols.hashRight3[nexti] = op[3];
-            // console.log('RUN SET_HASH_RIGHT: '+op.map(x => x.toString(16)).join(','));
+            console.log('RUN SET_HASH_RIGHT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
             pols.setHashRight[i] = 1n;
         }
         else
@@ -1132,6 +1239,7 @@ function initPols (pols, polSize) {
         pols.climbSiblingRkey[i] = 0n;
         pols.climbBitN[i] = 0n;
         pols.jmpz[i] = 0n;
+        pols.jmpnz[i] = 0n;
         pols.jmp[i] = 0n;
         pols.const[i] = 0n;
         pols.address[i] = 0n;

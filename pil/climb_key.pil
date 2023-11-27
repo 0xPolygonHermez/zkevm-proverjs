@@ -22,12 +22,13 @@ namespace ClimbKey(%N);
 //  ==> CLK2     {A0      A1     A2       A3}   z    A2[36..53]   2**36   A2[0..53]      0       0       0       0       1     X      <=== key = keyIn
 //      CLK3     {A0      A1   2*A2+z     A3}   z    A2[54..63]   2**54   A2[0..63]      0       0       1       0       0     22     <=== key = keyOut
 //
-//      CLK0      B0      B1     B2       B3    y    A1[0..17]      1     A1[0..17]      0       0       0       0       0     X
-//      CLK1      B0      B1     B2       B3    y    A1[18..35]   2**18   A1[0..35]      0       0       0       0       0     X
-//  ==> CLK2     {B0      B1     B2       B3}   y    A1[36..53]   2**36   A1[0..53]      0       0       0       0      {1}    X       <=== key = keyIn
-//      CLK3     {B0   2*B1+y    B2       B3}   y    A1[54..63]   2**54   A1[0..63]      0       1       0       0       0    {37}     <=== key = keyOut
+//      CLK0      B0      B1     B2       B3    y    B1[0..17]      1     B1[0..17]      0       0       0       0       0     X
+//      CLK1      B0      B1     B2       B3    y    B1[18..35]   2**18   B1[0..35]      0       0       0       0       0     X
+//  ==> CLK2     {B0      B1     B2       B3}   y    B1[36..53]   2**36   B1[0..53]      0       0       0       0      {1}    X       <=== key = keyIn
+//      CLK3     {B0   2*B1+y    B2       B3}   y    B1[54..63]   2**54   B1[0..63]      0       1       0       0       0    {37}     <=== key = keyOut
 //
 // lookup columns match on storage { }
+// ==> result clock
 
 // keyIn = key on CLK0..CLK2
 // keyOut = key on CLK3

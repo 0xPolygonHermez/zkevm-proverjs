@@ -51,6 +51,7 @@ namespace Storage(%N);
     pol commit climbSiblingRkey;
     pol commit climbBitN;
     pol commit jmpz;
+    pol commit jmpnz;
     pol commit jmp;
     pol commit const;
     pol commit address;
@@ -202,7 +203,7 @@ namespace Storage(%N);
     pol commit op0inv;
     pol opIsZero = 1 - op0 * op0inv;
     opIsZero * op0 = 0;
-    pol doJump = jmp + jmpz * opIsZero;
+    pol doJump = jmp + jmpz * opIsZero + jmpnz * (1 - opIsZero);
     pc' = doJump * (address - pc - 1) + pc + 1;
     pc * Global.L1 = 0;
 
@@ -212,7 +213,7 @@ namespace Storage(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow" -b
+       node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz" -b
     */
 
     pol operation =
@@ -220,7 +221,8 @@ namespace Storage(%N);
         + 2**4  * climbRkey             + 2**5  * climbSiblingRkey      + 2**6  * climbBitN             + 2**7  * jmpz
         + 2**8  * jmp                   + 2**9  * setHashLeft           + 2**10 * setHashRight          + 2**11 * setLevel
         + 2**12 * setNewRoot            + 2**13 * setOldRoot            + 2**14 * setRkey               + 2**15 * setRkeyBit
-        + 2**16 * setSiblingRkey        + 2**17 * setSiblingValueHash   + 2**18 * setValueHigh          + 2**19 * setValueLow;
+        + 2**16 * setSiblingRkey        + 2**17 * setSiblingValueHash   + 2**18 * setValueHigh          + 2**19 * setValueLow
+        + 2**20 * jmpnz;
 
     (1 - hash) * hash = 0;
     (1 - hashType) * hashType = 0;
@@ -242,6 +244,7 @@ namespace Storage(%N);
     (1 - setSiblingValueHash) * setSiblingValueHash = 0;
     (1 - setValueHigh) * setValueHigh = 0;
     (1 - setValueLow) * setValueLow = 0;
+    (1 - jmpnz) * jmpnz = 0;
 
     pol constant OPERATION;
     pol constant CONST;

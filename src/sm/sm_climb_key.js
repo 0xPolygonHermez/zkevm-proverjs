@@ -35,7 +35,7 @@ module.exports.buildConstants = async function (pols) {
             console.log(`FIXED row:${row} clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${upToChunk-1}`);
             for (let chunk = 0; chunk < upToChunk; ++chunk) {
                 const result = 2 * chunk + carryIn;
-                const carryOut = (clock < 4 && result > upToChunk) ? 1: 0;
+                const carryOut = result > upToChunk ? 1: 0;
                 const chunkResult = result % (upToChunk + 1);
                 const ltOut = chunkResult > glChunk ? 0 : (chunkResult == glChunk ? ltIn : 1);
                 if (clock ===3 && (ltOut !== 1 || carryOut == 1)) {
