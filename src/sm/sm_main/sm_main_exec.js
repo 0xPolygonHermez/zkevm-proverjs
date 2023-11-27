@@ -2372,6 +2372,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             console.log('WARNING:'+msg)
         }
+        required.PaddingKK.push(h);
     }
 
 
