@@ -33,7 +33,7 @@ module.exports.buildConstants = async function (pols) {
 
             // Fill all chunk values
             console.log(`FIXED row:${row} clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${upToChunk-1}`);
-            for (let chunk = 0; chunk < upToChunk; ++chunk) {
+            for (let chunk = 0; chunk <= upToChunk; ++chunk) {
                 const result = 2 * chunk + carryIn;
                 const carryOut = result > upToChunk ? 1: 0;
                 const chunkResult = result % (upToChunk + 1);
