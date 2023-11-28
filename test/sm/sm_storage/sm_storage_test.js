@@ -46,6 +46,7 @@ describe("Test storage operations", async function () {
         constPols = newConstantPolsArray(pil);
         cmPols = newCommitPolsArray(pil);
         plookUpIndex = 0;
+        required.Storage = [];
         for (let index = 0; index < cmPols.Main.sRD.length; ++index) {
             cmPols.Main.sRD[index] = 0n;
             cmPols.Main.SR0[index] = 0n;
@@ -124,19 +125,6 @@ describe("Test storage operations", async function () {
         cmPols.Main.op6[index] = fr.e(r.newRoot[3] & 0xFFFFFFFFn);
         cmPols.Main.op7[index] = fr.e(r.newRoot[3] >> 32n);
         cmPols.Main.incCounter[index] = BigInt(r.proofHashCounter);
-/*        console.log(index+' '+[
-                     fr.e(cmPols.Main.SR0[index] + cmPols.Main.SR1[index] * 2n**32n),
-                     fr.e(cmPols.Main.SR2[index] + cmPols.Main.SR3[index] * 2n**32n),
-                     fr.e(cmPols.Main.SR4[index] + cmPols.Main.SR5[index] * 2n**32n),
-                     fr.e(cmPols.Main.SR6[index] + cmPols.Main.SR7[index] * 2n**32n),
-                     cmPols.Main.sKey[0][index], cmPols.Main.sKey[1][index], cmPols.Main.sKey[2][index], cmPols.Main.sKey[3][index],
-                     cmPols.Main.D0[index], cmPols.Main.D1[index], cmPols.Main.D2[index], cmPols.Main.D3[index],
-                     cmPols.Main.D4[index], cmPols.Main.D5[index], cmPols.Main.D6[index], cmPols.Main.D7[index],
-                     fr.e(cmPols.Main.op0[index] + cmPols.Main.op1[index] * 2n**32n),
-                     fr.e(cmPols.Main.op2[index] + cmPols.Main.op3[index] * 2n**32n),
-                     fr.e(cmPols.Main.op4[index] + cmPols.Main.op5[index] * 2n**32n),
-                     fr.e(cmPols.Main.op6[index] + cmPols.Main.op7[index] * 2n**32n),
-                     cmPols.Main.incCounter].join(','));*/
         required.Storage.push({bIsSet: true,
             setResult: {
                 oldRoot: [...r.oldRoot],
@@ -255,16 +243,6 @@ describe("Test storage operations", async function () {
                 }
             }
         }
-        /*
-        const cols = ['oldRoot0', 'oldRoot1', 'oldRoot2', 'oldRoot3', 'rkey0', 'rkey1', 'rkey2', 'rkey3',
-                      'valueLow0', 'valueLow1', 'valueLow2', 'valueLow3', 'valueHigh0', 'valueHigh1',
-                      'valueHigh2', 'valueHigh3', 'incCounter' ];
-
-        for (let i=0; i<N; i++) {
-            if (cmPols.Storage.latchGet[i]) {
-                console.log(`> LATCH_GET[${i}] `+cols.map(col => fr.toString(cmPols.Storage[col][i])));
-            }
-        }*/
 
         // Verify
         const res = await verifyPil(fr, pil, cmPols, constPols);
@@ -305,6 +283,27 @@ describe("Test storage operations", async function () {
 /*
             const r2 = await smtSet (r1.newRoot, scalar2key(1, fr), Scalar.e(0));
             assert(smtUtils.nodeIsZero(r2.newRoot, fr));*/
+            await executeAndVerify();
+        });
+    }
+
+    function lastKeyBitDifferent () {
+        console.log ("StorageSM_lastKeyBitDifferent starting...");
+
+        it('StorageSM_lastKeyBitDifferent starting', async () => {
+            initContext();
+
+            const k1 = scalar2key(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+            const k2 = scalar2key(0xEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+            const r1 = await smtSet (smt.empty, k1, Scalar.e(2));
+            const r2 = await smtSet (r1.newRoot, k2, Scalar.e(4));
+
+            const rGet = await smtGet (r2.newRoot, k1);
+            assert(Scalar.eq(rGet.value, Scalar.e(2)));
+
+            const rGet2 = await smtGet (r2.newRoot, k2);
+            assert(Scalar.eq(rGet2.value, Scalar.e(4)));
+
             await executeAndVerify();
         });
     }
@@ -692,11 +691,12 @@ describe("Test storage operations", async function () {
             executeAndVerify();
         });
     }
-
-    // bugTest();
+    bugTest();
     unitTest();
-/*    zeroToZeroTest();
+    zeroToZeroTest();
     zeroToZero2Test();
     emptyTest();
-    useCaseTest();*/
+    useCaseTest();
+    longkeyTest();
+    lastKeyBitDifferent();
 });
