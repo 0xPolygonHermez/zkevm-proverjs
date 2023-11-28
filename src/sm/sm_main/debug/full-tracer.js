@@ -45,6 +45,7 @@ class FullTracer {
      * @param {Object} smt state tree
      * @param {Object} options full-tracer options
      * @param {Bool} options.verbose verbose options
+     * @param {Bool} options.skipFirstChangeL2Block Skips verification that first transaction must be a ChangeL2BlockTx
      */
     constructor(logFileName, smt, options) {
         // Opcode step traces of all processed tx
@@ -204,12 +205,11 @@ class FullTracer {
      */
     onStartBlock(ctx) {
         // If it is not the first change L2 block transaction, we must finish previous block
-        if (this.currentBlock.parent_hash) {
+        if (Object.keys(this.currentBlock).length !== 0) {
             this.onFinishBlock(ctx);
         }
 
         this.currentBlock = {
-            parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
@@ -224,6 +224,7 @@ class FullTracer {
      */
     onFinishBlock(ctx) {
         this.currentBlock = Object.assign(this.currentBlock, {
+            parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
             block_number: Number(getVarFromCtx(ctx, true, 'blockNum')),
             timestamp: Number(getVarFromCtx(ctx, true, 'timestamp')),
             ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree')),
@@ -349,6 +350,17 @@ class FullTracer {
             cnt_steps: Number(ctx.step),
             cnt_sha256_hashes: Number(ctx.cntSha256F),
         };
+
+        // create block object if flag skipFirstChangeL2Block is active and this.currentBlock has no properties
+        if (this.options.skipFirstChangeL2Block === true && Object.keys(this.currentBlock).length === 0) {
+            this.currentBlock = {
+                parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
+                coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
+                gas_limit: Constants.BLOCK_GAS_LIMIT,
+                responses: [],
+            };
+        }
+
         // Create current tx object
         this.currentBlock.responses.push(response);
         this.txTime = Date.now();

@@ -143,8 +143,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             config.debugInfo.inputName,
             smt,
             {
-                verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer
-            }
+                verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer,
+                skipFirstChangeL2Block: input.skipFirstChangeL2Block,
+            },
         );
     }
 
@@ -1051,7 +1052,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         // overwrite 'op' when hiting 'checkFirstTxType' label
-        if ((Number(ctx.zkPC) === rom.labels.checkFirstTxType) && input.l1InfoTree.skipFirstChangeL2Block === true) {
+        if ((Number(ctx.zkPC) === rom.labels.checkFirstTxType) && input.skipFirstChangeL2Block === true) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
                 [
                     Fr.e(1),
@@ -1062,6 +1063,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     Fr.e(1),
                     Fr.e(1),
                     Fr.e(1),
+                ];
+        }
+
+        // overwrite 'op' when hiting 'writeBlockInfoRoot' label
+        if ((Number(ctx.zkPC) === rom.labels.writeBlockInfoRoot) && input.skipWriteBlockInfoRoot === true) {
+            [op0, op1, op2, op3, op4, op5, op6, op7] =
+                [
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
                 ];
         }
 
