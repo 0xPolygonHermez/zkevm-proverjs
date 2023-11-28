@@ -376,25 +376,6 @@ function splitFeaTo16bits(chunks) {
     console.log(res);
     return res;
 }
-
-function inputFeaTo16bits(input, N, names) {
-    for (let i = 0; i < input.length; i++) {
-        for (const name of names) {
-            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
-        }
-    }
-}
-
-function splitFeaTo16bits(chunks) {
-    let res = [];
-    for(const chunk of chunks) {
-        res.push(chunk % 2n**16n);
-        res.push((chunk / 2n**16n) >> 0n);
-    }
-    console.log(res);
-    return res;
-}
-
 function prepareInput256bits(input, N) {
     for (let i = 0; i < input.length; i++) {
         for (var key of Object.keys(input[i])) {
