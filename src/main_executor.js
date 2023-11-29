@@ -236,7 +236,7 @@ async function run() {
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof cmPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                    throw new Error(`Polynomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
                 }
             }
         }

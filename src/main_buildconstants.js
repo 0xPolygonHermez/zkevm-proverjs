@@ -178,7 +178,7 @@ async function run() {
     for (let i=0; i<constPols.$$array.length; i++) {
         for (let j=0; j<N; j++) {
             if (typeof constPols.$$array[i][j] === "undefined") {
-                throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+                throw new Error(`Polynomial not fited ${constPols.$$defArray[i].name} at ${j}` )
             }
         }
     }
