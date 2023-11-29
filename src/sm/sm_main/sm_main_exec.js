@@ -1081,7 +1081,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ];
         }
 
-        if (l.SRD || l.sWR) {
+        if (l.sRD || l.sWR) {
             if (!Fr.isZero(ctx.A[7]) || !Fr.isZero(ctx.A[6]) || !Fr.isZero(ctx.A[5])) {
                 const values = '0x' + ([ctx.A[7], ctx.A[6], ctx.A[5]].map(x => x.toString(16)).join(',0x'));
                 throw new Error(`Storage invalid key (address) [A7..A5] = [${values}] on ${sourceRef}`);
