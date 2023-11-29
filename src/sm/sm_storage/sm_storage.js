@@ -311,7 +311,11 @@ module.exports.execute = async function (pols, action) {
                         if (typeof action[a].setResult.siblingsLeftChild === 'undefined') {
                             console.log(action[a]);
                         }
-                        op = [...action[a].setResult.siblingsLeftChild[currentLevel]];
+                        if ((ctx.level - currentLevel) !== 1) {
+                            throw new Error(`Invalid currentLevel ${currentLevel} for level ${ctx.level}`);
+                        }
+                        op = [...action[a].setResult.siblingLeftChild];
+                        // op = [...action[a].setResult.siblingsLeftChild[currentLevel]];
                     }
                     logger("StorageExecutor GetSiblingLeftChildHash returns " + fea42String(fr, op));
                 }
@@ -322,7 +326,11 @@ module.exports.execute = async function (pols, action) {
                 {
                     if (action[a].bIsSet)
                     {
-                        op = [...action[a].setResult.siblingsRightChild[currentLevel]];
+                        if ((ctx.level - currentLevel) !== 1) {
+                            throw new Error(`Invalid currentLevel ${currentLevel} for level ${ctx.level}`);
+                        }
+                        op = [...action[a].setResult.siblingRightChild];
+                        // op = [...action[a].setResult.siblingsRightChild[currentLevel]];
                     }
                     logger("StorageExecutor GetSiblingRightChildHash returns " + fea42String(fr, op));
                 }
