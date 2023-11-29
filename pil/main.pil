@@ -46,7 +46,7 @@ namespace Main(%N);
     ///////  Instruction related polynomials
     pol commit CONST7, CONST6, CONST5, CONST4, CONST3, CONST2, CONST1, CONST0;
     pol commit FREE7, FREE6, FREE5, FREE4, FREE3, FREE2, FREE1, FREE0;
-    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
+    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
     pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setRR, setHASHPOS, setRCX;
     pol commit JMP, JMPN, JMPC, JMPZ, offset;
     pol commit incStack;
@@ -90,7 +90,7 @@ namespace Main(%N);
         C7 * inROTL_C +
         D0 * inD +
         E0 * inE +
-        FREE0 * inFREE +
+        FREE0 * (inFREE + inFREE0) +
         SR0 * inSR +
         CTX * inCTX +
         SP * inSP +
@@ -528,13 +528,13 @@ namespace Main(%N);
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0,
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line

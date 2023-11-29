@@ -621,7 +621,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 // CALCULATE AND LOAD FREE INPUT
 //////
 
-        if (l.inFREE) {
+        if (l.inFREE || l.inFREE0) {
 
             if (!l.freeInTag) {
                 throw new Error(`Instruction with freeIn without freeInTag ${sourceRef}`);
@@ -944,7 +944,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = fi;
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add( Fr.mul(Fr.e(l.inFREE), fi[0]), op0 ),
+                [Fr.add( Fr.mul(Fr.add(Fr.e(l.inFREE), Fr.e(l.inFREE0)), fi[0]), op0 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[1]), op1 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[2]), op2 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[3]), op3 ),
@@ -954,9 +954,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[7]), op7 )
                 ];
             pols.inFREE[i] = Fr.e(l.inFREE);
+            pols.inFREE0[i] = Fr.e(l.inFREE0);
         } else {
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
             pols.inFREE[i] = Fr.zero;
+            pols.inFREE0[i] = Fr.zero;
         }
 
         if (Fr.isZero(op0)) {
