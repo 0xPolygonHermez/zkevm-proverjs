@@ -304,11 +304,14 @@ describe("Test storage operations", async function () {
             const rGet2 = await smtGet (r2.newRoot, k2);
             assert(Scalar.eq(rGet2.value, Scalar.e(4)));
 
-            const value = Scalar.e(1n << 255n);
-            const rUpdate = await smtSet (r2.newRoot, k1, value);
-            const rGetAfterUpdate = await smtGet (rUpdate, k1);
-            assert(Scalar.eq(rGetAfterUpdate.value, value));
-
+            let root = r2.newRoot;
+            for (let i = 0; i < 9; ++i) {
+                const value = Scalar.e(i === 8 ? ((1n << 256n) - 1n) : (1n << (31n + 32n * BigInt(i))));
+                const rUpdate = await smtSet (root, k1, value);
+                root = rUpdate.newRoot;
+                const rGetAfterUpdate = await smtGet (root, k1);
+                assert(Scalar.eq(rGetAfterUpdate.value, value));
+            }
             await executeAndVerify();
         });
     }

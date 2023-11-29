@@ -45,7 +45,7 @@
    "line": 7,
    "address": 11,
    "fileName": "storage_sm.zkasm",
-   "lineStr": "    ${GetValueLow()} => VALUE_LOW, VALUE_HIGH   :JMPNZ(ValueLowIsNonZero)"
+   "lineStr": "    ${GetValueLow()} => VALUE_LOW,VALUE_HIGH    :JMPNZ(ValueLowIsNonZero)"
   },
   {
    "inROTL_VH": "1",
@@ -97,31 +97,31 @@
    "inROTL_VH": "1",
    "setVALUE_HIGH": 1,
    "jmpnz": "1",
-   "addressLabel": "ValueIsNonZero",
+   "addressLabel": "ValueHighIsNonZero",
    "line": 14,
-   "address": 14,
+   "address": 12,
    "fileName": "storage_sm.zkasm",
-   "lineStr": "    ROTL_VH => VALUE_HIGH                       :JMPNZ(ValueIsNonZero)"
+   "lineStr": "    ROTL_VH => VALUE_HIGH                       :JMPNZ(ValueHighIsNonZero)"
   },
   {
    "inROTL_VH": "1",
    "setVALUE_HIGH": 1,
    "jmpnz": "1",
-   "addressLabel": "ValueIsNonZero",
+   "addressLabel": "ValueHighIsNonZero",
    "line": 15,
-   "address": 14,
+   "address": 12,
    "fileName": "storage_sm.zkasm",
-   "lineStr": "    ROTL_VH => VALUE_HIGH                       :JMPNZ(ValueIsNonZero)"
+   "lineStr": "    ROTL_VH => VALUE_HIGH                       :JMPNZ(ValueHighIsNonZero)"
   },
   {
    "inROTL_VH": "1",
    "setVALUE_HIGH": 1,
    "jmpnz": "1",
-   "addressLabel": "ValueIsNonZero",
+   "addressLabel": "ValueHighIsNonZero",
    "line": 16,
-   "address": 14,
+   "address": 12,
    "fileName": "storage_sm.zkasm",
-   "lineStr": "    ROTL_VH => VALUE_HIGH                       :JMPNZ(ValueIsNonZero)"
+   "lineStr": "    ROTL_VH => VALUE_HIGH                       :JMPNZ(ValueHighIsNonZero)"
   },
   {
    "jmp": "1",
@@ -220,7 +220,7 @@
    "jmp": "1",
    "addressLabel": "SetAllToZero",
    "line": 32,
-   "address": 291,
+   "address": 290,
    "fileName": "storage_sm.zkasm",
    "lineStr": "                                                :JMP(SetAllToZero)"
   },
@@ -285,7 +285,7 @@
    "jmpnz": "1",
    "addressLabel": "Set_ZeroToZero",
    "line": 54,
-   "address": 288,
+   "address": 287,
    "fileName": "storage_sm.zkasm",
    "lineStr": "    ${isSetZeroToZero()}                        :JMPNZ(Set_ZeroToZero)"
   },
@@ -293,7 +293,7 @@
    "jmp": "1",
    "addressLabel": "SetAllToZero",
    "line": 55,
-   "address": 291,
+   "address": 290,
    "fileName": "storage_sm.zkasm",
    "lineStr": "                                                :JMP(SetAllToZero)"
   },
@@ -431,7 +431,7 @@
    "jmp": "1",
    "addressLabel": "AssertFails",
    "line": 48,
-   "address": 291,
+   "address": 290,
    "fileName": "storage_sm_get_zero.zkasm",
    "lineStr": "                                        :JMP(AssertFails)"
   },
@@ -664,7 +664,7 @@
    "jmpz": "1",
    "addressLabel": "Set_ZeroToZero_GetZero_Return",
    "line": 37,
-   "address": 289,
+   "address": 288,
    "fileName": "storage_sm_get_climb_up.zkasm",
    "lineStr": "    NEW_ROOT - 1                    :JMPZ(Set_ZeroToZero_GetZero_Return)"
   },
@@ -2374,7 +2374,7 @@
    "jmp": "1",
    "addressLabel": "AssertFails",
    "line": 123,
-   "address": 291,
+   "address": 290,
    "fileName": "storage_sm_set_delete_found.zkasm",
    "lineStr": "                                    :JMP(AssertFails)"
   },
@@ -2820,7 +2820,7 @@
    "jmpz": "1",
    "addressLabel": "SDNF_Latch",
    "line": 39,
-   "address": 287,
+   "address": 286,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    LEVEL                           :JMPZ(SDNF_Latch)"
   },
@@ -2840,7 +2840,7 @@
    },
    "inFREE": "1",
    "setHASH_LEFT": 1,
-   "line": 43,
+   "line": 45,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    ${GetSiblingLeftChildHash()} => HASH_LEFT"
   },
@@ -2852,7 +2852,7 @@
    },
    "inFREE": "1",
    "setHASH_RIGHT": 1,
-   "line": 44,
+   "line": 46,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    ${GetSiblingRightChildHash()} => HASH_RIGHT"
   },
@@ -2862,12 +2862,12 @@
    },
    "inFREE": "1",
    "setHASH_LEFT": 1,
-   "setSIBLING_VALUE_HASH": 1,
+   "setHASH_RIGHT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 45,
+   "line": 47,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
-   "lineStr": "    $ => HASH_LEFT, SIBLING_VALUE_HASH :HASH0"
+   "lineStr": "    $ => HASH_LEFT, HASH_RIGHT :HASH0"
   },
   {
    "freeInTag": {
@@ -2879,7 +2879,7 @@
    "setRKEY_BIT": 1,
    "jmpz": "1",
    "addressLabel": "SDNF_SiblingIsRight3",
-   "line": 47,
+   "line": 49,
    "address": 266,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    ${GetNextKeyBit()} => RKEY_BIT  :JMPZ(SDNF_SiblingIsRight3)"
@@ -2887,7 +2887,7 @@
   {
    "inNEW_ROOT": "1",
    "setHASH_RIGHT": 1,
-   "line": 52,
+   "line": 54,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    NEW_ROOT => HASH_RIGHT"
   },
@@ -2899,14 +2899,14 @@
    "setNEW_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 55,
+   "line": 57,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => NEW_ROOT                   :HASH0"
   },
   {
    "inOLD_ROOT": "1",
    "setHASH_RIGHT": 1,
-   "line": 58,
+   "line": 60,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    OLD_ROOT => HASH_RIGHT"
   },
@@ -2918,7 +2918,7 @@
    "setOLD_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 59,
+   "line": 61,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => OLD_ROOT                   :HASH0"
   },
@@ -2933,22 +2933,15 @@
    "climbBitN": "0",
    "jmp": "1",
    "addressLabel": "SDNF_ClimbTree",
-   "line": 62,
-   "address": 272,
+   "line": 64,
+   "address": 271,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => RKEY                       :CLIMB_RKEY, JMP(SDNF_ClimbTree)"
   },
   {
-   "inSIBLING_VALUE_HASH": "1",
-   "setHASH_RIGHT": 1,
-   "line": 68,
-   "fileName": "storage_sm_set_delete_not_found.zkasm",
-   "lineStr": "    SIBLING_VALUE_HASH => HASH_RIGHT"
-  },
-  {
    "inNEW_ROOT": "1",
    "setHASH_LEFT": 1,
-   "line": 69,
+   "line": 70,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    NEW_ROOT => HASH_LEFT"
   },
@@ -2960,14 +2953,14 @@
    "setNEW_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 70,
+   "line": 71,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => NEW_ROOT                   :HASH0"
   },
   {
    "inOLD_ROOT": "1",
    "setHASH_LEFT": 1,
-   "line": 73,
+   "line": 74,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    OLD_ROOT => HASH_LEFT"
   },
@@ -2979,7 +2972,7 @@
    "setOLD_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 74,
+   "line": 75,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => OLD_ROOT                   :HASH0"
   },
@@ -2994,8 +2987,8 @@
    "climbBitN": "0",
    "jmp": "1",
    "addressLabel": "SDNF_ClimbTree",
-   "line": 77,
-   "address": 272,
+   "line": 78,
+   "address": 271,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => RKEY                       :CLIMB_RKEY, JMP(SDNF_ClimbTree)"
   },
@@ -3003,8 +2996,8 @@
    "inLEVEL": "1",
    "jmpz": "1",
    "addressLabel": "SDNF_Latch",
-   "line": 82,
-   "address": 287,
+   "line": 83,
+   "address": 286,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    LEVEL                           :JMPZ(SDNF_Latch)"
   },
@@ -3012,7 +3005,7 @@
    "inLEVEL": "1",
    "CONST": "-1",
    "setLEVEL": 1,
-   "line": 83,
+   "line": 84,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    LEVEL - 1 => LEVEL"
   },
@@ -3026,15 +3019,15 @@
    "setRKEY_BIT": 1,
    "jmpz": "1",
    "addressLabel": "SDNF_SiblingIsRight4",
-   "line": 85,
-   "address": 281,
+   "line": 86,
+   "address": 280,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    ${GetNextKeyBit()} => RKEY_BIT  :JMPZ(SDNF_SiblingIsRight4)"
   },
   {
    "inNEW_ROOT": "1",
    "setHASH_RIGHT": 1,
-   "line": 90,
+   "line": 91,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    NEW_ROOT => HASH_RIGHT"
   },
@@ -3046,7 +3039,7 @@
    },
    "inFREE": "1",
    "setHASH_LEFT": 1,
-   "line": 91,
+   "line": 92,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    ${GetSiblingHash()} => HASH_LEFT"
   },
@@ -3058,14 +3051,14 @@
    "setNEW_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 92,
+   "line": 93,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => NEW_ROOT                   :HASH0"
   },
   {
    "inOLD_ROOT": "1",
    "setHASH_RIGHT": 1,
-   "line": 95,
+   "line": 96,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    OLD_ROOT => HASH_RIGHT"
   },
@@ -3077,7 +3070,7 @@
    "setOLD_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 96,
+   "line": 97,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => OLD_ROOT                   :HASH0"
   },
@@ -3092,15 +3085,15 @@
    "climbBitN": "0",
    "jmp": "1",
    "addressLabel": "SDNF_ClimbTree",
-   "line": 99,
-   "address": 272,
+   "line": 100,
+   "address": 271,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => RKEY                       :CLIMB_RKEY, JMP(SDNF_ClimbTree)"
   },
   {
    "inNEW_ROOT": "1",
    "setHASH_LEFT": 1,
-   "line": 104,
+   "line": 105,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    NEW_ROOT => HASH_LEFT"
   },
@@ -3112,7 +3105,7 @@
    },
    "inFREE": "1",
    "setHASH_RIGHT": 1,
-   "line": 105,
+   "line": 106,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    ${GetSiblingHash()} => HASH_RIGHT"
   },
@@ -3124,14 +3117,14 @@
    "setNEW_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 106,
+   "line": 107,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => NEW_ROOT                   :HASH0"
   },
   {
    "inOLD_ROOT": "1",
    "setHASH_LEFT": 1,
-   "line": 109,
+   "line": 110,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    OLD_ROOT => HASH_LEFT"
   },
@@ -3143,7 +3136,7 @@
    "setOLD_ROOT": 1,
    "hash": "1",
    "hashType": 0,
-   "line": 110,
+   "line": 111,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => OLD_ROOT                   :HASH0"
   },
@@ -3158,8 +3151,8 @@
    "climbBitN": "0",
    "jmp": "1",
    "addressLabel": "SDNF_ClimbTree",
-   "line": 113,
-   "address": 272,
+   "line": 114,
+   "address": 271,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "    $ => RKEY                       :CLIMB_RKEY, JMP(SDNF_ClimbTree)"
   },
@@ -3167,7 +3160,7 @@
    "latchSet": "1",
    "jmp": "1",
    "addressLabel": "Run",
-   "line": 119,
+   "line": 120,
    "address": 0,
    "fileName": "storage_sm_set_delete_not_found.zkasm",
    "lineStr": "                                    :LATCH_SET, JMP(Run)"
@@ -3225,7 +3218,7 @@
    "jmpz": "1",
    "addressLabel": "NotEndPol",
    "line": 74,
-   "address": 292,
+   "address": 291,
    "fileName": "storage_sm.zkasm",
    "lineStr": "    ${isAlmostEndPolynomial()}                  :JMPZ(NotEndPol)"
   },
@@ -3303,14 +3296,14 @@
   "SDNF_InitLevel": 253,
   "SDNF_SiblingIsLeft3": 261,
   "SDNF_SiblingIsRight3": 266,
-  "SDNF_ClimbTree": 272,
-  "SDNF_SiblingIsLeft4": 275,
-  "SDNF_SiblingIsRight4": 281,
-  "SDNF_Latch": 287,
-  "Set_ZeroToZero": 288,
-  "Set_ZeroToZero_GetZero_Return": 289,
-  "AssertFails": 291,
-  "SetAllToZero": 291,
-  "NotEndPol": 292
+  "SDNF_ClimbTree": 271,
+  "SDNF_SiblingIsLeft4": 274,
+  "SDNF_SiblingIsRight4": 280,
+  "SDNF_Latch": 286,
+  "Set_ZeroToZero": 287,
+  "Set_ZeroToZero_GetZero_Return": 288,
+  "AssertFails": 290,
+  "SetAllToZero": 290,
+  "NotEndPol": 291
  }
 }

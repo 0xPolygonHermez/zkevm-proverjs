@@ -53,7 +53,7 @@ namespace Storage(%N);
     pol commit jmpz;
     pol commit jmpnz;
     pol commit jmp;
-    pol commit const;
+    pol commit const0;
     pol commit address;
 
     pol commit incCounter;
@@ -76,7 +76,7 @@ namespace Storage(%N);
         inFree * free0 +
         inRkeyBit * rkeyBit +
         inRotlVh * valueHigh3 +
-        const;
+        const0;
 
     pol op1 =
         inOldRoot * oldRoot1 +
@@ -213,7 +213,7 @@ namespace Storage(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz" -b
+       node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz,inFree,inNewRoot,inOldRoot,inRkey,inRkeyBit,inSiblingValueHash,inValueLow,inValueHigh,inRotlVh,inLevel" -b
     */
 
     pol operation =
@@ -222,55 +222,47 @@ namespace Storage(%N);
         + 2**8  * jmp                   + 2**9  * setHashLeft           + 2**10 * setHashRight          + 2**11 * setLevel
         + 2**12 * setNewRoot            + 2**13 * setOldRoot            + 2**14 * setRkey               + 2**15 * setRkeyBit
         + 2**16 * setSiblingRkey        + 2**17 * setSiblingValueHash   + 2**18 * setValueHigh          + 2**19 * setValueLow
-        + 2**20 * jmpnz;
+        + 2**20 * jmpnz                 + 2**21 * inFree                + 2**22 * inNewRoot             + 2**23 * inOldRoot
+        + 2**24 * inRkey                + 2**25 * inRkeyBit             + 2**26 * inSiblingValueHash    + 2**27 * inValueLow
+        + 2**28 * inValueHigh           + 2**29 * inRotlVh              + 2**30 * inLevel;
 
-    (1 - hash) * hash = 0;
-    (1 - hashType) * hashType = 0;
-    (1 - latchGet) * latchGet = 0;
-    (1 - latchSet) * latchSet = 0;
-    (1 - climbRkey) * climbRkey = 0;
-    (1 - climbSiblingRkey) * climbSiblingRkey = 0;
-    (1 - climbBitN) * climbBitN = 0;
-    (1 - jmpz) * jmpz = 0;
-    (1 - jmp) * jmp = 0;
-    (1 - setHashLeft) * setHashLeft = 0;
-    (1 - setHashRight) * setHashRight = 0;
-    (1 - setLevel) * setLevel = 0;
-    (1 - setNewRoot) * setNewRoot = 0;
-    (1 - setOldRoot) * setOldRoot = 0;
-    (1 - setRkey) * setRkey = 0;
-    (1 - setRkeyBit) * setRkeyBit = 0;
-    (1 - setSiblingRkey) * setSiblingRkey = 0;
-    (1 - setSiblingValueHash) * setSiblingValueHash = 0;
-    (1 - setValueHigh) * setValueHigh = 0;
-    (1 - setValueLow) * setValueLow = 0;
-    (1 - jmpnz) * jmpnz = 0;
+        (1 - hash) * hash = 0;
+        (1 - hashType) * hashType = 0;
+        (1 - latchGet) * latchGet = 0;
+        (1 - latchSet) * latchSet = 0;
+        (1 - climbRkey) * climbRkey = 0;
+        (1 - climbSiblingRkey) * climbSiblingRkey = 0;
+        (1 - climbBitN) * climbBitN = 0;
+        (1 - jmpz) * jmpz = 0;
+        (1 - jmp) * jmp = 0;
+        (1 - setHashLeft) * setHashLeft = 0;
+        (1 - setHashRight) * setHashRight = 0;
+        (1 - setLevel) * setLevel = 0;
+        (1 - setNewRoot) * setNewRoot = 0;
+        (1 - setOldRoot) * setOldRoot = 0;
+        (1 - setRkey) * setRkey = 0;
+        (1 - setRkeyBit) * setRkeyBit = 0;
+        (1 - setSiblingRkey) * setSiblingRkey = 0;
+        (1 - setSiblingValueHash) * setSiblingValueHash = 0;
+        (1 - setValueHigh) * setValueHigh = 0;
+        (1 - setValueLow) * setValueLow = 0;
+        (1 - jmpnz) * jmpnz = 0;
+        (1 - inFree) * inFree = 0;
+        (1 - inNewRoot) * inNewRoot = 0;
+        (1 - inOldRoot) * inOldRoot = 0;
+        (1 - inRkey) * inRkey = 0;
+        (1 - inRkeyBit) * inRkeyBit = 0;
+        (1 - inSiblingValueHash) * inSiblingValueHash = 0;
+        (1 - inValueLow) * inValueLow = 0;
+        (1 - inValueHigh) * inValueHigh = 0;
+        (1 - inRotlVh) * inRotlVh = 0;
+        (1 - inLevel) * inLevel = 0;
 
     pol constant OPERATION;
-    pol constant CONST;
+    pol constant CONST0;
     pol constant ADDRESS;
     pol constant LINE; // 0, 1, 2, ...
-    pol constant IN_FREE;
-    pol constant IN_NEW_ROOT;
-    pol constant IN_OLD_ROOT;
-    pol constant IN_RKEY;
-    pol constant IN_RKEY_BIT;
     pol constant IN_SIBLING_RKEY;
-    pol constant IN_SIBLING_VALUE_HASH;
-    pol constant IN_VALUE_LOW;
-    pol constant IN_VALUE_HIGH;
-    pol constant IN_ROTL_VH;
-    pol constant IN_LEVEL;
 
-    {
-        operation, const, address, pc,
-        inFree, inNewRoot, inOldRoot, inRkey, inRkeyBit, inSiblingRkey, inSiblingValueHash,
-        inValueLow, inValueHigh, inRotlVh, inLevel
-    }
-    in
-    {
-        OPERATION, CONST, ADDRESS, LINE,
-        IN_FREE, IN_NEW_ROOT, IN_OLD_ROOT, IN_RKEY, IN_RKEY_BIT, IN_SIBLING_RKEY, IN_SIBLING_VALUE_HASH,
-        IN_VALUE_LOW, IN_VALUE_HIGH, IN_ROTL_VH, IN_LEVEL
-    }
+    { operation, const0, address, pc, inSiblingRkey } in { OPERATION, CONST0, ADDRESS, LINE, IN_SIBLING_RKEY }
 
