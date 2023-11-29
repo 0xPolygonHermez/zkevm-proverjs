@@ -27,26 +27,19 @@ module.exports.buildConstants = async function (pols) {
         const l = rom.line[romLine];
         // if (i < rom.line.length) console.log({_:romLine, ...l});
 
-        pols.CONST[i] = l.CONST ? fr.e(BigInt(l.CONST)) : fr.zero;
+        if (l.CONST && (BigInt(l.CONST) >= 2n ** 32n || BigInt(l.CONST) <= -(2n ** 32n))) {
+            throw new Error(`Invalid value for CONST ${BigInt(l.CONST)} on ${l.fileName}:${l.line}`);
+        }
+        pols.CONST0[i] = l.CONST ? fr.e(BigInt(l.CONST)) : fr.zero;
 
         pols.ADDRESS[i] = l.address ? BigInt(l.address) : 0n;
         pols.LINE[i] = BigInt(romLine);
 
-        pols.IN_FREE[i] = l.inFREE ? BigInt(l.inFREE) : 0n;
-        pols.IN_NEW_ROOT[i] = l.inNEW_ROOT ? BigInt(l.inNEW_ROOT):0n;
-        pols.IN_OLD_ROOT[i] = l.inOLD_ROOT ? BigInt(l.inOLD_ROOT):0n;
-        pols.IN_RKEY[i] = l.inRKEY ? BigInt(l.inRKEY):0n;
-        pols.IN_RKEY_BIT[i] = l.inRKEY_BIT ? BigInt(l.inRKEY_BIT):0n;
         pols.IN_SIBLING_RKEY[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
-        pols.IN_SIBLING_VALUE_HASH[i] = l.inSIBLING_VALUE_HASH ? BigInt(l.inSIBLING_VALUE_HASH):0n;
-        pols.IN_VALUE_LOW[i] = l.inVALUE_LOW ? BigInt(l.inVALUE_LOW):0n;
-        pols.IN_VALUE_HIGH[i] = l.inVALUE_HIGH ? BigInt(l.inVALUE_HIGH):0n;
-        pols.IN_ROTL_VH[i] = l.inROTL_VH ? BigInt(l.inROTL_VH):0n;
-        pols.IN_LEVEL[i] = l.inLEVEL ? BigInt(l.inLEVEL):0n;
 
         /*
             code PARTIAL generated with:
-            node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz" -B -e -p "l."
+            node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz,inFree,inNewRoot,inOldRoot,inRkey,inRkeyBit,inSiblingValueHash,inValueLow,inValueHigh,inRotlVh,inLevel" -B -e -p "l."
         */
 
         pols.OPERATION[i] =
@@ -70,7 +63,30 @@ module.exports.buildConstants = async function (pols) {
             + (l.setSIBLING_VALUE_HASH ? (2n**17n * BigInt(l.setSIBLING_VALUE_HASH)) : 0n)
             + (l.setVALUE_HIGH ? (2n**18n * BigInt(l.setVALUE_HIGH)) : 0n)
             + (l.setVALUE_LOW ? (2n**19n * BigInt(l.setVALUE_LOW)) : 0n)
-            + (l.jmpnz ? (2n**20n * BigInt(l.jmpnz)) : 0n);
+            + (l.jmpnz ? (2n**20n * BigInt(l.jmpnz)) : 0n)
+            + (l.inFREE ? (2n**21n * BigInt(l.inFREE)) : 0n)
+            + (l.inNEW_ROOT ? (2n**22n * BigInt(l.inNEW_ROOT)) : 0n)
+            + (l.inOLD_ROOT ? (2n**23n * BigInt(l.inOLD_ROOT)) : 0n)
+            + (l.inRKEY ? (2n**24n * BigInt(l.inRKEY)) : 0n)
+            + (l.inRKEY_BIT ? (2n**25n * BigInt(l.inRKEY_BIT)) : 0n)
+            + (l.inSIBLING_VALUE_HASH ? (2n**26n * BigInt(l.inSIBLING_VALUE_HASH)) : 0n)
+            + (l.inVALUE_LOW ? (2n**27n * BigInt(l.inVALUE_LOW)) : 0n)
+            + (l.inVALUE_HIGH ? (2n**28n * BigInt(l.inVALUE_HIGH)) : 0n)
+            + (l.inROTL_VH ? (2n**29n * BigInt(l.inROTL_VH)) : 0n)
+            + (l.inLEVEL ? (2n**30n * BigInt(l.inLEVEL)) : 0n);
+
+        const flags = ['hash','hashType','latchGet','latchSet','climbRkey','climbSiblingRkey','climbBitN',
+                       'jmpz','jmp','setHASH_LEFT','setHASH_RIGHT','setLEVEL','setNEW_ROOT','setOLD_ROOT',
+                       'setRKEY','setRKEY_BIT','setSIBLING_RKEY','setSIBLING_VALUE_HASH','setVALUE_HIGH',
+                       'setVALUE_LOW','jmpnz','inFREE','inNEW_ROOT','inOLD_ROOT','inRKEY','inRKEY_BIT',
+                       'inSIBLING_VALUE_HASH','inVALUE_LOW','inVALUE_HIGH','inROTL_VH','inLEVEL'];
+
+        for (const flag of flags) {
+            if (l[flag] && BigInt(l[flag]) !== 0n && BigInt(l[flag]) !== 1n) {
+                throw new Error(`Invalid value for ${flag} on ${l.fileName}:${l.line}`);
+            }
+        }
+
         if (i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
     }
     console.log('StorageRom Done');
