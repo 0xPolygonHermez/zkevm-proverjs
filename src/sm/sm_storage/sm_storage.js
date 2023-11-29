@@ -565,64 +565,64 @@ module.exports.execute = async function (pols, action) {
         if (rom.line[l].CONST != "")
         {
             op[0] = fr.add(op[0], fr.e(rom.line[l].CONST));
-            pols.const[i] = fr.e(rom.line[l].CONST);
+            pols.const0[i] = fr.e(rom.line[l].CONST);
         }
 
         // If inOLD_ROOT then op=OLD_ROOT
         if (rom.line[l].inOLD_ROOT)
         {
-            pols.inOldRoot[i] = fr.e(rom.line[l].inOLD_ROOT);
-            op[0] = fr.add(op[0], fr.mul(pols.inOldRoot[i], pols.oldRoot0[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inOldRoot[i], pols.oldRoot1[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inOldRoot[i], pols.oldRoot2[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inOldRoot[i], pols.oldRoot3[i]));
+            op[0] = fr.add(op[0], pols.oldRoot0[i]);
+            op[1] = fr.add(op[1], pols.oldRoot1[i]);
+            op[2] = fr.add(op[2], pols.oldRoot2[i]);
+            op[3] = fr.add(op[3], pols.oldRoot3[i]);
+            pols.inOldRoot[i] = fr.one;
         }
 
         // If inNEW_ROOT then op=NEW_ROOT
         if (rom.line[l].inNEW_ROOT)
         {
-            pols.inNewRoot[i] = fr.e(rom.line[l].inNEW_ROOT)
-            op[0] = fr.add(op[0], fr.mul(pols.inNewRoot[i], pols.newRoot0[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inNewRoot[i], pols.newRoot1[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inNewRoot[i], pols.newRoot2[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inNewRoot[i], pols.newRoot3[i]));
+            op[0] = fr.add(op[0], pols.newRoot0[i]);
+            op[1] = fr.add(op[1], pols.newRoot1[i]);
+            op[2] = fr.add(op[2], pols.newRoot2[i]);
+            op[3] = fr.add(op[3], pols.newRoot3[i]);
+            pols.inNewRoot[i] = fr.one;
         }
 
         // If inRKEY_BIT then op=RKEY_BIT
         if (rom.line[l].inRKEY_BIT)
         {
-            pols.inRkeyBit[i] = fr.e(rom.line[l].inRKEY_BIT);
-            op[0] = fr.add(op[0], fr.mul(pols.inRkeyBit[i], pols.rkeyBit[i]));
+            op[0] = fr.add(op[0], pols.rkeyBit[i]);
+            pols.inRkeyBit[i] = fr.one;
         }
 
         // If inVALUE_LOW then op=VALUE_LOW
         if (rom.line[l].inVALUE_LOW)
         {
-            pols.inValueLow[i] = fr.e(rom.line[l].inVALUE_LOW);
-            op[0] = fr.add(op[0], fr.mul(pols.inValueLow[i], pols.valueLow0[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inValueLow[i], pols.valueLow1[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inValueLow[i], pols.valueLow2[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inValueLow[i], pols.valueLow3[i]));
+            op[0] = fr.add(op[0], pols.valueLow0[i]);
+            op[1] = fr.add(op[1], pols.valueLow1[i]);
+            op[2] = fr.add(op[2], pols.valueLow2[i]);
+            op[3] = fr.add(op[3], pols.valueLow3[i]);
+            pols.inValueLow[i] = fr.one;
         }
 
         // If inVALUE_HIGH then op=VALUE_HIGH
         if (rom.line[l].inVALUE_HIGH)
         {
-            pols.inValueHigh[i] = fr.e(rom.line[l].inVALUE_HIGH);
-            op[0] = fr.add(op[0], fr.mul(pols.inValueHigh[i], pols.valueHigh0[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inValueHigh[i], pols.valueHigh1[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inValueHigh[i], pols.valueHigh2[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inValueHigh[i], pols.valueHigh3[i]));
+            op[0] = fr.add(op[0], pols.valueHigh0[i]);
+            op[1] = fr.add(op[1], pols.valueHigh1[i]);
+            op[2] = fr.add(op[2], pols.valueHigh2[i]);
+            op[3] = fr.add(op[3], pols.valueHigh3[i]);
+            pols.inValueHigh[i] = fr.one;
         }
 
         // If inRKEY then op=RKEY
         if (rom.line[l].inRKEY)
         {
-            pols.inRkey[i] = fr.e(rom.line[l].inRKEY);
-            op[0] = fr.add(op[0], fr.mul(pols.inRkey[i], pols.rkey0[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inRkey[i], pols.rkey1[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inRkey[i], pols.rkey2[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inRkey[i], pols.rkey3[i]));
+            op[0] = fr.add(op[0], pols.rkey0[i]);
+            op[1] = fr.add(op[1], pols.rkey1[i]);
+            op[2] = fr.add(op[2], pols.rkey2[i]);
+            op[3] = fr.add(op[3], pols.rkey3[i]);
+            pols.inRkey[i] = fr.one;
         }
 
         // If inSIBLING_RKEY then op=SIBLING_RKEY
@@ -638,28 +638,28 @@ module.exports.execute = async function (pols, action) {
         // If inSIBLING_VALUE_HASH then op=SIBLING_VALUE_HASH
         if (rom.line[l].inSIBLING_VALUE_HASH)
         {
-            pols.inSiblingValueHash[i] = fr.e(rom.line[l].inSIBLING_VALUE_HASH);
-            op[0] = fr.add(op[0], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash0[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash1[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash2[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inSiblingValueHash[i], pols.siblingValueHash3[i]));
+            op[0] = fr.add(op[0], pols.siblingValueHash0[i]);
+            op[1] = fr.add(op[1], pols.siblingValueHash1[i]);
+            op[2] = fr.add(op[2], pols.siblingValueHash2[i]);
+            op[3] = fr.add(op[3], pols.siblingValueHash3[i]);
+            pols.inSiblingValueHash[i] = fr.one;
         }
 
         // If inROTL_VH then op=rotate_left(VALUE_HIGH)
         if (rom.line[l].inROTL_VH)
         {
-            pols.inRotlVh[i] = fr.e(rom.line[l].inROTL_VH);
-            op[0] = fr.add(op[0], fr.mul(pols.inRotlVh[i], pols.valueHigh3[i]));
-            op[1] = fr.add(op[1], fr.mul(pols.inRotlVh[i], pols.valueHigh0[i]));
-            op[2] = fr.add(op[2], fr.mul(pols.inRotlVh[i], pols.valueHigh1[i]));
-            op[3] = fr.add(op[3], fr.mul(pols.inRotlVh[i], pols.valueHigh2[i]));
+            op[0] = fr.add(op[0], pols.valueHigh3[i]);
+            op[1] = fr.add(op[1], pols.valueHigh0[i]);
+            op[2] = fr.add(op[2], pols.valueHigh1[i]);
+            op[3] = fr.add(op[3], pols.valueHigh2[i]);
+            pols.inRotlVh[i] = fr.one;
         }
 
         // If inROTL_VH then op=rotate_left(VALUE_HIGH)
         if (rom.line[l].inLEVEL)
         {
-            pols.inLevel[i] = fr.e(rom.line[l].inLEVEL);
-            op[0] = fr.add(op[0], fr.mul(pols.inLevel[i], pols.level[i]));
+            op[0] = fr.add(op[0], pols.level[i]);
+            pols.inLevel[i] = fr.one;
         }
 
         /****************/
@@ -1265,7 +1265,7 @@ function initPols (pols, polSize) {
         pols.jmpz[i] = 0n;
         pols.jmpnz[i] = 0n;
         pols.jmp[i] = 0n;
-        pols.const[i] = 0n;
+        pols.const0[i] = 0n;
         pols.address[i] = 0n;
 
         pols.op0inv[i] = 0n;
