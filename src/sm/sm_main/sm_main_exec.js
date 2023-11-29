@@ -1086,15 +1086,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     newRoot: [...ctx.lastSWrite.res.newRoot],
                     key: [...ctx.lastSWrite.res.key],
                     siblings: [...ctx.lastSWrite.res.siblings],
-                    siblingLeftChild: [...ctx.lastSWrite.res.siblingLeftChild],
-                    siblingRightChild: [...ctx.lastSWrite.res.siblingRightChild],
                     insKey: ctx.lastSWrite.res.insKey ? [...ctx.lastSWrite.res.insKey] : new Array(4).fill(Scalar.zero),
                     insValue: ctx.lastSWrite.res.insValue,
                     isOld0: ctx.lastSWrite.res.isOld0,
                     oldValue: ctx.lastSWrite.res.oldValue,
                     newValue: ctx.lastSWrite.res.newValue,
                     mode: ctx.lastSWrite.res.mode,
-                    incCounter: ctx.lastSWrite.res.proofHashCounter
+                    incCounter: ctx.lastSWrite.res.proofHashCounter,
+                    siblingLeftChild: [...ctx.lastSWrite.res.siblingLeftChild],
+                    siblingRightChild: [...ctx.lastSWrite.res.siblingRightChild]
                 },
                 main: {
                     w: i,

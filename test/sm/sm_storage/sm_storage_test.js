@@ -131,15 +131,15 @@ describe("Test storage operations", async function () {
                 newRoot: [...r.newRoot],
                 key: [...r.key],
                 siblings: [...r.siblings],
-                siblingsLeftChild: [...r.siblingsLeftChild],
-                siblingsRightChild: [...r.siblingsRightChild],
                 insKey: r.insKey ? [...r.insKey] : new Array(4).fill(Scalar.zero),
                 insValue: r.insValue,
                 isOld0: r.isOld0,
                 oldValue: r.oldValue,
                 newValue: r.newValue,
                 mode: r.mode,
-                incCounter: r.proofHashCounter
+                incCounter: r.proofHashCounter,
+                siblingLeftChild: [...r.siblingLeftChild],
+                siblingRightChild: [...r.siblingRightChild]
             }, Main: {w:index, sourceRef:''}});
         if (LOG_SMT_RESULT) console.log(r);
         return r;
@@ -294,7 +294,7 @@ describe("Test storage operations", async function () {
             initContext();
 
             const k1 = scalar2key(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
-            const k2 = scalar2key(0xEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+            const k2 = scalar2key(0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
             const r1 = await smtSet (smt.empty, k1, Scalar.e(2));
             const r2 = await smtSet (r1.newRoot, k2, Scalar.e(4));
 
@@ -303,6 +303,11 @@ describe("Test storage operations", async function () {
 
             const rGet2 = await smtGet (r2.newRoot, k2);
             assert(Scalar.eq(rGet2.value, Scalar.e(4)));
+
+            const value = Scalar.e(1n << 255n);
+            const rUpdate = await smtSet (r2.newRoot, k1, value);
+            const rGetAfterUpdate = await smtGet (rUpdate, k1);
+            assert(Scalar.eq(rGetAfterUpdate.value, value));
 
             await executeAndVerify();
         });
