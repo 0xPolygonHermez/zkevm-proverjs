@@ -791,7 +791,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const a = safeFea2scalar(Fr, ctx.A);
                 const b = safeFea2scalar(Fr, ctx.B);
                 const c = safeFea2scalar(Fr, [op0, op1]);
-                const expectedC = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), MASK_64);
+                const expectedC = Scalar.band(Scalar.add(Scalar.sub(a, b), P2_64), MASK_64);
                 if (!Scalar.eq(c, expectedC)) {
                     throw new Error(`SUB does not match (${expectedC} != ${c}) ${sourceRef}`);
                 }
