@@ -512,7 +512,6 @@ describe("test plookup operations", async function () {
         }
     });
 
-/*
     it("It should fail tests", async () => {
         cmPols = newCommitPolsArray(pil);
 
@@ -541,6 +540,6 @@ describe("test plookup operations", async function () {
         expect(res[10]).to.equal(prefix + 'w=351 values: 1,6,176,180,0,0,164,0' + suffix);
         expect(res[11]).to.equal(prefix + 'w=383 values: 1,7,15,240,0,0,239,0' + suffix);
         expect(res[12]).to.equal(prefix + 'w=384 values: 0,2,255,0,0,0,16,0' + suffix);
-    })*/
+    })
 
 });
