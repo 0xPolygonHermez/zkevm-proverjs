@@ -228,7 +228,7 @@ class FullTracer {
             block_number: Number(getVarFromCtx(ctx, true, 'blockNum')),
             timestamp: Number(getVarFromCtx(ctx, true, 'timestamp')),
             ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree')),
-            block_hash_l1: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockchashL1InfoTree')),
+            block_hash_l1: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockHashL1InfoTree')),
             gas_used: Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed')),
             block_info_root: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR')),
             block_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
