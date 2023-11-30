@@ -2280,7 +2280,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
         }
 
-        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDiges) {
+        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
             pols.incCounter[i] = Fr.e(incCounter);
         } else {
             pols.incCounter[i] = Fr.zero;
