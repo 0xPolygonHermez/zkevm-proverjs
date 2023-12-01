@@ -218,7 +218,11 @@ module.exports.execute = async function (pols, input) {
 
             pols.connected[p] = connected ? 1n : 0n;
             pols.s1[p] = bit;
-            pols.s2[p] = bitFromState(stOut, j);
+            if (j<256) {
+                pols.s2[p] = bitFromState(stOut, j);
+            } else {
+                pols.s2[p] = 0n;
+            }
 
             const k = 7 - (j % 8);
             const inc = BigInt(pols.s1[p] << BigInt(k));
