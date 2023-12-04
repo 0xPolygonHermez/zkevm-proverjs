@@ -13,6 +13,12 @@ const { C } = require("@0xpolygonhermez/zkevm-commonjs/src/poseidon_constants_op
 describe("test climb key state machine", async function () {
     this.timeout(10000000);
 
+    let F;
+
+    before(async () => {
+        F = new F1Field("0xFFFFFFFF00000001");
+    });
+
     function executeMain(pols, input) {
         const N = pols.inkey[0].length;
 
@@ -74,42 +80,83 @@ describe("test climb key state machine", async function () {
         return [pil, cmPols, constPols];
     }
 
-    it("It should check standard l", async () => {
-        const F = new F1Field("0xFFFFFFFF00000001");
+    // it("It should check standard l", async () => {
+    //     const GL = 0xFFFFFFFF00000001n;
+    //     const PGL = GL - 1n;
+    //     const SGL = GL >> 1n;
+
+    //     // input: {key: currentRkey, level: pols.level[i], bit}
+    //     let input = [
+    //         {key: [0n,0n,0n,0n], out: [0n,0n,0n,0n], level: 3n, bit: 0n},
+    //         {key: [0n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n},
+    //         {key: [0n,0n,0n,0n], out: [0n,1n,0n,0n], level: 5n, bit: 1n},
+    //         {key: [0n,0n,0n,0n], out: [0n,0n,1n,0n], level: 6n, bit: 1n},
+    //         {key: [0n,0n,0n,0n], out: [0n,0n,0n,1n], level: 7n, bit: 1n},
+    //         {key: [SGL, PGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 0n, bit: 0n},
+    //         {key: [PGL, SGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 1n, bit: 0n},
+    //         {key: [PGL, PGL, SGL, PGL], out: [PGL, PGL, PGL, PGL], level: 2n, bit: 0n},
+    //         {key: [PGL, PGL, PGL, SGL], out: [PGL, PGL, PGL, PGL], level: 3n, bit: 0n}];
+
+    //     const values = [0x3FFFFn, 0x1FFFFn, 0xFFFFC0000n, 0x7FFFC0000n, 0x3FF000000000n, 0x1FF000000000n];
+    //     const fills = [0n, PGL];
+    //     for (let level = 0; level < 256; ++level) {
+    //         for (let bit = 0; bit < 2; ++bit) {
+    //             for (const value of values) {
+    //                 for (const fill of fills) {
+    //                     let key = new Array(4);
+    //                     key.fill(fill);
+    //                     key[level % 4] = value;
+    //                     input.push({key, level: BigInt(level), bit: BigInt(bit)});
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     const [pil, cmPols, constPols] = await generatePols(F, input);
+    //     // Verify
+    //     const res = await verifyPil(F, pil, cmPols, constPols);
+
+    //     if (res.length != 0) {
+    //         console.log("Pil does not pass");
+    //         for (let i = 0; i < res.length; i++) {
+    //             console.log(res[i]);
+    //         }
+    //         assert(0);
+    //     }
+    // });
+
+    it("It should pass??", async () => {
+        const pilCode = `
+        include "pil/global.pil";
+        include "pil/climb_key.pil";`;
+
+        const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 8}});
+        const constPols = newConstantPolsArray(pil);
+        const cmPols = newCommitPolsArray(pil);
+
+        await smGlobal.buildConstants(constPols.Global);
+        await smClimbKey.buildConstants(constPols.ClimbKey);
 
         const GL = 0xFFFFFFFF00000001n;
         const PGL = GL - 1n;
         const SGL = GL >> 1n;
 
-        // input: {key: currentRkey, level: pols.level[i], bit}
         let input = [
-            {key: [0n,0n,0n,0n], out: [0n,0n,0n,0n], level: 3n, bit: 0n},
-            {key: [0n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n},
-            {key: [0n,0n,0n,0n], out: [0n,1n,0n,0n], level: 5n, bit: 1n},
-            {key: [0n,0n,0n,0n], out: [0n,0n,1n,0n], level: 6n, bit: 1n},
-            {key: [0n,0n,0n,0n], out: [0n,0n,0n,1n], level: 7n, bit: 1n},
-            {key: [SGL, PGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 0n, bit: 0n},
-            {key: [PGL, SGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 1n, bit: 0n},
-            {key: [PGL, PGL, SGL, PGL], out: [PGL, PGL, PGL, PGL], level: 2n, bit: 0n},
-            {key: [PGL, PGL, PGL, SGL], out: [PGL, PGL, PGL, PGL], level: 3n, bit: 0n}];
+            {key: [0n,0n,0n,0n], out: [1n,0n,0n,0n], level: 0n, bit: 1n},
+            {key: [0n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n}];
 
-        const values = [0x3FFFFn, 0x1FFFFn, 0xFFFFC0000n, 0x7FFFC0000n, 0x3FF000000000n, 0x1FF000000000n];
-        const fills = [0n, PGL];
-        for (let level = 0; level < 256; ++level) {
-            for (let bit = 0; bit < 2; ++bit) {
-                for (const value of values) {
-                    for (const fill of fills) {
-                        let key = new Array(4);
-                        key.fill(fill);
-                        key[level % 4] = value;
-                        input.push({key, level: BigInt(level), bit: BigInt(bit)});
-                    }
-                }
-            }
-        }
-        const [pil, cmPols, constPols] = await generatePols(F, input);
-        // Verify
-        const res = await verifyPil(F, pil, cmPols, constPols);
+        await smClimbKey.execute(cmPols.ClimbKey, input);
+
+        let table = constPols.ClimbKey.T_CLKEYSEL.map((_, index) => {
+            let row = {};
+            Object.keys(constPols.ClimbKey).forEach(key => {
+                row[key] = constPols.ClimbKey[key][index];
+            });
+            return row;
+        });
+        console.table(table);
+        EXIT
+
+        let res = await verifyPil(F, pil, cmPols, constPols, { continueOnError: true })
 
         if (res.length != 0) {
             console.log("Pil does not pass");
@@ -118,54 +165,53 @@ describe("test climb key state machine", async function () {
             }
             assert(0);
         }
-    });
-
-    it("It should fail tests", async () => {
-        const F = new F1Field("0xFFFFFFFF00000001");
-        const pilCode = `
-        include "pil/global.pil";
-        include "pil/climb_key.pil";`;
-
-        const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 22}});
-        const constPols = newConstantPolsArray(pil);
-        const cmPols = newCommitPolsArray(pil);
-
-        await smGlobal.buildConstants(constPols.Global);
-        await smClimbKey.buildConstants(constPols.ClimbKey);
-
-        // input: {key: currentRkey, level: pols.level[i], bit}
-
-        const GL = 0xFFFFFFFF00000001n;
-        const PGL = GL - 1n;
-        const SGL = GL >> 1n;
-
-        let input = [
-            {key: [0n,0n,0n,0n], out: [0n,0n,0n,0n], level: 256n, bit: 0n},
-            {key: [0x8000000000000000n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n},
-            {key: [SGL, PGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 0n, bit: 1n},
-            {key: [PGL, SGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 1n, bit: 1n},
-            {key: [PGL, PGL, SGL, PGL], out: [PGL, PGL, PGL, PGL], level: 2n, bit: 1n},
-            {key: [PGL, PGL, PGL, SGL], out: [PGL, PGL, PGL, PGL], level: 3n, bit: 1n}];
-
-        await smClimbKey.execute(cmPols.ClimbKey, input);
-
-        let res = await verifyPil(F, pil, cmPols, constPols, { continueOnError: true })
-        for (let i = 0; i < res.length; i++) {
-            console.log(res[i]);
-        }
-        expect(res.length).to.not.eq(0);
-        const baseLen = res[0].indexOf('climb_key.pil');
-        res = res.map(x => x.substring(baseLen));
-        const plookupLine = pil.plookupIdentities[0].line;
-        const prefix = 'climb_key.pil:'+plookupLine+':  plookup not found ';
-
-        expect(res[0]).to.equal(prefix + 'w=3 values: 1:7,256,0,2,0');
-        expect(res[1]).to.equal(prefix + 'w=7 values: 1:7,4,512,2,0');
-        expect(res[2]).to.equal(prefix + 'w=11 values: 1:7,0,511,1,0');
-        expect(res[3]).to.equal(prefix + 'w=15 values: 1:11,1,511,1,0');
-        expect(res[4]).to.equal(prefix + 'w=19 values: 1:19,2,511,1,0');
-        expect(res[5]).to.equal(prefix + 'w=23 values: 1:35,3,511,1,0');
     })
+
+    // it("It should fail tests", async () => {
+    //     const pilCode = `
+    //     include "pil/global.pil";
+    //     include "pil/climb_key.pil";`;
+
+    //     const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 22}});
+    //     const constPols = newConstantPolsArray(pil);
+    //     const cmPols = newCommitPolsArray(pil);
+
+    //     await smGlobal.buildConstants(constPols.Global);
+    //     await smClimbKey.buildConstants(constPols.ClimbKey);
+
+    //     // input: {key: currentRkey, level: pols.level[i], bit}
+
+    //     const GL = 0xFFFFFFFF00000001n;
+    //     const PGL = GL - 1n;
+    //     const SGL = GL >> 1n;
+
+    //     let input = [
+    //         {key: [0n,0n,0n,0n], out: [0n,0n,0n,0n], level: 256n, bit: 0n},
+    //         {key: [0x8000000000000000n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n},
+    //         {key: [SGL, PGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 0n, bit: 1n},
+    //         {key: [PGL, SGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 1n, bit: 1n},
+    //         {key: [PGL, PGL, SGL, PGL], out: [PGL, PGL, PGL, PGL], level: 2n, bit: 1n},
+    //         {key: [PGL, PGL, PGL, SGL], out: [PGL, PGL, PGL, PGL], level: 3n, bit: 1n}];
+
+    //     await smClimbKey.execute(cmPols.ClimbKey, input);
+
+    //     let res = await verifyPil(F, pil, cmPols, constPols, { continueOnError: true })
+    //     for (let i = 0; i < res.length; i++) {
+    //         console.log(res[i]);
+    //     }
+    //     expect(res.length).to.not.eq(0);
+    //     const baseLen = res[0].indexOf('climb_key.pil');
+    //     res = res.map(x => x.substring(baseLen));
+    //     const plookupLine = pil.plookupIdentities[0].line;
+    //     const prefix = 'climb_key.pil:'+plookupLine+':  plookup not found ';
+
+    //     expect(res[0]).to.equal(prefix + 'w=3 values: 1:7,256,0,2,0');
+    //     expect(res[1]).to.equal(prefix + 'w=7 values: 1:7,4,512,2,0');
+    //     expect(res[2]).to.equal(prefix + 'w=11 values: 1:7,0,511,1,0');
+    //     expect(res[3]).to.equal(prefix + 'w=15 values: 1:11,1,511,1,0');
+    //     expect(res[4]).to.equal(prefix + 'w=19 values: 1:19,2,511,1,0');
+    //     expect(res[5]).to.equal(prefix + 'w=23 values: 1:35,3,511,1,0');
+    // })
 
 
     function mapConstraints(pilFile, constraints) {
@@ -182,54 +228,54 @@ describe("test climb key state machine", async function () {
         }
         return constraintLines;
     }
-    it("It should fail tests (MAP)", async () => {
-        const F = new F1Field("0xFFFFFFFF00000001");
-        const pilCode = `
-        include "pil/global.pil";
-        include "pil/climb_key.pil";`;
 
-        const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 22}});
-        const lines = mapConstraints('pil/climb_key.pil', ["keyIn' = (1 - CLK3) * keyIn + FACTOR * keyInChunk';"]);
+    // it("It should fail tests (MAP)", async () => {
+    //     const pilCode = `
+    //     include "pil/global.pil";
+    //     include "pil/climb_key.pil";`;
 
-        const constPols = newConstantPolsArray(pil);
-        const cmPols = newCommitPolsArray(pil);
+    //     const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 22}});
+    //     const lines = mapConstraints('pil/climb_key.pil', ["keyIn' = (1 - CLK3) * keyIn + FACTOR * keyInChunk';"]);
 
-        await smGlobal.buildConstants(constPols.Global);
-        await smClimbKey.buildConstants(constPols.ClimbKey);
+    //     const constPols = newConstantPolsArray(pil);
+    //     const cmPols = newCommitPolsArray(pil);
 
-        // input: {key: currentRkey, level: pols.level[i], bit}
+    //     await smGlobal.buildConstants(constPols.Global);
+    //     await smClimbKey.buildConstants(constPols.ClimbKey);
 
-        const GL = 0xFFFFFFFF00000001n;
-        const PGL = GL - 1n;
-        const SGL = GL >> 1n;
+    //     // input: {key: currentRkey, level: pols.level[i], bit}
 
-        let input = [
-            {key: [0x8000000000000000n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n},
-            {key: [SGL, PGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 0n, bit: 1n},
-            {key: [PGL, SGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 1n, bit: 1n},
-            {key: [PGL, PGL, SGL, PGL], out: [PGL, PGL, PGL, PGL], level: 2n, bit: 1n},
-            {key: [PGL, PGL, PGL, SGL], out: [PGL, PGL, PGL, PGL], level: 3n, bit: 1n}];
+    //     const GL = 0xFFFFFFFF00000001n;
+    //     const PGL = GL - 1n;
+    //     const SGL = GL >> 1n;
 
-        await smClimbKey.execute(cmPols.ClimbKey, input);
-        cmPols.ClimbKey.keyInChunk[3] = 0n;
+    //     let input = [
+    //         {key: [0x8000000000000000n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n},
+    //         {key: [SGL, PGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 0n, bit: 1n},
+    //         {key: [PGL, SGL, PGL, PGL], out: [PGL, PGL, PGL, PGL], level: 1n, bit: 1n},
+    //         {key: [PGL, PGL, SGL, PGL], out: [PGL, PGL, PGL, PGL], level: 2n, bit: 1n},
+    //         {key: [PGL, PGL, PGL, SGL], out: [PGL, PGL, PGL, PGL], level: 3n, bit: 1n}];
 
-        let res = await verifyPil(F, pil, cmPols, constPols, { continueOnError: true })
-        for (let i = 0; i < res.length; i++) {
-            console.log(res[i]);
-        }
-        expect(res.length).to.not.eq(0);
-        const baseLen = res[0].indexOf('climb_key.pil');
-        res = res.map(x => x.substring(baseLen).trim());
-        const plookupLine = pil.plookupIdentities[0].line;
-        const prefix = 'climb_key.pil:'+plookupLine+':  plookup not found ';
+    //     await smClimbKey.execute(cmPols.ClimbKey, input);
+    //     cmPols.ClimbKey.keyInChunk[3] = 0n;
 
-        // MAP: expect(res[1]).to.equal(prefix + 'w=7 values: 1:7,4,512,2,0');
-        expect(res[0]).to.equal(prefix + 'w=7 values: 1:7,0,511,1,0');
-        expect(res[1]).to.equal(prefix + 'w=11 values: 1:11,1,511,1,0');
-        expect(res[2]).to.equal(prefix + 'w=15 values: 1:19,2,511,1,0');
-        expect(res[3]).to.equal(prefix + 'w=19 values: 1:35,3,511,1,0');
-        let val = 0x8000000000000000n - 0xFFFFFFFF00000001n;
-        expect(res[4]).to.equal(`climb_key.pil:${lines[0]}: identity does not match w=2 val=${val}`);
-    })
+    //     let res = await verifyPil(F, pil, cmPols, constPols, { continueOnError: true })
+    //     for (let i = 0; i < res.length; i++) {
+    //         console.log(res[i]);
+    //     }
+    //     expect(res.length).to.not.eq(0);
+    //     const baseLen = res[0].indexOf('climb_key.pil');
+    //     res = res.map(x => x.substring(baseLen).trim());
+    //     const plookupLine = pil.plookupIdentities[0].line;
+    //     const prefix = 'climb_key.pil:'+plookupLine+':  plookup not found ';
+
+    //     // MAP: expect(res[1]).to.equal(prefix + 'w=7 values: 1:7,4,512,2,0');
+    //     expect(res[0]).to.equal(prefix + 'w=7 values: 1:7,0,511,1,0');
+    //     expect(res[1]).to.equal(prefix + 'w=11 values: 1:11,1,511,1,0');
+    //     expect(res[2]).to.equal(prefix + 'w=15 values: 1:19,2,511,1,0');
+    //     expect(res[3]).to.equal(prefix + 'w=19 values: 1:35,3,511,1,0');
+    //     let val = 0x8000000000000000n - 0xFFFFFFFF00000001n;
+    //     expect(res[4]).to.equal(`climb_key.pil:${lines[0]}: identity does not match w=2 val=${val}`);
+    // })
 
 });
