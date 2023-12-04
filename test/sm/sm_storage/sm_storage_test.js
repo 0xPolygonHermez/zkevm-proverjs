@@ -287,6 +287,51 @@ describe("Test storage operations", async function () {
         });
     }
 
+    function zeroAndNonZeroValues () {
+        console.log ("StorageSM_nonZeroValues starting...");
+
+        it('StorageSM_nonZeroValues starting', async () => {
+            initContext();
+
+            const k1 = scalar2key(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+            let root = smt.empty;
+            let value = 0n;
+            for (let i = 0; i < 10; ++i) {
+                console.log(`VALUE[${i}] = 0x${value.toString(16).toUpperCase().padStart(64, '0')}`);
+                const rUpdate = await smtSet (root, k1, value);
+                root = rUpdate.newRoot;
+                const rGetAfterUpdate = await smtGet (root, k1);
+                assert(Scalar.eq(rGetAfterUpdate.value, value));
+                value = i === 8 ? ((1n << 256n) - 1n) : (1n << (31n + 32n * BigInt(i)));
+            }
+
+            root = smt.empty;
+            value = 10n;
+            const k2a = scalar2key(0x0000000000000000000000000000000000000000000000000000n, fr);
+            root = (await smtSet (root, k2a, 100n)).newRoot;
+            for (let i = 0; i < 4; ++i) {
+                const k2b = 0x1n << BigInt(i);
+                console.log(`KEY2B[${i}] = 0x${k2b.toString(16).toUpperCase().padStart(64, '0')}`);
+                console.log(scalar2key(k2b, fr));
+                const res2 = await smtGet (root, scalar2key(k2b, fr));
+                assert(Scalar.eq(res2.value, 0n));
+            }
+
+            root = smt.empty;
+            const k3a = scalar2key(0x8000000000000000000000000000000000000000000000000000n, fr);
+            root = (await smtSet (root, k2a, 100n)).newRoot;
+            for (let i = 0; i < 4; ++i) {
+                const k3b = 0x1n << BigInt(i);
+                console.log(`KEY3B[${i}] = 0x${k3b.toString(16).toUpperCase().padStart(64, '0')}`);
+                console.log(scalar2key(k3b, fr));
+                const res2 = await smtGet (root, scalar2key(k3b, fr));
+                assert(Scalar.eq(res2.value, 0n));
+            }
+
+            await executeAndVerify();
+        });
+    }
+
     function lastKeyBitDifferent () {
         console.log ("StorageSM_lastKeyBitDifferent starting...");
 
@@ -699,12 +744,13 @@ describe("Test storage operations", async function () {
             executeAndVerify();
         });
     }
-    bugTest();
+    /*bugTest();
     unitTest();
     zeroToZeroTest();
     zeroToZero2Test();
     emptyTest();
     useCaseTest();
     longkeyTest();
-    lastKeyBitDifferent();
+    lastKeyBitDifferent();*/
+    zeroAndNonZeroValues();
 });

@@ -561,14 +561,14 @@ module.exports.execute = async function (pols, action) {
             pols.inFree[i] = 1n;
         }
 
-        // If a constant is provided, set op to the constant
+        // If a constant is provided, add the constant to the op0
         if (rom.line[l].CONST != "")
         {
             op[0] = fr.add(op[0], fr.e(rom.line[l].CONST));
             pols.const0[i] = fr.e(rom.line[l].CONST);
         }
 
-        // If inOLD_ROOT then op=OLD_ROOT
+        // If inOLD_ROOT then op += OLD_ROOT
         if (rom.line[l].inOLD_ROOT)
         {
             op[0] = fr.add(op[0], pols.oldRoot0[i]);
@@ -578,7 +578,7 @@ module.exports.execute = async function (pols, action) {
             pols.inOldRoot[i] = fr.one;
         }
 
-        // If inNEW_ROOT then op=NEW_ROOT
+        // If inNEW_ROOT then op += NEW_ROOT
         if (rom.line[l].inNEW_ROOT)
         {
             op[0] = fr.add(op[0], pols.newRoot0[i]);
@@ -588,14 +588,14 @@ module.exports.execute = async function (pols, action) {
             pols.inNewRoot[i] = fr.one;
         }
 
-        // If inRKEY_BIT then op=RKEY_BIT
+        // If inRKEY_BIT then op0 += RKEY_BIT
         if (rom.line[l].inRKEY_BIT)
         {
             op[0] = fr.add(op[0], pols.rkeyBit[i]);
             pols.inRkeyBit[i] = fr.one;
         }
 
-        // If inVALUE_LOW then op=VALUE_LOW
+        // If inVALUE_LOW then op += VALUE_LOW
         if (rom.line[l].inVALUE_LOW)
         {
             op[0] = fr.add(op[0], pols.valueLow0[i]);
@@ -605,7 +605,7 @@ module.exports.execute = async function (pols, action) {
             pols.inValueLow[i] = fr.one;
         }
 
-        // If inVALUE_HIGH then op=VALUE_HIGH
+        // If inVALUE_HIGH then op += VALUE_HIGH
         if (rom.line[l].inVALUE_HIGH)
         {
             op[0] = fr.add(op[0], pols.valueHigh0[i]);
@@ -615,9 +615,10 @@ module.exports.execute = async function (pols, action) {
             pols.inValueHigh[i] = fr.one;
         }
 
-        // If inRKEY then op=RKEY
+        // If inRKEY then op += RKEY
         if (rom.line[l].inRKEY)
         {
+            console.log('RKEY=['+[0,1,2,3].map(index => pols[`rkey${index}`][i].toString(16).toUpperCase()).join()+"]");
             op[0] = fr.add(op[0], pols.rkey0[i]);
             op[1] = fr.add(op[1], pols.rkey1[i]);
             op[2] = fr.add(op[2], pols.rkey2[i]);
@@ -625,17 +626,19 @@ module.exports.execute = async function (pols, action) {
             pols.inRkey[i] = fr.one;
         }
 
-        // If inSIBLING_RKEY then op=SIBLING_RKEY
+        // If inSIBLING_RKEY then op += inSIBLING_RKEY * SIBLING_RKEY
         if (rom.line[l].inSIBLING_RKEY)
         {
+            console.log('SIBLING_RKEY=['+[0,1,2,3].map(index => pols[`siblingRkey${index}`][i].toString(16).toUpperCase()).join()+"]");
             pols.inSiblingRkey[i] = fr.e(rom.line[l].inSIBLING_RKEY)
             op[0] = fr.add(op[0], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey0[i]));
             op[1] = fr.add(op[1], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey1[i]));
             op[2] = fr.add(op[2], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey2[i]));
             op[3] = fr.add(op[3], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey3[i]));
+            console.log('OP=['+op.map(value => value.toString(16).toUpperCase()).join()+"]");
         }
 
-        // If inSIBLING_VALUE_HASH then op=SIBLING_VALUE_HASH
+        // If inSIBLING_VALUE_HASH then op += SIBLING_VALUE_HASH
         if (rom.line[l].inSIBLING_VALUE_HASH)
         {
             op[0] = fr.add(op[0], pols.siblingValueHash0[i]);
@@ -645,7 +648,7 @@ module.exports.execute = async function (pols, action) {
             pols.inSiblingValueHash[i] = fr.one;
         }
 
-        // If inROTL_VH then op=rotate_left(VALUE_HIGH)
+        // If inROTL_VH then op += rotate_left(VALUE_HIGH)
         if (rom.line[l].inROTL_VH)
         {
             op[0] = fr.add(op[0], pols.valueHigh3[i]);
@@ -655,7 +658,7 @@ module.exports.execute = async function (pols, action) {
             pols.inRotlVh[i] = fr.one;
         }
 
-        // If inROTL_VH then op=rotate_left(VALUE_HIGH)
+        // If inLEVEL then op0 += LEVEL
         if (rom.line[l].inLEVEL)
         {
             op[0] = fr.add(op[0], pols.level[i]);
