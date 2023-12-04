@@ -113,11 +113,13 @@ async function main(){
         outputPath = '.';
     }
     if (outputPath) {
+        const zkasm = path.basename(zkasmFile).split('.')[0];
+
         config = {
-            romFilename: outputPath + '/rom.json',
-            constFilename: outputPath + '/constFile.bin',
-            commitFilename: outputPath + '/commitFile.bin',
-            pilJsonFilename: outputPath + '/main.pil.json',
+            romFilename: path.join(outputPath, zkasm + '.' + 'rom.json'),
+            constFilename: path.join(outputPath, zkasm + '.' + 'constFile.bin'),
+            commitFilename: path.join(outputPath, zkasm + '.' + 'commitFile.bin'),
+            pilJsonFilename: path.join(outputPath, zkasm + '.' + 'main.pil.json'),
             ...config};
     }
 

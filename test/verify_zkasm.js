@@ -1,4 +1,4 @@
-    const chai = require("chai");
+const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 const fs = require("fs");
@@ -203,7 +203,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             }
         }
 
-        if (mainConfig && mainConfig.constFilename) {
+        if (mainConfig && mainConfig.constFilename && constPols !== false) {
             await constPols.saveToFile(mainConfig.constFilename);
         }
 
