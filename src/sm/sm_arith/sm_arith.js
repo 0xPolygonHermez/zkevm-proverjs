@@ -147,9 +147,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let y2 = fea2scalar(Fr, input[i]["y2"]);
         let x3 = fea2scalar(Fr, input[i]["x3"]);
         let y3 = fea2scalar(Fr, input[i]["y3"]);
-        console.log(`x1: ${x1}, y1: ${y1}, x2: ${x2}, y2: ${y2}, x3: ${x3}, y3: ${y3}`);
-
-        // TODO: Assume the limit is 2^256 instead of p-1. Otherwise, the tests will not pass.
 
         // In the following, recall that we can only work with unsiged integers of 256 bits.
         // Therefore, as the quotient needs to be represented in our VM, we need to know
@@ -158,7 +155,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         // Note1: Since we can choose whether the quotient is positive or negative, we choose it so
         //        that the added offset is the lowest.
         // Note2: x1,x2,y1,y2 can be assumed to be alias free, as this is the pre condition in the Arith SM.
-        //        I.e, x1,x2,y1,y2 ∈ [0, p-1], where p is the corresponding prime.
+        //        I.e, x1,x2,y1,y2 ∈ [0, 2^256-1].
         if (input[i].selEq1) {
             let pq0;
             if (Fec.eq(x2, x1) && !continueOnError) {
@@ -169,7 +166,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 } else {
                     s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
                 }
-                pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are {-pFec*(pFec-1),pFec*(pFec-1)}
+                pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are {-2^256*(2^256-1),2^256*(2^256-1)}
             }
             q0 = pq0/pFec;
             nDivErrors = errorHandler(
@@ -179,10 +176,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q0 += 2n ** 256n;
+            q0 += 2n ** 257n;
             nNegErrors = errorHandler(
                 q0 < 0n,
-                `For input ${i}, the q0 with offset is negative (diff point). Actual value: ${q0}, previous value: ${q0 - 2n ** 256n}`,
+                `For input ${i}, the q0 with offset is negative (diff point). Actual value: ${q0}, previous value: ${q0 - 2n ** 257n}`,
                 continueOnError,
                 nNegErrors
             );
@@ -193,8 +190,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             } else {
                 s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
             }
-            let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(pFec-1)**2,2*(pFec-1)**2}
-                                                  // with |-3*(pFec-1)**2| > 2*(pFec-1)**2
+            let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2}
+                                                  // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
             q0 = -(pq0/pFec);
             nDivErrors = errorHandler(
                 (pq0 + pFec*q0) != 0n,
@@ -203,10 +200,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q0 += 2n ** 257n;
+            q0 += 2n ** 258n;
             nNegErrors = errorHandler(
                 q0 < 0n,
-                `For input ${i}, the q0 with offset is negative (same point). Actual value: ${q0}, previous value: ${q0 - 2n ** 257n}`,
+                `For input ${i}, the q0 with offset is negative (same point). Actual value: ${q0}, previous value: ${q0 - 2n ** 258n}`,
                 continueOnError,
                 nNegErrors
             );
@@ -217,8 +214,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         }
 
         if (input[i].selEq3) {
-            let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(pFec-1),(pFec-1)**2}
-                                            // with (pFec-1)**2 > |-3*(pFec-1)|
+            let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
+                                            // with (2^256-1)**2 > |-3*(2^256-1)|
             q1 = pq1/pFec;
             nDivErrors = errorHandler(
                 (pq1 - pFec*q1) != 0n,
@@ -238,8 +235,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];
             }
-            let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(pFec+1)*(pFec-1),(pFec-1)**2}
-                                                 // with |-(pFec+1)*(pFec-1)| > (pFec-1)**2
+            let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(2^256+1)*(2^256-1),(2^256-1)**2}
+                                                 // with |-(2^256+1)*(2^256-1)| > (2^256-1)**2
             q2 = -(pq2/pFec);
             nDivErrors = errorHandler(
                 (pq2 + pFec*q2) != 0n,
@@ -248,17 +245,17 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q2 += 2n ** 256n;
+            q2 += 2n ** 257n;
             nNegErrors = errorHandler(
                 q2 < 0n,
-                `For input ${i}, the q2 with offset is negative (point addition). Actual value: ${q2}, previous value: ${q2 - 2n ** 256n}`,
+                `For input ${i}, the q2 with offset is negative (point addition). Actual value: ${q2}, previous value: ${q2 - 2n ** 257n}`,
                 continueOnError,
                 nNegErrors
             );
         }
         else if (input[i].selEq4) {
-            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-pBN254*(pBN254-1),(pBN254-1)**2}
-                                              // with |-pBN254*(pBN254-1)| > (pBN254-1)**2
+            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
+                                              // with |-2^256*(2^256-1)| > (2^256-1)**2
             q1 = -(pq1/pBN254);
             nDivErrors = errorHandler(
                 (pq1 + pBN254*q1) != 0n,
@@ -267,16 +264,16 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q1 += 2n ** 254n;
+            q1 += 2n ** 259n;
             nNegErrors = errorHandler(
                 q1 < 0n,
-                `For input ${i}, the q1 with offset is negative (complex mul). Actual value: ${q1}, previous value: ${q1 - 2n ** 254n}`,
+                `For input ${i}, the q1 with offset is negative (complex mul). Actual value: ${q1}, previous value: ${q1 - 2n ** 259n}`,
                 continueOnError,
                 nNegErrors
             );
 
-            let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(pBN254-1),2*(pBN254-1)**2}
-                                              // with 2*(pBN254-1)**2 > |-(pBN254-1)|
+            let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)**2}
+                                              // with 2*(2^256-1)**2 > |-(2^256-1)|
             q2 = pq2/pBN254;
             nDivErrors = errorHandler(
                 (pq2 - pBN254*q2) != 0n,
@@ -285,17 +282,17 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q2 += 2n ** 0n;
+            q2 += 2n ** 3n;
             nNegErrors = errorHandler(
                 q2 < 0n,
-                `For input ${i}, the q2 with offset is negative (complex mul). Actual value: ${q2}, previous value: ${q2 - 2n ** 0n}`,
+                `For input ${i}, the q2 with offset is negative (complex mul). Actual value: ${q2}, previous value: ${q2 - 2n ** 3n}`,
                 continueOnError,
                 nNegErrors
             );
         }
         else if (input[i].selEq5) {
-            let pq1 = x1 + x2 - x3; // Worst values are {-(pBN254-1),2*(pBN254-1)}
-                                    // with 2*(pBN254-1) > |-(pBN254-1)|
+            let pq1 = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
+                                    // with 2*(2^256-1) > |-(2^256-1)|
             q1 = pq1/pBN254;
             nDivErrors = errorHandler(
                 (pq1 - pBN254*q1) != 0n,
@@ -304,16 +301,16 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q1 += 2n ** 0n;
+            q1 += 2n ** 3n;
             nNegErrors = errorHandler(
                 q1 < 0n,
-                `For input ${i}, the q1 with offset is negative (complex add). Actual value: ${q1}, previous value: ${q2 - 2n ** 0n}`,
+                `For input ${i}, the q1 with offset is negative (complex add). Actual value: ${q1}, previous value: ${q2 - 2n ** 3n}`,
                 continueOnError,
                 nNegErrors
             );
 
-            let pq2 = y1 + y2 - y3; // Worst values are {-(pBN254-1),2*(pBN254-1)}
-                                    // with 2*(pBN254-1) > |-(pBN254-1)|
+            let pq2 = y1 + y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)}
+                                    // with 2*(2^256-1) > |-(2^256-1)|
             q2 = pq2/pBN254;
             nDivErrors = errorHandler(
                 (pq2 - pBN254*q2) != 0n,
@@ -322,17 +319,17 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q2 += 2n ** 0n;
+            q2 += 2n ** 3n;
             nNegErrors = errorHandler(
                 q2 < 0n,
-                `For input ${i}, the q2 with offset is negative (complex add). Actual value: ${q2}, previous value: ${q2 - 2n ** 0n}`,
+                `For input ${i}, the q2 with offset is negative (complex add). Actual value: ${q2}, previous value: ${q2 - 2n ** 3n}`,
                 continueOnError,
                 nNegErrors
             );
         }
         else if (input[i].selEq6) {
-            let pq1 = x1 - x2 - x3; // Worst values are {-2*(pBN254-1),(pBN254-1)}
-                                    // with |-2*(pBN254-1)| > (pBN254-1)
+            let pq1 = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
+                                    // with |-2*(2^256-1)| > (2^256-1)
             q1 = -(pq1/pBN254);
             nDivErrors = errorHandler(
                 (pq1 + pBN254*q1) != 0n,
@@ -341,16 +338,16 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q1 += 2n ** 0n;
+            q1 += 2n ** 3n;
             nNegErrors = errorHandler(
                 q1 < 0n,
-                `For input ${i}, the q1 with offset is negative (complex sub). Actual value: ${q1}, previous value: ${q1 - 2n ** 0n}`,
+                `For input ${i}, the q1 with offset is negative (complex sub). Actual value: ${q1}, previous value: ${q1 - 2n ** 3n}`,
                 continueOnError,
                 nNegErrors
             );
 
-            let pq2 = y1 - y2 - y3; // Worst values are {-2*(pBN254-1),(pBN254-1)}
-                                    // with |-2*(pBN254-1)| > (pBN254-1)
+            let pq2 = y1 - y2 - y3; // Worst values are {-2*(2^256-1),(2^256-1)}
+                                    // with |-2*(2^256-1)| > (2^256-1)
             q2 = -(pq2/pBN254);
             nDivErrors = errorHandler(
                 (pq2 + pBN254*q2) != 0n,
@@ -359,10 +356,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nDivErrors
             );
             // offset
-            q2 += 2n ** 0n;
+            q2 += 2n ** 3n;
             nNegErrors = errorHandler(
                 q2 < 0n,
-                `For input ${i}, the q2 with offset is negative (complex sub). Actual value: ${q2}, previous value: ${q2 - 2n ** 0n}`,
+                `For input ${i}, the q2 with offset is negative (complex sub). Actual value: ${q2}, previous value: ${q2 - 2n ** 3n}`,
                 continueOnError,
                 nNegErrors
             );
