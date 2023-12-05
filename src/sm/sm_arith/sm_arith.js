@@ -107,7 +107,7 @@ module.exports.execute = async function (pols, input) {
     // prepareInput256bits(input, N);
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
-                        arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate, 
+                        arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
                         arithEq10.calculate];
 
     // Initialization
@@ -138,8 +138,6 @@ module.exports.execute = async function (pols, input) {
     }
     let s, q0, q1, q2;
     for (let i = 0; i < input.length; i++) {
-        console.log(i);
-        console.log(input[i]["x1"]);
         let x1 = fea2scalar(Fr, input[i]["x1"]);
         let y1 = fea2scalar(Fr, input[i]["y1"]);
         let x2 = fea2scalar(Fr, input[i]["x2"]);
@@ -151,15 +149,17 @@ module.exports.execute = async function (pols, input) {
         // Therefore, as the quotient needs to be represented in our VM, we need to know
         // the worst negative case and add an offset so that the resulting name is never negative.
         // Then, this offset is also added in the PIL constraint to ensure the equality.
-        // Note: Since we can choose whether the quotient is positive or negative, we choose it so
-        //       that the added offset is the lowest.
+        // Note1: Since we can choose whether the quotient is positive or negative, we choose it so
+        //        that the added offset is the lowest.
+        // Note2: x1,x2,y1,y2 can be assumed to be alias free, as this is the pre condition in the Arith SM.
+        //        I.e, x1,x2,y1,y2 ∈ [0, p-1], where p is the corresponding prime.
         if (input[i].selEq1) {
             let pq0;
             if (Fec.eq(x2, x1)) {
                 throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
             } else {
                 s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
-                pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are ±(pFec-1)*(2^256-1) + (2^256 - 1)
+                pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are {-pFec*(pFec-1),pFec*(pFec-1)}
             }
             q0 = pq0/pFec;
             if ((pq0 - pFec*q0) != 0n) {
@@ -170,8 +170,8 @@ module.exports.execute = async function (pols, input) {
         }
         else if (input[i].selEq2) {
             s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
-            let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2**256-1)**2,2*(pFec-1)*(2**256-1)}
-                                                  // with |-3*(2**256-1)**2| > 2*(pFec-1)*(2**256-1)
+            let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(pFec-1)**2,2*(pFec-1)**2}
+                                                  // with |-3*(pFec-1)**2| > 2*(pFec-1)**2
             q0 = -(pq0/pFec);
             if ((pq0 + pFec*q0) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q0 the residual is not zero (same point)`);
@@ -185,17 +185,17 @@ module.exports.execute = async function (pols, input) {
         }
 
         if (input[i].selEq3) {
-            let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(2**256-1),(pFec-1)**2}
-                                            // with (pFec-1)**2 > |-3*(2**256-1)|
+            let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(pFec-1),(pFec-1)**2}
+                                            // with (pFec-1)**2 > |-3*(pFec-1)|
             q1 = pq1/pFec;
             if ((pq1 - pFec*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
             // offset
-            q1 += 2n ** 258n;
+            q1 += 2n ** 2n;
 
-            let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(pFec+1)*(2**256-1),(pFec-1)*(2**256-1)}
-                                                 // with |-(pFec+1)*(2**256-1)| > (pFec-1)*(2**256-1)
+            let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(pFec+1)*(pFec-1),(pFec-1)**2}
+                                                 // with |-(pFec+1)*(pFec-1)| > (pFec-1)**2
             q2 = -(pq2/pFec);
             if ((pq2 + pFec*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
@@ -204,113 +204,66 @@ module.exports.execute = async function (pols, input) {
             q2 += 2n ** 256n;
         }
         else if (input[i].selEq4) {
-            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-(2**256-1)**2+(2**256-1),(2**256-1)**2}
-                                              // with |-(2**256-1)**2+(2**256-1)| > (2**256-1)**2
+            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-(pBN254-1)**2+(pBN254-1),(pBN254-1)**2}
+                                              // with |-(pBN254-1)**2+(pBN254-1)| > (pBN254-1)**2
             q1 = -(pq1/pBN254);
             if ((pq1 + pBN254*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
             // offset
-            q1 += 2n ** 257n;
+            q1 += 2n ** 254n;
 
-            let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(2**256-1),2*(2**256-1)**2}
-                                              // with 2*(2**256-1)**2 > |-(2**256-1)|
+            let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(pBN254-1),2*(pBN254-1)**2}
+                                              // with 2*(pBN254-1)**2 > |-(pBN254-1)|
                                               // No offset is needed!
             q2 = pq2/pBN254;
             if ((pq2 - pBN254*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
+            // offset
+            q2 += 2n ** 0n;
         }
         else if (input[i].selEq5) {
-            let pq1 = x1 + x2 - x3; // Worst values are {-(2**256-1),2*(2**256-1)}
-                                    // with 2*(2**256-1) > |-(2**256-1)|
+            let pq1 = x1 + x2 - x3; // Worst values are {-(pBN254-1),2*(pBN254-1)}
+                                    // with 2*(pBN254-1) > |-(pBN254-1)|
                                     // No offset is needed!
             q1 = pq1/pBN254;
             if ((pq1 - pBN254*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
+            // offset
+            q1 += 2n ** 0n;
 
-            let pq2 = y1 + y2 - y3; // Worst values are {-(2**256-1),2*(2**256-1)}
-                                    // with 2*(2**256-1) > |-(2**256-1)|
+            let pq2 = y1 + y2 - y3; // Worst values are {-(pBN254-1),2*(pBN254-1)}
+                                    // with 2*(pBN254-1) > |-(pBN254-1)|
                                     // No offset is needed!
             q2 = pq2/pBN254;
             if ((pq2 - pBN254*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
+            // offset
+            q2 += 2n ** 0n;
         }
         else if (input[i].selEq6) {
-            let pq1 = x1 - x2 - x3; // Worst values are {-2*(2**256-1),(2**256-1)}
-                                    // with |-2*(2**256-1)| > (2**256-1)
+            let pq1 = x1 - x2 - x3; // Worst values are {-2*(pBN254-1),(pBN254-1)}
+                                    // with |-2*(pBN254-1)| > (pBN254-1)
                                     // No offset is needed!
             q1 = -(pq1/pBN254);
             if ((pq1 + pBN254*q1) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
             }
+            // offset
+            q1 += 2n ** 0n;
 
-            let pq2 = y1 - y2 - y3; // Worst values are {-2*(2**256-1),(2**256-1)}
-                                    // with |-2*(2**256-1)| > (2**256-1)
+            let pq2 = y1 - y2 - y3; // Worst values are {-2*(pBN254-1),(pBN254-1)}
+                                    // with |-2*(pBN254-1)| > (pBN254-1)
                                     // No offset is needed!
             q2 = -(pq2/pBN254);
             if ((pq2 + pBN254*q2) != 0n) {
                 throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
             }
-        }
-        else if (input[i].selEq4) {
-            // EQ5:  x1 * x2 - y1 * y2 - x3  + (q1 * p)
-            let pq1 = x1 * x2 - y1 * y2 - x3;
-            q1 = -(pq1/pBN254);
-            if ((pq1 + pBN254*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
             // offset
-            q1 += 2n ** 258n;
-
-            // EQ6:  y1 * x2 + x1 * y2 - y3 + (q2 * p)
-            let pq2 = y1 * x2 + x1 * y2 - y3;
-            q2 = -(pq2/pBN254);
-            if ((pq2 + pBN254*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
-            // offset
-            q2 += 2n ** 258n;
-        }
-        else if (input[i].selEq5) {
-            // EQ7:  x1 + x2 - x3  + (q1 * p)
-            let pq1 = x1 + x2 - x3;
-            q1 = -(pq1/pBN254);
-            if ((pq1 + pBN254*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
-            // offset
-            q1 += 2n ** 258n;
-
-            // EQ8:  y1 + y2 - y3 + (q2 * p)
-            let pq2 = y1 + y2 - y3;
-            q2 = -(pq2/pBN254);
-            if ((pq2 + pBN254*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
-            // offset
-            q2 += 2n ** 258n;
-        }
-        else if (input[i].selEq6) {
-            // EQ9:  x1 - x2 - x3  + (q1 * p)
-            let pq1 = x1 - x2 - x3;
-            q1 = -(pq1/pBN254);
-            if ((pq1 + pBN254*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
-            // offset
-            q1 += 2n ** 258n;
-
-            // EQ10:  y1 - y2 - y3 + (q2 * p)
-            let pq2 = y1 - y2 - y3;
-            q2 = -(pq2/pBN254);
-            if ((pq2 + pBN254*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
-            // offset
-            q2 += 2n ** 258n;
+            q2 += 2n ** 0n;
         }
         else {
             q1 = 0n;
@@ -324,7 +277,7 @@ module.exports.execute = async function (pols, input) {
 
     const chunksPrimeSecp256k1 = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
                             0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn ];
-    const chunksPrimeBN254     = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn, 
+    const chunksPrimeBN254     = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
                             0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
     for (let i = 0; i < input.length; i++) {
         let offset = i * 32;
@@ -430,28 +383,8 @@ function splitFeaTo16bits(chunks) {
         res.push(chunk % 2n**16n);
         res.push((chunk / 2n**16n) >> 0n);
     }
-    console.log(res);
     return res;
 }
-
-function inputFeaTo16bits(input, N, names) {
-    for (let i = 0; i < input.length; i++) {
-        for (const name of names) {
-            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
-        }
-    }
-}
-
-function splitFeaTo16bits(chunks) {
-    let res = [];
-    for(const chunk of chunks) {
-        res.push(chunk % 2n**16n);
-        res.push((chunk / 2n**16n) >> 0n);
-    }
-    console.log(res);
-    return res;
-}
-
 function prepareInput256bits(input, N) {
     for (let i = 0; i < input.length; i++) {
         for (var key of Object.keys(input[i])) {

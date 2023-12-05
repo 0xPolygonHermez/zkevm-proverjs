@@ -71,6 +71,10 @@ async function main(){
         pol l3l2 = l3 * l2;
         l3' = l3l2 * l1 + L1;
     `)});
+    table.push({title: 'BASE + 1 pol constant alias', ...await pilInfo(
+        codeBase +`
+        pol constant L3; pol L2 = L1 + L1; l1 * l1 = L2;
+    `)});
     table.push({title: 'BASE + 1 plookup (1 column)', ...await pilInfo(
         codeBase +`
         l1 in L1;
@@ -133,13 +137,25 @@ async function main(){
         codeBase +`
         {l1, l2, l3} is {L1, L1, L1};
     `)});
+    table.push({title: 'BASE + 1 permutation check (3 columns one sums)', ...await pilInfo(
+        codeBase +`
+        {l1, l1 + 2 * l2 + 4 * l3, l3} is {L1, L1, L1};
+    `)});
+    table.push({title: 'BASE + 1 permutation check (3 columns one im = sums)', ...await pilInfo(
+        codeBase +`
+        pol l1l2l3 = l1 + 2 * l2 + 4 * l3; {l1, l1l2l3 , l3} is {L1, L1, L1};
+    `)});
+    table.push({title: 'BASE + 1 permutation check (3 columns one prod)', ...await pilInfo(
+        codeBase +`
+        {l1, l1 * l2, l3} is {L1, L1, L1};
+    `)});
     table.push({title: 'BASE + 1 permutation check (3 columns one im = prod)', ...await pilInfo(
         codeBase +`
-        pol l1l3 = l1*l3; pol l1l2 = l1*l2; {l1, l1l2, l1l3} is {L1, L1, L1};
+        pol l1l2 = l1 * l2; {l1, l1l2, l3} is {L1, L1, L1};
     `)});
     table.push({title: 'BASE + 1 permutation check (3 columns one commit = prod)', ...await pilInfo(
         codeBase +`
-        pol l1l3 = l1*l3; pol commit l1l2; l1l2 = l1*l2; {l1, l1l2, l1l3} is {L1, L1, L1};
+        pol commit l1l2; l1l2  = l1 * l2; {l1, l1l2, l3} is {L1, L1, L1};
     `)});
     table.push({title: 'BASE + 1 permutation check (2 columns + leftsel)', ...await pilInfo(
         codeBase +`
@@ -159,8 +175,7 @@ async function main(){
     `)});
     table.push({title: 'BASE + 1 permutation check (1 columns + leftprod + rightprod)', ...await pilInfo(
         codeBase +`
-        pol l4=l3*l1;
-        l4*l1 is l2*L1;
+        pol l4=l3*l1; l4*l1 is l2*L1;
     `)});
     table.push({title: 'BASE + 1 permutation check (1 columns + leftsel + rightprod)', ...await pilInfo(
         codeBase +`
@@ -178,6 +193,29 @@ async function main(){
         codeBase +`
         l3 {l1, l2} is l2 {L1, L1};
         l1 {l2, l3} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 3 permutation check (2 columns + leftsel + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1, l2} is l2 {l2, L1};
+        l1 {l2, l3} is l3 {L1, l3};
+        l2 {l2, l3} is l1 {l1, l2};
+    `)});
+
+    table.push({title: 'BASE + 2 permutation check (2 columns + leftsel+ + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1, l2} is l2 {L1, L1};
+        l1+l2 {l2, l3} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 2 permutation check (2 columns + leftsel* + rightsel)', ...await pilInfo(
+        codeBase +`
+        l3 {l1, l2} is l2 {L1, L1};
+        l1*l2 {l2, l3} is l3 {L1, L1};
+    `)});
+    table.push({title: 'BASE + 2 permutation check (2 columns + leftsel* + rightsel)', ...await pilInfo(
+        codeBase +`
+        pol l1l2 = l1*l2;
+        l3 {l1, l2} is l2 {L1, L1};
+        l1l2 {l2, l3} is l3 {L1, L1};
     `)});
 
     const titleWidth = Math.max(...table.map((x) => x.title.length));

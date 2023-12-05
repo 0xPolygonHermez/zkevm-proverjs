@@ -3,8 +3,10 @@ module.exports = {
         'mocha',
     ],
     env: {
+        es2020: true,
         node: true,
         mocha: true,
+        'es2020': true,
     },
     extends: 'airbnb-base',
     rules: {
@@ -24,7 +26,6 @@ module.exports = {
         'no-console': [2, { allow: ['warn', 'error'] }],
         'import/prefer-default-export': [0],
         'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
-        'multiline-comment-style': 'error',
         'no-await-in-loop': 'off',
         'newline-before-return': 'error',
     },

@@ -64,6 +64,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.inPC[i] = rom.program[pIndex].inPC ? F.e(rom.program[pIndex].inPC) : F.zero;
         pols.inSTEP[i] = rom.program[pIndex].inSTEP ? F.e(rom.program[pIndex].inSTEP) : F.zero;
         pols.inFREE[i] = rom.program[pIndex].inFREE ? F.e(rom.program[pIndex].inFREE) : F.zero;
+        pols.inFREE0[i] = rom.program[pIndex].inFREE0 ? F.e(rom.program[pIndex].inFREE0) : F.zero;
         pols.inGAS[i] = rom.program[pIndex].inGAS ? F.e(rom.program[pIndex].inGAS) : F.zero;
         pols.inRR[i] = rom.program[pIndex].inRR ? F.e(rom.program[pIndex].inRR) : F.zero;
         pols.inHASHPOS[i] = rom.program[pIndex].inHASHPOS ? F.e(rom.program[pIndex].inHASHPOS) : F.zero;
@@ -76,10 +77,11 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.inCntMemAlign[i] = rom.program[pIndex].inCntMemAlign ? F.e(rom.program[pIndex].inCntMemAlign) : F.zero;
         pols.inCntPaddingPG[i] = rom.program[pIndex].inCntPaddingPG ? F.e(rom.program[pIndex].inCntPaddingPG) : F.zero;
         pols.inCntPoseidonG[i] = rom.program[pIndex].inCntPoseidonG ? F.e(rom.program[pIndex].inCntPoseidonG) : F.zero;
+        pols.inCntSha256F[i] = rom.program[pIndex].inCntSha256F ? F.e(rom.program[pIndex].inCntSha256F) : F.zero;
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5" -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5, hashS, hashSDigest, hashSLen, hashS1" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
@@ -132,7 +134,11 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         + (rom.program[pIndex].useElseAddr ? (2n**46n * BigInt(rom.program[pIndex].useElseAddr)) : 0n)
         + (rom.program[pIndex].arithEq3 ? (2n**47n * BigInt(rom.program[pIndex].arithEq3)) : 0n)
         + (rom.program[pIndex].arithEq4 ? (2n**48n * BigInt(rom.program[pIndex].arithEq4)) : 0n)
-        + (rom.program[pIndex].arithEq5 ? (2n**49n * BigInt(rom.program[pIndex].arithEq5)) : 0n);
+        + (rom.program[pIndex].arithEq5 ? (2n**49n * BigInt(rom.program[pIndex].arithEq5)) : 0n)
+        + (rom.program[pIndex].hashS ? (2n**50n  * BigInt(rom.program[pIndex].hashS)) : 0n)
+        + (rom.program[pIndex].hashSDigest ? (2n**51n  * BigInt(rom.program[pIndex].hashSDigest)) : 0n)
+        + (rom.program[pIndex].hashSLen ? (2n**52n  * BigInt(rom.program[pIndex].hashSLen)) : 0n)
+        + (rom.program[pIndex].hashS1 ? (2n**53n * BigInt(rom.program[pIndex].hashS1)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;
 
