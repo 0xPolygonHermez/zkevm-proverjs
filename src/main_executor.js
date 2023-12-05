@@ -233,6 +233,11 @@ async function run() {
             await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         }
 
+        if (cmPols.ClimbKey) {
+            console.log("ClimbKey...");
+            await ClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
+        }
+
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof cmPols.$$array[i][j] === "undefined") {

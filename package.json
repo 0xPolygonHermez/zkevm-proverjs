@@ -123,7 +123,7 @@
     "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#feature/fork-etrog",
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/fork-etrog",
     "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom-internal.git#feature/fork-etrog",
-    "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v1.0.0-fork.3",
+    "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom-internal.git#develop",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
@@ -136,7 +136,7 @@
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
     "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#b6f11e43459ec4c4d81af1dff9d68aed1b8c8cb2",
-    "pilcom": "0.0.23",
+    "pilcom": "0.0.24",
     "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
   },

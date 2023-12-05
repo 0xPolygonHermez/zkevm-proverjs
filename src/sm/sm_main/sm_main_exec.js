@@ -200,7 +200,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
     }
     ctx.helpers = helpers;
-
     try {
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
@@ -1139,7 +1138,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     insKey: res.insKey ? [...res.insKey] : new Array(4).fill(Scalar.zero),
                     insValue: res.insValue,
                     isOld0: res.isOld0,
-                    value: res.value
+                    value: res.value,
+                    incCounter: res.proofHashCounter
+                },
+                main: {
+                    w: i,
+                    sourceRef
                 }});
 
             if (!Scalar.eq(res.value,safeFea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
@@ -1215,7 +1219,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     isOld0: ctx.lastSWrite.res.isOld0,
                     oldValue: ctx.lastSWrite.res.oldValue,
                     newValue: ctx.lastSWrite.res.newValue,
-                    mode: ctx.lastSWrite.res.mode
+                    mode: ctx.lastSWrite.res.mode,
+                    incCounter: ctx.lastSWrite.res.proofHashCounter,
+                    siblingLeftChild: [...ctx.lastSWrite.res.siblingLeftChild],
+                    siblingRightChild: [...ctx.lastSWrite.res.siblingRightChild]
+                },
+                main: {
+                    w: i,
+                    sourceRef
                 }});
 
             if (!nodeIsEq(ctx.lastSWrite.newRoot, sr8to4(ctx.Fr, [op0, op1, op2, op3, op4, op5, op6, op7 ]), ctx.Fr)) {
