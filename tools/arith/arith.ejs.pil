@@ -55,7 +55,7 @@ namespace Arith(%N);
     //      · Verify that the x1,x2 are different when adding different elliptic curve points (EQ1,EQ3,EQ4).
 
     // PRE:
-    //      · x1, x2 are alias free
+    //      · x1,x2,y1,y2 are alias free for EQ[1..10]
 
     // In the first 16 clocks of 32-clock cycle we have: x2[0]-x1[0], x2[1]-x1[1], ..., x2[15]-x1[15]
     // In the last  16 clocks of 32-clock cycle we set all values to 0.
@@ -359,7 +359,7 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ1: s * x2 - s * x1 - y2 + y1 - p * (q0 - offset)
+    * EQ1: s * x2 - s * x1 - y2 + y1 - p * (q0 - offset) = 0
     *
     *******/
 
@@ -368,7 +368,7 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ2:  2 * s * y1 - 3 * x1 * x1 + p * (q0 - offset)
+    * EQ2:  2 * s * y1 - 3 * x1 * x1 + p * (q0 - offset) = 0
     *
     *******/
 
@@ -377,16 +377,16 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ3:  s * s - x1 - x2 - x3 - p * (q1 - offset)
+    * EQ3:  s * s - x1 - x2 - x3 - p * (q1 - offset) = 0
     *
     *******/
 
     <%- equation('pol eq3_## =', 's*s-x1-x2-x3-p*q1+p*offset', {p: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn,
-                                                                offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+                                                                offset:0x4}) %>
 
     /*******
     *
-    * EQ4:  s * x1 - s * x3 - y1 - y3 + p * (q2 - offset)
+    * EQ4:  s * x1 - s * x3 - y1 - y3 + p * (q2 - offset) = 0
     *
     *******/
 
@@ -395,53 +395,58 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ5:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset)
+    * EQ5:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset) = 0
     *
     *******/
 
     <%- equation('pol eq5_## =', 'x1*x2-y1*y2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset:0x20000000000000000000000000000000000000000000000000000000000000000n}) %>
+                                                                  offset:0x4000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     /*******
     *
-    * EQ6:  y1 * x2 + x1 * y2 - y3 - p * q2
+    * EQ6:  y1 * x2 + x1 * y2 - y3 - p * (q2 - offset) = 0
     *
     *******/
 
-    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3-p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
+    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3-p*q2+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                                  offset: 0x1n}) %>
 
     /*******
     *
-    * EQ7:  x1 + x2 - x3 - p * q1
+    * EQ7:  x1 + x2 - x3 - p * (q1 - offset) = 0
     *
     *******/
 
-    <%- equation('pol eq7_## =', 'x1+x2-x3-p*q1', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
+    <%- equation('pol eq7_## =', 'x1+x2-x3-p*q1+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                            offset: 0x1n}) %>
 
     /*******
     *
-    * EQ8:  y1 + y2 - y3 - p * q2
+    * EQ8:  y1 + y2 - y3 - p * (q2 - offset) = 0
     *
     *******/
 
-    <%- equation('pol eq8_## =', 'y1+y2-y3-p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
+    <%- equation('pol eq8_## =', 'y1+y2-y3-p*q2+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                            offset: 0x1n}) %>
 
 
     /*******
     *
-    * EQ9:  x1 - x2 - x3 + p * q1
+    * EQ9:  x1 - x2 - x3 + p * (q1 - offset) = 0
     *
     *******/
 
-    <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
+    <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                            offset: 0x1n}) %>
 
     /*******
     *
-    * EQ10:  y1 - y2 - y3 + p * q2
+    * EQ10:  y1 - y2 - y3 + p * (q2 - offset) = 0
     *
     *******/
 
-    <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
+    <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+                                                             offset: 0x1n}) %>
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
