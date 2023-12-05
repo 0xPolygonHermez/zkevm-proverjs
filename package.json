@@ -134,7 +134,7 @@
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
     "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#b6f11e43459ec4c4d81af1dff9d68aed1b8c8cb2",
-    "pilcom": "0.0.23",
+    "pilcom": "0.0.24",
     "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
   },

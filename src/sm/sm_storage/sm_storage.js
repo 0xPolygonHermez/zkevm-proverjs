@@ -680,7 +680,7 @@ module.exports.execute = async function (pols, action) {
             {
                 pols.pc[nexti] = pols.pc[i] + 1n;
             }
-            pols.jmAddress[i] = BigInt(rom.line[l].jmpAddress);
+            pols.jmpAddress[i] = BigInt(rom.line[l].jmpAddress);
             pols.jmpz[i] = 1n;
         }
         else if (rom.line[l].jmpnz)
@@ -693,14 +693,14 @@ module.exports.execute = async function (pols, action) {
             {
                 pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
             }
-            pols.jmAddress[i] = BigInt(rom.line[l].jmpAddress);
+            pols.jmpAddress[i] = BigInt(rom.line[l].jmpAddress);
             pols.jmpnz[i] = 1n;
         }
         // JMP: Jump always
         else if (rom.line[l].jmp)
         {
             pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
-            pols.jmAddress[i] = BigInt(rom.line[l].jmpAddress);
+            pols.jmpAddress[i] = BigInt(rom.line[l].jmpAddress);
             pols.jmp[i] = 1n;
         }
         // If not any jump, then simply increment program counter

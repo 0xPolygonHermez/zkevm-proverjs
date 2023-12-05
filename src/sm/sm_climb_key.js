@@ -13,7 +13,7 @@ const debug = false;
 module.exports.buildConstants = async function (pols) {
     const N = pols.T_CHUNK_VALUE.length;
 
-    let row = -1;
+    let row = 0;
     const ltInSizes = [1, 2, 2, 2];
     const carryInSizes = [2, 2, 2, 2];
     const levelSizes = [1, 1, 1, 256];
@@ -23,6 +23,18 @@ module.exports.buildConstants = async function (pols) {
     let carryIn = 0;
 
     let times = 0;
+
+    // empty lookups (value = 0, carry = 0, level = 0)
+    for (row = 0; row < CLIMB_KEY_CLOCKS; ++row) {
+        // row === clock
+        pols.T_CLKEYSEL[row] = row === LAST_CLOCK ? 7n : BigInt(row);
+        pols.T_CHUNK_VALUE[row] = 0n;
+        pols.T_CARRYLT_IN[row] = row == 0 ? 0n : pols.T_CARRYLT_OUT[row-1];
+        pols.T_CARRYLT_OUT[row] = row === LAST_CLOCK ? 0n: 2n;
+        pols.T_LEVEL[row] = 0n;
+        pols.FACTOR[row] = CHUNK_FACTORS[(row + 1) % CLIMB_KEY_CLOCKS];
+    }
+    --row;
     while (row < N) {
         let clock = 0;
         while (clock < CLIMB_KEY_CLOCKS && row < N) {
@@ -54,7 +66,7 @@ module.exports.buildConstants = async function (pols) {
                 pols.T_CARRYLT_IN[row] = carryLtIn;
                 pols.T_CARRYLT_OUT[row] = clock == LAST_CLOCK ? 0n : BigInt(carryOut + 2 * ltOut);
                 pols.T_LEVEL[row] = _level;
-                pols.FACTOR[row] = CHUNK_FACTORS[(row + 1) % CLIMB_KEY_CLOCKS];
+                pols.FACTOR[row] = CHUNK_FACTORS[(clock + 1) % CLIMB_KEY_CLOCKS];
 
                 // { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT }
                 if (debug && times === 0) {
