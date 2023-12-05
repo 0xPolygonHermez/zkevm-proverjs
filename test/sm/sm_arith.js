@@ -7,8 +7,12 @@ const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require
 const global = require("../../src/sm/sm_global.js");
 const arith = require("../../src/sm/sm_arith/sm_arith.js");
 
+const limit = 0x10000000000000000000000000000000000000000000000000000000000000000n; // 2^256
+
+const pFec = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+const pBN254 = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47n;
 const Fr = new F1Field(0xFFFFFFFF00000001n);
-const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
+const Fec = new F1Field(pFec);
 
 function addDiffPoint(x1, y1, x2, y2) {
     const s = Fec.mul(Fec.sub(y2,y1),Fec.inv(Fec.sub(x2,x1)));
@@ -133,10 +137,10 @@ const input = [
     },
     // w = 192 .. 223
     {
-        x1: 2n ** 256n - 1n,
-        y1: 2n ** 256n - 1n,
-        x2: 2n ** 256n - 1n,
-        y2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
+        x2: limit - 1n,
+        y2: limit - 1n,
         x3: 0n,
         y3: 0n,
         selEq0: 1n,
@@ -149,12 +153,12 @@ const input = [
     },
     // w = 224 .. 255
     {
-        x1: 2n ** 256n - 1n,
+        x1: limit - 1n,
         y1: 1n,
-        x2: 2n ** 256n - 1n,
+        x2: limit - 1n,
         y2: 1n,
         x3: 0n,
-        y3: 115792089237316195423570985008687907853269984665640564039457584007913129639934n,
+        y3: limit - 2n,
         selEq0: 1n,
         selEq1: 0n,
         selEq2: 0n,
@@ -1724,10 +1728,10 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        y1: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        x2: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        y2: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
+        x1: pBN254 - 1n,
+        y1: pBN254 - 1n,
+        x2: pBN254 - 1n,
+        y2: pBN254 - 1n,
         x3: 0n,
         y3: 2n,
         selEq0: 0n,
@@ -1739,10 +1743,10 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        x2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
+        x2: limit - 1n,
+        y2: limit - 1n,
         x3: 0n,
         y3: 2677976365327405820577716489325894353013677577530193816181800150760135506919n,
         selEq0: 0n,
@@ -1754,8 +1758,8 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
         x2: 0n,
         y2: 0n,
         x3: 0n,
@@ -1769,9 +1773,9 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
         y1: 0n,
-        x2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x2: limit - 1n,
         y2: 0n,
         x3: 12283109618583340521412061117291584720854994367414008739435419022702680857751n,
         y3: 0n,
@@ -2055,12 +2059,12 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        y1: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        x2: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        y2: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        x3: 21888242871839275222246405745257275088696311157297823662689037894645226208581n,
-        y3: 21888242871839275222246405745257275088696311157297823662689037894645226208581n,
+        x1: pBN254 - 1n,
+        y1: pBN254 - 1n,
+        x2: pBN254 - 1n,
+        y2: pBN254 - 1n,
+        x3: pBN254 - 2n,
+        y3: pBN254 - 2n,
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
@@ -2070,10 +2074,10 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        x2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
+        x2: limit - 1n,
+        y2: limit - 1n,
         x3: 12701749756239638624677912564803064819576857758302891452024789069373997194040n,
         y3: 12701749756239638624677912564803064819576857758302891452024789069373997194040n,
         selEq0: 0n,
@@ -2085,8 +2089,8 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
         x2: 0n,
         y2: 0n,
         x3: 6350874878119819312338956282401532409788428879151445726012394534686998597020n,
@@ -2100,9 +2104,9 @@ const input = [
         selEq6: 0n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
         y1: 0n,
-        x2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x2: limit - 1n,
         y2: 0n,
         x3: 12701749756239638624677912564803064819576857758302891452024789069373997194040n,
         y3: 0n,
@@ -2386,10 +2390,10 @@ const input = [
         selEq6: 1n,
     },
     {
-        x1: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        y1: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        x2: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        y2: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
+        x1: pBN254 - 1n,
+        y1: pBN254 - 1n,
+        x2: pBN254 - 1n,
+        y2: pBN254 - 1n,
         x3: 0n,
         y3: 0n,
         selEq0: 0n,
@@ -2401,10 +2405,10 @@ const input = [
         selEq6: 1n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        x2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
+        x2: limit - 1n,
+        y2: limit - 1n,
         x3: 0n,
         y3: 0n,
         selEq0: 0n,
@@ -2416,8 +2420,8 @@ const input = [
         selEq6: 1n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
-        y1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
+        y1: limit - 1n,
         x2: 0n,
         y2: 0n,
         x3: 6350874878119819312338956282401532409788428879151445726012394534686998597020n,
@@ -2431,9 +2435,9 @@ const input = [
         selEq6: 1n,
     },
     {
-        x1: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x1: limit - 1n,
         y1: 0n,
-        x2: 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+        x2: limit - 1n,
         y2: 0n,
         x3: 0n,
         y3: 0n,
@@ -2465,7 +2469,7 @@ const input = [
         y1: 0n,
         x2: 1n,
         y2: 0n,
-        x3: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
+        x3: pBN254 - 1n,
         y3: 0n,
         selEq0: 0n,
         selEq1: 0n,
@@ -2477,7 +2481,7 @@ const input = [
     },
 ];
 
-const badInput = [
+const inputWithAlias = [
     // Complex multiplication tests
     { // x3 and y3 with a good result plus p
         x1: 2999113016370801447448637477310555551699411366746876888402482806647931650955n,
@@ -2518,6 +2522,210 @@ const badInput = [
         y2: 1361179629352358267333550734567663993971386151768430307761609245213368478601n,
         x3: 23271715678515728680670476203861502249279292046172013475251254110230609159428n,
         y3: 35638900019199631588385376118115781827371633726020518645351544335884395774770n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 1n,
+    },
+];
+
+const inputWorstCase = [
+    // Equation 1
+    {
+        x1: 0n,
+        y1: pFec, // I used pFec here to raise the error
+        x2: pFec - 1n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
+        s: pFec - 1n,
+        selEq0: 0n,
+        selEq1: 1n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 2
+    {
+        x1: 0n,
+        y1: pFec - 1n,
+        x2: 0n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
+        s: pFec - 1n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 1n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 3
+    {
+        x1: pFec - 1n,
+        y1: 0n,
+        x2: pFec - 1n,
+        y2: 0n,
+        x3: pFec - 1n,
+        y3: 0n,
+        s: pFec - 1n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 1n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 4
+    {
+        x1: pBN254 - 1n,
+        y1: 0n,
+        x2: pBN254 - 1n,
+        y2: 0n,
+        x3: 0n,
+        y3: pBN254 - 1n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 1n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 5
+    {
+        x1: 0n,
+        y1: 0n,
+        x2: 0n,
+        y2: 0n,
+        x3: pBN254 - 1n,
+        y3: pBN254 - 1n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 1n,
+        selEq6: 0n,
+    },
+    // Equation 6
+    {
+        x1: pBN254 - 1n,
+        y1: pBN254 - 1n,
+        x2: 0n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 1n,
+    },
+];
+
+const inputLargeQuo = [
+    // Equation 1
+    {
+        x1: pFec**2n,
+        y1: 0n,
+        x2: 0n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
+        s: pFec,
+        selEq0: 0n,
+        selEq1: 1n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 2
+    {
+        x1: 0n,
+        y1: pFec**2n,
+        x2: 0n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
+        s: pFec,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 1n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 3
+    {
+        x1: pFec**4n,
+        y1: 0n,
+        x2: pFec,
+        y2: 0n,
+        x3: pFec,
+        y3: 0n,
+        s: pFec,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 1n,
+        selEq4: 0n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 4
+    {
+        x1: pBN254**2n,
+        y1: 0n,
+        x2: pBN254,
+        y2: 0n,
+        x3: 0n,
+        y3: pBN254**2n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 1n,
+        selEq5: 0n,
+        selEq6: 0n,
+    },
+    // Equation 5
+    {
+        x1: 0n,
+        y1: 0n,
+        x2: 0n,
+        y2: 0n,
+        x3: pBN254**2n,
+        y3: pBN254**2n,
+        selEq0: 0n,
+        selEq1: 0n,
+        selEq2: 0n,
+        selEq3: 0n,
+        selEq4: 0n,
+        selEq5: 1n,
+        selEq6: 0n,
+    },
+    // Equation 6
+    {
+        x1: pBN254**2n,
+        y1: pBN254**2n,
+        x2: 0n,
+        y2: 0n,
+        x3: 0n,
+        y3: 0n,
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
@@ -2621,7 +2829,7 @@ describe("test plookup operations", async function () {
 
         await global.buildConstants(constPols.Global);
         await arith.buildConstants(constPols.Arith);
-        await arith.execute(cmPols.Arith, prepareInput32bits(badInput));
+        await arith.execute(cmPols.Arith, prepareInput32bits(inputWithAlias));
 
         const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
 
@@ -2629,6 +2837,38 @@ describe("test plookup operations", async function () {
 
         for (let i = 0; i < res.length; i++) {
             console.log(res[i]);
+        }
+    });
+
+    it("It checks the worst case in each equation throws the expected error", async () => {
+        const pil = await loadPil("pil/arith.pil");
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
+
+        await global.buildConstants(constPols.Global);
+        await arith.buildConstants(constPols.Arith);
+
+        try {
+            await arith.execute(cmPols.Arith, prepareInput32bits(inputWorstCase), true);
+        } catch (e) {
+            console.log(e.message);
+            assert.match(e.message, /There are \d+ divisions errors/)
+        }
+    });
+
+    it("It checks that a negative quotient in each equation throws the expected error", async () => {
+        const pil = await loadPil("pil/arith.pil");
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
+
+        await global.buildConstants(constPols.Global);
+        await arith.buildConstants(constPols.Arith);
+
+        try {
+            await arith.execute(cmPols.Arith, prepareInput32bits(inputLargeQuo), true);
+        } catch (e) {
+            console.log(e.message);
+            assert.match(e.message, /There are \d+ negative quotient errors/)
         }
     });
 });
