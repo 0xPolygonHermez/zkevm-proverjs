@@ -8,7 +8,7 @@ const GL_CHUNKS = [0x00001, 0x3C000, 0x3FFFF, 0x003FF];
 const CHUNK_FACTORS = [1n, 2n ** 18n, 2n ** 36n, 2n ** 54n];
 const CHUNK_MASKS = [0x3FFFFn, 0x3FFFFn, 0x3FFFFn, 0x3FFn];
 
-const debug = false;
+const DEBUG = false;
 
 module.exports.buildConstants = async function (pols) {
     const N = pols.T_CHUNK_VALUE.length;
@@ -38,7 +38,7 @@ module.exports.buildConstants = async function (pols) {
     while (row < N) {
         let clock = 0;
         while (clock < CLIMB_KEY_CLOCKS && row < N) {
-            console.log(`FIXED row:${row} clock:${clock}`);
+            if (DEBUG) console.log(`FIXED row:${row} clock:${clock}`);
             const upToLtIn = ltInSizes[clock] - 1;
             const upToCarryIn = carryInSizes[clock] - 1;
             const upToLevel = levelSizes[clock] - 1;
@@ -49,14 +49,14 @@ module.exports.buildConstants = async function (pols) {
             const _level = BigInt(level);
 
             // Fill all chunk values
-            console.log(`FIXED row:${row} clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${upToChunk-1}`);
+            if (DEBUG) console.log(`FIXED row:${row} clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${upToChunk-1}`);
             for (let chunk = 0; chunk <= upToChunk; ++chunk) {
                 const result = 2 * chunk + carryIn;
                 const carryOut = result > upToChunk ? 1: 0;
                 const chunkResult = result % (upToChunk + 1);
                 const ltOut = chunkResult > GL_CHUNKS[clock] ? 0 : (chunkResult == GL_CHUNKS[clock] ? ltIn : 1);
                 if (clock === LAST_CLOCK && (ltOut !== 1 || carryOut == 1)) {
-                    console.log(`FIXED clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${chunk-1}`);
+                    if (DEBUG) console.log(`FIXED clock:${clock} level:${level} carryIn:${carryIn} ltIn:${ltIn} 0-${chunk-1}`);
                     break;
                 }
                 ++row;
@@ -69,7 +69,7 @@ module.exports.buildConstants = async function (pols) {
                 pols.FACTOR[row] = CHUNK_FACTORS[(clock + 1) % CLIMB_KEY_CLOCKS];
 
                 // { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT }
-                if (debug && times === 0) {
+                if (DEBUG && times === 0) {
                     console.log('PL 1:'+[pols.T_CLKEYSEL[row], pols.T_LEVEL[row], pols.T_CHUNK_VALUE[row], pols.T_CARRYLT_IN[row], pols.T_CARRYLT_OUT[row]].join(','));
                 }
             }
@@ -127,7 +127,7 @@ module.exports.execute = async function (pols, input) {
         const bit = BigInt(input[i].bit);
         let value = key[zlevel];
 
-        if (debug) {
+        if (DEBUG) {
             console.log(`INPUT #${i}: level:${level} bit:${bit} key:${key.join(',')} value:${value}/0x${value.toString(16)}`);
         }
         let carry = bit;
@@ -166,7 +166,7 @@ module.exports.execute = async function (pols, input) {
             pols.keySel2[row] = (keySelLevel === 2) ? 1n : 0n;
             pols.keySel3[row] = (keySelLevel === 3) ? 1n : 0n;
             pols.result[row] = clock === RESULT_CLOCK ? 1n : 0n;
-            if (debug) {
+            if (DEBUG) {
                 console.log(`TRACE w=${row} key:${pols.key0[row]},${pols.key1[row]},${pols.key2[row]},${pols.key3[row]} level:${pols.level[row]} value:0x${value.toString(16)} keyInChunk:0x${pols.keyInChunk[row].toString(16)} keyIn:0x${pols.keyIn[row].toString(16)}`+
                              ` bit:${pols.bit[row]} carryLt:${pols.carryLt[row]} keySel:${pols.keySel0[row]},${pols.keySel1[row]},${pols.keySel2[row]},${pols.keySel3[row]} result:${pols.result[row]}`);
             }

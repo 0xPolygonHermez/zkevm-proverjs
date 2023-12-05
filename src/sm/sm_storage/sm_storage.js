@@ -10,6 +10,8 @@ const StorageRom = require("./sm_storage_rom.js").StorageRom;
 const StorageRomFile = __dirname + "/storage_sm_rom.json";
 const util = require('util');
 
+const DEBUG = false;
+
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
     const fr = poseidon.F;
@@ -25,7 +27,6 @@ module.exports.buildConstants = async function (pols) {
     for (let i=0; i<polSize; i++) {
         const romLine = i % rom.line.length;
         const l = rom.line[romLine];
-        // if (i < rom.line.length) console.log({_:romLine, ...l});
 
         if (l.CONST && (BigInt(l.CONST) >= 2n ** 32n || BigInt(l.CONST) <= -(2n ** 32n))) {
             throw new Error(`Invalid value for CONST ${BigInt(l.CONST)} on ${l.fileName}:${l.line}`);
@@ -87,7 +88,7 @@ module.exports.buildConstants = async function (pols) {
             }
         }
 
-        if (i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
+        if (DEBUG && i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
     }
     console.log('StorageRom Done');
 }
@@ -126,8 +127,6 @@ module.exports.execute = async function (pols, action) {
         let op = [fr.zero, fr.zero, fr.zero, fr.zero];
         // Current rom line is set by the program counter of this evaluation
         l = pols.pc[i];
-        // console.log('RUN: '+rom.line[l].fileName+':'+rom.line[l].line+' '+rom.line[l].lineStr);
-        // console.log('RUN: '+rom.line[l].fileName+':'+rom.line[l].line);
 
         // Set the next evaluation index, which will be 0 when we reach the last evaluation
         let nexti = (i+1)%polSize;
@@ -138,7 +137,7 @@ module.exports.execute = async function (pols, action) {
                 rom.line[l].print(l);
             }
         }
-        if (!onFinal) {
+        if (DEBUG && !onFinal) {
             console.log(`LEVEL ${pols.level[i]} ctx.currentLevel:${ctx.currentLevel}`);
             console.log('TRACE '+l.toString(10).padStart(3)+` ${rom.line[l].fileName.slice(0,-6)}:${rom.line[l].line}`.padEnd(35)+rom.line[l].lineStr);
         }
@@ -149,7 +148,7 @@ module.exports.execute = async function (pols, action) {
         // When the rom assembler code calls inFREE, it specifies the requested input data
         // using an operation + function name string couple
 
-        if (a !== dumpedAction) {
+        if (DEBUG && a !== dumpedAction) {
             console.log(`************* DUMP ACTION ${a}*********************`);
             console.log(util.inspect(action[a], false, null,true));
             dumpedAction = a;
@@ -278,7 +277,6 @@ module.exports.execute = async function (pols, action) {
                 // taking into account that the sibling bit is the opposite (1-x) of the value bit
                 else if (rom.line[l].funcName=="GetSiblingHash")
                 {
-                    console.log(currentLevel);
                     if (action[a].bIsSet)
                     {
                         op[0] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
@@ -300,7 +298,6 @@ module.exports.execute = async function (pols, action) {
                 // taking into account that the sibling bit is the opposite (1-x) of the value bit
                 else if (rom.line[l].funcName=="GetSiblingHash")
                 {
-                    console.log(currentLevel);
                     if (action[a].bIsSet)
                     {
                         op[0] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
@@ -324,14 +321,13 @@ module.exports.execute = async function (pols, action) {
                 {
                     if (action[a].bIsSet)
                     {
-                        if (typeof action[a].setResult.siblingsLeftChild === 'undefined') {
+                        if (DEBUG && typeof action[a].setResult.siblingsLeftChild === 'undefined') {
                             console.log(action[a]);
                         }
                         if ((ctx.level - currentLevel) !== 1) {
                             throw new Error(`Invalid currentLevel ${currentLevel} for level ${ctx.level}`);
                         }
                         op = [...action[a].setResult.siblingLeftChild];
-                        // op = [...action[a].setResult.siblingsLeftChild[currentLevel]];
                     }
                     logger("StorageExecutor GetSiblingLeftChildHash returns " + fea42String(fr, op));
                 }
@@ -497,7 +493,6 @@ module.exports.execute = async function (pols, action) {
                 else if (rom.line[l].funcName=="GetNextKeyBit")
                 {
                     // Decrease current level
-                    console.log('ctx.level', ctx.level, currentLevel);
                     ctx.currentLevel--;
                     if (currentLevel < 0)
                     {
@@ -533,13 +528,17 @@ module.exports.execute = async function (pols, action) {
                 const bit = rom.line[l].climbBitN ? (1n - pols.rkeyBit[i]) : pols.rkeyBit[i];
                 const currentRkey = [pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i]];
                 op = climbKey(currentRkey, pols.level[i], bit);
-                console.log(`$ Rkey: ${op.map(x => x.toString(16)).join(',')} level:${pols.level[i]} bit:${bit} current:${currentRkey.map(x => x.toString(16)).join(',')}`);
+                if (DEBUG) {
+                    console.log(`$ Rkey: ${op.map(x => x.toString(16)).join(',')} level:${pols.level[i]} bit:${bit} current:${currentRkey.map(x => x.toString(16)).join(',')}`);
+                }
             }
             else if (rom.line[l].climbSiblingRkey) {
                 const bit = rom.line[l].climbBitN ? (1n - pols.rkeyBit[i]) : pols.rkeyBit[i];
                 const currentRkey = [pols.siblingRkey0[i], pols.siblingRkey1[i], pols.siblingRkey2[i], pols.siblingRkey3[i]];
                 op = climbKey(currentRkey, pols.level[i], bit);
-                console.log(`$ clibSiblingRkey: ${op.map(x => x.toString(16)).join(',')} level:${pols.level[i]} bit: ${bit} current: ${currentRkey.map(x => x.toString(16)).join(',')}`);
+                if (DEBUG) {
+                    console.log(`$ clibSiblingRkey: ${op.map(x => x.toString(16)).join(',')} level:${pols.level[i]} bit: ${bit} current: ${currentRkey.map(x => x.toString(16)).join(',')}`);
+                }
             }
             else if (rom.line[l].op=="")
             {
@@ -618,7 +617,9 @@ module.exports.execute = async function (pols, action) {
         // If inRKEY then op += RKEY
         if (rom.line[l].inRKEY)
         {
-            console.log('RKEY=['+[0,1,2,3].map(index => pols[`rkey${index}`][i].toString(16).toUpperCase()).join()+"]");
+            if (DEBUG) {
+                console.log('RKEY=['+[0,1,2,3].map(index => pols[`rkey${index}`][i].toString(16).toUpperCase()).join()+"]");
+            }
             op[0] = fr.add(op[0], pols.rkey0[i]);
             op[1] = fr.add(op[1], pols.rkey1[i]);
             op[2] = fr.add(op[2], pols.rkey2[i]);
@@ -629,13 +630,17 @@ module.exports.execute = async function (pols, action) {
         // If inSIBLING_RKEY then op += inSIBLING_RKEY * SIBLING_RKEY
         if (rom.line[l].inSIBLING_RKEY)
         {
-            console.log('SIBLING_RKEY=['+[0,1,2,3].map(index => pols[`siblingRkey${index}`][i].toString(16).toUpperCase()).join()+"]");
+            if (DEBUG) {
+                console.log('SIBLING_RKEY=['+[0,1,2,3].map(index => pols[`siblingRkey${index}`][i].toString(16).toUpperCase()).join()+"]");
+            }
             pols.inSiblingRkey[i] = fr.e(rom.line[l].inSIBLING_RKEY)
             op[0] = fr.add(op[0], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey0[i]));
             op[1] = fr.add(op[1], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey1[i]));
             op[2] = fr.add(op[2], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey2[i]));
             op[3] = fr.add(op[3], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey3[i]));
-            console.log('OP=['+op.map(value => value.toString(16).toUpperCase()).join()+"]");
+            if (DEBUG) {
+                console.log('OP=['+op.map(value => value.toString(16).toUpperCase()).join()+"]");
+            }
         }
 
         // If inSIBLING_VALUE_HASH then op += SIBLING_VALUE_HASH
@@ -758,8 +763,10 @@ module.exports.execute = async function (pols, action) {
             pols.hash[i] = 1n;
             const hashLeft = [pols.hashLeft0[i],pols.hashLeft1[i],pols.hashLeft2[i],pols.hashLeft3[i]];
             const hashRight = [pols.hashRight0[i],pols.hashRight1[i],pols.hashRight2[i],pols.hashRight3[i]];
-            console.log(`HASH${pols.hashType[i]} ${op.slice(0, 4).map(x => x.toString(16).padStart(16,'0')).join('_')} L=${hashLeft.map(x => x.toString(16).padStart(16,'0')).join('_')} R=${hashRight.map(x => x.toString(16).padStart(16,'0')).join('_')}`);
+            if (DEBUG) {
+                console.log(`HASH${pols.hashType[i]} ${op.slice(0, 4).map(x => x.toString(16).padStart(16,'0')).join('_')} L=${hashLeft.map(x => x.toString(16).padStart(16,'0')).join('_')} R=${hashRight.map(x => x.toString(16).padStart(16,'0')).join('_')}`);
             // console.log('POSEIDON:'+rom.line[l].fileName + ':' + rom.line[l].line+' '+[fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3]].map(x => x.toString(16)).join(','));
+            }
             required.PoseidonG.push([fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3], POSEIDONG_PERMUTATION3_ID]);
 
             if (isLogging) {
@@ -862,7 +869,7 @@ module.exports.execute = async function (pols, action) {
                             pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i],
                             pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
                             pols.incCounter[i]];
-            console.log(`LATCH_GET input#${a} w(storage)=${i} 1:${values.join()}`);
+            if (DEBUG) console.log(`LATCH_GET input#${a} w(storage)=${i} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH GET");
 
@@ -933,7 +940,7 @@ module.exports.execute = async function (pols, action) {
                             pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
                             pols.newRoot0[i], pols.newRoot1[i], pols.newRoot2[i], pols.newRoot3[i], pols.incCounter[i]+2n];
 
-            console.log(`LATCH_SET input#${a} w(storage)=${i} 1:${values.join()}`);
+            if (DEBUG) console.log(`LATCH_SET input#${a} w(storage)=${i} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH SET");
 
@@ -970,8 +977,10 @@ module.exports.execute = async function (pols, action) {
         // If setRKEY then RKEY=op
         if (rom.line[l].setRKEY)
         {
-            console.log(`SET RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
-            console.log(`SET RKEY(path)         [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
+            if (DEBUG) {
+                console.log(`SET RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
+                console.log(`SET RKEY(path)         [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
+            }
             pols.rkey0[nexti] = op[0];
             pols.rkey1[nexti] = op[1];
             pols.rkey2[nexti] = op[2];
@@ -989,7 +998,9 @@ module.exports.execute = async function (pols, action) {
         // If setRKEY_BIT then RKEY_BIT=op
         if (rom.line[l].setRKEY_BIT)
         {
-            console.log(`SET RKEY_BIT=${op[0]}`);
+            if (DEBUG) {
+                console.log(`SET RKEY_BIT=${op[0]}`);
+            }
             pols.rkeyBit[nexti] = op[0];
             pols.setRkeyBit[i] = 1n;
         }
@@ -1035,7 +1046,9 @@ module.exports.execute = async function (pols, action) {
         // If setLEVEL then LEVEL=op
         if (rom.line[l].setLEVEL)
         {
-            console.log(`SET LEVEL=${op[0]}[${op[0] % 4n}]`);
+            if (DEBUG) {
+                console.log(`SET LEVEL=${op[0]}[${op[0] % 4n}]`);
+            }
             pols.level[nexti] = op[0];
             pols.setLevel[i] = 1n;
         }
@@ -1051,7 +1064,9 @@ module.exports.execute = async function (pols, action) {
             pols.oldRoot1[nexti] = op[1];
             pols.oldRoot2[nexti] = op[2];
             pols.oldRoot3[nexti] = op[3];
-            console.log(`RUN SET_OLD_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
+            if (DEBUG) {
+                console.log(`RUN SET_OLD_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
+            }
             pols.setOldRoot[i] = 1n;
         }
         else
@@ -1069,7 +1084,9 @@ module.exports.execute = async function (pols, action) {
             pols.newRoot1[nexti] = op[1];
             pols.newRoot2[nexti] = op[2];
             pols.newRoot3[nexti] = op[3];
-            console.log(`RUN SET_NEW_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
+            if (DEBUG) {
+                console.log(`RUN SET_NEW_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
+            }
             pols.setNewRoot[i] = 1n;
         }
         else
@@ -1087,7 +1104,9 @@ module.exports.execute = async function (pols, action) {
             pols.hashLeft1[nexti] = op[1];
             pols.hashLeft2[nexti] = op[2];
             pols.hashLeft3[nexti] = op[3];
-            console.log('RUN SET_HASH_LEFT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
+            if (DEBUG) {
+                console.log('RUN SET_HASH_LEFT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
+            }
             pols.setHashLeft[i] = 1n;
         }
         else
@@ -1105,7 +1124,9 @@ module.exports.execute = async function (pols, action) {
             pols.hashRight1[nexti] = op[1];
             pols.hashRight2[nexti] = op[2];
             pols.hashRight3[nexti] = op[3];
-            console.log('RUN SET_HASH_RIGHT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
+            if (DEBUG) {
+                console.log('RUN SET_HASH_RIGHT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
+            }
             pols.setHashRight[i] = 1n;
         }
         else
@@ -1119,8 +1140,10 @@ module.exports.execute = async function (pols, action) {
         // If setSIBLING_RKEY then SIBLING_RKEY=op
         if (rom.line[l].setSIBLING_RKEY)
         {
-            console.log(`SET SIBLING_RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
-            console.log(`SET SIBLING_RKEY(path) [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
+            if (DEBUG) {
+                console.log(`SET SIBLING_RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
+                console.log(`SET SIBLING_RKEY(path) [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
+            }
             pols.siblingRkey0[nexti] = op[0];
             pols.siblingRkey1[nexti] = op[1];
             pols.siblingRkey2[nexti] = op[2];
