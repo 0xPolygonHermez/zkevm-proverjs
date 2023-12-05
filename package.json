@@ -120,10 +120,10 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#feature/climb-key-sm",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#feature/fork-etrog",
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/fork-etrog",
     "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom-internal.git#feature/fork-etrog",
-    "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom-internal.git#feature/climb-key-sm",
+    "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom-internal.git#develop",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
