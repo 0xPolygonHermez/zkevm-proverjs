@@ -21,6 +21,7 @@ const argv = require("yargs")
     .alias("o", "outputpath")
     .alias("C", "constants")
     .alias("d", "debug")
+    .alias("s", "stats")
     .alias("H", "helper")
     .argv;
 
@@ -55,6 +56,7 @@ async function main(){
     const verbose = argv.verbose ? true : false;
     const constants = argv.constants ? true : false;
     const debug = argv.debug ? true : false;
+    const stats = argv.stats ? true : false;
     let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
@@ -82,8 +84,16 @@ async function main(){
     let defaultConfig = {
         constants,
         debug,
-        externalPilVerification
+        debugInfo: {},
+        continueOnError: true,
+        externalPilVerification,
+        stats
     }
+
+    if (stats) {
+        defaultConfig.debugInfo.inputName = path.basename(zkasmFile);
+    }
+
     if (typeof argv.stepsN !== 'undefined') {
         let steps = argv.stepsN;
         if (typeof steps === 'string' && steps.startsWith('2**')) {
@@ -92,7 +102,7 @@ async function main(){
         defaultConfig.stepsN = steps;
         defaultConfig.debug = true;
         defaultPilConfig.defines.N = 2 ** 16;
-        console.log(`setting steps upto ${steps} vs rows upto ${rows} (debug: active)`);
+        console.log(`Setting steps upto ${steps} vs rows upto ${rows} (debug: active)`);
     }
 
     const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : (__dirname + "/../pil/main.pil");
@@ -103,18 +113,20 @@ async function main(){
         outputPath = '.';
     }
     if (outputPath) {
+        const zkasm = path.basename(zkasmFile).split('.')[0];
+
         config = {
-            romFilename: outputPath + '/rom.json',
-            constFilename: outputPath + '/constFile.bin',
-            commitFilename: outputPath + '/commitFile.bin',
-            pilJsonFilename: outputPath + '/main.pil.json',
+            romFilename: path.join(outputPath, zkasm + '.' + 'rom.json'),
+            constFilename: path.join(outputPath, zkasm + '.' + 'constFile.bin'),
+            commitFilename: path.join(outputPath, zkasm + '.' + 'commitFile.bin'),
+            pilJsonFilename: path.join(outputPath, zkasm + '.' + 'main.pil.json'),
             ...config};
     }
 
     const fullPathZkasmFile = zkasmFile.startsWith('/') ? zkasmFile : path.join(cwd(), zkasmFile);
     const zkasmPath = path.dirname(fullPathZkasmFile);
 
-    console.log(`verifying ${fullPathZkasmFile} .....`);
+    console.log(`Verifying ${fullPathZkasmFile}...`);
 
     let helpers = argv.helper ?? [];
     if (!Array.isArray(helpers)) {
@@ -128,14 +140,14 @@ async function main(){
                 throw new Error(`Not found helper on ${helper} or ${helperFile}`);
             }
             const fullPathHelper = path.resolve(helperFile);
-            console.log(`using helper ${helperFile} on ${fullPathHelper}`);
+            console.log(`Using helper ${helperFile} on ${fullPathHelper}`);
             const clhelper = require(fullPathHelper);
             config.helpers.push(new clhelper());
         }
     }
 
     if (config && config.debug && config.constants) {
-        console.log("debug and constants options are incompatible");
+        console.log("Debug and constants options are incompatible");
         process.exit(1);
     }
 

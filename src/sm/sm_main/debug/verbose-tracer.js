@@ -65,18 +65,26 @@ class VerboseTracer {
         }
     }
 
-    printTx(message) {
-        if (this.enable !== true) return;
-
-        let info = `${chalk.yellowBright('TX'.padEnd(7))} | `;
-        info += `${message}`;
-        console.log(info);
-    }
-
     printBatch(message) {
         if (this.enable !== true) return;
 
         let info = `${chalk.blue('BATCH'.padEnd(7))} | `;
+        info += `${message}`;
+        console.log(info);
+    }
+
+    printBlock(message) {
+        if (this.enable !== true) return;
+
+        let info = `${chalk.magenta('BLOCK'.padEnd(7))} | `;
+        info += `${message}`;
+        console.log(info);
+    }
+
+    printTx(message) {
+        if (this.enable !== true) return;
+
+        let info = `${chalk.yellowBright('TX'.padEnd(7))} | `;
         info += `${message}`;
         console.log(info);
     }
