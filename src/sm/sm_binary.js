@@ -21,7 +21,7 @@ module.exports.buildConstants = async function (pols) {
     const N = pols.P_C.length;
     buildFACTORS(pols.FACTOR, N);
 
-    buildP_P_CIN(pols.P_CIN, CIN_SIZE, REG_SIZE * REG_SIZE, N);
+    buildP_CIN(pols.P_CIN, CIN_SIZE, REG_SIZE * REG_SIZE, N);
     buildP_LAST(pols.P_LAST, P_LAST_SIZE, REG_SIZE * REG_SIZE * CIN_SIZE, N);
     buildP_OPCODE(pols.P_OPCODE, REG_SIZE * REG_SIZE * CIN_SIZE * P_LAST_SIZE, N);
 
@@ -64,7 +64,7 @@ function buildFACTORS(FACTORS, N) {
     ...
     0 0 0 ... {AccumulatedSize} ... 0 0 0 1 1 1 ... {AccumulatedSize} ... 1 1 1
  */
-function buildP_P_CIN(pol, pol_size, accumulated_size, N) {
+function buildP_CIN(pol, pol_size, accumulated_size, N) {
     let index = 0;
     for (let i = 0; i < N; i += (accumulated_size * pol_size)) {
         let value = 0;
@@ -97,6 +97,15 @@ function buildP_OPCODE(pol, current_size, N) {
     }
 }
 
+/*
+    =========
+    LAST
+    =========
+    0 ... {accumulated_size} ... 0 1 ... {accumulated_size} ... 1 ... ... pol_size-1 ... {accumulated_size} ... pol_size-1
+    0 ... {accumulated_size} ... 0 1 ... {accumulated_size} ... 1 ... ... pol_size-1 ... {accumulated_size} ... pol_size-1
+    ...
+    0 ... {accumulated_size} ... 0 1 ... {accumulated_size} ... 1 ... ... pol_size-1 ... {accumulated_size} ... pol_size-1
+ */
 function buildP_LAST(pol, pol_size, accumulated_size, N) {
     let index = 0;
     for (let i = 0; i < N; i += (accumulated_size * pol_size)) {
@@ -112,19 +121,21 @@ function buildP_LAST(pol, pol_size, accumulated_size, N) {
 
 /*
     =========
-    C & COUT
+    C & FLAGS
     =========
-    1 => ADD
+    0 => ADD
         * Extract less signative byte -> C
         * Get the carry out -> COUT
-    0 => AND
+    ...
+    5 => AND
         * A & B -> C
         * [C != 0] => COUT
+    ...
     default
         * 0 -> C
         * 0 -> COUT
  */
-function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opc, pol_flags, pol_c, N) {
+function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opcode, pol_flags, pol_c, N) {
     // All opcodes
     let carry = 0;
     let cout;
@@ -133,8 +144,8 @@ function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opc, pol_flags, pol_c, N) {
         const pol_b = BigInt(i & 0xFF);
         let useCarry = 0n;
         let usePreviousAreLt4 = 0n;
-        let reset4 = pol_opc[i] === 8n ? 1n : 0n;
-        switch (pol_opc[i]) {
+        let reset4 = pol_opcode[i] === 8n ? 1n : 0n;
+        switch (pol_opcode[i]) {
             // ADD   (OPCODE = 0)
             case 0n:
                 let sum = pol_cin[i] + pol_a + pol_b;
@@ -165,8 +176,8 @@ function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opc, pol_flags, pol_c, N) {
                     cout = 0n;
                     pol_c[i] = 0n;
                 }
-                useCarry = (pol_last[i] && (pol_opc[i] === 2n || cout === 0n)) ? 1n : 0n;
-                usePreviousAreLt4 = (pol_last[i] && pol_opc[i] === 8n && cout === 1n) ? 1n : 0n;
+                useCarry = (pol_last[i] && (pol_opcode[i] === 2n || cout === 0n)) ? 1n : 0n;
+                usePreviousAreLt4 = (pol_last[i] && pol_opcode[i] === 8n && cout === 1n) ? 1n : 0n;
                 break;
             // SLT   (OPCODE = 3)
             case 3n:
@@ -184,15 +195,15 @@ function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opc, pol_flags, pol_c, N) {
                 } else {
                     let sig_a = pol_a >> 7n;
                     let sig_b = pol_b >> 7n;
-                    // A Negative ; B Positive
+                    // A Negative & B Positive
                     if (sig_a > sig_b) {
                         cout = 1n;
                         pol_c[i] = 1n;
-                        // A Positive ; B Negative
+                    // A Positive & B Negative
                     } else if (sig_a < sig_b) {
                         cout = 0n;
                         pol_c[i] = 0n;
-                        // A and B equals
+                    // A & B equal sign
                     } else {
                         if (pol_a < pol_b) {
                             cout = 1n;
@@ -243,7 +254,6 @@ function buildP_C_P_FLAGS(pol_cin, pol_last, pol_opc, pol_flags, pol_c, N) {
                 cout = 0n;
                 break;
 
-
             default:
                 pol_c[i] = 0n;
                 cout = 0n;
@@ -270,15 +280,14 @@ module.exports.execute = async function (pols, input) {
             pols.c[j][i] = 0n;
         }
         pols.opcode[i] = 0n;
-        pols.freeInA[0][i] = 0n;
-        pols.freeInA[1][i] = 0n;
-        pols.freeInB[0][i] = 0n;
-        pols.freeInB[1][i] = 0n;
-        pols.freeInC[0][i] = 0n;
-        pols.freeInC[1][i] = 0n;
+        for (let j = 0; j < 2; ++j) {
+            pols.freeInA[j][i] = 0n;
+            pols.freeInB[j][i] = 0n;
+            pols.freeInC[j][i] = 0n;
+        }
         pols.cIn[i] = 0n;
-        pols.cOut[i] = 0n;
         pols.cMiddle[i] = 0n;
+        pols.cOut[i] = 0n;
         pols.lCout[i] = 0n;
         pols.lOpcode[i] = 0n;
         pols.useCarry[i] = 0n;
@@ -350,7 +359,7 @@ module.exports.execute = async function (pols, input) {
                         if (resetByte) {
                             pols.freeInC[0][index] = BigInt(input[i]["c_bytes"][STEPS-1]); // Only change the freeInC when reset or Last
                         }
-                        if ((byteA < byteB)) {
+                        if (byteA < byteB) {
                             cOut = 1n;
                         } else if (byteA == byteB) {
                             cOut = cIn;
@@ -379,13 +388,13 @@ module.exports.execute = async function (pols, input) {
                         if (lastByte) {
                             let sig_a = byteA >> 7n;
                             let sig_b = byteB >> 7n;
-                            // A Negative ; B Positive
+                            // A Negative & B Positive
                             if (sig_a > sig_b) {
                                 cOut = 1n;
-                                // A Positive ; B Negative
+                            // A Positive & B Negative
                             } else if (sig_a < sig_b) {
                                 cOut = 0n;
-                                // A and B equals
+                            // A and B equal sign
                             } else {
                                 if ((byteA < byteB)) {
                                     cOut = 1n;
@@ -430,13 +439,12 @@ module.exports.execute = async function (pols, input) {
 
                     // AND    (OPCODE = 5)
                     case 5n:
-                        // setting carry if result of AND was non zero
+                        // setting carry if result of AND is non zero
                         if (byteC == 0n && cIn == 0n) {
                             cOut = 0n;
                         } else {
                             cOut = 1n;
                         }
-
                         break;
 
                     default:
@@ -467,7 +475,7 @@ module.exports.execute = async function (pols, input) {
 
             pols.previousAreLt4[nextIndex] = previousAreLt4;
 
-            // We can set the cIn and the LCin when RESET =1
+            // We can set the cIn and the LCin when RESET = 1
             if (nextReset) {
                 pols.cIn[nextIndex] = 0n;
             } else {
@@ -495,10 +503,10 @@ module.exports.execute = async function (pols, input) {
             }
         }
         if (input[i].type == 1) {
-            pols.resultBinOp[((i+1) * STEPS)%N] = 1n;
+            pols.resultBinOp[((i + 1) * STEPS) % N] = 1n;
         }
         if (input[i].type == 2) {
-            pols.resultValidRange [((i+1) * STEPS)%N] = 1n;
+            pols.resultValidRange[((i + 1) * STEPS) % N] = 1n;
         }
     }
     console.log(`Binary-used-steps:${input.length * STEPS} (${input.length}x${STEPS}) use:${Number((input.length * STEPS * 10000/N))/100}%`);

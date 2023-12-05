@@ -1,5 +1,5 @@
 /*
-    PLOOKUP OPERATIONS
+    LOOKUP OPERATIONS
     ==================
     PIL State Machine that compute 256 bits operations:
         - [X] ADD   (OPCODE = 0)
@@ -17,24 +17,24 @@ include "global.pil";
 
 namespace Binary(%N);
 
-//  ##############################################################
-    //  CONSTANT POLINOMIALS
     //  ##############################################################
-    //  Plockup polinomials
+    //  CONSTANT POLYNOMIALS
+    //  ##############################################################
+    //  Lookup polynomials
     //  ==============================================================
     //  ==== IN ====
     //  P_OPCODE         (4  bits) Operation code
-    //  P_CIN            (1  bits) Carry in
-    //  P_LAST           (1  bits) Last byte
+    //  P_CIN            (1   bit) Carry in
+    //  P_LAST           (1   bit) Last byte
     //  Global.BYTE_2A   (8  bits) Input A
     //  Global.BYTE      (8  bits) Input B
     //  ==== OUT ======
     //  P_C         (8 bits) Output C
-    //  P_FLAGS     (4  bits) Carry out, use Carry, use PreviousLt4, reset4
+    //  P_FLAGS     (4 bits) Carry out, use Carry, use PreviousAreLt4, reset4
     //  ==== TOTAL ====
     //  4 + 1 + 1 + 8 + 8 = 22 bits
     //  ==============================================================
-    //  NAME    | 0 | 1 | 2 | 3 | ... | 32 |
+    //  NAME    |  0  |    1    |  2  |    3    | ... | 14  | 15
     //  ==============================================================
     //  FACTOR0 | 0x1 | 0x10000 | 0x0 | 0x0     | ... | 0x0 | 0x0
     //  FACTOR1 | 0x0 | 0x0     | 0x1 | 0x10000 | ... | 0x0 | 0x0
@@ -47,63 +47,77 @@ namespace Binary(%N);
     pol constant FACTOR[8];
 
     // ############################################################
-    // COMMIT POLINOMIALS
+    // COMMIT POLYNOMIALS
     // ############################################################
-    // opcode = (2  bits) Operation code
+    // opcode       (4 bits) Operation code
     // ============================================================
-    // a0-a7, a0-a7, a0-a7
-    // 256 bits operations -> 32 Bytes / 4 Bytes (per registry) ->
-    //          8 Registries
+    // 256 bits operations -> 32 Bytes / 4 Bytes (per registry) -> 8 Registers
+    // a[0..7]      (8 bits) First input
+    // b[0..7]      (8 bits) Second input
+    // c[0..7]      (8 bits) Output
     // ============================================================
-    // freeInA, freeInB, freeInC -> 1 Byte input
+    // freeInA      (8 bits) Input to A
+    // freeInB      (8 bits) Input to B
+    // freeInC      (8 bits) Input to C
     // ============================================================
-    // cIn -> Carry In ; cOut -> Carry Out ; lCIn -> Latch Carry in
+    // cIn          (1  bit) Carry introduced to the first byte of the operation
+    // cMiddle      (1  bit) Carry genrated in the middle of the operation
+    // cOut         (1  bit) Carry generated in the last byte of the operation
     // ============================================================
-    pol commit freeInA[2], freeInB[2], freeInC[2];
-    pol commit a[8], b[8], c[8];
+    // (the following polynomials are only used to properly relate the Main SM with this SM)
+    // lCout        (1  bit) Latch carry out
+    // lOpcode      (4 bits) Latch opcode
+    // ============================================================
     pol commit opcode;
+    pol commit a[8], b[8], c[8];
+    pol commit freeInA[2], freeInB[2], freeInC[2];
     pol commit cIn, cMiddle, cOut;
     pol commit lCout,lOpcode;
 
-
     //  LT4 (opcode = 8)
     //
-    //  Instruction operate over 4 chunks of 64 bits, divide the 256-bit values on 4 chunks of 64 bits and verifies
-    //  that ALL "a" chunks are LESS THAN "b" chunks, one to one (first chunk a vs first chunk b, second chunch a vs second chunk b,...)
+    //  This instruction operates over 4 chunks of 64 bits, so we divide the 256-bit values "a" and "b" in 4 chunks of 64 bits. It verifies
+    //  that the 4 "a" chunks are LESS THAN the 4 "b" chunks, one-to-one.
     //
-    //  examples:
-    //      0x0FFF...FFFF 0FFF...FFFF 0FFF...FFFF 0FFF...FFFF LT4 0xFFFF...FFFF FFFF...FFFF FFFF...FFFF FFFF...FFFF = 1
-    //      0x0FFF...FFFF 0FFF...FFFF FFFF...FFFF 0FFF...FFFF LT4 0xFFFF...FFFF FFFF...FFFF FFFF...FFFF FFFF...FFFF = 0
+    //  Examples:
+    //      (0x0FFF...FFFF, 0x0FFF...FFFF, 0x0FFF...FFFF, 0x0FFF...FFFF) LT4 (0xFFFF...FFFF, 0xFFFF...FFFF, 0xFFFF...FFFF, 0xFFFF...FFFF) = 1
+    //      (0x0FFF...FFFF, 0x0FFF...FFFF, 0xFFFF...FFFF, 0x0FFF...FFFF) LT4 (0xFFFF...FFFF, 0xFFFF...FFFF, 0xFFFF...FFFF, 0xFFFF...FFFF) = 0
+    //                                     ^^^^^^^^^^^^^                                                    ^^^^^^^^^^^^^
     //
-    //  usePreviousAreLt4: (binary value *) to indicate use previousAreLt4 as result, only active in last byte, on LT4 operation and cOut = 1.
-    //                     if cOut is 1, means last chunk is LT, for this reason result is if previous are LT too.
-    //                     if cOut is 0, means last chunk isn't LT, don't matter previous LT, result is cOut, 0.
-    //
-    //  previousAreLt4:    (binary value **) to indicate if previous LT chunk comparations are LT or no, only use for three firsts chunks.
-    //                     Before first comparation is 0, and is set with result of first comparation. After that value is propagated,
-    //                     on next comparations second and third chunks, result of LT (cOut) is multiplied by this value, to force zero
-    //                     if previous or current result of LT are zero, as AND operator.
-    //
+    //  previousAreLt4:    [binary value] flag (*) to indicate whether the first three chunks are lower than or not.
+    //                     It is 1 if all of the first three chunks of a are lower than those of b, and 0 otherwise.
+    //                     Before the first comparation is 0, and is set with the result of the first comparation. After that, the value is propagated.
+    //                     In particular, on the comparisons of the second and third chunks, the result of the comparison (cOut) is multiplied by its value,
+    //                     to force it being zero if some of the previous comparison are zero. It works similar to the AND operator.
+    //                     Mathematically, this is:
     //                          first chunk --> previousAreLt4 = cOut
     //                         second chunk --> previousAreLt4 = previousAreLt4 * cOut
     //                          third chunk --> previousAreLt4 = previousAreLt4 * cOut
     //                         fourth chunk --> no affects to previousAreLt4
     //
-    // reset4             (binary value *) flag to indicate that carry was reset each 4 clocks
+    //  usePreviousAreLt4: [binary value] flag (**) to use the value of previousAreLt4. It is only active if:
+    //                     (a) we are at the last byte, (b) we are in the LT4 operation and (c) it happens that cOut = 1.
+    //                     In the last clock, we have:
+    //                          · If cOut = 1, then lastChunk(a) < lastChunk(b). Then a LT4 b if the previous chunks are also lower.
+    //                          · If cOut = 0, then lastChunk(a) >= lastChunk(b). Then, it doesn't matter the previous chunks; the result of a LT4 b is cOut = 0.
     //
-    // NOTE: (*) to validate flags usePreviousAreLt4, reset4, useCarry and cOut use a composition:
-    //           (cout + 2 * useCarry + 4 *  usePreviousAreLt4 + 8 * reset4) in P_FLAGS.
-    //           with optimization this flags MUST BE constrainet to binary.
+    // reset4:             [binary value] flag (**) to indicate that cIn is reset each 4 clocks in the LT4 operation.
     //
-    // NOTE: (**) binary is checked by lookup values
+    // NOTE: (*)  Flag is validated by lookup values.
+    //
+    // NOTE: (**) To validate the flags usePreviousAreLt4, reset4, useCarry and cOut, check that the composition:
+    //                   cout + 2 * useCarry + 4 *  usePreviousAreLt4 + 8 * reset4
+    //            is in P_FLAGS.
+    //            After the last optimization, these flags MUST BE constrained to be binary.
+    //
 
-    pol commit usePreviousAreLt4;
     pol commit previousAreLt4;
+    pol commit usePreviousAreLt4;
     pol commit reset4;
     pol commit useCarry;
 
-    usePreviousAreLt4 * (1 - usePreviousAreLt4) = 0;
     previousAreLt4 * (1 - previousAreLt4) = 0;
+    usePreviousAreLt4 * (1 - usePreviousAreLt4) = 0;
     reset4 * (1 - reset4) = 0;
     useCarry * (1 - useCarry) = 0;
     cOut * (1 - cOut) = 0;
@@ -127,14 +141,13 @@ namespace Binary(%N);
 
     cIn' = cOut * ( 1 - resetCarry );
 
-    // LT4_PROPAGATE (pol constant binary)
+    // LT4_PROPAGATE (polynomial made up of constant, binary and disjoint polynomials, therefore it's a constant and binary polynomial)
     //
-    // Each 4 clocks this sm was processed 8 bytes = 64 bits, last clock isn't relevant last clock cOut it's ignored because:
-    //
-    //   last cout == 0 => means LT4 = 0 (at least last A chunk of 64 isn't less than B, if previous chunks are less than B, it doesn't matter.
-    //   last cout == 1 => means last A chuck is less than B, in this path result only deepends of ge4 value.
+    // Each 4 clocks this sm has processed 8 bytes = 64 bits, last clock isn't relevant last clock cOut is ignored because:
+    //      · last cout = 0 => means LT4 = 0 (if the last chunk of a isn't lower than the last of b then we are done).
+    //      · last cout = 1 => means last a chunk is less than b, in this path result only deepends of ge4 value.
 
-    pol LT4_PROPAGATE = /* NO 0-2,3 */ +  Global.CLK32[4] + Global.CLK32[5] + Global.CLK32[6] + /* NO 7 */ + Global.CLK32[8] + Global.CLK32[9]
+    pol LT4_PROPAGATE = /* NO 0-2,3 */       Global.CLK32[4] + Global.CLK32[5] + Global.CLK32[6] + /* NO 7 */ + Global.CLK32[8] + Global.CLK32[9]
                         + Global.CLK32[10] + /* NO 11 */ + Global.CLK32[12] + Global.CLK32[13] + Global.CLK32[14] + Global.CLK32[15]
                         /* NO 16-18,19 */ +  Global.CLK32[20] + Global.CLK32[21] + Global.CLK32[22] + /* NO 23 */ + Global.CLK32[24] + Global.CLK32[25]
                         + Global.CLK32[26] + /* NO 27 */ + Global.CLK32[28] + Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31];
@@ -146,6 +159,8 @@ namespace Binary(%N);
     lCout' = cOut + usePreviousAreLt4 * (previousAreLt4 - cOut);
     lOpcode' = opcode;
 
+    // P_FLAGS = cOut + 2 * useCarry + 4 * usePreviousAreLt4 + 8 * reset4
+    // In even byte clocks, useCarry = usePreviousAreLt4 = 0 and cOut = cMiddle, therefore P_FLAGS = cMiddle + 8 * reset4
     {0, opcode, freeInA[0], freeInB[0], cIn, freeInC[0], cMiddle + 8 * reset4}
     in {P_LAST, P_OPCODE, Global.BYTE_2A, Global.BYTE, P_CIN, P_C, P_FLAGS};
 
@@ -170,12 +185,11 @@ namespace Binary(%N);
     b[6]' = b[6] * (1 - RESET) + freeInB[0] * FACTOR[6] + 256 * freeInB[1] * FACTOR[6];
     b[7]' = b[7] * (1 - RESET) + freeInB[0] * FACTOR[7] + 256 * freeInB[1] * FACTOR[7];
 
-    // In last clock when useCarry o usePreviousAreLt4, the value of c[0] needs to change
-    // to result (0 or 1). First clock, freeInC must be changed to match with lookup
+    // In the last byte, when useCarry or usePreviousAreLt4 are 1, the value of c[0] needs to change
+    // to result (0 or 1). In the first clock, freeInC must be changed to match with the lookup
     // because lookup is a static table (has a 0 for comparators), but useCarry or
-    // usePreviousAreLt4 are dynamic. Otherwise they are enabled only in last byte
-    // (verified lookup only enabled when P_LAST = 1). In last byte only FACTOR[7]
-    // is active, and freeInC only affects to c[7]'
+    // usePreviousAreLt4 are dynamic. Otherwise, useCarry and usePreviousAreLt4 are enabled only in the last byte
+    // (verified lookup only enabled when P_LAST = 1).
 
     pol c0Temp = c[0] * (1 - RESET) + freeInC[0] * FACTOR[0] + 256 * freeInC[1] * FACTOR[0];
     c[0]' = useCarry * (cOut - c0Temp ) + usePreviousAreLt4 * (previousAreLt4 - c0Temp ) + c0Temp;
@@ -187,10 +201,7 @@ namespace Binary(%N);
     c[5]' = c[5] * (1 - RESET) + freeInC[0] * FACTOR[5] + 256 * freeInC[1] * FACTOR[5];
     c[6]' = c[6] * (1 - RESET) + freeInC[0] * FACTOR[6] + 256 * freeInC[1] * FACTOR[6];
 
-    // In last byte when useCarry o usePreviousAreLt4, freeInC must be changed to match with lookup
-    // because lookup is a static table, but useCarry and usePreviousAreLt4 are dynamic.
-    // Otherwise useCarry and usePreviousAreLt4 only are enabled in last byte (verified lookup only
-    // enabled when P_LAST = 1). In last byte only FACTOR[7] is active, and freeInC only affects to c[7]'
+    // In the last byte, only FACTOR[7] is active, and freeInC only affects to c[7]'.
 
     pol c7Temp = c[7] * (1 - RESET) + freeInC[0] * FACTOR[7] + 256 * freeInC[1] * FACTOR[7];
     c[7]' = (1 - useCarry - usePreviousAreLt4) * c7Temp;

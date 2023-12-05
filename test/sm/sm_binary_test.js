@@ -865,7 +865,7 @@ describe("test plookup operations", async function () {
         for (let i=0; i<constPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof constPols.$$array[i][j] !== "bigint") {
-                    throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+                    throw new Error(`Polynomial not fited ${constPols.$$defArray[i].name} at ${j}` )
                 }
             }
         }
@@ -912,7 +912,7 @@ describe("test plookup operations", async function () {
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof cmPols.$$array[i][j] !== 'bigint') {
-                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                    throw new Error(`Polynomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
                 }
             }
         }
