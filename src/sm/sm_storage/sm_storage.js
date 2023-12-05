@@ -32,7 +32,7 @@ module.exports.buildConstants = async function (pols) {
         }
         pols.CONST0[i] = l.CONST ? fr.e(BigInt(l.CONST)) : fr.zero;
 
-        pols.ADDRESS[i] = l.address ? BigInt(l.address) : 0n;
+        pols.JMP_ADDRESS[i] = l.jmpAddress ? BigInt(l.jmpAddress) : 0n;
         pols.LINE[i] = BigInt(romLine);
 
         pols.IN_SIBLING_RKEY[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
@@ -674,13 +674,13 @@ module.exports.execute = async function (pols, action) {
         {
             if (fr.isZero(op[0]))
             {
-                pols.pc[nexti] = BigInt(rom.line[l].address);
+                pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
             }
             else
             {
                 pols.pc[nexti] = pols.pc[i] + 1n;
             }
-            pols.address[i] = BigInt(rom.line[l].address);
+            pols.jmAddress[i] = BigInt(rom.line[l].jmpAddress);
             pols.jmpz[i] = 1n;
         }
         else if (rom.line[l].jmpnz)
@@ -691,16 +691,16 @@ module.exports.execute = async function (pols, action) {
             }
             else
             {
-                pols.pc[nexti] = BigInt(rom.line[l].address);
+                pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
             }
-            pols.address[i] = BigInt(rom.line[l].address);
+            pols.jmAddress[i] = BigInt(rom.line[l].jmpAddress);
             pols.jmpnz[i] = 1n;
         }
         // JMP: Jump always
         else if (rom.line[l].jmp)
         {
-            pols.pc[nexti] = BigInt(rom.line[l].address);
-            pols.address[i] = BigInt(rom.line[l].address);
+            pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
+            pols.jmAddress[i] = BigInt(rom.line[l].jmpAddress);
             pols.jmp[i] = 1n;
         }
         // If not any jump, then simply increment program counter
@@ -862,7 +862,7 @@ module.exports.execute = async function (pols, action) {
                             pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i],
                             pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
                             pols.incCounter[i]];
-            console.log(`LATCH_GET input#${a} w=${action[a].main ? action[a].main.w:''} 1:${values.join()}`);
+            console.log(`LATCH_GET input#${a} w(storage)=${i} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH GET");
 
@@ -933,7 +933,7 @@ module.exports.execute = async function (pols, action) {
                             pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
                             pols.newRoot0[i], pols.newRoot1[i], pols.newRoot2[i], pols.newRoot3[i], pols.incCounter[i]+2n];
 
-            console.log(`LATCH_SET input#${a} w=${action[a].main ? action[a].main.w:''} 1:${values.join()}`);
+            console.log(`LATCH_SET input#${a} w(storage)=${i} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH SET");
 
@@ -970,24 +970,26 @@ module.exports.execute = async function (pols, action) {
         // If setRKEY then RKEY=op
         if (rom.line[l].setRKEY)
         {
+            console.log(`SET RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
+            console.log(`SET RKEY(path)         [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
             pols.rkey0[nexti] = op[0];
             pols.rkey1[nexti] = op[1];
             pols.rkey2[nexti] = op[2];
             pols.rkey3[nexti] = op[3];
             pols.setRkey[i] = 1n;
         }
-        else if (pols.climbRkey[i] == 0)
+        else
         {
             pols.rkey0[nexti] = pols.rkey0[i];
             pols.rkey1[nexti] = pols.rkey1[i];
             pols.rkey2[nexti] = pols.rkey2[i];
             pols.rkey3[nexti] = pols.rkey3[i];
-
         }
 
         // If setRKEY_BIT then RKEY_BIT=op
         if (rom.line[l].setRKEY_BIT)
         {
+            console.log(`SET RKEY_BIT=${op[0]}`);
             pols.rkeyBit[nexti] = op[0];
             pols.setRkeyBit[i] = 1n;
         }
@@ -1033,6 +1035,7 @@ module.exports.execute = async function (pols, action) {
         // If setLEVEL then LEVEL=op
         if (rom.line[l].setLEVEL)
         {
+            console.log(`SET LEVEL=${op[0]}[${op[0] % 4n}]`);
             pols.level[nexti] = op[0];
             pols.setLevel[i] = 1n;
         }
@@ -1116,13 +1119,15 @@ module.exports.execute = async function (pols, action) {
         // If setSIBLING_RKEY then SIBLING_RKEY=op
         if (rom.line[l].setSIBLING_RKEY)
         {
+            console.log(`SET SIBLING_RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
+            console.log(`SET SIBLING_RKEY(path) [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
             pols.siblingRkey0[nexti] = op[0];
             pols.siblingRkey1[nexti] = op[1];
             pols.siblingRkey2[nexti] = op[2];
             pols.siblingRkey3[nexti] = op[3];
             pols.setSiblingRkey[i] = 1n;
         }
-        else if (pols.climbSiblingRkey[i] == 0)
+        else
         {
             pols.siblingRkey0[nexti] = pols.siblingRkey0[i];
             pols.siblingRkey1[nexti] = pols.siblingRkey1[i];
@@ -1269,7 +1274,7 @@ function initPols (pols, polSize) {
         pols.jmpnz[i] = 0n;
         pols.jmp[i] = 0n;
         pols.const0[i] = 0n;
-        pols.address[i] = 0n;
+        pols.jmpAddress[i] = 0n;
 
         pols.op0inv[i] = 0n;
         pols.incCounter[i] = 0n;
@@ -1281,4 +1286,17 @@ function climbKey (key, level, bit) {
     const levelKey = Number(level) % 4;
     result[levelKey] = result[levelKey] * 2n + bit;
     return result;
+}
+
+function keyToBinPath(key, level, upToLevel = 16)
+{
+    let _key = [...key];
+    let path = '';
+    while (_key.some(x => x !== 0n) || level < upToLevel) {
+        const zlevel = level % 4;
+        path = (_key[zlevel] & 0x01n ? '1':'·') + path;
+        _key[zlevel] = _key[zlevel] >> 1n;
+        ++level;
+    }
+    return 'MSB '+path;
 }

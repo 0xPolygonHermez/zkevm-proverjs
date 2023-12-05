@@ -54,7 +54,7 @@ namespace Storage(%N);
     pol commit jmpnz;
     pol commit jmp;
     pol commit const0;
-    pol commit address;
+    pol commit jmpAddress;
 
     pol commit incCounter;
     incCounter' = incCounter * (1 - latchSet - latchGet - Global.L1) + hash;
@@ -204,7 +204,7 @@ namespace Storage(%N);
     pol opIsZero = 1 - op0 * op0inv;
     opIsZero * op0 = 0;
     pol doJump = jmp + jmpz * opIsZero + jmpnz * (1 - opIsZero);
-    pc' = doJump * (address - pc - 1) + pc + 1;
+    pc' = doJump * (jmpAddress - pc - 1) + pc + 1;
     pc * Global.L1 = 0;
 
     // Last pc' must return to be pc=0 in order to close the program loop
@@ -260,9 +260,9 @@ namespace Storage(%N);
 
     pol constant OPERATION;
     pol constant CONST0;
-    pol constant ADDRESS;
+    pol constant JMP_ADDRESS;
     pol constant LINE; // 0, 1, 2, ...
     pol constant IN_SIBLING_RKEY;
 
-    { operation, const0, address, pc, inSiblingRkey } in { OPERATION, CONST0, ADDRESS, LINE, IN_SIBLING_RKEY }
+    { operation, const0, jmpAddress, pc, inSiblingRkey } in { OPERATION, CONST0, JMP_ADDRESS, LINE, IN_SIBLING_RKEY }
 

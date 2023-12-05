@@ -13,6 +13,7 @@ const StorageRom = require("../../../src/sm/sm_storage/sm_storage_rom.js").Stora
 const sm_storage = require("../../../src/sm/sm_storage/sm_storage.js");
 const sm_poseidong = require("../../../src/sm/sm_poseidong.js");
 const sm_climbKey = require("../../../src/sm/sm_climb_key.js");
+const util = require('util');
 
 const { isLogging, logger, fea42String, fea42String10, scalar2fea4, fea4IsEq }  = require("../../../src/sm/sm_storage/sm_storage_utils.js");
 
@@ -328,6 +329,36 @@ describe("Test storage operations", async function () {
                 assert(Scalar.eq(res2.value, 0n));
             }
 
+            {
+
+                root = smt.empty;
+                root = (await smtSet (root, scalar2key(0b0100100, fr), 101n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b0000100, fr), 102n)).newRoot;
+                const rootBeforeInsert = root;
+                root = (await smtSet (root, scalar2key(0b10000100, fr), 103n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b10000100, fr), 0n)).newRoot;
+                assert(smtUtils.nodeIsEq(rootBeforeInsert, root, fr));
+            }
+
+            {
+                root = smt.empty;
+                root = (await smtSet (root, scalar2key(0b01011010100, fr), 101n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b00011010100, fr), 102n)).newRoot;
+                const rootBeforeInsert = root;
+                root = (await smtSet (root, scalar2key(0b11011010100, fr), 103n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b11011010100, fr), 0n)).newRoot;
+                assert(smtUtils.nodeIsEq(rootBeforeInsert, root, fr));
+            }
+
+            {
+                root = smt.empty;
+                root = (await smtSet (root, scalar2key(0b0100000101, fr), 101n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b0001100101, fr), 102n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b0101100101, fr), 103n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b0011100101, fr), 104n)).newRoot;
+                root = (await smtSet (root, scalar2key(0b0011100101, fr), 0n)).newRoot;
+                assert(smtUtils.nodeIsEq(rootBeforeInsert, root, fr));
+            }
             await executeAndVerify();
         });
     }
@@ -744,13 +775,13 @@ describe("Test storage operations", async function () {
             executeAndVerify();
         });
     }
-    /*bugTest();
+    bugTest();
     unitTest();
     zeroToZeroTest();
     zeroToZero2Test();
     emptyTest();
     useCaseTest();
     longkeyTest();
-    lastKeyBitDifferent();*/
+    lastKeyBitDifferent();
     zeroAndNonZeroValues();
 });
