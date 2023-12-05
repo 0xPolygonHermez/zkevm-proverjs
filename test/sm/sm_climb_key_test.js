@@ -13,6 +13,12 @@ const { C } = require("@0xpolygonhermez/zkevm-commonjs/src/poseidon_constants_op
 describe("test climb key state machine", async function () {
     this.timeout(10000000);
 
+    let F;
+
+    before(async () => {
+        F = new F1Field("0xFFFFFFFF00000001");
+    });
+
     function executeMain(pols, input) {
         const N = pols.inkey[0].length;
 
@@ -75,8 +81,6 @@ describe("test climb key state machine", async function () {
     }
 
     it("It should check standard l", async () => {
-        const F = new F1Field("0xFFFFFFFF00000001");
-
         const GL = 0xFFFFFFFF00000001n;
         const PGL = GL - 1n;
         const SGL = GL >> 1n;
@@ -120,8 +124,50 @@ describe("test climb key state machine", async function () {
         }
     });
 
+    it("It should pass??", async () => {
+        const pilCode = `
+        include "pil/global.pil";
+        include "pil/climb_key.pil";`;
+
+        const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 8}});
+        const constPols = newConstantPolsArray(pil);
+        const cmPols = newCommitPolsArray(pil);
+
+        await smGlobal.buildConstants(constPols.Global);
+        await smClimbKey.buildConstants(constPols.ClimbKey);
+
+        const GL = 0xFFFFFFFF00000001n;
+        const PGL = GL - 1n;
+        const SGL = GL >> 1n;
+
+        let input = [
+            {key: [0n,0n,0n,0n], out: [1n,0n,0n,0n], level: 0n, bit: 1n},
+            {key: [0n,0n,0n,0n], out: [1n,0n,0n,0n], level: 4n, bit: 1n}];
+
+        await smClimbKey.execute(cmPols.ClimbKey, input);
+
+        let table = constPols.ClimbKey.T_CLKEYSEL.map((_, index) => {
+            let row = {};
+            Object.keys(constPols.ClimbKey).forEach(key => {
+                row[key] = constPols.ClimbKey[key][index];
+            });
+            return row;
+        });
+        console.table(table);
+        EXIT
+
+        let res = await verifyPil(F, pil, cmPols, constPols, { continueOnError: true })
+
+        if (res.length != 0) {
+            console.log("Pil does not pass");
+            for (let i = 0; i < res.length; i++) {
+                console.log(res[i]);
+            }
+            assert(0);
+        }
+    })
+
     it("It should fail tests", async () => {
-        const F = new F1Field("0xFFFFFFFF00000001");
         const pilCode = `
         include "pil/global.pil";
         include "pil/climb_key.pil";`;
@@ -182,8 +228,8 @@ describe("test climb key state machine", async function () {
         }
         return constraintLines;
     }
+
     it("It should fail tests (MAP)", async () => {
-        const F = new F1Field("0xFFFFFFFF00000001");
         const pilCode = `
         include "pil/global.pil";
         include "pil/climb_key.pil";`;
