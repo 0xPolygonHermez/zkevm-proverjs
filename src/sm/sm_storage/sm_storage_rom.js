@@ -45,8 +45,8 @@ class StorageRomLine
         this.setSIBLING_VALUE_HASH = false;
 
         // Jump parameters
-        this.addressLabel = "";
-        this.address = 0;
+        this.jmpAddressLabel = "";
+        this.jmpAddress = 0;
 
         // inFREE parameters
         this.op = "";
@@ -95,8 +95,8 @@ class StorageRomLine
         if (this.jmpz) logstr += "jmpz ";
         if (this.jmpz) logstr += "jmpnz ";
         if (this.jmp) logstr += "jmp ";
-        if (this.addressLabel.length>0) logstr += "addressLabel=" + this.addressLabel + " "; // Jump parameter
-        if (this.address>0) logstr += "address=" + this.address + " "; // Jump parameter
+        if (this.jmpAddressLabel.length>0) logstr += "jmpAddressLabel=" + this.jmpAddressLabel + " "; // Jump parameter
+        if (this.jmpAddress>0) logstr += "jmpAddress=" + this.jmpAddress + " "; // Jump parameter
         if (this.hash) logstr += "hash " + "hashType=" + this.iHashType + " ";
         if (this.climbRkey) logstr += "climbRkey ";
         if (this.climbSiblingRkey) logstr += "climbSiblingRkey ";
@@ -190,8 +190,8 @@ class StorageRom
             // Jump parameters
             if (romLine.jmp || romLine.jmpz || romLine.jmpnz)
             {
-                romLine.addressLabel = l.addressLabel;
-                romLine.address = l.address;
+                romLine.jmpAddressLabel = l.jmpAddressLabel;
+                romLine.jmpAddress = l.jmpAddress;
             }
 
             // inFREE parameters
