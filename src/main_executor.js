@@ -24,6 +24,7 @@ const smPaddingSha256 = require("./sm/sm_padding_sha256.js");
 const smPaddingSha256Bit = require("./sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
 const smBits2FieldSha256 = require("./sm/sm_bits2field_sha256.js");
 const smSha256F = require("./sm/sm_sha256f/sm_sha256f.js");
+const smClimbKey = require("./sm/sm_climb_key.js");
 
 const argv = require("yargs")
     .version(version)
@@ -235,7 +236,7 @@ async function run() {
 
         if (cmPols.ClimbKey) {
             console.log("ClimbKey...");
-            await ClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
+            await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
         }
 
         for (let i=0; i<cmPols.$$array.length; i++) {

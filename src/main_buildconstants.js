@@ -24,7 +24,7 @@ const smSha256F = require("./sm/sm_sha256f/sm_sha256f.js");
 const smBits2FieldSha256 = require("./sm/sm_bits2field_sha256.js");
 const smPaddingSha256 = require("./sm/sm_padding_sha256.js");
 const smPaddingSha256Bit = require("./sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
-
+const smClimbKey = require("./sm/sm_climb_key.js");
 const { F1Field } = require("ffjavascript");
 
 const argv = require("yargs")
@@ -154,6 +154,11 @@ async function run() {
     if (constPols.Sha256F) {
         console.log("Sha256F...");
         await smSha256F.buildConstants(constPols.Sha256F);
+    }
+
+    if (constPols.ClimbKey) {
+        console.log("ClimbKey...");
+        await smClimbKey.buildConstants(constPols.ClimbKey);
     }
 
     if (typeof outputTextDir === 'string') {
