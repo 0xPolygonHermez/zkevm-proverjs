@@ -17,7 +17,7 @@ const arithEq10 = require('./sm_arith_eq10');
 
 const F1Field = require("ffjavascript").F1Field;
 
-module.exports.buildConstants = async function (pols) {
+module.exports.buildConstants = async function(pols) {
     const N = pols.SEL_BYTE2_BIT19.length;
 
     buildByte2Bits16(pols, N);
@@ -89,7 +89,7 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
     }
 }
 
-module.exports.execute = async function (pols, input) {
+module.exports.execute = async function(pols, input, continueOnError = false) {
     // Get N from definitions
     const N = pols.x1[0].length;
 
@@ -136,7 +136,10 @@ module.exports.execute = async function (pols, input) {
         pols.valueLtPrime[i] = 0n;
         pols.chunkLtPrime[i] = 0n;
     }
+
     let s, q0, q1, q2;
+    let nDivErrors = 0;
+    let nNegErrors = 0;
     for (let i = 0; i < input.length; i++) {
         let x1 = fea2scalar(Fr, input[i]["x1"]);
         let y1 = fea2scalar(Fr, input[i]["y1"]);
@@ -144,6 +147,9 @@ module.exports.execute = async function (pols, input) {
         let y2 = fea2scalar(Fr, input[i]["y2"]);
         let x3 = fea2scalar(Fr, input[i]["x3"]);
         let y3 = fea2scalar(Fr, input[i]["y3"]);
+        console.log(`x1: ${x1}, y1: ${y1}, x2: ${x2}, y2: ${y2}, x3: ${x3}, y3: ${y3}`);
+
+        // TODO: Assume the limit is 2^256 instead of p-1. Otherwise, the tests will not pass.
 
         // In the following, recall that we can only work with unsiged integers of 256 bits.
         // Therefore, as the quotient needs to be represented in our VM, we need to know
@@ -155,29 +161,55 @@ module.exports.execute = async function (pols, input) {
         //        I.e, x1,x2,y1,y2 ∈ [0, p-1], where p is the corresponding prime.
         if (input[i].selEq1) {
             let pq0;
-            if (Fec.eq(x2, x1)) {
+            if (Fec.eq(x2, x1) && !continueOnError) {
                 throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
             } else {
-                s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
+                if (typeof input[i]["s"] !== 'undefined') {
+                    s = input[i]["s"];
+                } else {
+                    s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
+                }
                 pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are {-pFec*(pFec-1),pFec*(pFec-1)}
             }
             q0 = pq0/pFec;
-            if ((pq0 - pFec*q0) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q0 the residual is not zero (diff point)`);
-            }
+            nDivErrors = errorHandler(
+                (pq0 - pFec * q0) != 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (diff point)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q0 += 2n ** 256n;
+            nNegErrors = errorHandler(
+                q0 < 0n,
+                `For input ${i}, the q0 with offset is negative (diff point). Actual value: ${q0}, previous value: ${q0 - 2n ** 256n}`,
+                continueOnError,
+                nNegErrors
+            );
         }
         else if (input[i].selEq2) {
-            s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
+            if (typeof input[i]["s"] !== 'undefined') {
+                s = input[i]["s"];
+            } else {
+                s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
+            }
             let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(pFec-1)**2,2*(pFec-1)**2}
                                                   // with |-3*(pFec-1)**2| > 2*(pFec-1)**2
             q0 = -(pq0/pFec);
-            if ((pq0 + pFec*q0) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q0 the residual is not zero (same point)`);
-            }
+            nDivErrors = errorHandler(
+                (pq0 + pFec*q0) != 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (same point)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q0 += 2n ** 257n;
+            nNegErrors = errorHandler(
+                q0 < 0n,
+                `For input ${i}, the q0 with offset is negative (same point). Actual value: ${q0}, previous value: ${q0 - 2n ** 257n}`,
+                continueOnError,
+                nNegErrors
+            );
         }
         else {
             s = 0n;
@@ -188,82 +220,152 @@ module.exports.execute = async function (pols, input) {
             let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(pFec-1),(pFec-1)**2}
                                             // with (pFec-1)**2 > |-3*(pFec-1)|
             q1 = pq1/pFec;
-            if ((pq1 - pFec*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq1 - pFec*q1) != 0n,
+                `For input ${i}, with the calculated q1 the residual is not zero (point addition)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q1 += 2n ** 2n;
+            nNegErrors = errorHandler(
+                q1 < 0n,
+                `For input ${i}, the q1 with offset is negative (point addition). Actual value: ${q1}, previous value: ${q1 - 2n ** 2n}`,
+                continueOnError,
+                nNegErrors
+            );
 
+            if (typeof input[i]["s"] !== 'undefined') {
+                s = input[i]["s"];
+            }
             let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(pFec+1)*(pFec-1),(pFec-1)**2}
                                                  // with |-(pFec+1)*(pFec-1)| > (pFec-1)**2
             q2 = -(pq2/pFec);
-            if ((pq2 + pFec*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq2 + pFec*q2) != 0n,
+                `For input ${i}, with the calculated q2 the residual is not zero (point addition)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q2 += 2n ** 256n;
+            nNegErrors = errorHandler(
+                q2 < 0n,
+                `For input ${i}, the q2 with offset is negative (point addition). Actual value: ${q2}, previous value: ${q2 - 2n ** 256n}`,
+                continueOnError,
+                nNegErrors
+            );
         }
         else if (input[i].selEq4) {
-            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-(pBN254-1)**2+(pBN254-1),(pBN254-1)**2}
-                                              // with |-(pBN254-1)**2+(pBN254-1)| > (pBN254-1)**2
+            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-pBN254*(pBN254-1),(pBN254-1)**2}
+                                              // with |-pBN254*(pBN254-1)| > (pBN254-1)**2
             q1 = -(pq1/pBN254);
-            if ((pq1 + pBN254*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq1 + pBN254*q1) != 0n,
+                `For input ${i}, with the calculated q1 the residual is not zero (complex mul)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q1 += 2n ** 254n;
+            nNegErrors = errorHandler(
+                q1 < 0n,
+                `For input ${i}, the q1 with offset is negative (complex mul). Actual value: ${q1}, previous value: ${q1 - 2n ** 254n}`,
+                continueOnError,
+                nNegErrors
+            );
 
             let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(pBN254-1),2*(pBN254-1)**2}
                                               // with 2*(pBN254-1)**2 > |-(pBN254-1)|
-                                              // No offset is needed!
             q2 = pq2/pBN254;
-            if ((pq2 - pBN254*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq2 - pBN254*q2) != 0n,
+                `For input ${i}, with the calculated q2 the residual is not zero (complex mul)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q2 += 2n ** 0n;
+            nNegErrors = errorHandler(
+                q2 < 0n,
+                `For input ${i}, the q2 with offset is negative (complex mul). Actual value: ${q2}, previous value: ${q2 - 2n ** 0n}`,
+                continueOnError,
+                nNegErrors
+            );
         }
         else if (input[i].selEq5) {
             let pq1 = x1 + x2 - x3; // Worst values are {-(pBN254-1),2*(pBN254-1)}
                                     // with 2*(pBN254-1) > |-(pBN254-1)|
-                                    // No offset is needed!
             q1 = pq1/pBN254;
-            if ((pq1 - pBN254*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq1 - pBN254*q1) != 0n,
+                `For input ${i}, with the calculated q1 the residual is not zero (complex add)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q1 += 2n ** 0n;
+            nNegErrors = errorHandler(
+                q1 < 0n,
+                `For input ${i}, the q1 with offset is negative (complex add). Actual value: ${q1}, previous value: ${q2 - 2n ** 0n}`,
+                continueOnError,
+                nNegErrors
+            );
 
             let pq2 = y1 + y2 - y3; // Worst values are {-(pBN254-1),2*(pBN254-1)}
                                     // with 2*(pBN254-1) > |-(pBN254-1)|
-                                    // No offset is needed!
             q2 = pq2/pBN254;
-            if ((pq2 - pBN254*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq2 - pBN254*q2) != 0n,
+                `For input ${i}, with the calculated q2 the residual is not zero (complex add)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q2 += 2n ** 0n;
+            nNegErrors = errorHandler(
+                q2 < 0n,
+                `For input ${i}, the q2 with offset is negative (complex add). Actual value: ${q2}, previous value: ${q2 - 2n ** 0n}`,
+                continueOnError,
+                nNegErrors
+            );
         }
         else if (input[i].selEq6) {
             let pq1 = x1 - x2 - x3; // Worst values are {-2*(pBN254-1),(pBN254-1)}
                                     // with |-2*(pBN254-1)| > (pBN254-1)
-                                    // No offset is needed!
             q1 = -(pq1/pBN254);
-            if ((pq1 + pBN254*q1) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q1 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq1 + pBN254*q1) != 0n,
+                `For input ${i}, with the calculated q1 the residual is not zero (complex sub)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q1 += 2n ** 0n;
+            nNegErrors = errorHandler(
+                q1 < 0n,
+                `For input ${i}, the q1 with offset is negative (complex sub). Actual value: ${q1}, previous value: ${q1 - 2n ** 0n}`,
+                continueOnError,
+                nNegErrors
+            );
 
             let pq2 = y1 - y2 - y3; // Worst values are {-2*(pBN254-1),(pBN254-1)}
                                     // with |-2*(pBN254-1)| > (pBN254-1)
-                                    // No offset is needed!
             q2 = -(pq2/pBN254);
-            if ((pq2 + pBN254*q2) != 0n) {
-                throw new Error(`For input ${i}, with the calculated q2 the residual is not zero`);
-            }
+            nDivErrors = errorHandler(
+                (pq2 + pBN254*q2) != 0n,
+                `For input ${i}, with the calculated q2 the residual is not zero (complex sub)`,
+                continueOnError,
+                nDivErrors
+            );
             // offset
             q2 += 2n ** 0n;
+            nNegErrors = errorHandler(
+                q2 < 0n,
+                `For input ${i}, the q2 with offset is negative (complex sub). Actual value: ${q2}, previous value: ${q2 - 2n ** 0n}`,
+                continueOnError,
+                nNegErrors
+            );
         }
         else {
             q1 = 0n;
@@ -273,6 +375,12 @@ module.exports.execute = async function (pols, input) {
         input[i]['_q0'] = to16bitsRegisters(q0);
         input[i]['_q1'] = to16bitsRegisters(q1);
         input[i]['_q2'] = to16bitsRegisters(q2);
+    }
+
+    if (nNegErrors > 0) {
+        throw new Error(`There are ${nNegErrors} negative quotient errors`);
+    } else if (nDivErrors > 0) {
+        throw new Error(`There are ${nDivErrors} divisions errors`);
     }
 
     const chunksPrimeSecp256k1 = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
@@ -357,7 +465,7 @@ module.exports.execute = async function (pols, input) {
                 let carryIndex = eqIndexToCarryIndex[eqIndex];
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
-                if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n) {
+                if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
                     throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
                 }
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
@@ -367,6 +475,19 @@ module.exports.execute = async function (pols, input) {
         pols.resultEq1[offset + 31] = ((pols.selEq[1][offset] && pols.selEq[3][offset]) || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]) ? 1n : 0n;
         pols.resultEq2[offset + 31] = (pols.selEq[2][offset] && pols.selEq[3][offset]) ? 1n : 0n;
     }
+}
+
+function errorHandler(condition, message, continueOnError, counter) {
+    if (condition) {
+        if (continueOnError) {
+            console.warn(message);
+        } else {
+            throw new Error(message);
+        }
+        counter++;
+    }
+
+    return counter;
 }
 
 function inputFeaTo16bits(input, N, names) {
