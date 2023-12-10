@@ -25,6 +25,7 @@ const smPaddingSha256 = require(smPath + "sm_padding_sha256.js");
 const smPaddingSha256Bit = require(smPath + "sm_padding_sha256bit/sm_padding_sha256bit.js");
 const smBits2FieldSha256 = require(smPath + "sm_bits2field_sha256.js");
 const smSha256F = require(smPath + "sm_sha256f/sm_sha256f.js");
+const smClimbKey = require(smPath + "sm_climb_key.js");
 
 describe("test main sm", async function () {
     this.timeout(10000000);
@@ -116,6 +117,9 @@ describe("test main sm", async function () {
         await smArith.execute(cmPols.Arith, requiredMain.Arith);
         console.log("Exec Binary...");
         await smBinary.execute(cmPols.Binary, requiredMain.Binary);
+
+        console.log("Exec ClimbKey...");
+        await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
 
         for (let i=0; i<cmPols.length; i++) {
             for (let j=0; j<constPols.Global.L1.length; j++) {

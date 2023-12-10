@@ -40,7 +40,8 @@ async function main(){
     const numberSuffix = bigint ? 'n':'';
     const numberWidth = bigint ? 7:5;
     let polref, expr, polcontent;
-    for (const pol of pols) {
+    for (let index = 0; index < pols.length; ++index) {
+        const pol = pols[index];
         if (bit && (bit % lsize) == 0) content = content.trimEnd() + "\n";
         content += (bit > 0 ? "+ ": "  ");
         polref = prefix+pol;
@@ -50,10 +51,10 @@ async function main(){
         if (emptyCheck) {
             polcontent = `(${polref} ? (${polcontent}) : 0${numberSuffix})`;
         }
-        content += polcontent.padEnd(width);
+        content += polcontent.padEnd(index + 1 < pols.length ? width:0);
         ++bit;
     }
-    content += "\n\n";
+    content += ";\n\n";
     if (binary) {
         for (const pol of pols) {
             content += `(1 - ${pol}) * ${pol} = 0;\n`

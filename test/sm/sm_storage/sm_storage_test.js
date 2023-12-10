@@ -12,6 +12,8 @@ const sm_global = require("../../../src/sm/sm_global");
 const StorageRom = require("../../../src/sm/sm_storage/sm_storage_rom.js").StorageRom;
 const sm_storage = require("../../../src/sm/sm_storage/sm_storage.js");
 const sm_poseidong = require("../../../src/sm/sm_poseidong.js");
+const sm_climbKey = require("../../../src/sm/sm_climb_key.js");
+const util = require('util');
 
 const { isLogging, logger, fea42String, fea42String10, scalar2fea4, fea4IsEq }  = require("../../../src/sm/sm_storage/sm_storage_utils.js");
 
@@ -34,17 +36,18 @@ describe("Test storage operations", async function () {
         poseidon = await getPoseidon();
         fr = poseidon.F;
 
-        pil = await compile(fr, __dirname + "/storage_main.pil");
-
         db = new Database(fr);
         // await db.connect("postgresql://statedb:statedb@127.0.0.1:5432/testdb");
         smt = new SMT(db, poseidon, fr);
     })
 
-    function initContext () {
+    async function initContext (config = {}) {
+
+        pil = await compile(fr, __dirname + "/storage_main.pil", false, config);
         constPols = newConstantPolsArray(pil);
         cmPols = newCommitPolsArray(pil);
         plookUpIndex = 0;
+        required.Storage = [];
         for (let index = 0; index < cmPols.Main.sRD.length; ++index) {
             cmPols.Main.sRD[index] = 0n;
             cmPols.Main.SR0[index] = 0n;
@@ -82,6 +85,7 @@ describe("Test storage operations", async function () {
 
     async function smtSet (oldRoot, key, value) {
         const r = await smt.set(oldRoot, key, value);
+        console.log('SMT-SET', r);
         const index = plookUpIndex++;
         cmPols.Main.sRD[index] = fr.zero;
         cmPols.Main.sWR[index] = fr.e(1n);
@@ -121,20 +125,7 @@ describe("Test storage operations", async function () {
         cmPols.Main.op5[index] = fr.e(r.newRoot[2] >> 32n);
         cmPols.Main.op6[index] = fr.e(r.newRoot[3] & 0xFFFFFFFFn);
         cmPols.Main.op7[index] = fr.e(r.newRoot[3] >> 32n);
-        cmPols.Main.incCounter = r.proofHashCounter;
-/*        console.log(index+' '+[
-                     fr.e(cmPols.Main.SR0[index] + cmPols.Main.SR1[index] * 2n**32n),
-                     fr.e(cmPols.Main.SR2[index] + cmPols.Main.SR3[index] * 2n**32n),
-                     fr.e(cmPols.Main.SR4[index] + cmPols.Main.SR5[index] * 2n**32n),
-                     fr.e(cmPols.Main.SR6[index] + cmPols.Main.SR7[index] * 2n**32n),
-                     cmPols.Main.sKey[0][index], cmPols.Main.sKey[1][index], cmPols.Main.sKey[2][index], cmPols.Main.sKey[3][index],
-                     cmPols.Main.D0[index], cmPols.Main.D1[index], cmPols.Main.D2[index], cmPols.Main.D3[index],
-                     cmPols.Main.D4[index], cmPols.Main.D5[index], cmPols.Main.D6[index], cmPols.Main.D7[index],
-                     fr.e(cmPols.Main.op0[index] + cmPols.Main.op1[index] * 2n**32n),
-                     fr.e(cmPols.Main.op2[index] + cmPols.Main.op3[index] * 2n**32n),
-                     fr.e(cmPols.Main.op4[index] + cmPols.Main.op5[index] * 2n**32n),
-                     fr.e(cmPols.Main.op6[index] + cmPols.Main.op7[index] * 2n**32n),
-                     cmPols.Main.incCounter].join(','));*/
+        cmPols.Main.incCounter[index] = BigInt(r.proofHashCounter);
         required.Storage.push({bIsSet: true,
             setResult: {
                 oldRoot: [...r.oldRoot],
@@ -146,14 +137,18 @@ describe("Test storage operations", async function () {
                 isOld0: r.isOld0,
                 oldValue: r.oldValue,
                 newValue: r.newValue,
-                mode: r.mode
-            }});
+                mode: r.mode,
+                incCounter: r.proofHashCounter,
+                siblingLeftChild: [...r.siblingLeftChild],
+                siblingRightChild: [...r.siblingRightChild]
+            }, Main: {w:index, sourceRef:''}});
         if (LOG_SMT_RESULT) console.log(r);
         return r;
     }
 
     async function smtGet (root, key) {
         const r = await smt.get(root, key);
+        console.log('SMT-GET', r);
         const index = plookUpIndex++;
         cmPols.Main.sRD[index] = fr.e(1n);
         cmPols.Main.sWR[index] = fr.zero;
@@ -194,7 +189,7 @@ describe("Test storage operations", async function () {
         rvalue = rvalue >> 32n;
         cmPols.Main.op7[index] = rvalue & 0xFFFFFFFFn;
         rvalue = rvalue >> 32n;
-        cmPols.Main.incCounter = r.proofHashCounter;
+        cmPols.Main.incCounter[index] = BigInt(r.proofHashCounter);
         required.Storage.push({bIsSet: false,
             getResult: {
                 root: [...r.root],
@@ -203,19 +198,55 @@ describe("Test storage operations", async function () {
                 insKey: r.insKey ? [...r.insKey] : new Array(4).fill(Scalar.zero),
                 insValue: r.insValue,
                 isOld0: r.isOld0,
-                value: r.value
-            }});
+                value: r.value,
+                incCounter: r.proofHashCounter
+            }, Main: {w:index, sourceRef:''}});
         if (LOG_SMT_RESULT) console.log(r);
         return r;
     }
 
+    function initTest(title) {
+        console.log('starting '+title+' ....');
+    }
     async function executeAndVerify () {
         await sm_global.buildConstants(constPols.Global);
         await sm_storage.buildConstants(constPols.Storage);
+        await sm_climbKey.buildConstants(constPols.ClimbKey);
         const req = await sm_storage.execute(cmPols.Storage, required.Storage);
 
         await sm_poseidong.buildConstants(constPols.PoseidonG);
         await sm_poseidong.execute(cmPols.PoseidonG, req.PoseidonG);
+        await sm_climbKey.execute(cmPols.ClimbKey, req.ClimbKey);
+        const N = cmPols.$$array[0].length;
+        console.log('N='+N);
+
+        if (constPols !== false) {
+            for (let i=0; i<constPols.$$array.length; i++) {
+                for (let j=0; j<N; j++) {
+                    const type = typeof constPols.$$array[i][j];
+                    if (type !== 'bigint') {
+                        if (type === 'undefined') {
+                            throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` );
+                        } else {
+                            throw new Error(`Polinomial not valid type (${type}) on ${constPols.$$defArray[i].name} at ${j}` );
+                        }
+                    }
+                }
+            }
+        }
+
+        for (let i=0; i<cmPols.$$array.length; i++) {
+            for (let j=0; j<N; j++) {
+                const type = typeof cmPols.$$array[i][j];
+                if (type !== 'bigint') {
+                    if (type === 'undefined') {
+                        throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}`);
+                    } else {
+                        throw new Error(`Polinomial not valid type (${type}) on ${cmPols.$$defArray[i].name} at ${j}` );
+                    }
+                }
+            }
+        }
 
         // Verify
         const res = await verifyPil(fr, pil, cmPols, constPols);
@@ -229,260 +260,316 @@ describe("Test storage operations", async function () {
         }
     }
 
-    function bugTest () {
-        console.log ("StorageSM_BugTest starting...");
+    async function bugTest () {
+        initTest ("BugTest");
 
-        it('Set & Clear', async () => {
-            initContext();
+        const r1 = await smtSet (smt.empty, scalar2key(0x01, fr), Scalar.e(2));
+        // console.log({r1});
+        const r2 = await smtSet (r1.newRoot, scalar2key(0x03, fr), Scalar.e(4));
+        // console.log({r2});
+        const r3 = await smtSet (r2.newRoot, scalar2key(0x07, fr), Scalar.e(4));
+        // console.log({r3});
 
-            const r1 = await smtSet (smt.empty, scalar2key(0x01, fr), Scalar.e(2));
-            // console.log({r1});
-            const r2 = await smtSet (r1.newRoot, scalar2key(0x03, fr), Scalar.e(4));
-            // console.log({r2});
-            const r3 = await smtSet (r2.newRoot, scalar2key(0x07, fr), Scalar.e(4));
-            // console.log({r3});
+        const rGet = await smtGet (r3.newRoot, scalar2key(0x02, fr));
+        console.log({rGet});
+        assert(Scalar.eq(rGet.value, Scalar.e(0)));
 
-            const rGet = await smtGet (r3.newRoot, scalar2key(0x02, fr));
-            console.log({rGet});
-            assert(Scalar.eq(rGet.value, Scalar.e(0)));
+        const rGet2 = await smtGet (r3.newRoot, scalar2key(0xFFFF, fr));
+        console.log({rGet2});
+        assert(Scalar.eq(rGet2.value, Scalar.e(0)));
 
-            const rGet2 = await smtGet (r3.newRoot, scalar2key(0xFFFF, fr));
-            console.log({rGet2});
-            assert(Scalar.eq(rGet2.value, Scalar.e(0)));
-
-            /* const rGet = await smtGet (r3.newRoot, scalar2key(0x02, fr));
-            console.log(rGet.value);
-            assert(Scalar.eq(rGet.value, Scalar.e(0)));*/
+        /* const rGet = await smtGet (r3.newRoot, scalar2key(0x02, fr));
+        console.log(rGet.value);
+        assert(Scalar.eq(rGet.value, Scalar.e(0)));*/
 /*
-            const r2 = await smtSet (r1.newRoot, scalar2key(1, fr), Scalar.e(0));
-            assert(smtUtils.nodeIsZero(r2.newRoot, fr));*/
-
-            await executeAndVerify();
-        });
+        const r2 = await smtSet (r1.newRoot, scalar2key(1, fr), Scalar.e(0));
+        assert(smtUtils.nodeIsZero(r2.newRoot, fr));*/
     }
 
-    function unitTest () {
-        console.log ("StorageSM_UnitTest starting...");
-        it('Storage Unit test', async () => {
+    async function edgeValuesAndKeys () {
+        initTest ("edgeValuesAndKeys");
 
-            initContext();
+        const k1 = scalar2key(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+        let root = smt.empty;
+        let value = 0n;
+        for (let i = 0; i < 10; ++i) {
+            console.log(`VALUE[${i}] = 0x${value.toString(16).toUpperCase().padStart(64, '0')}`);
+            const rUpdate = await smtSet (root, k1, value);
+            root = rUpdate.newRoot;
+            const rGetAfterUpdate = await smtGet (root, k1);
+            assert(Scalar.eq(rGetAfterUpdate.value, value));
+            value = i === 8 ? ((1n << 256n) - 1n) : (1n << (31n + 32n * BigInt(i)));
+        }
 
-            let sr, gr;
-            let root;
-            let value = Scalar.e(10);
-            let key = [Scalar.one, Scalar.zero, Scalar.zero, Scalar.zero];
+        root = smt.empty;
+        value = 10n;
+        const k2a = scalar2key(0x0000000000000000000000000000000000000000000000000000n, fr);
+        root = (await smtSet (root, k2a, 100n)).newRoot;
+        for (let i = 0; i < 4; ++i) {
+            const k2b = 0x1n << BigInt(i);
+            console.log(`KEY2B[${i}] = 0x${k2b.toString(16).toUpperCase().padStart(64, '0')}`);
+            console.log(scalar2key(k2b, fr));
+            const res2 = await smtGet (root, scalar2key(k2b, fr));
+            assert(Scalar.eq(res2.value, 0n));
+        }
 
-            // Get zero
-            gr = await smtGet(smt.empty, key);
-            console.log("0: StorageSMTest Get zero value=" + gr.value.toString(16));
+        root = smt.empty;
+        const k3a = scalar2key(0x8000000000000000000000000000000000000000000000000000n, fr);
+        root = (await smtSet (root, k2a, 100n)).newRoot;
+        for (let i = 0; i < 4; ++i) {
+            const k3b = 0x1n << BigInt(i);
+            console.log(`KEY3B[${i}] = 0x${k3b.toString(16).toUpperCase().padStart(64, '0')}`);
+            console.log(scalar2key(k3b, fr));
+            const res2 = await smtGet (root, scalar2key(k3b, fr));
+            assert(Scalar.eq(res2.value, 0n));
+        }
 
-            // Set insertNotFound
-            sr = await smtSet(smt.empty, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertNotFound");
-            console.log("1: StorageSMTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+        {
 
-            // Get non zero
-            gr = await smtGet(root, key);
-            console.log("2: StorageSMTest Get nonZero value=" + gr.value.toString(16));
+            root = smt.empty;
+            root = (await smtSet (root, scalar2key(0b0100100, fr), 101n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b0000100, fr), 102n)).newRoot;
+            const rootBeforeInsert = root;
+            root = (await smtSet (root, scalar2key(0b10000100, fr), 103n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b10000100, fr), 0n)).newRoot;
+            assert(smtUtils.nodeIsEq(rootBeforeInsert, root, fr));
+        }
 
-            // Set deleteLast
-            value=Scalar.e(0);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="deleteLast");
-            console.log("3: StorageSMTest Set deleteLast root=" + fea42String(fr, root) + " mode=" +sr.mode);
+        {
+            root = smt.empty;
+            root = (await smtSet (root, scalar2key(0b01011010100, fr), 101n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b00011010100, fr), 102n)).newRoot;
+            const rootBeforeInsert = root;
+            root = (await smtSet (root, scalar2key(0b11011010100, fr), 103n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b11011010100, fr), 0n)).newRoot;
+            assert(smtUtils.nodeIsEq(rootBeforeInsert, root, fr));
+        }
 
-            // Set insertNotFound
-            value=Scalar.e(10);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            console.log("4: StorageSMTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Set update
-            value=Scalar.e(20);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="update");
-            console.log("5: StorageSMTest Set update root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Get non zero
-            gr = await smtGet(root, key);
-            console.log("6: StorageSMTest Get nonZero value=" + gr.value.toString(16));
-
-            // Set insertFound
-            key[0] = Scalar.e(3);
-            value = Scalar.e(20);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertFound");
-            console.log("7: StorageSMTest Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Get non zero
-            gr = await smtGet(root, key);
-            console.log("8: StorageSMTest Get nonZero value=" + gr.value.toString(16));
-
-            // Set deleteFound
-            value = Scalar.e(0);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="deleteFound");
-            console.log("9: StorageSMTest Set deleteFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Get zero
-            gr = await smtGet(root, key);
-            console.log("10: StorageSMTest Get zero value=" + gr.value.toString(16));
-
-            // Set zeroToZzero
-            value = Scalar.zero;
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="zeroToZero");
-            console.log("11: StorageSMTest Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Set insertFound
-            value = Scalar.e(40);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertFound");
-            console.log("12: StorageSMTest Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Get non zero
-            gr = await smtGet(root, key);
-            console.log("13: StorageSMTest Get nonZero value=" + gr.value.toString(16));
-
-            // Set insertNotFound
-            key[0] = Scalar.zero;
-            key[1] = Scalar.one;
-            value = Scalar.e(30);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertNotFound");
-            console.log("14: StorageSMTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            // Set deleteNotFound
-            value = Scalar.zero;
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="deleteNotFound");
-            console.log("15: StorageSMTest Set deleteNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            await executeAndVerify();
-        });
-        console.log("StorageSM_UnitTest done");
+        {
+            root = smt.empty;
+            root = (await smtSet (root, scalar2key(0b0100000101, fr), 101n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b0001100101, fr), 102n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b0101100101, fr), 103n)).newRoot;
+            const rootBeforeInsert = root;
+            root = (await smtSet (root, scalar2key(0b0011100101, fr), 104n)).newRoot;
+            root = (await smtSet (root, scalar2key(0b0011100101, fr), 0n)).newRoot;
+            assert(smtUtils.nodeIsEq(rootBeforeInsert, root, fr));
+        }
     }
 
-    function zeroToZeroTest () {
-        console.log("StorageSM_ZeroToZeroTest starting...");
-        it('zeroTozeroTest', async () => {
-            initContext();
+    async function lastKeyBitDifferent () {
+        initTest("lastKeyBitDifferent");
 
-            let sr, gr;
-            let root;
-            let value = Scalar.e(10);
-            let key = [Scalar.one, Scalar.zero, Scalar.zero, Scalar.zero];
+        const k1 = scalar2key(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+        const k2 = scalar2key(0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000n, fr);
+        const r1 = await smtSet (smt.empty, k1, Scalar.e(2));
+        const r2 = await smtSet (r1.newRoot, k2, Scalar.e(4));
 
-            // Set insertNotFound
-            sr = await smtSet(smt.empty, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertNotFound");
-            console.log("0: StorageSM_ZeroToZeroTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" << sr.mode);
+        const rGet = await smtGet (r2.newRoot, k1);
+        assert(Scalar.eq(rGet.value, Scalar.e(2)));
 
-            // Set zeroToZzero
-            key[0] = Scalar.zero;
-            key[1] = Scalar.one;
-            value = Scalar.zero;
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="zeroToZero");
-            console.log("1: StorageSM_ZeroToZeroTest Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
+        const rGet2 = await smtGet (r2.newRoot, k2);
+        assert(Scalar.eq(rGet2.value, Scalar.e(4)));
 
-            await executeAndVerify();
-        });
-        console.log("StorageSM_ZeroToZeroTest done");
+        let root = r2.newRoot;
+        for (let i = 0; i < 9; ++i) {
+            const value = Scalar.e(i === 8 ? ((1n << 256n) - 1n) : (1n << (31n + 32n * BigInt(i))));
+            const rUpdate = await smtSet (root, k1, value);
+            root = rUpdate.newRoot;
+            const rGetAfterUpdate = await smtGet (root, k1);
+            assert(Scalar.eq(rGetAfterUpdate.value, value));
+        }
     }
 
-    function zeroToZero2Test ()
+    async function unitTest () {
+        initTest("UnitTest");
+        let sr, gr;
+        let root;
+        let value = Scalar.e(10);
+        let key = [Scalar.one, Scalar.zero, Scalar.zero, Scalar.zero];
+
+        // 0 Get zero
+        gr = await smtGet(smt.empty, key);
+        console.log("0: StorageSMTest Get zero value=" + gr.value.toString(16));
+
+        // 1 Set insertNotFound
+        sr = await smtSet(smt.empty, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertNotFound");
+        console.log("1: StorageSMTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 2 Get non zero
+        gr = await smtGet(root, key);
+        console.log("2: StorageSMTest Get nonZero value=" + gr.value.toString(16));
+
+        // 3 Set deleteLast
+        value=Scalar.e(0);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="deleteNotFound");
+        // assert(sr.mode=="deleteLast");
+        console.log("3: StorageSMTest Set deleteLast root=" + fea42String(fr, root) + " mode=" +sr.mode);
+
+        // 4 Set insertNotFound
+        value=Scalar.e(10);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        console.log("4: StorageSMTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 5 Set update
+        value=Scalar.e(20);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="update");
+        console.log("5: StorageSMTest Set update root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 6 Get non zero
+        gr = await smtGet(root, key);
+        console.log("6: StorageSMTest Get nonZero value=" + gr.value.toString(16));
+
+        // 7 Set insertFound
+        key[0] = Scalar.e(3);
+        value = Scalar.e(20);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertFound");
+        console.log("7: StorageSMTest Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 8 Get non zero
+        gr = await smtGet(root, key);
+        console.log("8: StorageSMTest Get nonZero value=" + gr.value.toString(16));
+
+        // 9 Set deleteFound
+        value = Scalar.e(0);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="deleteFound");
+        console.log("9: StorageSMTest Set deleteFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 10 Get zero
+        gr = await smtGet(root, key);
+        console.log("10: StorageSMTest Get zero value=" + gr.value.toString(16));
+
+        // 11 Set zeroToZzero
+        value = Scalar.zero;
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="zeroToZero");
+        console.log("11: StorageSMTest Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 12 Set insertFound
+        value = Scalar.e(40);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertFound");
+        console.log("12: StorageSMTest Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 13 Get non zero
+        gr = await smtGet(root, key);
+        console.log("13: StorageSMTest Get nonZero value=" + gr.value.toString(16));
+
+        // 14 Set insertNotFound
+        key[0] = Scalar.zero;
+        key[1] = Scalar.one;
+        value = Scalar.e(30);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertNotFound");
+        console.log("14: StorageSMTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+
+        // 15 Set deleteNotFound
+        value = Scalar.zero;
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="deleteNotFound");
+        console.log("15: StorageSMTest Set deleteNotFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+    }
+
+    async function zeroToZeroTest () {
+        initTest("ZeroToZeroTest");
+        let sr, gr;
+        let root;
+        let value = Scalar.e(10);
+        let key = [Scalar.one, Scalar.zero, Scalar.zero, Scalar.zero];
+
+        // Set insertNotFound
+        sr = await smtSet(smt.empty, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertNotFound");
+        console.log("0: StorageSM_ZeroToZeroTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" << sr.mode);
+
+        // Set zeroToZzero
+        key[0] = Scalar.zero;
+        key[1] = Scalar.one;
+        value = Scalar.zero;
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="zeroToZero");
+        console.log("1: StorageSM_ZeroToZeroTest Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
+    }
+
+    async function zeroToZero2Test ()
     {
-        console.log("StorageSM_ZeroToZero2Test starting...");
-        it('zeroTozero2Test', async () => {
-            initContext();
+        initTest("ZeroToZero2Test");
 
-            let sr, gr;
-            let root;
-            let value = Scalar.e(10);
-            let key = [Scalar.e(0x23), Scalar.zero, Scalar.zero, Scalar.zero];
+        let sr, gr;
+        let root;
+        let value = Scalar.e(10);
+        let key = [Scalar.e(0x23), Scalar.zero, Scalar.zero, Scalar.zero];
 
-            // Set insertNotFound
-            sr = await smtSet(smt.empty, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertNotFound");
-            console.log("0: StorageSM_ZeroToZeroTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" << sr.mode);
+        // Set insertNotFound
+        sr = await smtSet(smt.empty, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertNotFound");
+        console.log("0: StorageSM_ZeroToZeroTest Set insertNotFound root=" + fea42String(fr, root) + " mode=" << sr.mode);
 
-            // Set insertFound
-            key[0] = Scalar.e(0x1);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="insertFound");
-            console.log("1: StorageSM_ZeroToZero2Test Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
+        // Set insertFound
+        key[0] = Scalar.e(0x1);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="insertFound");
+        console.log("1: StorageSM_ZeroToZero2Test Set insertFound root=" + fea42String(fr, root) + " mode=" + sr.mode);
 
-            // Set zeroToZzero
-            key[0] = Scalar.e(0x73);
-            value = Scalar.e(0);
-            sr = await smtSet(root, key, value);
-            root = [...sr.newRoot];
-            assert(sr.mode=="zeroToZero");
-            console.log("2: StorageSM_ZeroToZero2Test Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
-
-            await executeAndVerify();
-
-        });
-        console.log("StorageSM_ZeroToZero2Test done");
+        // Set zeroToZzero
+        key[0] = Scalar.e(0x73);
+        value = Scalar.e(0);
+        sr = await smtSet(root, key, value);
+        root = [...sr.newRoot];
+        assert(sr.mode=="zeroToZero");
+        console.log("2: StorageSM_ZeroToZero2Test Set zeroToZero root=" + fea42String(fr, root) + " mode=" + sr.mode);
     }
 
-    function emptyTest () {
+    async function emptyTest () {
         console.log ("StorageSM_EmptyTest starting...");
-        it('emptyTest', async () => {
-            initContext();
-
-            await executeAndVerify();
-        });
+        await initContext({defines:{N: 2**16}});
+        await executeAndVerify();
         console.log("StorageSM_EmptyTest done");
     }
 
 
 
-    function useCaseTest () {
-        console.log ("StorageSM_UseCasteTest starting...");
+    async function useCaseTest () {
+        initTest("UseCaseTest");
 
-        it('It should add and remove an element', async () => {
-            initContext();
+        const r1 = await smtSet (smt.empty, scalar2key(1, fr), Scalar.e(2));
 
-            const r1 = await smtSet (smt.empty, scalar2key(1, fr), Scalar.e(2));
+        const rGet = await smtGet (r1.newRoot, scalar2key(1, fr));
+        assert(Scalar.eq(rGet.value, Scalar.e(2)));
 
-            const rGet = await smtGet (r1.newRoot, scalar2key(1, fr));
-            assert(Scalar.eq(rGet.value, Scalar.e(2)));
+        const r2 = await smtSet (r1.newRoot, scalar2key(1, fr), Scalar.e(0));
+        assert(smtUtils.nodeIsZero(r2.newRoot, fr));
 
-            const r2 = await smtSet (r1.newRoot, scalar2key(1, fr), Scalar.e(0));
-            assert(smtUtils.nodeIsZero(r2.newRoot, fr));
-
-            await executeAndVerify();
-        });
-
-        it('It should update an element 1', async () => {
-            initContext();
+        {
+            initTest('UseCaseTest - update an element 1');
 
             const r1 = await smtSet(smt.empty, scalar2key(1, fr), Scalar.e(2));
             const r2 = await smtSet(r1.newRoot, scalar2key(1, fr), Scalar.e(3));
             const r3 = await smtSet(r2.newRoot, scalar2key(1, fr), Scalar.e(2));
 
             assert(smtUtils.nodeIsEq(r1.newRoot, r3.newRoot, fr));
-
-            await executeAndVerify();
-        });
-
-        it('It should add a shared element 2', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - add a shared element 2');
 
             const r1 = await smtSet(smt.empty, scalar2key(8, fr), Scalar.e(2));
             const r2 = await smtSet(r1.newRoot, scalar2key(9, fr), Scalar.e(3));
@@ -490,12 +577,9 @@ describe("Test storage operations", async function () {
             const r4 = await smtSet(r3.newRoot, scalar2key(9, fr), Scalar.e(0));
 
             assert(smtUtils.nodeIsZero(r4.newRoot, fr));
-
-            await executeAndVerify();
-        });
-
-        it('It should add a shared element 3', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - add a shared element 3');
 
             const r1 = await smtSet(smt.empty, scalar2key(7, fr), Scalar.e(2));
             const r2 = await smtSet(r1.newRoot, scalar2key(15, fr), Scalar.e(3));
@@ -503,12 +587,9 @@ describe("Test storage operations", async function () {
             const r4 = await smtSet(r3.newRoot, scalar2key(15, fr), Scalar.e(0));
 
             assert(smtUtils.nodeIsZero(r4.newRoot, fr));
-
-            await executeAndVerify();
-        });
-
-        it('It should add a shared element', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - add a shared element');
 
             const r1 = await smtSet(smt.empty, scalar2key(7, fr), Scalar.e(107));
             const r2 = await smtSet(r1.newRoot, scalar2key(15, fr), Scalar.e(115));
@@ -518,12 +599,9 @@ describe("Test storage operations", async function () {
             const r6 = await smtSet(r5.newRoot, scalar2key(3, fr), Scalar.e(0));
 
             assert(smtUtils.nodeIsZero(r6.newRoot, fr));
-
-            await executeAndVerify();
-        });
-
-        it('Add-Remove 128 elements', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - Add-Remove 128 elements');
 
             const N = 128;
 
@@ -540,12 +618,9 @@ describe("Test storage operations", async function () {
             }
 
             assert(smtUtils.nodeIsZero(r.newRoot, fr));
-
-            await executeAndVerify();
-        });
-
-        it('Should read random', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - read random');
 
             let r = {
                 newRoot: smt.empty,
@@ -565,11 +640,9 @@ describe("Test storage operations", async function () {
                 assert(Scalar.eq(r2.value, Scalar.e(i+1000)));
             }
 
-            await executeAndVerify();
-        });
-
-        it('It should add elements with similar keys', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - add elements with similar keys');
 
             const expectedRoot = [
                 442750481621001142n,
@@ -584,11 +657,9 @@ describe("Test storage operations", async function () {
 
             assert(smtUtils.nodeIsEq(expectedRoot, r2.newRoot, fr));
 
-            executeAndVerify();
-        });
-
-        it('It should update leaf with more than one level depth', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - update leaf with more than one level depth');
 
             const expectedRoot = [
                 13590506365193044307n,
@@ -627,12 +698,9 @@ describe("Test storage operations", async function () {
                 Scalar.e('35179347944617143021579132182092200136526168785636368258055676929581544372820'),
             );
             assert(smtUtils.nodeIsEq(expectedRoot, r4.newRoot, fr));
-
-            executeAndVerify();
-        });
-
-        it('It should Zero to Zero with isOldZero=0', async () => {
-            initContext();
+        }
+        {
+            initTest('UseCaseTest - Zero to Zero with isOldZero=0');
 
             const r0 = await smtSet(smt.empty, scalar2key(0x1, fr), Scalar.e(2)); // 0x00
             const r1 = await smtSet(r0.newRoot, scalar2key(0x2, fr), Scalar.e(3)); // 0x00
@@ -640,14 +708,19 @@ describe("Test storage operations", async function () {
 
             assert(!r2.isOldZero);
 
-            executeAndVerify();
-        });
+        }
     }
 
-    bugTest();
-/*    unitTest();
-    zeroToZeroTest();
-    zeroToZero2Test();
-    emptyTest();
-    useCaseTest();*/
+    it('Storage Tests', async () => {
+        await emptyTest();
+        await initContext();
+        await bugTest();
+        await unitTest();
+        await zeroToZeroTest();
+        await zeroToZero2Test();
+        await useCaseTest();
+        await lastKeyBitDifferent();
+        await edgeValuesAndKeys();
+        await executeAndVerify();
+    });
 });

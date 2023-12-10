@@ -893,7 +893,7 @@ namespace Main(%N);
         op4, op5, op6, op7,
         incCounter
     } is
-    Storage.iLatchGet {
+    Storage.latchGet {
         Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
         Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
         Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
@@ -910,7 +910,7 @@ namespace Main(%N);
         op0 + 2**32*op1, op2 + 2**32*op3, op4 + 2**32*op5, op6 + 2**32*op7,
         incCounter
     } is
-    Storage.iLatchSet {
+    Storage.latchSet {
         Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
         Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
         Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,

@@ -3,7 +3,7 @@
 * equation: s*x1-s*x3-y1-y3+p*q2-p*offset
 * 
 * p=0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
-* offset=0x10000000000000000000000000000000000000000000000000000000000000000
+* offset=0x20000000000000000000000000000000000000000000000000000000000000000
 */
 
 module.exports.calculate = function (p, step, _o)
@@ -209,7 +209,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[3][_o]  - p.s[13][_o]  * p.x3[3][_o]  + 0xffffn  * p.q2[3][_o] ) +
 			(p.s[14][_o]  * p.x1[2][_o]  - p.s[14][_o]  * p.x3[2][_o]  + 0xffffn  * p.q2[2][_o] ) +
 			(p.s[15][_o]  * p.x1[1][_o]  - p.s[15][_o]  * p.x3[1][_o]  + 0xffffn  * p.q2[1][_o] )
-			    - 0xfc2fn );
+			    - 0x1f85en);
 
 		case 17: return (
 			(p.s[2][_o]   * p.x1[15][_o] - p.s[2][_o]   * p.x3[15][_o] + 0xfffen  * p.q2[15][_o]) +
@@ -226,7 +226,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[4][_o]  - p.s[13][_o]  * p.x3[4][_o]  + 0xffffn  * p.q2[4][_o] ) +
 			(p.s[14][_o]  * p.x1[3][_o]  - p.s[14][_o]  * p.x3[3][_o]  + 0xffffn  * p.q2[3][_o] ) +
 			(p.s[15][_o]  * p.x1[2][_o]  - p.s[15][_o]  * p.x3[2][_o]  + 0xffffn  * p.q2[2][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 18: return (
 			(p.s[3][_o]   * p.x1[15][_o] - p.s[3][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -242,7 +242,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[5][_o]  - p.s[13][_o]  * p.x3[5][_o]  + 0xffffn  * p.q2[5][_o] ) +
 			(p.s[14][_o]  * p.x1[4][_o]  - p.s[14][_o]  * p.x3[4][_o]  + 0xffffn  * p.q2[4][_o] ) +
 			(p.s[15][_o]  * p.x1[3][_o]  - p.s[15][_o]  * p.x3[3][_o]  + 0xffffn  * p.q2[3][_o] )
-			    - 0xfffen );
+			    - 0x1fffcn);
 
 		case 19: return (
 			(p.s[4][_o]   * p.x1[15][_o] - p.s[4][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -257,7 +257,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[6][_o]  - p.s[13][_o]  * p.x3[6][_o]  + 0xffffn  * p.q2[6][_o] ) +
 			(p.s[14][_o]  * p.x1[5][_o]  - p.s[14][_o]  * p.x3[5][_o]  + 0xffffn  * p.q2[5][_o] ) +
 			(p.s[15][_o]  * p.x1[4][_o]  - p.s[15][_o]  * p.x3[4][_o]  + 0xffffn  * p.q2[4][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 20: return (
 			(p.s[5][_o]   * p.x1[15][_o] - p.s[5][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -271,7 +271,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[7][_o]  - p.s[13][_o]  * p.x3[7][_o]  + 0xffffn  * p.q2[7][_o] ) +
 			(p.s[14][_o]  * p.x1[6][_o]  - p.s[14][_o]  * p.x3[6][_o]  + 0xffffn  * p.q2[6][_o] ) +
 			(p.s[15][_o]  * p.x1[5][_o]  - p.s[15][_o]  * p.x3[5][_o]  + 0xffffn  * p.q2[5][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 21: return (
 			(p.s[6][_o]   * p.x1[15][_o] - p.s[6][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -284,7 +284,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[8][_o]  - p.s[13][_o]  * p.x3[8][_o]  + 0xffffn  * p.q2[8][_o] ) +
 			(p.s[14][_o]  * p.x1[7][_o]  - p.s[14][_o]  * p.x3[7][_o]  + 0xffffn  * p.q2[7][_o] ) +
 			(p.s[15][_o]  * p.x1[6][_o]  - p.s[15][_o]  * p.x3[6][_o]  + 0xffffn  * p.q2[6][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 22: return (
 			(p.s[7][_o]   * p.x1[15][_o] - p.s[7][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -296,7 +296,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[9][_o]  - p.s[13][_o]  * p.x3[9][_o]  + 0xffffn  * p.q2[9][_o] ) +
 			(p.s[14][_o]  * p.x1[8][_o]  - p.s[14][_o]  * p.x3[8][_o]  + 0xffffn  * p.q2[8][_o] ) +
 			(p.s[15][_o]  * p.x1[7][_o]  - p.s[15][_o]  * p.x3[7][_o]  + 0xffffn  * p.q2[7][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 23: return (
 			(p.s[8][_o]   * p.x1[15][_o] - p.s[8][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -307,7 +307,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[10][_o] - p.s[13][_o]  * p.x3[10][_o] + 0xffffn  * p.q2[10][_o]) +
 			(p.s[14][_o]  * p.x1[9][_o]  - p.s[14][_o]  * p.x3[9][_o]  + 0xffffn  * p.q2[9][_o] ) +
 			(p.s[15][_o]  * p.x1[8][_o]  - p.s[15][_o]  * p.x3[8][_o]  + 0xffffn  * p.q2[8][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 24: return (
 			(p.s[9][_o]   * p.x1[15][_o] - p.s[9][_o]   * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -317,7 +317,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[11][_o] - p.s[13][_o]  * p.x3[11][_o] + 0xffffn  * p.q2[11][_o]) +
 			(p.s[14][_o]  * p.x1[10][_o] - p.s[14][_o]  * p.x3[10][_o] + 0xffffn  * p.q2[10][_o]) +
 			(p.s[15][_o]  * p.x1[9][_o]  - p.s[15][_o]  * p.x3[9][_o]  + 0xffffn  * p.q2[9][_o] )
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 25: return (
 			(p.s[10][_o]  * p.x1[15][_o] - p.s[10][_o]  * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -326,7 +326,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[12][_o] - p.s[13][_o]  * p.x3[12][_o] + 0xffffn  * p.q2[12][_o]) +
 			(p.s[14][_o]  * p.x1[11][_o] - p.s[14][_o]  * p.x3[11][_o] + 0xffffn  * p.q2[11][_o]) +
 			(p.s[15][_o]  * p.x1[10][_o] - p.s[15][_o]  * p.x3[10][_o] + 0xffffn  * p.q2[10][_o])
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 26: return (
 			(p.s[11][_o]  * p.x1[15][_o] - p.s[11][_o]  * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
@@ -334,31 +334,31 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.x1[13][_o] - p.s[13][_o]  * p.x3[13][_o] + 0xffffn  * p.q2[13][_o]) +
 			(p.s[14][_o]  * p.x1[12][_o] - p.s[14][_o]  * p.x3[12][_o] + 0xffffn  * p.q2[12][_o]) +
 			(p.s[15][_o]  * p.x1[11][_o] - p.s[15][_o]  * p.x3[11][_o] + 0xffffn  * p.q2[11][_o])
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 27: return (
 			(p.s[12][_o]  * p.x1[15][_o] - p.s[12][_o]  * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
 			(p.s[13][_o]  * p.x1[14][_o] - p.s[13][_o]  * p.x3[14][_o] + 0xffffn  * p.q2[14][_o]) +
 			(p.s[14][_o]  * p.x1[13][_o] - p.s[14][_o]  * p.x3[13][_o] + 0xffffn  * p.q2[13][_o]) +
 			(p.s[15][_o]  * p.x1[12][_o] - p.s[15][_o]  * p.x3[12][_o] + 0xffffn  * p.q2[12][_o])
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 28: return (
 			(p.s[13][_o]  * p.x1[15][_o] - p.s[13][_o]  * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
 			(p.s[14][_o]  * p.x1[14][_o] - p.s[14][_o]  * p.x3[14][_o] + 0xffffn  * p.q2[14][_o]) +
 			(p.s[15][_o]  * p.x1[13][_o] - p.s[15][_o]  * p.x3[13][_o] + 0xffffn  * p.q2[13][_o])
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 29: return (
 			(p.s[14][_o]  * p.x1[15][_o] - p.s[14][_o]  * p.x3[15][_o] + 0xffffn  * p.q2[15][_o]) +
 			(p.s[15][_o]  * p.x1[14][_o] - p.s[15][_o]  * p.x3[14][_o] + 0xffffn  * p.q2[14][_o])
-			    - 0xffffn );
+			    - 0x1fffen);
 
 		case 30: return (
 			(p.s[15][_o]  * p.x1[15][_o] - p.s[15][_o]  * p.x3[15][_o] + 0xffffn  * p.q2[15][_o])
-			    - 0xffffn );
+			    - 0x1fffen);
 
-		case 31: return ( - 0xffffn);
+		case 31: return ( - 0x1fffen);
 	}
 	return 0n;
 }

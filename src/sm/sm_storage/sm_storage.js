@@ -8,6 +8,9 @@ const SmtActionContext = require("./smt_action_context.js");
 const { StorageRomLine } = require("./sm_storage_rom.js");
 const StorageRom = require("./sm_storage_rom.js").StorageRom;
 const StorageRomFile = __dirname + "/storage_sm_rom.json";
+const util = require('util');
+
+const DEBUG = false;
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
@@ -19,59 +22,75 @@ module.exports.buildConstants = async function (pols) {
     rom = new StorageRom;
     rom.load(j);
 
-    const polSize = pols.rLine.length;
+    const polSize = pols.LINE.length;
 
     for (let i=0; i<polSize; i++) {
         const romLine = i % rom.line.length;
         const l = rom.line[romLine];
 
-        pols.rHash[i] = l.iHash ? BigInt(l.iHash) : 0n;
-        pols.rHashType[i] = l.iHashType ? BigInt(l.iHashType) : 0n;
-        pols.rLatchGet[i] = l.iLatchGet ? BigInt(l.iLatchGet) : 0n;
-        pols.rLatchSet[i] = l.iLatchSet ? BigInt(l.iLatchSet) : 0n;
-        pols.rClimbRkey[i] = l.iClimbRkey ? BigInt(l.iClimbRkey) : 0n;
-        pols.rClimbSiblingRkey[i] = l.iClimbSiblingRkey ? BigInt(l.iClimbSiblingRkey) : 0n;
-        pols.rClimbSiblingRkeyN[i] = l.iClimbSiblingRkeyN ? BigInt(l.iClimbSiblingRkeyN) : 0n;
-        pols.rRotateLevel[i] = l.iRotateLevel ? BigInt(l.iRotateLevel) : 0n;
-        pols.rJmpz[i] = l.iJmpz ? BigInt(l.iJmpz) : 0n;
-        pols.rJmp[i] = l.iJmp ? BigInt(l.iJmp) : 0n;
-        let consFea4;
-        if (l.CONST) {
-            consFea4 = scalar2fea4(fr,BigInt(l.CONST));
-        } else {
-            consFea4 = [fr.zero, fr.zero, fr.zero, fr.zero];
+        if (l.CONST && (BigInt(l.CONST) >= 2n ** 32n || BigInt(l.CONST) <= -(2n ** 32n))) {
+            throw new Error(`Invalid value for CONST ${BigInt(l.CONST)} on ${l.fileName}:${l.line}`);
         }
-        pols.rConst0[i] = consFea4[0];
-        pols.rConst1[i] = consFea4[1];
-        pols.rConst2[i] = consFea4[2];
-        pols.rConst3[i] = consFea4[3];
+        pols.CONST0[i] = l.CONST ? fr.e(BigInt(l.CONST)) : fr.zero;
 
-        pols.rAddress[i] = l.address ? BigInt(l.address) : 0n;
-        pols.rLine[i] = BigInt(romLine);
+        pols.JMP_ADDRESS[i] = l.jmpAddress ? BigInt(l.jmpAddress) : 0n;
+        pols.LINE[i] = BigInt(romLine);
 
-        pols.rInFree[i] = l.inFREE ? BigInt(l.inFREE) : 0n;
-        pols.rInNewRoot[i] = l.inNEW_ROOT ? BigInt(l.inNEW_ROOT):0n;
-        pols.rInOldRoot[i] = l.inOLD_ROOT ? BigInt(l.inOLD_ROOT):0n;
-        pols.rInRkey[i] = l.inRKEY ? BigInt(l.inRKEY):0n;
-        pols.rInRkeyBit[i] = l.inRKEY_BIT ? BigInt(l.inRKEY_BIT):0n;
-        pols.rInSiblingRkey[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
-        pols.rInSiblingValueHash[i] = l.inSIBLING_VALUE_HASH ? BigInt(l.inSIBLING_VALUE_HASH):0n;
-        pols.rInValueLow[i] = l.inVALUE_LOW ? BigInt(l.inVALUE_LOW):0n;
-        pols.rInValueHigh[i] = l.inVALUE_HIGH ? BigInt(l.inVALUE_HIGH):0n;
-        pols.rInRotlVh[i] = l.inROTL_VH ? BigInt(l.inROTL_VH):0n;
+        pols.IN_SIBLING_RKEY[i] = l.inSIBLING_RKEY ? BigInt(l.inSIBLING_RKEY):0n;
 
-        pols.rSetHashLeft[i] = l.setHASH_LEFT ? BigInt(l.setHASH_LEFT):0n;
-        pols.rSetHashRight[i] = l.setHASH_RIGHT ? BigInt(l.setHASH_RIGHT):0n;
-        pols.rSetLevel[i] = l.setLEVEL ? BigInt(l.setLEVEL):0n;
-        pols.rSetNewRoot[i] = l.setNEW_ROOT ? BigInt(l.setNEW_ROOT):0n;
-        pols.rSetOldRoot[i] = l.setOLD_ROOT ? BigInt(l.setOLD_ROOT):0n;
-        pols.rSetRkey[i] = l.setRKEY ? BigInt(l.setRKEY):0n;
-        pols.rSetRkeyBit[i] = l.setRKEY_BIT ? BigInt(l.setRKEY_BIT):0n;
-        pols.rSetSiblingRkey[i] = l.setSIBLING_RKEY ? BigInt(l.setSIBLING_RKEY):0n;
-        pols.rSetSiblingValueHash[i] = l.setSIBLING_VALUE_HASH ? BigInt(l.setSIBLING_VALUE_HASH):0n;
-        pols.rSetValueHigh[i] = l.setVALUE_HIGH ? BigInt(l.setVALUE_HIGH):0n;
-        pols.rSetValueLow[i] = l.setVALUE_LOW ? BigInt(l.setVALUE_LOW):0n;
+        /*
+            code PARTIAL generated with:
+            node tools/pil_pol_table/bits_compose.js "hash,hashType,latchGet,latchSet,climbRkey,climbSiblingRkey,climbBitN,jmpz,jmp,setHashLeft,setHashRight,setLevel,setNewRoot,setOldRoot,setRkey,setRkeyBit,setSiblingRkey,setSiblingValueHash,setValueHigh,setValueLow,jmpnz,inFree,inNewRoot,inOldRoot,inRkey,inRkeyBit,inSiblingValueHash,inValueLow,inValueHigh,inRotlVh,inLevel" -B -e -p "l."
+        */
+
+        pols.OPERATION[i] =
+              (l.hash ? (2n**0n  * BigInt(l.hash)) : 0n)
+            + (l.hashType ? (2n**1n  * BigInt(l.hashType)) : 0n)
+            + (l.latchGet ? (2n**2n  * BigInt(l.latchGet)) : 0n)
+            + (l.latchSet ? (2n**3n  * BigInt(l.latchSet)) : 0n)
+            + (l.climbRkey ? (2n**4n  * BigInt(l.climbRkey)) : 0n)
+            + (l.climbSiblingRkey ? (2n**5n  * BigInt(l.climbSiblingRkey)) : 0n)
+            + (l.climbBitN ? (2n**6n  * BigInt(l.climbBitN)) : 0n)
+            + (l.jmpz ? (2n**7n  * BigInt(l.jmpz)) : 0n)
+            + (l.jmp ? (2n**8n  * BigInt(l.jmp)) : 0n)
+            + (l.setHASH_LEFT ? (2n**9n  * BigInt(l.setHASH_LEFT)) : 0n)
+            + (l.setHASH_RIGHT ? (2n**10n * BigInt(l.setHASH_RIGHT)) : 0n)
+            + (l.setLEVEL ? (2n**11n * BigInt(l.setLEVEL)) : 0n)
+            + (l.setNEW_ROOT ? (2n**12n * BigInt(l.setNEW_ROOT)) : 0n)
+            + (l.setOLD_ROOT ? (2n**13n * BigInt(l.setOLD_ROOT)) : 0n)
+            + (l.setRKEY ? (2n**14n * BigInt(l.setRKEY)) : 0n)
+            + (l.setRKEY_BIT ? (2n**15n * BigInt(l.setRKEY_BIT)) : 0n)
+            + (l.setSIBLING_RKEY ? (2n**16n * BigInt(l.setSIBLING_RKEY)) : 0n)
+            + (l.setSIBLING_VALUE_HASH ? (2n**17n * BigInt(l.setSIBLING_VALUE_HASH)) : 0n)
+            + (l.setVALUE_HIGH ? (2n**18n * BigInt(l.setVALUE_HIGH)) : 0n)
+            + (l.setVALUE_LOW ? (2n**19n * BigInt(l.setVALUE_LOW)) : 0n)
+            + (l.jmpnz ? (2n**20n * BigInt(l.jmpnz)) : 0n)
+            + (l.inFREE ? (2n**21n * BigInt(l.inFREE)) : 0n)
+            + (l.inNEW_ROOT ? (2n**22n * BigInt(l.inNEW_ROOT)) : 0n)
+            + (l.inOLD_ROOT ? (2n**23n * BigInt(l.inOLD_ROOT)) : 0n)
+            + (l.inRKEY ? (2n**24n * BigInt(l.inRKEY)) : 0n)
+            + (l.inRKEY_BIT ? (2n**25n * BigInt(l.inRKEY_BIT)) : 0n)
+            + (l.inSIBLING_VALUE_HASH ? (2n**26n * BigInt(l.inSIBLING_VALUE_HASH)) : 0n)
+            + (l.inVALUE_LOW ? (2n**27n * BigInt(l.inVALUE_LOW)) : 0n)
+            + (l.inVALUE_HIGH ? (2n**28n * BigInt(l.inVALUE_HIGH)) : 0n)
+            + (l.inROTL_VH ? (2n**29n * BigInt(l.inROTL_VH)) : 0n)
+            + (l.inLEVEL ? (2n**30n * BigInt(l.inLEVEL)) : 0n);
+
+        const flags = ['hash','hashType','latchGet','latchSet','climbRkey','climbSiblingRkey','climbBitN',
+                       'jmpz','jmp','setHASH_LEFT','setHASH_RIGHT','setLEVEL','setNEW_ROOT','setOLD_ROOT',
+                       'setRKEY','setRKEY_BIT','setSIBLING_RKEY','setSIBLING_VALUE_HASH','setVALUE_HIGH',
+                       'setVALUE_LOW','jmpnz','inFREE','inNEW_ROOT','inOLD_ROOT','inRKEY','inRKEY_BIT',
+                       'inSIBLING_VALUE_HASH','inVALUE_LOW','inVALUE_HIGH','inROTL_VH','inLEVEL'];
+
+        for (const flag of flags) {
+            if (l[flag] && BigInt(l[flag]) !== 0n && BigInt(l[flag]) !== 1n) {
+                throw new Error(`Invalid value for ${flag} on ${l.fileName}:${l.line}`);
+            }
+        }
+
+        if (DEBUG && i < rom.line.length) console.log(`pols.OPERATION[${i}]=${pols.OPERATION[i]}`);
     }
+    console.log('StorageRom Done');
 }
 
 module.exports.execute = async function (pols, action) {
@@ -87,7 +106,7 @@ module.exports.execute = async function (pols, action) {
     rom = new StorageRom;
     rom.load(j);
 
-    const required = {PoseidonG: []};
+    const required = {PoseidonG: [], ClimbKey: []};
 
     initPols (pols, polSize);
 
@@ -96,30 +115,32 @@ module.exports.execute = async function (pols, action) {
     let actionListEmpty = (action.length==0); // becomes true when we run out of actions
 
     logger("actionListEmpty="+actionListEmpty);
-
     const ctx = new SmtActionContext(isLogging);
 
     if (!actionListEmpty) {
         ctx.init (fr, action[a]);
     }
-    let prevlineId
+    let dumpedAction = false;
+    let onFinal = false;
     for (let i=0; i<polSize; i++) {
-
         // op is the internal register, reset to 0 at every evaluation
         let op = [fr.zero, fr.zero, fr.zero, fr.zero];
-
         // Current rom line is set by the program counter of this evaluation
         l = pols.pc[i];
 
         // Set the next evaluation index, which will be 0 when we reach the last evaluation
         let nexti = (i+1)%polSize;
+        if (i == 65) debugger;
 
         if (isLogging) {
             if (rom.line[l].funcName!="isAlmostEndPolynomial") {
                 rom.line[l].print(l);
             }
         }
-
+        if (DEBUG && !onFinal) {
+            console.log(`LEVEL ${pols.level[i]} ctx.currentLevel:${ctx.currentLevel}`);
+            console.log('TRACE '+l.toString(10).padStart(3)+` ${rom.line[l].fileName.slice(0,-6)}:${rom.line[l].line}`.padEnd(35)+rom.line[l].lineStr);
+        }
         /*************/
         /* Selectors */
         /*************/
@@ -127,8 +148,15 @@ module.exports.execute = async function (pols, action) {
         // When the rom assembler code calls inFREE, it specifies the requested input data
         // using an operation + function name string couple
 
+        if (DEBUG && a !== dumpedAction) {
+            console.log(`************* DUMP ACTION ${a}*********************`);
+            console.log(util.inspect(action[a], false, null,true));
+            dumpedAction = a;
+        }
         if (rom.line[l].inFREE)
         {
+            const currentLevel = Number(pols.level[i]);
+
             if (rom.line[l].op == "functionCall")
             {
                 /* Possible values of mode when action is SMT Set:
@@ -251,26 +279,84 @@ module.exports.execute = async function (pols, action) {
                 {
                     if (action[a].bIsSet)
                     {
-                        op[0] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n];
-                        op[1] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+1n];
-                        op[2] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+2n];
-                        op[3] = action[a].setResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+3n];
+                        op[0] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
                     }
                     else
                     {
-                        op[0] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n];
-                        op[1] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+1n];
-                        op[2] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+2n];
-                        op[3] = action[a].getResult.siblings[ctx.currentLevel][(1n-ctx.bits[ctx.currentLevel])*4n+3n];
+                        op[0] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
                     }
 
                     logger("StorageExecutor GetSiblingHash returns " + fea42String(fr, op));
+                }
+                // Get the sibling hash, obtained from the siblings array of the current level,
+                // taking into account that the sibling bit is the opposite (1-x) of the value bit
+                else if (rom.line[l].funcName=="GetSiblingHash")
+                {
+                    if (action[a].bIsSet)
+                    {
+                        op[0] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].setResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
+                    }
+                    else
+                    {
+                        op[0] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n];
+                        op[1] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+1n];
+                        op[2] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+2n];
+                        op[3] = action[a].getResult.siblings[currentLevel][(1n-ctx.bits[currentLevel])*4n+3n];
+                    }
+
+                    logger("StorageExecutor GetSiblingHash returns " + fea42String(fr, op));
+                }
+                // Get the sibling hash, obtained from the siblings array of the current level,
+                // taking into account that the sibling bit is the opposite (1-x) of the value bit
+                else if (rom.line[l].funcName=="GetSiblingLeftChildHash")
+                {
+                    if (action[a].bIsSet)
+                    {
+                        if (DEBUG && typeof action[a].setResult.siblingsLeftChild === 'undefined') {
+                            console.log(action[a]);
+                        }
+                        if ((ctx.level - currentLevel) !== 1) {
+                            throw new Error(`Invalid currentLevel ${currentLevel} for level ${ctx.level}`);
+                        }
+                        op = [...action[a].setResult.siblingLeftChild];
+                    }
+                    logger("StorageExecutor GetSiblingLeftChildHash returns " + fea42String(fr, op));
+                }
+
+                // Get the sibling hash, obtained from the siblings array of the current level,
+                // taking into account that the sibling bit is the opposite (1-x) of the value bit
+                else if (rom.line[l].funcName=="GetSiblingRightChildHash")
+                {
+                    if (action[a].bIsSet)
+                    {
+                        if ((ctx.level - currentLevel) !== 1) {
+                            throw new Error(`Invalid currentLevel ${currentLevel} for level ${ctx.level}`);
+                        }
+                        op = [...action[a].setResult.siblingRightChild];
+                        // op = [...action[a].setResult.siblingsRightChild[currentLevel]];
+                    }
+                    logger("StorageExecutor GetSiblingRightChildHash returns " + fea42String(fr, op));
                 }
 
                 // Value is an u256 split in 8 u32 chuncks, each one stored in the lower 32 bits of an u63 field element
                 // u63 means that it is not an u64, since some of the possible values are lost due to the prime effect
 
                 // Get the lower 4 field elements of the value
+                else if (rom.line[l].funcName=="isValueZero")
+                {
+                    op[0] = (actionListEmpty || a >= action.length || (action[a].bIsSet ? action[a].setResult.newValue : action[a].getResult.value) === 0n) ? 1n : 0n;
+                    logger("StorageExecutor isGet returns " + fea42String(fr, op));
+                }
+
                 else if (rom.line[l].funcName=="GetValueLow")
                 {
                     let fea = scalar2fea(fr, action[a].bIsSet ? action[a].setResult.newValue : action[a].getResult.value);
@@ -281,7 +367,6 @@ module.exports.execute = async function (pols, action) {
 
                     logger("StorageExecutor GetValueLow returns " + fea42String(fr, op));
                 }
-
                 // Get the higher 4 field elements of the value
                 else if (rom.line[l].funcName=="GetValueHigh")
                 {
@@ -364,39 +449,25 @@ module.exports.execute = async function (pols, action) {
                 }
 
                 // Get the level bit, i.e. the bit x (specified by the parameter) of the level number
-                else if (rom.line[l].funcName=="GetLevelBit")
+                else if (rom.line[l].funcName=="GetLevel")
                 {
-                    // Check that we have the one single parameter: the bit number
-                    if (rom.line[l].params.length!=1)
+                    // Check that we haven't parameters
+                    if (rom.line[l].params.length!=0)
                     {
-                        console.error("Error: StorageExecutor() called with GetLevelBit but wrong number of parameters=" + rom.line[l].params.length);
+                        console.error("Error: StorageExecutor() called with GetLevel but wrong number of parameters=" + rom.line[l].params.length);
                         process.exit(-1);
                     }
+                    // TODO: difference ctx.level vs currentLevel
+                    op[0] = fr.e(ctx.level);
 
-                    // Get the bit parameter
-                    let bit = rom.line[l].params[0];
-
-                    // Check that the bit is either 0 or 1
-                    if (bit!=0 && bit!=1)
-                    {
-                        console.error("Error: StorageExecutor() called with GetLevelBit but wrong bit=" + bit );
-                        process.exit(-1);
-                    }
-
-                    // Set the bit in op[0]
-                    if ( ( ctx.level & (1<<bit) ) != 0)
-                    {
-                        op[0] = fr.one;
-                    }
-
-                    logger("StorageExecutor GetLevelBit(" + bit + ") returns " + fea42String(fr, op));
+                    logger("StorageExecutor GetLevel() returns " + fea42String(fr, op));
                 }
 
                 // Returns 0 if we reached the top of the tree, i.e. if the current level is 0
                 else if (rom.line[l].funcName=="GetTopTree")
                 {
                     // Return 0 only if we reached the end of the tree, i.e. if the current level is 0
-                    if (ctx.currentLevel > 0)
+                    if (currentLevel > 0)
                     {
                         op[0] = fr.one;
                     }
@@ -409,7 +480,7 @@ module.exports.execute = async function (pols, action) {
                 {
                     // If we have consumed enough key bits to reach the deepest level of the siblings array, then we are at the top of the branch and we can start climing the tree
                     let siblingsSize = action[a].bIsSet ? action[a].setResult.siblings.length : action[a].getResult.siblings.length;
-                    if (ctx.currentLevel > siblingsSize )
+                    if (currentLevel > siblingsSize )
                     {
                         op[0] = fr.one;
                     }
@@ -423,14 +494,14 @@ module.exports.execute = async function (pols, action) {
                 {
                     // Decrease current level
                     ctx.currentLevel--;
-                    if (ctx.currentLevel<0)
+                    if (currentLevel < 0)
                     {
-                        console.error("Error: StorageExecutor.execute() GetNextKeyBit() found ctx.currentLevel<0");
+                        console.error("Error: StorageExecutor.execute() GetNextKeyBit() found currentLevel<0");
                         process.exit(-1);
                     }
 
                     // Get the key bit corresponding to the current level
-                    op[0] = ctx.bits[ctx.currentLevel];
+                    op[0] = ctx.bits[currentLevel];
 
                     logger("StorageExecutor GetNextKeyBit returns " + fea42String(fr, op));
                 }
@@ -438,6 +509,7 @@ module.exports.execute = async function (pols, action) {
                 // Return 1 if we completed all evaluations, except one
                 else if (rom.line[l].funcName=="isAlmostEndPolynomial")
                 {
+                    onFinal = true;
                     // Return one if this is the one before the last evaluation of the polynomials
                     if (i == (polSize-2))
                     {
@@ -452,7 +524,22 @@ module.exports.execute = async function (pols, action) {
                     process.exit(-1);
                 }
             }
-
+            else if (rom.line[l].climbRkey) {
+                const bit = rom.line[l].climbBitN ? (1n - pols.rkeyBit[i]) : pols.rkeyBit[i];
+                const currentRkey = [pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i]];
+                op = climbKey(currentRkey, pols.level[i], bit);
+                if (DEBUG) {
+                    console.log(`$ Rkey: ${op.map(x => x.toString(16)).join(',')} level:${pols.level[i]} bit:${bit} current:${currentRkey.map(x => x.toString(16)).join(',')}`);
+                }
+            }
+            else if (rom.line[l].climbSiblingRkey) {
+                const bit = rom.line[l].climbBitN ? (1n - pols.rkeyBit[i]) : pols.rkeyBit[i];
+                const currentRkey = [pols.siblingRkey0[i], pols.siblingRkey1[i], pols.siblingRkey2[i], pols.siblingRkey3[i]];
+                op = climbKey(currentRkey, pols.level[i], bit);
+                if (DEBUG) {
+                    console.log(`$ clibSiblingRkey: ${op.map(x => x.toString(16)).join(',')} level:${pols.level[i]} bit: ${bit} current: ${currentRkey.map(x => x.toString(16)).join(',')}`);
+                }
+            }
             else if (rom.line[l].op=="")
             {
                 // Ignore; this is just to report a list of setters
@@ -473,107 +560,114 @@ module.exports.execute = async function (pols, action) {
             pols.inFree[i] = 1n;
         }
 
-        // If a constant is provided, set op to the constant
-        if (rom.line[l].CONST!="")
+        // If a constant is provided, add the constant to the op0
+        if (rom.line[l].CONST != "")
         {
-            let constScalar = BigInt(rom.line[l].CONST);
-
-            op = scalar2fea4 (fr, constScalar);
-
-            pols.iConst0[i] = op[0];
-            pols.iConst1[i] = op[1];
-            pols.iConst2[i] = op[2];
-            pols.iConst3[i] = op[3];
+            op[0] = fr.add(op[0], fr.e(rom.line[l].CONST));
+            pols.const0[i] = fr.e(rom.line[l].CONST);
         }
 
-        // If inOLD_ROOT then op=OLD_ROOT
+        // If inOLD_ROOT then op += OLD_ROOT
         if (rom.line[l].inOLD_ROOT)
         {
-            op[0] = pols.oldRoot0[i];
-            op[1] = pols.oldRoot1[i];
-            op[2] = pols.oldRoot2[i];
-            op[3] = pols.oldRoot3[i];
-            pols.inOldRoot[i] = 1n;
+            op[0] = fr.add(op[0], pols.oldRoot0[i]);
+            op[1] = fr.add(op[1], pols.oldRoot1[i]);
+            op[2] = fr.add(op[2], pols.oldRoot2[i]);
+            op[3] = fr.add(op[3], pols.oldRoot3[i]);
+            pols.inOldRoot[i] = fr.one;
         }
 
-        // If inNEW_ROOT then op=NEW_ROOT
+        // If inNEW_ROOT then op += NEW_ROOT
         if (rom.line[l].inNEW_ROOT)
         {
-            op[0] = pols.newRoot0[i];
-            op[1] = pols.newRoot1[i];
-            op[2] = pols.newRoot2[i];
-            op[3] = pols.newRoot3[i];
-            pols.inNewRoot[i] = 1n;
+            op[0] = fr.add(op[0], pols.newRoot0[i]);
+            op[1] = fr.add(op[1], pols.newRoot1[i]);
+            op[2] = fr.add(op[2], pols.newRoot2[i]);
+            op[3] = fr.add(op[3], pols.newRoot3[i]);
+            pols.inNewRoot[i] = fr.one;
         }
 
-        // If inRKEY_BIT then op=RKEY_BIT
+        // If inRKEY_BIT then op0 += RKEY_BIT
         if (rom.line[l].inRKEY_BIT)
         {
-            op[0] = pols.rkeyBit[i];
-            op[1] = fr.zero;
-            op[2] = fr.zero;
-            op[3] = fr.zero;
-            pols.inRkeyBit[i] = 1n;
+            op[0] = fr.add(op[0], pols.rkeyBit[i]);
+            pols.inRkeyBit[i] = fr.one;
         }
 
-        // If inVALUE_LOW then op=VALUE_LOW
+        // If inVALUE_LOW then op += VALUE_LOW
         if (rom.line[l].inVALUE_LOW)
         {
-            op[0] = pols.valueLow0[i];
-            op[1] = pols.valueLow1[i];
-            op[2] = pols.valueLow2[i];
-            op[3] = pols.valueLow3[i];
-            pols.inValueLow[i] = 1n;
+            op[0] = fr.add(op[0], pols.valueLow0[i]);
+            op[1] = fr.add(op[1], pols.valueLow1[i]);
+            op[2] = fr.add(op[2], pols.valueLow2[i]);
+            op[3] = fr.add(op[3], pols.valueLow3[i]);
+            pols.inValueLow[i] = fr.one;
         }
 
-        // If inVALUE_HIGH then op=VALUE_HIGH
+        // If inVALUE_HIGH then op += VALUE_HIGH
         if (rom.line[l].inVALUE_HIGH)
         {
-            op[0] = pols.valueHigh0[i];
-            op[1] = pols.valueHigh1[i];
-            op[2] = pols.valueHigh2[i];
-            op[3] = pols.valueHigh3[i];
-            pols.inValueHigh[i] = 1n;
+            op[0] = fr.add(op[0], pols.valueHigh0[i]);
+            op[1] = fr.add(op[1], pols.valueHigh1[i]);
+            op[2] = fr.add(op[2], pols.valueHigh2[i]);
+            op[3] = fr.add(op[3], pols.valueHigh3[i]);
+            pols.inValueHigh[i] = fr.one;
         }
 
-        // If inRKEY then op=RKEY
+        // If inRKEY then op += RKEY
         if (rom.line[l].inRKEY)
         {
-            op[0] = pols.rkey0[i];
-            op[1] = pols.rkey1[i];
-            op[2] = pols.rkey2[i];
-            op[3] = pols.rkey3[i];
-            pols.inRkey[i] = 1n;
+            if (DEBUG) {
+                console.log('RKEY=['+[0,1,2,3].map(index => pols[`rkey${index}`][i].toString(16).toUpperCase()).join()+"]");
+            }
+            op[0] = fr.add(op[0], pols.rkey0[i]);
+            op[1] = fr.add(op[1], pols.rkey1[i]);
+            op[2] = fr.add(op[2], pols.rkey2[i]);
+            op[3] = fr.add(op[3], pols.rkey3[i]);
+            pols.inRkey[i] = fr.one;
         }
 
-        // If inSIBLING_RKEY then op=SIBLING_RKEY
+        // If inSIBLING_RKEY then op += inSIBLING_RKEY * SIBLING_RKEY
         if (rom.line[l].inSIBLING_RKEY)
         {
-            op[0] = pols.siblingRkey0[i];
-            op[1] = pols.siblingRkey1[i];
-            op[2] = pols.siblingRkey2[i];
-            op[3] = pols.siblingRkey3[i];
-            pols.inSiblingRkey[i] = 1n;
+            if (DEBUG) {
+                console.log('SIBLING_RKEY=['+[0,1,2,3].map(index => pols[`siblingRkey${index}`][i].toString(16).toUpperCase()).join()+"]");
+            }
+            pols.inSiblingRkey[i] = fr.e(rom.line[l].inSIBLING_RKEY)
+            op[0] = fr.add(op[0], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey0[i]));
+            op[1] = fr.add(op[1], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey1[i]));
+            op[2] = fr.add(op[2], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey2[i]));
+            op[3] = fr.add(op[3], fr.mul(pols.inSiblingRkey[i], pols.siblingRkey3[i]));
+            if (DEBUG) {
+                console.log('OP=['+op.map(value => value.toString(16).toUpperCase()).join()+"]");
+            }
         }
 
-        // If inSIBLING_VALUE_HASH then op=SIBLING_VALUE_HASH
+        // If inSIBLING_VALUE_HASH then op += SIBLING_VALUE_HASH
         if (rom.line[l].inSIBLING_VALUE_HASH)
         {
-            op[0] = pols.siblingValueHash0[i];
-            op[1] = pols.siblingValueHash1[i];
-            op[2] = pols.siblingValueHash2[i];
-            op[3] = pols.siblingValueHash3[i];
-            pols.inSiblingValueHash[i] = 1n;
+            op[0] = fr.add(op[0], pols.siblingValueHash0[i]);
+            op[1] = fr.add(op[1], pols.siblingValueHash1[i]);
+            op[2] = fr.add(op[2], pols.siblingValueHash2[i]);
+            op[3] = fr.add(op[3], pols.siblingValueHash3[i]);
+            pols.inSiblingValueHash[i] = fr.one;
         }
 
-        // If inROTL_VH then op=rotate_left(VALUE_HIGH)
+        // If inROTL_VH then op += rotate_left(VALUE_HIGH)
         if (rom.line[l].inROTL_VH)
         {
-            op[0] = pols.valueHigh3[i];
-            op[1] = pols.valueHigh0[i];
-            op[2] = pols.valueHigh1[i];
-            op[3] = pols.valueHigh2[i];
-            pols.inRotlVh[i] = 1n;
+            op[0] = fr.add(op[0], pols.valueHigh3[i]);
+            op[1] = fr.add(op[1], pols.valueHigh0[i]);
+            op[2] = fr.add(op[2], pols.valueHigh1[i]);
+            op[3] = fr.add(op[3], pols.valueHigh2[i]);
+            pols.inRotlVh[i] = fr.one;
+        }
+
+        // If inLEVEL then op0 += LEVEL
+        if (rom.line[l].inLEVEL)
+        {
+            op[0] = fr.add(op[0], pols.level[i]);
+            pols.inLevel[i] = fr.one;
         }
 
         /****************/
@@ -581,25 +675,38 @@ module.exports.execute = async function (pols, action) {
         /****************/
 
         // JMPZ: Jump if OP==0
-        if (rom.line[l].iJmpz)
+        if (rom.line[l].jmpz)
         {
             if (fr.isZero(op[0]))
             {
-                pols.pc[nexti] = BigInt(rom.line[l].address);
+                pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
             }
             else
             {
                 pols.pc[nexti] = pols.pc[i] + 1n;
             }
-            pols.iAddress[i] = BigInt(rom.line[l].address);
-            pols.iJmpz[i] = 1n;
+            pols.jmpAddress[i] = BigInt(rom.line[l].jmpAddress);
+            pols.jmpz[i] = 1n;
+        }
+        else if (rom.line[l].jmpnz)
+        {
+            if (fr.isZero(op[0]))
+            {
+                pols.pc[nexti] = pols.pc[i] + 1n;
+            }
+            else
+            {
+                pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
+            }
+            pols.jmpAddress[i] = BigInt(rom.line[l].jmpAddress);
+            pols.jmpnz[i] = 1n;
         }
         // JMP: Jump always
-        else if (rom.line[l].iJmp)
+        else if (rom.line[l].jmp)
         {
-            pols.pc[nexti] = BigInt(rom.line[l].address);
-            pols.iAddress[i] = BigInt(rom.line[l].address);
-            pols.iJmp[i] = 1n;
+            pols.pc[nexti] = BigInt(rom.line[l].jmpAddress);
+            pols.jmpAddress[i] = BigInt(rom.line[l].jmpAddress);
+            pols.jmp[i] = 1n;
         }
         // If not any jump, then simply increment program counter
         else
@@ -607,20 +714,8 @@ module.exports.execute = async function (pols, action) {
             pols.pc[nexti] = pols.pc[i] + 1n;
         }
 
-        // Rotate level registers values, from higher to lower
-        if (rom.line[l].iRotateLevel)
-        {
-            pols.level0[nexti] = pols.level1[i];
-            pols.level1[nexti] = pols.level2[i];
-            pols.level2[nexti] = pols.level3[i];
-            pols.level3[nexti] = pols.level0[i];
-            pols.iRotateLevel[i] = 1n;
-
-            logger("StorageExecutor iRotateLevel level[3:2:1:0]=" + pols.level3[nexti] + ":" + pols.level2[nexti] + ":" + pols.level1[nexti] + ":" + pols.level0[nexti]);
-        }
-
         // Hash: op = poseidon.hash(HASH_LEFT + HASH_RIGHT + (0 or 1, depending on iHashType))
-        if (rom.line[l].iHash)
+        if (rom.line[l].hash)
         {
             // Prepare the data to hash: HASH_LEFT + HASH_RIGHT + 0 or 1, depending on iHashType
             let fea = [];
@@ -633,18 +728,18 @@ module.exports.execute = async function (pols, action) {
             fea[6] = pols.hashRight2[i];
             fea[7] = pols.hashRight3[i];
             let cap = [];
-            if (rom.line[l].iHashType==0)
+            if (rom.line[l].hashType==0)
             {
                 cap[0] = fr.zero;
             }
-            else if (rom.line[l].iHashType==1)
+            else if (rom.line[l].hashType==1)
             {
                 cap[0] = fr.one;
-                pols.iHashType[i] = 1n;
+                pols.hashType[i] = 1n;
             }
             else
             {
-                console.error("Error: StorageExecutor:execute() found invalid iHashType=" + rom.line[l].iHashType);
+                console.error("Error: StorageExecutor:execute() found invalid iHashType=" + rom.line[l].hashType);
                 process.exit(-1);
             }
             cap[1] = fr.zero;
@@ -665,12 +760,17 @@ module.exports.execute = async function (pols, action) {
             op[2] = fr.add(op[2],fr.mul(BigInt(rom.line[l].inFREE), pols.free2[i]));
             op[3] = fr.add(op[3],fr.mul(BigInt(rom.line[l].inFREE), pols.free3[i]));
 
-            pols.iHash[i] = 1n;
-
+            pols.hash[i] = 1n;
+            const hashLeft = [pols.hashLeft0[i],pols.hashLeft1[i],pols.hashLeft2[i],pols.hashLeft3[i]];
+            const hashRight = [pols.hashRight0[i],pols.hashRight1[i],pols.hashRight2[i],pols.hashRight3[i]];
+            if (DEBUG) {
+                console.log(`HASH${pols.hashType[i]} ${op.slice(0, 4).map(x => x.toString(16).padStart(16,'0')).join('_')} L=${hashLeft.map(x => x.toString(16).padStart(16,'0')).join('_')} R=${hashRight.map(x => x.toString(16).padStart(16,'0')).join('_')}`);
+            // console.log('POSEIDON:'+rom.line[l].fileName + ':' + rom.line[l].line+' '+[fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3]].map(x => x.toString(16)).join(','));
+            }
             required.PoseidonG.push([fea[0],fea[1],fea[2],fea[3],fea[4],fea[5],fea[6],fea[7],cap[0],cap[1],cap[2],cap[3],rp[0],rp[1],rp[2],rp[3], POSEIDONG_PERMUTATION3_ID]);
 
             if (isLogging) {
-                let mlog = "StorageExecutor iHash" + rom.line[l].iHashType + " hash=" + fea42String(fr, op) + " value=";
+                let mlog = "StorageExecutor iHash" + rom.line[l].hashType + " hash=" + fea42String(fr, op) + " value=";
                 for (let i=0; i<8; i++) mlog += fr.toString(fea[i],16) + ":";
                 for (let i=0; i<4; i++) mlog += fr.toString(cap[i],16) + ":";
                 logger(mlog);
@@ -678,107 +778,53 @@ module.exports.execute = async function (pols, action) {
         }
 
         // Climb the remaining key, by injecting the RKEY_BIT in the register specified by LEVEL
-        if (rom.line[l].iClimbRkey)
+        if (rom.line[l].climbRkey)
         {
-            let bit = pols.rkeyBit[i];
-            pols.rkey0[nexti] = pols.rkey0[i];
-            pols.rkey1[nexti] = pols.rkey1[i];
-            pols.rkey2[nexti] = pols.rkey2[i];
-            pols.rkey3[nexti] = pols.rkey3[i];
-            if (pols.level0[i] == fr.one)
-            {
-                pols.rkey0[nexti] = (pols.rkey0[i]<<1n) + bit;
+            const bit = rom.line[l].climbBitN ? (1n - pols.rkeyBit[i]) : pols.rkeyBit[i];
+            const currentRkey = [pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i]];
+            const expectedRkey = climbKey(currentRkey, pols.level[i], bit);
+            if (op.some((x, index) => x !== expectedRkey[index])) {
+                console.log(rom.line[l]);
+                throw new Error(`rkey not match current: (${currentRkey.map(x => x.toString(16)).join(',')}) op:(${op.map(x => x.toString(16)).join(',')}) vs expected:(${expectedRkey.map(x => x.toString(16)).join(',')})`
+                                +` level:${pols.level[i]} bit:${bit} rkeyBit:${pols.rkeyBit[i]} on ${rom.line[l].fileName}:${rom.line[l].line} (w:${i})`);
             }
-            if (pols.level1[i] == fr.one)
-            {
-                pols.rkey1[nexti] = (pols.rkey1[i]<<1n) + bit;
-            }
-            if (pols.level2[i] == fr.one)
-            {
-                pols.rkey2[nexti] = (pols.rkey2[i]<<1n) + bit;
-            }
-            if (pols.level3[i] == fr.one)
-            {
-                pols.rkey3[nexti] = (pols.rkey3[i]<<1n) + bit;
-            }
-            pols.iClimbRkey[i] = 1n;
+            [pols.rkey0[nexti], pols.rkey1[nexti], pols.rkey2[nexti], pols.rkey3[nexti]] = op;
+            pols.climbBitN[i] = rom.line[l].climbBitN ? 1n : 0n;
+            pols.climbRkey[i] = 1n;
+            required.ClimbKey.push({key: currentRkey, level: pols.level[i], bit});
 
             if (isLogging) {
                 let fea = [pols.rkey0[nexti], pols.rkey1[nexti], pols.rkey2[nexti], pols.rkey3[nexti]];
-                logger("StorageExecutor iClimbRkey sibling bit=" + bit + " rkey=" + fea42String(fr,fea));
+                logger("StorageExecutor iClimbRkey sibling "+(rom.line[l].climbBitN ? '!':'')+"bit=" + bit + " rkey=" + fea42String(fr,fea));
             }
         }
 
         // Climb the sibling remaining key, by injecting the sibling bit in the register specified by LEVEL
-        if (rom.line[l].iClimbSiblingRkey)
+        if (rom.line[l].climbSiblingRkey)
         {
             if (isLogging) {
                 let fea1 = [pols.siblingRkey0[i], pols.siblingRkey1[i], pols.siblingRkey2[i], pols.siblingRkey3[i]];
                 logger("StorageExecutor iClimbSiblingRkey before rkey=" + fea42String(fr,fea1));
             }
-            let bit = pols.rkeyBit[i];
-            pols.siblingRkey0[nexti] = pols.siblingRkey0[i];
-            pols.siblingRkey1[nexti] = pols.siblingRkey1[i];
-            pols.siblingRkey2[nexti] = pols.siblingRkey2[i];
-            pols.siblingRkey3[nexti] = pols.siblingRkey3[i];
-            if (pols.level0[i] == fr.one)
-            {
-                pols.siblingRkey0[nexti] = (pols.siblingRkey0[i]<<1n) + bit;
+            const bit = rom.line[l].climbBitN ? (1n - pols.rkeyBit[i]) : pols.rkeyBit[i];
+            const currentRkey = [pols.siblingRkey0[i], pols.siblingRkey1[i], pols.siblingRkey2[i], pols.siblingRkey3[i]];
+            const expectedRkey = climbKey(currentRkey, pols.level[i], bit);
+            if (op.some((x, index) => x !== expectedRkey[index])) {
+                console.log(rom.line[l]);
+                throw new Error(`siblingRkey not match current: (${currentRkey.map(x => x.toString(16)).join(',')}) op:(${op.map(x => x.toString(16)).join(',')}) vs expected:(${expectedRkey.map(x => x.toString(16)).join(',')})`
+                                +` level:${pols.level[i]} bit:${bit} rkeyBit:${pols.rkeyBit[i]} on ${rom.line[l].fileName}:${rom.line[l].line} (w:${i})`);
             }
-            if (pols.level1[i] == fr.one)
-            {
-                pols.siblingRkey1[nexti] = (pols.siblingRkey1[i]<<1n) + bit;
-            }
-            if (pols.level2[i] == fr.one)
-            {
-                pols.siblingRkey2[nexti] = (pols.siblingRkey2[i]<<1n) + bit;
-            }
-            if (pols.level3[i] == fr.one)
-            {
-                pols.siblingRkey3[nexti] = (pols.siblingRkey3[i]<<1n) + bit;
-            }
-            pols.iClimbSiblingRkey[i] = 1n;
+            [pols.siblingRkey0[nexti], pols.siblingRkey1[nexti], pols.siblingRkey2[nexti], pols.siblingRkey3[nexti]] = op;
+            pols.climbBitN[i] = rom.line[l].climbBitN ? 1n : 0n;
+            pols.climbSiblingRkey[i] = 1n;
+            required.ClimbKey.push({key: currentRkey, level: pols.level[i], bit});
 
             let fea = [pols.siblingRkey0[nexti], pols.siblingRkey1[nexti], pols.siblingRkey2[nexti], pols.siblingRkey3[nexti]];
-            logger("StorageExecutor iClimbSiblingRkey after sibling bit=" + bit + " rkey=" + fea42String(fr,fea));
-        }
-
-        // Climb the sibling remaining key, by injecting the sibling bit in the register specified by LEVEL
-        if (rom.line[l].iClimbSiblingRkeyN)
-        {
-            if (isLogging) {
-                let fea1 = [pols.siblingRkey0[i], pols.siblingRkey1[i], pols.siblingRkey2[i], pols.siblingRkey3[i]];
-                logger("StorageExecutor iClimbSiblingRkeyN before rkey=" + fea42String(fr,fea1));
-            }
-            let bit = 1n-pols.rkeyBit[i];
-            pols.siblingRkey0[nexti] = pols.siblingRkey0[i];
-            pols.siblingRkey1[nexti] = pols.siblingRkey1[i];
-            pols.siblingRkey2[nexti] = pols.siblingRkey2[i];
-            pols.siblingRkey3[nexti] = pols.siblingRkey3[i];
-            if (pols.level0[i] == fr.one)
-            {
-                pols.siblingRkey0[nexti] = (pols.siblingRkey0[i]<<1n) + bit;
-            }
-            if (pols.level1[i] == fr.one)
-            {
-                pols.siblingRkey1[nexti] = (pols.siblingRkey1[i]<<1n) + bit;
-            }
-            if (pols.level2[i] == fr.one)
-            {
-                pols.siblingRkey2[nexti] = (pols.siblingRkey2[i]<<1n) + bit;
-            }
-            if (pols.level3[i] == fr.one)
-            {
-                pols.siblingRkey3[nexti] = (pols.siblingRkey3[i]<<1n) + bit;
-            }
-            pols.iClimbSiblingRkeyN[i] = 1n;
-
-            let fea = [pols.siblingRkey0[nexti], pols.siblingRkey1[nexti], pols.siblingRkey2[nexti], pols.siblingRkey3[nexti]];
-            logger("StorageExecutor iClimbSiblingRkeyN after sibling bit=" + bit + " rkey=" + fea42String(fr,fea));
+            logger("StorageExecutor iClimbSiblingRkey after sibling "+(rom.line[l].climbBitN ? '!':'')+"bit=" + bit + " rkey=" + fea42String(fr,fea));
         }
 
         // Latch get: at this point consistency is granted: OLD_ROOT, RKEY (complete key), VALUE_LOW, VALUE_HIGH, LEVEL
-        if (rom.line[l].iLatchGet)
+        if (rom.line[l].latchGet)
         {
             // Check that the current action is an SMT get
             if (action[a].bIsSet)
@@ -797,23 +843,33 @@ module.exports.execute = async function (pols, action) {
 
             // Check that the calculated complete key is the same as the provided action key
             if ( pols.rkey0[i] != action[a].getResult.key[0] ||
-                    pols.rkey1[i] != action[a].getResult.key[1] ||
-                    pols.rkey2[i] != action[a].getResult.key[2] ||
-                    pols.rkey3[i] != action[a].getResult.key[3] )
+                 pols.rkey1[i] != action[a].getResult.key[1] ||
+                 pols.rkey2[i] != action[a].getResult.key[2] ||
+                 pols.rkey3[i] != action[a].getResult.key[3] )
             {
                 console.error("Error: StorageExecutor() LATCH GET found action " + a + " pols.rkey!=action.getResult.key");
                 process.exit(-1);
             }
 
             // Check that final level state is consistent
-            if ( pols.level0[i] != fr.one ||
-                    pols.level1[i] != fr.zero ||
-                    pols.level2[i] != fr.zero ||
-                    pols.level3[i] != fr.zero )
+            if ( pols.level[i] != fr.zero )
             {
-                console.error("Error: StorageExecutor() LATCH GET found action " + a + " wrong level=" + pols.level3[i] + ":" + pols.level2[i] + ":" + pols.level1[i] + ":" + pols.level0[i]);
+                console.error("Error: StorageExecutor() LATCH GET found action " + a + " wrong level=" + pols.level[i]);
                 process.exit(-1);
             }
+
+            // Check hash counters
+            if (typeof action[a].getResult.incCounter !== 'undefined' && !fr.eq(action[a].getResult.incCounter, pols.incCounter[i]))
+            {
+                console.error(`Error: StorageExecutor() LATCH GET ${a} counters no match ${action[a].getResult.incCounter} pols.incCounter:${pols.incCounter[i]}`);
+                process.exit(-1);
+            }
+
+            const values = [...oldRoot, pols.rkey0[0], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i],
+                            pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i],
+                            pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
+                            pols.incCounter[i]];
+            if (DEBUG) console.log(`LATCH_GET input#${a} w(storage)=${i} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH GET");
 
@@ -832,11 +888,11 @@ module.exports.execute = async function (pols, action) {
                 ctx.init(fr, action[a]);
             }
 
-            pols.iLatchGet[i] = 1n;
+            pols.latchGet[i] = 1n;
         }
 
         // Latch set: at this point consistency is granted: OLD_ROOT, NEW_ROOT, RKEY (complete key), VALUE_LOW, VALUE_HIGH, LEVEL
-        if (rom.line[l].iLatchSet)
+        if (rom.line[l].latchSet)
         {
             // Check that the current action is an SMT set
             if (!action[a].bIsSet)
@@ -874,16 +930,26 @@ module.exports.execute = async function (pols, action) {
             }
 
             // Check that final level state is consistent
-            if ( pols.level0[i] != fr.one ||
-                 pols.level1[i] != fr.zero ||
-                 pols.level2[i] != fr.zero ||
-                 pols.level3[i] != fr.zero )
+            if ( pols.level[i] != fr.zero )
             {
-                console.error("Error: StorageExecutor() LATCH SET found action " + a + " wrong level=" + pols.level3[i] + ":" + pols.level2[i] + ":" + pols.level1[i] + ":" + pols.level0[i]);
+                console.error("Error: StorageExecutor() LATCH SET found action " + a + " wrong level=" + pols.level);
                 process.exit(-1);
             }
+            const values = [...oldRoot, pols.rkey0[i], pols.rkey1[i], pols.rkey2[i], pols.rkey3[i],
+                            pols.valueLow0[i], pols.valueLow1[i], pols.valueLow2[i], pols.valueLow3[i],
+                            pols.valueHigh0[i], pols.valueHigh1[i], pols.valueHigh2[i], pols.valueHigh3[i],
+                            pols.newRoot0[i], pols.newRoot1[i], pols.newRoot2[i], pols.newRoot3[i], pols.incCounter[i]+2n];
+
+            if (DEBUG) console.log(`LATCH_SET input#${a} w(storage)=${i} 1:${values.join()}`);
 
             logger("StorageExecutor LATCH SET");
+
+            // Check hash counters
+            if (typeof action[a].setResult.incCounter !== 'undefined' && !fr.eq(action[a].setResult.incCounter, pols.incCounter[i]))
+            {
+                console.error(`Error: StorageExecutor() LATCH SET ${a}  counters no match ${action[a].setResult.incCounter} pols.incCounter:${pols.incCounter[i]}`);
+                process.exit(-1);
+            }
 
             // Increase action
             a++;
@@ -901,7 +967,7 @@ module.exports.execute = async function (pols, action) {
                 ctx.init(fr, action[a]);
             }
 
-            pols.iLatchSet[i] = 1n;
+            pols.latchSet[i] = 1n;
         }
 
         /***********/
@@ -911,24 +977,30 @@ module.exports.execute = async function (pols, action) {
         // If setRKEY then RKEY=op
         if (rom.line[l].setRKEY)
         {
+            if (DEBUG) {
+                console.log(`SET RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
+                console.log(`SET RKEY(path)         [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
+            }
             pols.rkey0[nexti] = op[0];
             pols.rkey1[nexti] = op[1];
             pols.rkey2[nexti] = op[2];
             pols.rkey3[nexti] = op[3];
             pols.setRkey[i] = 1n;
         }
-        else if (pols.iClimbRkey[i]==0)
+        else
         {
             pols.rkey0[nexti] = pols.rkey0[i];
             pols.rkey1[nexti] = pols.rkey1[i];
             pols.rkey2[nexti] = pols.rkey2[i];
             pols.rkey3[nexti] = pols.rkey3[i];
-
         }
 
         // If setRKEY_BIT then RKEY_BIT=op
         if (rom.line[l].setRKEY_BIT)
         {
+            if (DEBUG) {
+                console.log(`SET RKEY_BIT=${op[0]}`);
+            }
             pols.rkeyBit[nexti] = op[0];
             pols.setRkeyBit[i] = 1n;
         }
@@ -974,18 +1046,15 @@ module.exports.execute = async function (pols, action) {
         // If setLEVEL then LEVEL=op
         if (rom.line[l].setLEVEL)
         {
-            pols.level0[nexti] = op[0];
-            pols.level1[nexti] = op[1];
-            pols.level2[nexti] = op[2];
-            pols.level3[nexti] = op[3];
+            if (DEBUG) {
+                console.log(`SET LEVEL=${op[0]}[${op[0] % 4n}]`);
+            }
+            pols.level[nexti] = op[0];
             pols.setLevel[i] = 1n;
         }
-        else if (pols.iRotateLevel[i]==0)
+        else
         {
-            pols.level0[nexti] = pols.level0[i];
-            pols.level1[nexti] = pols.level1[i];
-            pols.level2[nexti] = pols.level2[i];
-            pols.level3[nexti] = pols.level3[i];
+            pols.level[nexti] = pols.level[i];
         }
 
         // If setOLD_ROOT then OLD_ROOT=op
@@ -995,6 +1064,9 @@ module.exports.execute = async function (pols, action) {
             pols.oldRoot1[nexti] = op[1];
             pols.oldRoot2[nexti] = op[2];
             pols.oldRoot3[nexti] = op[3];
+            if (DEBUG) {
+                console.log(`RUN SET_OLD_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
+            }
             pols.setOldRoot[i] = 1n;
         }
         else
@@ -1012,6 +1084,9 @@ module.exports.execute = async function (pols, action) {
             pols.newRoot1[nexti] = op[1];
             pols.newRoot2[nexti] = op[2];
             pols.newRoot3[nexti] = op[3];
+            if (DEBUG) {
+                console.log(`RUN SET_NEW_ROOT level:${pols.level[i]} hash:${op.map(x => x.toString(16)).join(',')}`);
+            }
             pols.setNewRoot[i] = 1n;
         }
         else
@@ -1029,6 +1104,9 @@ module.exports.execute = async function (pols, action) {
             pols.hashLeft1[nexti] = op[1];
             pols.hashLeft2[nexti] = op[2];
             pols.hashLeft3[nexti] = op[3];
+            if (DEBUG) {
+                console.log('RUN SET_HASH_LEFT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
+            }
             pols.setHashLeft[i] = 1n;
         }
         else
@@ -1046,6 +1124,9 @@ module.exports.execute = async function (pols, action) {
             pols.hashRight1[nexti] = op[1];
             pols.hashRight2[nexti] = op[2];
             pols.hashRight3[nexti] = op[3];
+            if (DEBUG) {
+                console.log('RUN SET_HASH_RIGHT: '+op.map(x => x.toString(16).padStart(16,'0')).join('_'));
+            }
             pols.setHashRight[i] = 1n;
         }
         else
@@ -1059,13 +1140,17 @@ module.exports.execute = async function (pols, action) {
         // If setSIBLING_RKEY then SIBLING_RKEY=op
         if (rom.line[l].setSIBLING_RKEY)
         {
+            if (DEBUG) {
+                console.log(`SET SIBLING_RKEY(bin)=[${op.map(x => x.toString(2)).join()}]`);
+                console.log(`SET SIBLING_RKEY(path) [${keyToBinPath(op, Number(pols.level[i]))}] L:${pols.level[i]}`);
+            }
             pols.siblingRkey0[nexti] = op[0];
             pols.siblingRkey1[nexti] = op[1];
             pols.siblingRkey2[nexti] = op[2];
             pols.siblingRkey3[nexti] = op[3];
             pols.setSiblingRkey[i] = 1n;
         }
-        else if ((pols.iClimbSiblingRkey[i]==0) && (pols.iClimbSiblingRkeyN[i]==0))
+        else
         {
             pols.siblingRkey0[nexti] = pols.siblingRkey0[i];
             pols.siblingRkey1[nexti] = pols.siblingRkey1[i];
@@ -1097,11 +1182,11 @@ module.exports.execute = async function (pols, action) {
 
 
         // Increment counter at every hash, and reset it at every latch
-        if (rom.line[l].iHash)
+        if (rom.line[l].hash)
         {
             pols.incCounter[nexti] = pols.incCounter[i] + 1n;
         }
-        else if (rom.line[l].iLatchGet || rom.line[l].iLatchSet)
+        else if (rom.line[l].latchGet || rom.line[l].latchSet)
         {
             pols.incCounter[nexti] = 0n;
         }
@@ -1173,10 +1258,7 @@ function initPols (pols, polSize) {
 
         pols.rkeyBit[i] = 0n;
 
-        pols.level0[i] = 0n;
-        pols.level1[i] = 0n;
-        pols.level2[i] = 0n;
-        pols.level3[i] = 0n;
+        pols.level[i] = 0n;
 
         pols.pc[i] = 0n;
 
@@ -1190,6 +1272,7 @@ function initPols (pols, polSize) {
         pols.inSiblingRkey[i] = 0n;
         pols.inFree[i] = 0n;
         pols.inRotlVh[i] = 0n;
+        pols.inLevel[i] = 0n;
 
         pols.setHashLeft[i] = 0n;
         pols.setHashRight[i] = 0n;
@@ -1203,23 +1286,40 @@ function initPols (pols, polSize) {
         pols.setRkeyBit[i] = 0n;
         pols.setLevel[i] = 0n;
 
-        pols.iHash[i] = 0n;
-        pols.iHashType[i] = 0n;
-        pols.iLatchGet[i] = 0n;
-        pols.iLatchSet[i] = 0n;
-        pols.iClimbRkey[i] = 0n;
-        pols.iClimbSiblingRkey[i] = 0n;
-        pols.iClimbSiblingRkeyN[i] = 0n;
-        pols.iRotateLevel[i] = 0n;
-        pols.iJmpz[i] = 0n;
-        pols.iJmp[i] = 0n;
-        pols.iConst0[i] = 0n;
-        pols.iConst1[i] = 0n;
-        pols.iConst2[i] = 0n;
-        pols.iConst3[i] = 0n;
-        pols.iAddress[i] = 0n;
+        pols.hash[i] = 0n;
+        pols.hashType[i] = 0n;
+        pols.latchGet[i] = 0n;
+        pols.latchSet[i] = 0n;
+        pols.climbRkey[i] = 0n;
+        pols.climbSiblingRkey[i] = 0n;
+        pols.climbBitN[i] = 0n;
+        pols.jmpz[i] = 0n;
+        pols.jmpnz[i] = 0n;
+        pols.jmp[i] = 0n;
+        pols.const0[i] = 0n;
+        pols.jmpAddress[i] = 0n;
 
         pols.op0inv[i] = 0n;
         pols.incCounter[i] = 0n;
     }
+}
+
+function climbKey (key, level, bit) {
+    let result = [...key];
+    const levelKey = Number(level) % 4;
+    result[levelKey] = result[levelKey] * 2n + bit;
+    return result;
+}
+
+function keyToBinPath(key, level, upToLevel = 16)
+{
+    let _key = [...key];
+    let path = '';
+    while (_key.some(x => x !== 0n) || level < upToLevel) {
+        const zlevel = level % 4;
+        path = (_key[zlevel] & 0x01n ? '1':'·') + path;
+        _key[zlevel] = _key[zlevel] >> 1n;
+        ++level;
+    }
+    return 'MSB '+path;
 }
