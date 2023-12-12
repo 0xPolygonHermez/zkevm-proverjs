@@ -2261,7 +2261,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.JMPZ[i] = 1n;
                 const o = Fr.toObject(op0);
                 if (o > 0 && o >= FrFirst32Negative) {
-                    console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
+                    // console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
                 }
             } else if (l.JMP) {
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);

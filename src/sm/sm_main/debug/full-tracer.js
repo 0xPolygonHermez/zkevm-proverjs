@@ -62,8 +62,8 @@ class FullTracer {
         this.depth = 1;
         this.prevCTX = 0;
         this.initGas = 0;
+        // transaction index in the block
         this.txIndex = 0;
-        this.txCount = 0;
         this.deltaStorage = {};
         this.txTime = 0;
         this.txGAS = {};
@@ -209,13 +209,15 @@ class FullTracer {
             this.onFinishBlock(ctx);
         }
 
+        // when the event is triggered, the block number is not updated yet, so we must add 1
         this.currentBlock = {
+            block_number: 1 + Number(getVarFromCtx(ctx, true, 'blockNum')),
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
         };
 
-        this.verbose.printBlock(`start ${1 + Number(getVarFromCtx(ctx, true, 'blockNum'))}`);
+        this.verbose.printBlock(`${'start'.padEnd(10)} ${this.currentBlock.block_number}`);
     }
 
     /**
@@ -225,7 +227,6 @@ class FullTracer {
     onFinishBlock(ctx) {
         this.currentBlock = Object.assign(this.currentBlock, {
             parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
-            block_number: Number(getVarFromCtx(ctx, true, 'blockNum')),
             timestamp: Number(getVarFromCtx(ctx, true, 'timestamp')),
             ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree')),
             block_hash_l1: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockHashL1InfoTree')),
@@ -262,12 +263,11 @@ class FullTracer {
 
         // Append block to final trace
         this.finalTrace.block_responses.push(JSON.parse(JSON.stringify(this.currentBlock)));
-        // Reset tx Count
-        this.txIndex = 0;
+
         // Reset logs
         this.logs = [];
 
-        this.verbose.printBlock(`finish ${this.currentBlock.block_number}`);
+        this.verbose.printBlock(`${'finish'.padEnd(10)} ${this.currentBlock.block_number}`);
     }
 
     /**
@@ -285,6 +285,9 @@ class FullTracer {
             return;
         }
 
+        // set tx Index
+        this.txIndex = Number(getVarFromCtx(ctx, true, 'txIndex'));
+
         // Fill context object
         const context = {};
         context.type = Number(getVarFromCtx(ctx, false, 'isCreateContract')) ? 'CREATE' : 'CALL';
@@ -301,7 +304,7 @@ class FullTracer {
         context.old_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         context.gas_price = String(getVarFromCtx(ctx, false, 'txGasPriceRLP'));
         context.chain_id = Number(getVarFromCtx(ctx, false, 'txChainId'));
-        context.tx_index = Number(getVarFromCtx(ctx, true, 'txIndex'));
+        context.tx_index = this.txIndex;
         this.callData[ctx.CTX] = { type: 'CALL' };
         this.prevCTX = ctx.CTX;
         // Fill response object
@@ -372,7 +375,7 @@ class FullTracer {
         this.deltaStorage = {};
         this.txGAS[this.depth] = context.gas;
 
-        this.verbose.printTx(`start ${this.txIndex}`);
+        this.verbose.printTx(`${'start'.padEnd(10)} ${this.txIndex}`);
     }
 
     /**
@@ -507,20 +510,17 @@ class FullTracer {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }
+
         // write single tx trace
-        fs.writeFileSync(`${this.pathLogFile}_${this.txCount}.json`, JSON.stringify(response, null, 2));
+        fs.writeFileSync(`${this.pathLogFile}_${this.currentBlock.block_number}_${this.txIndex}.json`, JSON.stringify(response, null, 2));
 
         // verbose
-        this.verbose.printTx(`finish ${this.txCount}`);
-
-        // Increase transaction count
-        this.txIndex += 1;
-        this.txCount += 1;
+        this.verbose.printTx(`${'finish'.padEnd(10)} ${this.txIndex}`);
 
         // Clean aux array for next iteration
         this.full_trace = [];
         this.callData = [];
-        // this.logs = [];
+
         this.hasGaspriceOpcode = false;
         this.hasBalanceOpcode = false;
     }
