@@ -275,12 +275,14 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onProcessTx(ctx) {
-        // detect if it is a change L2 block transaction
-        if (Number(getVarFromCtx(ctx, false, 'isChangeL2BlockTx')) || (this.isForced && this.txIndex === 0)) {
+        // create new block if:
+        // - it is a change L2 block tx
+        // - it is forced batch and the currentTx is 1
+        const currentTx = Number(getVarFromCtx(ctx, true, 'currentTx'));
+        if (Number(getVarFromCtx(ctx, false, 'isChangeL2BlockTx')) || (this.isForced && currentTx === 1)) {
             this.onStartBlock(ctx);
-            if (!this.isForced) {
-                return;
-            }
+
+            return;
         }
 
         // Fill context object
