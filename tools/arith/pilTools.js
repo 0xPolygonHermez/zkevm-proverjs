@@ -412,8 +412,8 @@ function generateJavaScript(eq, constants, info, config) {
 
 function generateCpp(eq, constants, info, config, name) {
     let cppConfig = {...config,
-        prefix: 'p.',
-        suffix: '[_o]',
+        prefix: '(int64_t)fr.toU64(p.',
+        suffix: '[_o])',
         endEq: ');\n',
         constPrefix: '0x',
         constBase: 16,
@@ -422,11 +422,16 @@ function generateCpp(eq, constants, info, config, name) {
     };
     let startEq = '\tcase ##: \n\t\treturn (';
     code = '/* '+info.split('\n').join('\n* ')+'\n*/\n\n';
-    code += '#include <stdint.h>\n\n';
+    code += '#include <stdint.h>\n';
+    code += '#include "definitions.hpp"\n';
+    code += '#include "sm/pols_generated/commit_pols.hpp"\n';
+    code += '#include "goldilocks_base_field.hpp"\n\n';
+    code += 'USING_PROVER_FORK_NAMESPACE;\n\n'
+
     // code += 'typedef struct { uint64_t *x1[16]; uint64_t *y1[16]; uint64_t *x2[16]; uint64_t *y2[16]; uint64_t *x3[16]; uint64_t *y3[16]; uint64_t *s[16]; uint64_t *q0[16]; uint64_t *q1[16]; uint64_t *q2[16]; } ArithPols;\n';
     name = name || 'arithEqStep';
 
-    code += `uint64_t ${name} (ArithPols &p, uint64_t step, uint64_t _o)\n{\n\tswitch(step) {\n\t`;
+    code += `int64_t ${name} (Goldilocks &fr, ArithCommitPols &p, uint64_t step, uint64_t _o)\n{\n\tswitch(step) {\n\t`;
     code += equation(startEq, eq, constants, cppConfig);
     code += '\t}\n\treturn 0;\n}\n';
     return code;
