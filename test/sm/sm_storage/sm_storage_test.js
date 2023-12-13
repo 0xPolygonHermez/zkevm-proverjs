@@ -121,7 +121,7 @@ describe("Test storage operations", async function () {
         cmPols.Main.op5[index] = fr.e(r.newRoot[2] >> 32n);
         cmPols.Main.op6[index] = fr.e(r.newRoot[3] & 0xFFFFFFFFn);
         cmPols.Main.op7[index] = fr.e(r.newRoot[3] >> 32n);
-        cmPols.Main.incCounter = r.proofHashCounter;
+        cmPols.Main.incCounter[index] = r.proofHashCounter;
 /*        console.log(index+' '+[
                      fr.e(cmPols.Main.SR0[index] + cmPols.Main.SR1[index] * 2n**32n),
                      fr.e(cmPols.Main.SR2[index] + cmPols.Main.SR3[index] * 2n**32n),
@@ -194,7 +194,7 @@ describe("Test storage operations", async function () {
         rvalue = rvalue >> 32n;
         cmPols.Main.op7[index] = rvalue & 0xFFFFFFFFn;
         rvalue = rvalue >> 32n;
-        cmPols.Main.incCounter = r.proofHashCounter;
+        cmPols.Main.incCounter[index] = r.proofHashCounter;
         required.Storage.push({bIsSet: false,
             getResult: {
                 root: [...r.root],

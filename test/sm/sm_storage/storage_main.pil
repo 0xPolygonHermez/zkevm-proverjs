@@ -23,7 +23,7 @@ Storage.iLatchGet {
     Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
     Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
     Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
-    incCounter
+    Storage.incCounter
 };
 
 sWR {
