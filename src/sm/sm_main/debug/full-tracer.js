@@ -12,8 +12,8 @@ const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 const { ethers } = require('ethers');
 const { Scalar } = require('ffjavascript');
 const {
-    enableMemory, enableReturnData, disableStorage, disableStack,
-} = require('./full-tracer-config.json');
+    enableMemoryDefault, enableReturnDataDefault, disableStorageDefault, disableStackDefault,
+} = require('./full-tracer-config-default.json');
 const codes = require('./opcodes');
 const Verbose = require('./verbose-tracer');
 const {
@@ -29,9 +29,16 @@ const responseErrors = [
     'OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'OOCSH',
     'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce',
     'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance',
-    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_change_l2_block',
+    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_change_l2_block_limit_timestamp',
+    'invalid_change_l2_block_min_timestamp', 'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
+];
+
+const invalidBatchErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'OOCSH',
+    'invalid_change_l2_block_limit_timestamp', 'invalid_change_l2_block_min_timestamp',
     'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
 ];
+
+const changeBlockErrors = ['invalid_change_l2_block_limit_timestamp', 'invalid_change_l2_block_min_timestamp'];
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
@@ -46,6 +53,7 @@ class FullTracer {
      * @param {Object} options full-tracer options
      * @param {Bool} options.verbose verbose options
      * @param {Bool} options.skipFirstChangeL2Block Skips verification that first transaction must be a ChangeL2BlockTx
+     * @param {Object} options.tracerOptions Set tracer flags: disableStorage, disableStack, enableMemory & enableReturnData
      */
     constructor(logFileName, smt, options) {
         // Opcode step traces of all processed tx
@@ -77,7 +85,19 @@ class FullTracer {
 
         // options
         this.options = options;
+        this.setTracerOptions();
+
         this.verbose = new Verbose(options.verbose, smt, logFileName);
+    }
+
+    /**
+     * Set tracer options
+     */
+    setTracerOptions() {
+        this.enableMemory = typeof this.options.tracerOptions.enableMemory === 'undefined' ? enableMemoryDefault : this.options.tracerOptions.enableMemory;
+        this.enableReturnData = typeof this.options.tracerOptions.enableReturnData === 'undefined' ? enableReturnDataDefault : this.options.tracerOptions.enableReturnData;
+        this.disableStorage = typeof this.options.tracerOptions.disableStorage === 'undefined' ? disableStorageDefault : this.options.tracerOptions.disableStorage;
+        this.disableStack = typeof this.options.tracerOptions.disableStack === 'undefined' ? disableStackDefault : this.options.tracerOptions.disableStack;
     }
 
     /**
@@ -138,19 +158,35 @@ class FullTracer {
         const errorName = tag.params[1].varName;
         this.verbose.printError(errorName);
 
-        /*
-         * Intrinsic error should be set at tx level (not opcode)
-         * Error triggered with no previous opcode set at tx level
-         */
+        // set flag `invalid_batch` if error invalidates the full batch
+        // continue function to set the error when it has been triggered
+        if (invalidBatchErrors.includes(errorName)) {
+            this.finalTrace.invalid_batch = true;
+            this.finalTrace.error_rom = errorName;
+            // finish set errors if there is no block processed
+            if (Object.keys(this.currentBlock).length === 0) {
+                return;
+            }
+        }
+
+        // set error at block level if error is triggered by the block transaction
+        if (changeBlockErrors.includes(errorName)) {
+            this.currentBlock.error = errorName;
+
+            return;
+        }
+
+        // set error at block level if error is an invalid batch and there is no transaction processed in that block
+        if (invalidBatchErrors.includes(errorName) && this.currentBlock.responses.length === 0) {
+            this.currentBlock.error = errorName;
+
+            return;
+        }
+
+        // Intrinsic error should be set at tx level (not opcode)
+        // Error triggered with no previous opcode set at tx level
         if ((responseErrors.includes(errorName) || this.full_trace.length === 0)) {
-            if (!this.currentBlock.responses) {
-                this.currentBlock.responses = [];
-            }
-            if (this.currentBlock.responses[this.txIndex]) {
-                this.currentBlock.responses[this.txIndex].error = errorName;
-            } else {
-                this.currentBlock.responses[this.txIndex] = { error: errorName };
-            }
+            this.currentBlock.responses[this.txIndex].error = errorName;
 
             return;
         }
@@ -204,18 +240,17 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onStartBlock(ctx) {
-        // If it is not the first change L2 block transaction, we must finish previous block
-        if (Object.keys(this.currentBlock).length !== 0) {
-            this.onFinishBlock(ctx);
-        }
-
         // when the event is triggered, the block number is not updated yet, so we must add 1
         this.currentBlock = {
             block_number: 1 + Number(getVarFromCtx(ctx, true, 'blockNum')),
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
+            error: '',
         };
+
+        // add current block to the final trace
+        this.finalTrace.block_responses.push(this.currentBlock);
 
         this.verbose.printBlock(`${'start'.padEnd(10)} ${this.currentBlock.block_number}`);
     }
@@ -225,16 +260,14 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onFinishBlock(ctx) {
-        this.currentBlock = Object.assign(this.currentBlock, {
-            parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
-            timestamp: Number(getVarFromCtx(ctx, true, 'timestamp')),
-            ger: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree')),
-            block_hash_l1: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockHashL1InfoTree')),
-            gas_used: Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed')),
-            block_info_root: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR')),
-            block_hash: ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR)),
-            logs: [],
-        });
+        this.currentBlock.parent_hash = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash'));
+        this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
+        this.currentBlock.ger = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree'));
+        this.currentBlock.block_hash_l1 = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockHashL1InfoTree'));
+        this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
+        this.currentBlock.block_info_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR'));
+        this.currentBlock.block_hash = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
+        this.currentBlock.logs = [];
 
         // Append logs correctly formatted to block response logs
         this.logs = this.logs.filter((n) => n); // Remove null values
@@ -261,9 +294,6 @@ class FullTracer {
             tx.block_number = this.currentBlock.block_number;
         });
 
-        // Append block to final trace
-        this.finalTrace.block_responses.push(JSON.parse(JSON.stringify(this.currentBlock)));
-
         // Reset logs
         this.logs = [];
 
@@ -275,16 +305,6 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onProcessTx(ctx) {
-        // create new block if:
-        // - it is a change L2 block tx
-        // - it is forced batch and the currentTx is 1
-        const currentTx = Number(getVarFromCtx(ctx, true, 'currentTx'));
-        if (Number(getVarFromCtx(ctx, false, 'isChangeL2BlockTx')) || (this.isForced && currentTx === 1)) {
-            this.onStartBlock(ctx);
-
-            return;
-        }
-
         // set tx Index
         this.txIndex = Number(getVarFromCtx(ctx, true, 'txIndex'));
 
@@ -384,7 +404,7 @@ class FullTracer {
      * @param {Object} params event parameters. storage Key - value.
      */
     onUpdateStorage(ctx, params) {
-        if (disableStorage) return;
+        if (this.disableStorage) return;
 
         // The storage key is stored in C
         const key = ethers.utils.hexZeroPad(ethers.utils.hexlify(getRegFromCtx(ctx, params[0].regName)), 32).slice(2);
@@ -410,11 +430,14 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onFinishTx(ctx) {
-        const response = this.currentBlock.responses[this.txIndex];
-
-        if (typeof response.full_trace === 'undefined') {
+        // if the 'onFinishTx' is triggered with no previous transactions, do nothing
+        // this can happen when the first transaction of the batch is a changeL2BlockTx or a new block is started with no transactions
+        if (this.currentBlock.responses.length === 0) {
             return;
         }
+
+        const response = this.currentBlock.responses[this.txIndex];
+
         response.full_trace.context.from = bnToPaddedHex(getVarFromCtx(ctx, true, 'txSrcOriginAddr'), 40);
         response.effective_gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'txGasPrice'));
         response.cumulative_gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
@@ -536,7 +559,10 @@ class FullTracer {
         this.isForced = Number(getVarFromCtx(ctx, true, 'isForced'));
         this.finalTrace.block_responses = [];
         this.finalTrace.error = '';
+        this.finalTrace.error_rom = '';
         this.finalTrace.read_write_addresses = {};
+        this.finalTrace.invalid_batch = false;
+
         this.verbose.printBatch('start');
         this.verbose.saveInitStateRoot(fea2String(ctx.Fr, ctx.SR));
     }
@@ -547,9 +573,6 @@ class FullTracer {
      * @param {Object} tag to identify the log values
      */
     onFinishBatch(ctx) {
-        // Close last block
-        this.onFinishBlock(ctx);
-
         this.finalTrace.gas_used = String(this.accBatchGas);
         this.finalTrace.cnt_arithmetics = Number(ctx.cntArith);
         this.finalTrace.cnt_binaries = Number(ctx.cntBinary);
@@ -647,7 +670,7 @@ class FullTracer {
         const lenMemValue = ctx.mem[offsetCtx + lengthMemOffset];
         const lenMemValueFinal = typeof lenMemValue === 'undefined' ? 0 : Math.ceil(Number(fea2scalar(ctx.Fr, lenMemValue)) / 32);
 
-        if (enableMemory) {
+        if (this.enableMemory) {
             for (let i = 0; i < lenMemValueFinal; i++) {
                 const memValue = ctx.mem[addrMem + i];
                 if (typeof memValue === 'undefined') {
@@ -667,7 +690,7 @@ class FullTracer {
 
         const finalStack = [];
 
-        if (!disableStack) {
+        if (!this.disableStack) {
             for (let i = 0; i < ctx.SP; i++) {
                 const stack = ctx.mem[addr + i];
                 if (typeof stack === 'undefined') {
@@ -795,7 +818,7 @@ class FullTracer {
         singleInfo.memory = finalMemory;
 
         // Handle return data
-        if (enableReturnData) {
+        if (this.enableReturnData) {
             // write return data from create/create2 until CTX changes
             if (this.returnFromCreate !== null) {
                 if (typeof this.returnFromCreate.returnValue === 'undefined') {

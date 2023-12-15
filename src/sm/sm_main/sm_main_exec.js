@@ -32,7 +32,6 @@ const { lstat } = require("fs");
 const MyHelperClass = require("./helpers/helpers");
 const Constants = require('./const-sm-main-exec');
 
-
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
 
@@ -145,6 +144,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             {
                 verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer,
                 skipFirstChangeL2Block: input.skipFirstChangeL2Block,
+                tracerOptions: config.tracerOptions,
             },
         );
     }
