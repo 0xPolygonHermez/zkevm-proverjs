@@ -18,3 +18,4 @@ parallel-tests
 verbose-config.json
 *.stats
 main.pil.json
+tools/full-tracer-tests/ft-traces/
