@@ -241,8 +241,16 @@ class FullTracer {
      */
     onStartBlock(ctx) {
         // when the event is triggered, the block number is not updated yet, so we must add 1
+        // if this.options.skipFirstChangeL2Block is not active
+        let blockNumber;
+        if (this.options.skipFirstChangeL2Block === true) {
+            blockNumber = Number(getVarFromCtx(ctx, true, 'blockNum'));
+        } else {
+            blockNumber = 1 + Number(getVarFromCtx(ctx, true, 'blockNum'));
+        }
+
         this.currentBlock = {
-            block_number: 1 + Number(getVarFromCtx(ctx, true, 'blockNum')),
+            block_number: blockNumber,
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
@@ -378,12 +386,7 @@ class FullTracer {
 
         // create block object if flag skipFirstChangeL2Block is active and this.currentBlock has no properties
         if (this.options.skipFirstChangeL2Block === true && Object.keys(this.currentBlock).length === 0) {
-            this.currentBlock = {
-                parent_hash: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash')),
-                coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
-                gas_limit: Constants.BLOCK_GAS_LIMIT,
-                responses: [],
-            };
+            this.onStartBlock(ctx);
         }
 
         // Create current tx object
