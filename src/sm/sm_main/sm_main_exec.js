@@ -153,7 +153,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         statsTracer = new StatsTracer(config.debugInfo.inputName);
     }
 
-    const iPrint = new Prints(ctx, smt);
+    const iPrint = new Prints(ctx, smt, verboseOptions.externalLogs);
     let fastDebugExit = false;
 
     let pendingCmds = false;
@@ -279,6 +279,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
             }
+        }
+
+        // print external logs
+        if (verboseOptions.enableExternalLogs && verboseOptions.externalLogs) {
+            iPrint.processExternalLogs();
         }
 
 //////////
