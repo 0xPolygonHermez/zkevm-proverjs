@@ -112,7 +112,6 @@ namespace PaddingPG(%N);
     // if lastHash=0 && lastBLock=1 then incCounter'=incCounter+1
     // if lastHash=1 && lastBlock=1 then incCounter'=1
     incCounter' = incCounter*(1-lastBlock) + (incCounter +1)*(lastBlock-lastHash) + lastHash;
-    incCounter * Global.L1 = 0;
 
 
 
