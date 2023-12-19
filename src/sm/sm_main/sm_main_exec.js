@@ -32,7 +32,6 @@ const { lstat } = require("fs");
 const MyHelperClass = require("./helpers/helpers");
 const Constants = require('./const-sm-main-exec');
 
-
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
 
@@ -145,6 +144,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             {
                 verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer,
                 skipFirstChangeL2Block: input.skipFirstChangeL2Block,
+                tracerOptions: config.tracerOptions,
             },
         );
     }
@@ -153,7 +153,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         statsTracer = new StatsTracer(config.debugInfo.inputName);
     }
 
-    const iPrint = new Prints(ctx, smt);
+    const iPrint = new Prints(ctx, smt, verboseOptions.externalLogs);
     let fastDebugExit = false;
 
     let pendingCmds = false;
@@ -279,6 +279,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
             }
+        }
+
+        // print external logs
+        if (verboseOptions.enableExternalLogs && verboseOptions.externalLogs) {
+            iPrint.processExternalLogs();
         }
 
 //////////
@@ -2261,7 +2266,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.JMPZ[i] = 1n;
                 const o = Fr.toObject(op0);
                 if (o > 0 && o >= FrFirst32Negative) {
-                    console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
+                    // console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
                 }
             } else if (l.JMP) {
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);

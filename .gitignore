@@ -16,6 +16,7 @@ tmp
 pil-config.json
 parallel-tests
 verbose-config.json
+tracer-options.json
 *.stats
 main.pil.json
 tools/full-tracer-tests/ft-traces/

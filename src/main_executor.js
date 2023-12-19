@@ -51,6 +51,7 @@ const argv = require("yargs")
     .alias("n", "dbnodestable")
     .alias("G", "dbprogramtable")
     .alias("a", "assertOutputs")
+    .alias("TO", "tracerOptions")
     .argv;
 
 async function run() {
@@ -91,7 +92,7 @@ async function run() {
         logs: false,
         stats: 'program.stats',
         pil: path.join(__dirname, "/../pil/main.pil"),
-        pilConfig: false
+        pilConfig: false,
     };
 
     for (let name in configFiles) {
@@ -159,11 +160,22 @@ async function run() {
     config.pathVerboseFile = (typeof argv.verboseExecutor === 'string' ? argv.verboseExecutor.trim() : config.pathVerboseFile);
     config.verboseOptions = config.verboseOptions ?? {};
 
-    if (typeof config.pathVerboseFile !== 'undefined'){
+    if (typeof config.pathVerboseFile !== 'undefined') {
         if (!fs.existsSync(config.pathVerboseFile)) {
-            throw new Error("Cache pil file does not exist");
+            throw new Error('pathVerboseFile does not exist');
         } else {
             config.verboseOptions = JSON.parse(fs.readFileSync(config.pathVerboseFile));
+        }
+    }
+
+    const pathTracerOptions = (typeof argv.tracerOptions === 'string') ? argv.tracerOptions.trim() : undefined;
+    config.tracerOptions = config.tracerOptions ?? {};
+
+    if (typeof pathTracerOptions !== 'undefined') {
+        if (!fs.existsSync(pathTracerOptions)) {
+            throw new Error('pathTracerOptions does not exist');
+        } else {
+            config.tracerOptions = JSON.parse(fs.readFileSync(pathTracerOptions));
         }
     }
 

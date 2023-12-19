@@ -116,14 +116,14 @@ class VerboseTracer {
         }
 
         let infoHeader = `${chalk.greenBright('/////////////////////////////\n')}`;
-        infoHeader += `${chalk.greenBright('//////////PRE STATE/////////\n')}`;
+        infoHeader += `${chalk.greenBright(`//////////PRE STATE: ${this.initSR}/////////\n`)}`;
         infoHeader += `${chalk.greenBright('///////////////////////////')}`;
 
         console.log(infoHeader);
         console.log(fullInfo.pre);
 
         infoHeader = `${chalk.blueBright('/////////////////////////////\n')}`;
-        infoHeader += `${chalk.blueBright('//////////POST STATE////////\n')}`;
+        infoHeader += `${chalk.blueBright(`//////////POST STATE: ${this.finalSR}////////\n`)}`;
         infoHeader += `${chalk.blueBright('///////////////////////////')}`;
 
         console.log(infoHeader);
@@ -148,6 +148,7 @@ class VerboseTracer {
         const hashBytecode = await stateUtils.getContractHashBytecode(address, this.smt, rootArray);
         const hashBytecodeLength = await stateUtils.getContractBytecodeLength(address, this.smt, rootArray);
         const bytecodeArray = await this.smt.db.getProgram(smtUtils.stringToH4(hashBytecode));
+
         const sto = await stateUtils.getContractStorage(address, this.smt, rootArray, storage);
 
         info.balance = state.balance.toString();
