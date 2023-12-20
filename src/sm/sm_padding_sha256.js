@@ -5,8 +5,8 @@ const { Scalar } = require('ffjavascript');
 const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 
 const BYTESPERBLOCK = 64;
-const BlockSize = 31487; // TODO
-const bitsPerElement = 7; // todo
+const BlockSize = 31488;
+const bitsPerElement = 7;
 
 module.exports.buildConstants = async function (pols) {
     const poseidon = await buildPoseidon();
@@ -184,6 +184,8 @@ module.exports.execute = async function (pols, input) {
                 });
 
                 if (j === input[i].dataBytes.length - 1) {
+                    // The Sha digest's chunks are ordered from most to
+                    // least significant. (input7 => hash0, input6 => hash1, ..)
                     [
                         pols.hash7[p],
                         pols.hash6[p],
@@ -269,7 +271,8 @@ module.exports.execute = async function (pols, input) {
                     r: bytes0,
                     connected: false,
                 });
-
+                // The Sha digest's chunks are ordered from most to
+                // least significant. (input7 => hash0, input6 => hash1, ..)
                 [
                     pols.hash7[p],
                     pols.hash6[p],

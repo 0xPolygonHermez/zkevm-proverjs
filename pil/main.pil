@@ -748,6 +748,8 @@ namespace Main(%N);
         PaddingSha256.len
     };
 
+    // The Sha digest's chunks are ordered from most to least significant.
+    // (hash0 => op7, hash1 => op6, ..)
     hashSDigest {
         addr,
         op0, op1, op2, op3,
@@ -756,8 +758,8 @@ namespace Main(%N);
     } is
     PaddingSha256.lastHashDigest {
         PaddingSha256.addr,
-        PaddingSha256.hash0, PaddingSha256.hash1, PaddingSha256.hash2, PaddingSha256.hash3,
-        PaddingSha256.hash4, PaddingSha256.hash5, PaddingSha256.hash6, PaddingSha256.hash7,
+        PaddingSha256.hash7, PaddingSha256.hash6, PaddingSha256.hash5, PaddingSha256.hash4,
+        PaddingSha256.hash3, PaddingSha256.hash2, PaddingSha256.hash1, PaddingSha256.hash0,
         PaddingSha256.incCounter
     };
 
