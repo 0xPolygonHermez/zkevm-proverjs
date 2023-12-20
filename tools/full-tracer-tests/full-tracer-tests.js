@@ -184,7 +184,7 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
             test = [test[keysTests[testToDebug]]];
         }
-        const inputTestPath = isEthereumTest ? path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
+        const inputTestPath = isEthereumTest ? path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
         const tn = isEthereumTest ? testName.split('/')[1] : testName;
         const fn = isEthereumTest ? testName.split('/')[0] : testName;
         Object.assign(test[0], {
