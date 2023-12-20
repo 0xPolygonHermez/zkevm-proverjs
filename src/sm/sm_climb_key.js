@@ -66,7 +66,7 @@ module.exports.buildConstants = async function (pols) {
                 pols.T_CARRYLT_IN[row] = carryLtIn;
                 pols.T_CARRYLT_OUT[row] = clock == LAST_CLOCK ? 0n : BigInt(carryOut + 2 * ltOut);
                 pols.T_LEVEL[row] = _level;
-                pols.FACTOR[row] = CHUNK_FACTORS[(clock + 1) % CLIMB_KEY_CLOCKS];
+                pols.FACTOR[row] = CHUNK_FACTORS[(row + 1) % CLIMB_KEY_CLOCKS];
 
                 // { T_CLKEYSEL, T_LEVEL, T_CHUNK_VALUE, T_CARRYLT_IN, T_CARRYLT_OUT }
                 if (DEBUG && times === 0) {

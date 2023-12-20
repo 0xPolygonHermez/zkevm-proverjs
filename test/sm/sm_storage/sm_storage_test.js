@@ -85,7 +85,6 @@ describe("Test storage operations", async function () {
 
     async function smtSet (oldRoot, key, value) {
         const r = await smt.set(oldRoot, key, value);
-        console.log('SMT-SET', r);
         const index = plookUpIndex++;
         cmPols.Main.sRD[index] = fr.zero;
         cmPols.Main.sWR[index] = fr.e(1n);
@@ -148,7 +147,6 @@ describe("Test storage operations", async function () {
 
     async function smtGet (root, key) {
         const r = await smt.get(root, key);
-        console.log('SMT-GET', r);
         const index = plookUpIndex++;
         cmPols.Main.sRD[index] = fr.e(1n);
         cmPols.Main.sWR[index] = fr.zero;
