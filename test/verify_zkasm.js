@@ -23,6 +23,10 @@ const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
 const smStorage = require("../src/sm/sm_storage/sm_storage.js");
 const smClimbKey = require("../src/sm/sm_climb_key.js");
+const smPaddingSha256 = require("../src/sm/sm_padding_sha256.js");
+const smPaddingSha256Bit = require("../src/sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
+const smBits2FieldSha256 = require("../src/sm/sm_bits2field_sha256.js");
+const smSha256F = require("../src/sm/sm_sha256f/sm_sha256f.js");
 const { config } = require("yargs");
 
 module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
@@ -87,6 +91,22 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     if (constPols.KeccakF) {
         console.log("Const KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
+    }
+    if (constPols.PaddingSha256) {
+        console.log("Const PaddingSha256...");
+        await smPaddingSha256.buildConstants(constPols.PaddingSha256);
+    }
+    if (constPols.PaddingSha256Bit) {
+        console.log("Const PaddingKKBit...");
+        await smPaddingSha256Bit.buildConstants(constPols.PaddingSha256Bit);
+    }
+    if (constPols.Bits2FieldSha256) {
+        console.log("Const Bits2FieldSha256...");
+        await smBits2FieldSha256.buildConstants(constPols.Bits2FieldSha256);
+    }
+    if (constPols.Sha256F) {
+        console.log("Const Sha256F...");
+        await smSha256F.buildConstants(constPols.Sha256F);
     }
     if (constPols.Mem) {
         console.log("Const Mem...");
@@ -188,6 +208,22 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         } else if (verifyPilFlag && allPoseidonG.length) {
             console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations `+
                             `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
+        }
+
+        if (cmPols.PaddingSha256) console.log("Exec PaddingSha256...");
+        const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
+
+        if (cmPols.PaddingSha256Bit) console.log("Exec PaddingSha256bit...");
+        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
+
+        if (cmPols.Bits2FieldSha256) console.log("Exec Bits2FieldSha256...");
+        const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
+
+        if (cmPols.Sha256F) {
+            console.log("Exec Sha256F...");
+            await smSha256F.execute(cmPols.Sha256F, requiredBits2FieldSha256.Sha256F || []);
+        } else if (verifyPilFlag && requiredBits2FieldSha256.Sha256F) {
+            console.log(`WARNING: Namespace Sha256F isn't included, but there are ${requiredBits2FieldSha256.Sha256F.length} Sha256F operations`);
         }
 
         if (cmPols.Arith) {
