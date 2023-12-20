@@ -5,7 +5,7 @@ const { log2 } = require('@0xpolygonhermez/zkevm-commonjs').utils;
 const { F1Field } = require('ffjavascript');
 const { getKs, getRoots } = require('pilcom');
 
-const SlotSize = 31487;
+const SlotSize = 31488;
 const chunkBits = 7n;
 
 const GATE_XOR = 0n;
@@ -28,8 +28,9 @@ function carry(a, b, c) {
 module.exports.buildConstants = async function (pols) {
     function connect(p1, i1, p2, i2, offset) {
         offset = offset || 0;
-        if (i1 > 1) i1 += offset;
-        if (i2 > 1) i2 += offset;
+        // row = 0 reserved for constants signals 0,1
+        if (i1 > 0) i1 += offset;
+        if (i2 > 0) i2 += offset;
         [pols.Conn[p1][i1], pols.Conn[p2][i2]] = [pols.Conn[p2][i2], pols.Conn[p1][i1]];
     }
 
@@ -60,6 +61,8 @@ module.exports.buildConstants = async function (pols) {
     pols.GATE_TYPE[0] = GATE_XOR;
     pols.CARRY_ENABLED[0] = 0n;
 
+    // start with one because first row reserved to
+    // constant signals 0,1
     let p = 1;
 
     for (let i = 0; i < nSlots; i++) {
@@ -74,9 +77,13 @@ module.exports.buildConstants = async function (pols) {
             for (let k = 0; k < 4; k++) {
                 const wire = gates[j].connections[k];
                 if (wires[wire]) {
+                    // next times that found a wire, connect the "end"
+                    // saved previously with this "end"
                     connect(wires[wire][0], wires[wire][1], k, j, offset);
                     wires[wire] = [k, j];
                 } else {
+                    // first time that found a wire saves the "end"
+                    // of this wire.
                     wires[wire] = [k, j];
                 }
             }

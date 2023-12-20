@@ -38,8 +38,10 @@ function newWire(ctx) {
 }
 
 function isNextAvailable(ctx) {
+    // In first 1024 cycles of BitsPerField, last position inside cycle
+    // are reserved for bit inputs.
     if ((ctx.gatesUsed - 1) % BitsPerField !== (BitsPerField - 1)) return true;
-    const b = Math.floor(ctx.gatesUsed / BitsPerField);
+    const b = Math.floor((ctx.gatesUsed - 1) / BitsPerField);
     if (b >= 1024) return true;
 
     return false;
@@ -379,4 +381,5 @@ fs.writeFileSync(programFile, JSON.stringify({ program, sums, total: gates.lengt
 
 console.log('Files generated correctly');
 console.log(JSON.stringify(sums, null, 1));
+// gates.length - 1 because first row is reserved to 0,1 constant signals.
 console.log(`total gates: ${gates.length - 1}`);
