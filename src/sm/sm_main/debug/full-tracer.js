@@ -94,6 +94,7 @@ class FullTracer {
      * Set tracer options
      */
     setTracerOptions() {
+        this.options.tracerOptions = typeof this.options.tracerOptions === 'undefined' ? {} : this.options.tracerOptions;
         this.enableMemory = typeof this.options.tracerOptions.enableMemory === 'undefined' ? enableMemoryDefault : this.options.tracerOptions.enableMemory;
         this.enableReturnData = typeof this.options.tracerOptions.enableReturnData === 'undefined' ? enableReturnDataDefault : this.options.tracerOptions.enableReturnData;
         this.disableStorage = typeof this.options.tracerOptions.disableStorage === 'undefined' ? disableStorageDefault : this.options.tracerOptions.disableStorage;
