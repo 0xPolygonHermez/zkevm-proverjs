@@ -365,6 +365,28 @@ module.exports = class myHelper {
         return ctx.quotient_short.length;
     }
 
+    ///////////// ecAdd, ecMul
+
+    eval_uintToBin(ctx, tag) {
+        let k = this.evalCommand(ctx, tag.params[0]);
+
+        let kbin = [];
+        while (k > 1n) {
+            kbin.push(k & 1n);
+            k >>= 1n;
+        }
+
+        ctx.kEcMul = { k: kbin, len: kbin.length };
+    }
+
+    eval_receiveLenK(ctx) {
+        return ctx.kEcMul.len;
+    }
+
+    eval_receiveNextBitK(ctx) {
+        return ctx.kEcMul.k.pop();
+    }
+
     ///////////// PAIRINGS
 
     /**
