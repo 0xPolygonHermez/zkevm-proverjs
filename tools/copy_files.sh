@@ -86,6 +86,8 @@ if [ $CP_SCRIPTS -eq 1 ]; then
     cpfile $BDIR/storage_sm_rom.json                           $FULLDST
     cpfile $BASEDIR/src/sm/sm_keccakf/keccak_script.json       $FULLDST/keccak_script.json
     cpfile $BASEDIR/src/sm/sm_keccakf/keccak_connections.json  $FULLDST/keccak_connections.json
+    cpfile $BASEDIR/src/sm/sm_sha256f/sha256_script.json       $FULLDST/sha256_script.json
+    cpfile $BASEDIR/src/sm/sm_sha256f/sha256_gates.json        $FULLDST/sha256_gates.json
 fi
 
 if [ $CP_ZKEVM -eq 1 ]; then
