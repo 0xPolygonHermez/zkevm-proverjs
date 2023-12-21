@@ -120,10 +120,10 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v4.0.0-rc.1-fork.7",
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v2.0.0-rc.1-fork.7",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom-internal.git#v4.0.0-rc.2-fork.7",
-    "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom-internal.git#v4.0.0-rc.1-fork.7",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v4.0.0-rc.2-fork.7",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v2.0.0-rc.2-fork.7",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom-internal.git#v4.0.0-rc.3-fork.7",
+    "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom-internal.git#v4.0.0-rc.2-fork.7",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
@@ -135,7 +135,7 @@
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
-    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#b6f11e43459ec4c4d81af1dff9d68aed1b8c8cb2",
+    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#84f114aca749bce0baa3cd2c4f0cc722d165f69e",
     "pilcom": "0.0.24",
     "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
