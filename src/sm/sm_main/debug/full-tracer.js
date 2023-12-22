@@ -255,6 +255,7 @@ class FullTracer {
             gas_limit: Constants.BLOCK_GAS_LIMIT,
             responses: [],
             error: '',
+            ctx: Number(ctx.CTX),
         };
 
         // add current block to the final trace
@@ -268,10 +269,16 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onFinishBlock(ctx) {
+        // recover chnageL2Block context to get data from there
+        const ctxBlock = this.currentBlock.ctx;
+
+        // get data ctx
+        this.currentBlock.ger = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'gerL1InfoTree', ctxBlock));
+        this.currentBlock.block_hash_l1 = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'blockHashL1InfoTree', ctxBlock));
+
+        // get global data
         this.currentBlock.parent_hash = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash'));
         this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
-        this.currentBlock.ger = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'gerL1InfoTree'));
-        this.currentBlock.block_hash_l1 = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockHashL1InfoTree'));
         this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
         this.currentBlock.block_info_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR'));
         this.currentBlock.block_hash = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
