@@ -367,6 +367,12 @@ module.exports = class myHelper {
 
     ///////////// ecAdd, ecMul
 
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Binary representation of the scalar, from LSB to MSB, with the MSB removed.
+     */
     eval_uintToBin(ctx, tag) {
         let k = this.evalCommand(ctx, tag.params[0]);
 
@@ -379,10 +385,20 @@ module.exports = class myHelper {
         ctx.kEcMul = { k: kbin, len: kbin.length };
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @returns Length of the binary representation of the scalar.
+     */
     eval_receiveLenK(ctx) {
         return ctx.kEcMul.len;
     }
 
+    /**
+     *
+     * @param ctx - Context.
+     * @returns Next bit of the binary representation of the scalar.
+     */
     eval_receiveNextBitK(ctx) {
         return ctx.kEcMul.k.pop();
     }
