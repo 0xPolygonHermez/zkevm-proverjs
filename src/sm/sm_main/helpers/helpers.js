@@ -371,10 +371,11 @@ module.exports = class myHelper {
      *
      * @param ctx - Context.
      * @param tag - Tag.
-     * @returns Binary representation of the scalar, from LSB to MSB, with the MSB removed.
+     * @returns Binary representation of the input scalar, from LSB to MSB, with the MSB removed.
      */
     eval_uintToBin(ctx, tag) {
         let k = this.evalCommand(ctx, tag.params[0]);
+        const kname = tag.params[0].offsetLabel;
 
         let kbin = [];
         while (k > 1n) {
@@ -382,25 +383,63 @@ module.exports = class myHelper {
             k >>= 1n;
         }
 
-        ctx.kEcMul = { k: kbin, len: kbin.length };
+        ctx[kname] = { k: kbin, len: kbin.length };
     }
 
     /**
      *
      * @param ctx - Context.
-     * @returns Length of the binary representation of the scalar.
+     * @param tag - Tag.
+     * @returns Binary representation of the two input scalars, from LSB to MSB.
      */
-    eval_receiveLenK(ctx) {
-        return ctx.kEcMul.len;
+    eval_uintToBin2(ctx, tag) {
+        let k1 = this.evalCommand(ctx, tag.params[0]);
+        let k2 = this.evalCommand(ctx, tag.params[1]);
+        const kname1 = tag.params[0].offsetLabel;
+        const kname2 = tag.params[1].offsetLabel;
+
+        let kbin1 = [];
+        let kbin2 = [];
+        while (k1 > 0n || k2 > 0n) {
+            kbin1.push(k1 & 1n);
+            kbin2.push(k2 & 1n);
+            k1 >>= 1n;
+            k2 >>= 1n;
+        }
+
+        let len1 = kbin1.length;
+        let len2 = kbin2.length;
+        while (kbin1[len1 - 1] === 0n) {
+            len1--;
+        }
+        while (kbin2[len2 - 1] === 0n) {
+            len2--;
+        }
+
+        ctx[kname1] = { k: kbin1, len: len1 };
+        ctx[kname2] = { k: kbin2, len: len2 };
     }
 
     /**
      *
      * @param ctx - Context.
-     * @returns Next bit of the binary representation of the scalar.
+     * @param tag - Tag.
+     * @returns Length of the binary representation of the input scalar.
      */
-    eval_receiveNextBitK(ctx) {
-        return ctx.kEcMul.k.pop();
+    eval_receiveLen(ctx, tag) {
+        const kname = tag.params[0].offsetLabel;
+        return ctx[kname].len;
+    }
+
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Next bit of the binary representation of the input scalar.
+     */
+    eval_receiveNextBit(ctx, tag) {
+        const kname = tag.params[0].offsetLabel;
+        return ctx[kname].k.pop();
     }
 
     ///////////// PAIRINGS
