@@ -223,9 +223,9 @@ class FullTracer {
         }
 
         if (isTopic) {
-            this.logs[ctx.CTX][indexLog].topics.push(data.toString(16).padStart(32, '0'));
+            this.logs[ctx.CTX][indexLog].topics.push(data.toString(16).padStart(64, '0'));
         } else {
-            this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(32, '0'));
+            this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(64, '0'));
         }
         // Add log info
         this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
@@ -270,19 +270,13 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onFinishBlock(ctx) {
-        // recover chnageL2Block context to get data from there
-        const ctxBlock = this.currentBlock.ctx;
-
-        // get data ctx
-        this.currentBlock.ger = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'gerL1InfoTree', ctxBlock));
-        this.currentBlock.block_hash_l1 = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'blockHashL1InfoTree', ctxBlock));
-
-        // get global data
-        this.currentBlock.parent_hash = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'previousBlockHash'));
+        this.currentBlock.parent_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'previousBlockHash'), 64);
         this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
+        this.currentBlock.ger = bnToPaddedHex(getVarFromCtx(ctx, true, 'gerL1InfoTree'), 64);
+        this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockHashL1InfoTree'), 64);
         this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
-        this.currentBlock.block_info_root = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'blockInfoSR'));
-        this.currentBlock.block_hash = ethers.utils.hexlify(fea2scalar(ctx.Fr, ctx.SR));
+        this.currentBlock.block_info_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockInfoSR'), 64);
+        this.currentBlock.block_hash = bnToPaddedHex((fea2scalar(ctx.Fr, ctx.SR), 64));
         this.currentBlock.logs = [];
 
         // Append logs correctly formatted to block response logs

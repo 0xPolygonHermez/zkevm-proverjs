@@ -33,6 +33,7 @@ const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
 const noExec = require('../../../zkevm-testvectors-internal/tools-inputs/tools-eth/no-exec.json');
+const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
 const regen = false;
 const errorsMap = {
@@ -112,7 +113,14 @@ async function main() {
                 }
 
                 // Get trace from full tracer
+                if (!fs.existsSync(test.inputTestPath)) {
+                    console.log(`Test not found ${test.testName}`);
+                    continue;
+                }
                 const ftTraces = await getFtTrace(test, gethTraces.length, rom, isEthereumTest);
+
+                // Check block info root
+                await checkBlockInfoRootsFromTrace(test.testName);
 
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
@@ -615,6 +623,7 @@ function compareTraces(geth, fullTracer) {
  * @param {Boolean} isEthereumTest Flag to know if is an ethereum test
  * @returns Array of tx hashes
  */
+
 async function getFtTrace(test, txsCount, rom, isEthereumTest) {
     const input = JSON.parse(fs.readFileSync(test
         .inputTestPath, 'utf8'));

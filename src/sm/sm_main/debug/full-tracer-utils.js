@@ -5,7 +5,7 @@ const { toHexStringRlp, addressToHexStringRlp } = require('@0xpolygonhermez/zkev
 const { scalar2fea, fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
 
 /**
- * Compute transaction hash from a transaction RLP enconding and hashing with keccak
+ * Compute transaction hash from a transaction RLP encoding and hashing with keccak
  * @param {String} to - hex string
  * @param {Number} value - int number
  * @param {Number} nonce - int number
@@ -95,7 +95,7 @@ function getRegFromCtx(ctx, reg) {
  * @param {Number} length size of the bytes to read from offset
  * @param {Object} ctx current context object
  * @param {Number} customCTX get memory from a custom context
- * @returns {Array} string array with 32 bytes hexa values
+ * @returns {Array} string array with 32 bytes hex values
  */
 function getFromMemory(offset, length, ctx, customCTX) {
     const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
@@ -158,7 +158,7 @@ function getConstantFromCtx(ctx, constantName) {
 /**
  * Get a padded hex string from its numeric value
  * @param {BigInt} bn numeric value
- * @param {Numver} paddingLength left padding size with zeros
+ * @param {Number} paddingLength left padding size with zeros
  * @returns {String} hex value of the bn left padded with zeros
  */
 function bnToPaddedHex(bn, paddingLength) {
