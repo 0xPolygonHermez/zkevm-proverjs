@@ -38,6 +38,7 @@ const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'invalidStaticTx', 'bn256: malformed point'];
 const noExec = require('../../../zkevm-testvectors-internal/tools-inputs/tools-eth/no-exec.json');
+const { checkBlockInfoRootsFromProverTrace } = require('./full-tracer-tests-utils');
 
 const regen = false;
 const saveExecutorResponse = false;
@@ -79,13 +80,15 @@ const { ExecutorService } = zkProverProto;
 const { HashDBService } = hashDbProto;
 // my prover -> 52.30.205.190
 // executor Fr -> 51.210.116.237
-const client = new ExecutorService('51.210.116.237:50075', grpc.credentials.createInsecure(), { 'grpc.max_receive_message_length': 91837108 });
-const dbClient = new HashDBService('51.210.116.237:50065', grpc.credentials.createInsecure());
+const client = new ExecutorService('51.210.116.237:50072', grpc.credentials.createInsecure(), { 'grpc.max_receive_message_length': 91837108 });
+const dbClient = new HashDBService('51.210.116.237:50062', grpc.credentials.createInsecure());
 let tn;
 let fn;
 let tid;
 let gethTraces = [];
 let waiting = false;
+let joinedTraces = [];
+
 async function main() {
     try {
         console.log('Starting traces comparator');
@@ -118,6 +121,7 @@ async function main() {
             files.sort((a, b) => Number(a.split('_')[3]) - Number(b.split('_')[3]));
             for (let j = 0; j < tests.length; j++) {
                 const test = tests[j];
+                joinedTraces = [];
                 console.log(chalk.green(`Checking test number ${j}/${tests.length}: ${test.testName}-${test.id}   ----  ${traceMethod}`));
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
@@ -152,6 +156,10 @@ async function main() {
                     gethTraces = await getGethTrace(txsHashes, test.testName, traceMethod, test.id);
                 }
                 // Get trace from full tracer
+                if (!fs.existsSync(test.inputTestPath)) {
+                    console.log(`Test not found ${test.testName}`);
+                    continue;
+                }
                 const ftTxHashes = await getFtTrace(test, gethTraces.length, rom, isEthereumTest);
 
                 const input = JSON.parse(fs.readFileSync(test.inputTestPath, 'utf8'));
@@ -162,9 +170,12 @@ async function main() {
                 tid = test.id;
                 console.log(`Processing ${fn}/${tn}-${tid}`);
                 checkBytecode(input, 0, ftTxHashes, traceMethod, test, isEthereumTest);
-
                 while (waiting) {
                     await sleep(2000);
+                }
+                // compute blockInfo tree and txHashL2 for batches with only one block
+                if (joinedTraces[0] && joinedTraces[0].block_responses.length === 1) {
+                    await checkBlockInfoRootsFromProverTrace(joinedTraces);
                 }
                 console.log(`Finished processing ${fn}/${tn}-${tid}`);
             }
@@ -929,6 +940,7 @@ function processBatchV2(input, txsHashes, currentHash, traceMethod, test, isEthe
             if (saveExecutorResponse) {
                 executorJsonFromBatch(res, res.block_responses[0].responses[currentHash].tx_hash.toString('hex'));
             }
+            joinedTraces.push(res);
             // Compare trace
             const blockNum = isEthereumTest ? [1, currentHash] : getBlockNumFromTxCount(test, currentHash);
             const changes = compareTracesByMethod(gethTraces[currentHash], res.block_responses[blockNum[0] - 1].responses[blockNum[1]], traceMethod, currentHash);
@@ -939,7 +951,6 @@ function processBatchV2(input, txsHashes, currentHash, traceMethod, test, isEthe
                 process.exit(1);
             } else {
                 console.log(chalk.green(`No differences for test ${fn}/${tn}-${tid}-${currentHash}`));
-                // check next txHash
                 processBatchV2(input, txsHashes, currentHash + 1, traceMethod, test, isEthereumTest);
             }
         } catch (e) {
@@ -963,7 +974,7 @@ function formatInput(jsInput, txHash) {
         old_acc_input_hash: Buffer.from(jsInput.oldAccInputHash.slice(2), 'hex'),
         old_batch_num: jsInput.oldNumBatch,
         chain_id: jsInput.chainID,
-        fork_id: 7,
+        fork_id: 6,
         batch_l2_data: Buffer.from(jsInput.batchL2Data.slice(2), 'hex'),
         global_exit_root: Buffer.from(jsInput.globalExitRoot.slice(2), 'hex'),
         eth_timestamp: Number(jsInput.timestamp),

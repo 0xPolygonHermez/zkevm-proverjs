@@ -360,7 +360,7 @@ class FullTracer {
             vn,
         );
         response.tx_hash = tx_hash;
-        response.tx_hash_l2 = ethers.utils.hexlify(getVarFromCtx(ctx, false, 'l2TxHash'));
+        response.tx_hash_l2 = bnToPaddedHex(getVarFromCtx(ctx, false, 'l2TxHash'), 64);
         response.rlp_tx = rlp_tx;
         response.type = 0;
         response.return_value = '';
