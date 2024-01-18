@@ -203,6 +203,7 @@ if [ $CP_BUILDS -eq 1 ]; then
     [ ! -d $FULLDST ] && mkdir -p $FULLDST
 
     cpfile package.json $FULLDST
+    cpfile package-lock.json $FULLDST
 
     DEPENDENCIES=$BDIR/dependencies.txt
     cpfile $DEPENDENCIES $FULLDST
