@@ -5,6 +5,12 @@ const arithEq1 = require(arithEqPath + 'sm_arith_eq1.js');
 const arithEq2 = require(arithEqPath + 'sm_arith_eq2.js');
 const arithEq3 = require(arithEqPath + 'sm_arith_eq3.js');
 const arithEq4 = require(arithEqPath + 'sm_arith_eq4.js');
+const arithEq5 = require(arithEqPath + 'sm_arith_eq5.js');
+const arithEq6 = require(arithEqPath + 'sm_arith_eq6.js');
+const arithEq7 = require(arithEqPath + 'sm_arith_eq7.js');
+const arithEq8 = require(arithEqPath + 'sm_arith_eq8.js');
+const arithEq9 = require(arithEqPath + 'sm_arith_eq9.js');
+const arithEq10 = require(arithEqPath + 'sm_arith_eq10.js');
 const F1Field = require("ffjavascript").F1Field;
 
 const max256bits = (2n ** 256n)-1n;
@@ -18,10 +24,22 @@ const limits = {
     y3: [0n, max256bits],
     s: [0n, max256bits],
     q: [0n,  (2n ** 259n)-1n],
-    carry: [0n, (2n ** 19n)-1n]
+    carry: [-(2n ** 22n), 0n, (2n ** 22n)-1n]
 }
-const qs = ['q0', 'q0', 'q0', 'q1', 'q2'];
-const eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate];
+const qs = ['q0', 'q0', 'q0', 'q1', 'q2', 'q1', 'q2', 'q1', 'q2', 'q1', 'q2'];
+const eqCalculates = [
+    arithEq0.calculate,
+    arithEq1.calculate,
+    arithEq2.calculate,
+    arithEq3.calculate,
+    arithEq4.calculate,
+    arithEq5.calculate,
+    arithEq6.calculate,
+    arithEq7.calculate,
+    arithEq8.calculate,
+    arithEq9.calculate,
+    arithEq10.calculate,
+];
 
 
 function log2 (value)
