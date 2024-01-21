@@ -50,21 +50,21 @@ function buildByte2Bits16(pols, N) {
     let p = 0;
     // when SEL_BYTE2_BIT19 is zero, only values from 0 to (2**16)-1 are included
     for (let i = 0; i < 2**16; ++i) {
-        pols.SEL_BYTE2_BIT19[p] = 0n;
-        pols.BYTE2_BIT19[p] = BigInt(i);
+        pols.SEL_BYTE2_BIT21[p] = 0n;
+        pols.BYTE2_BIT21[p] = BigInt(i);
         ++p;
     }
 
     // when SEL_BYTE2_BIT19 is one, only values from 0 to (2**19)-1 are included
-    for (let i = 0; i < 2**19; ++i) {
-        pols.SEL_BYTE2_BIT19[p] = 1n;
-        pols.BYTE2_BIT19[p] = BigInt(i);
+    for (let i = 0; i < 2**21; ++i) {
+        pols.SEL_BYTE2_BIT21[p] = 1n;
+        pols.BYTE2_BIT21[p] = BigInt(i);
         ++p;
     }
     // fill to end with zero and zero, a valid combination
     for (let i = p; i < N; ++i) {
-        pols.SEL_BYTE2_BIT19[i] = 0n;
-        pols.BYTE2_BIT19[i] = 0n;
+        pols.SEL_BYTE2_BIT21[i] = 0n;
+        pols.BYTE2_BIT21[i] = 0n;
     }
 }
 

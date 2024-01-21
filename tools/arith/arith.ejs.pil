@@ -27,8 +27,8 @@ include "global.pil";
 
 namespace Arith(%N);
 
-    pol constant BYTE2_BIT19;
-    pol constant SEL_BYTE2_BIT19;
+    pol constant BYTE2_BIT21;
+    pol constant SEL_BYTE2_BIT21;
     pol constant GL_SIGNED_22BITS;
 
     pol commit x1[16];
@@ -347,7 +347,7 @@ namespace Arith(%N);
 
     <%- clksel(['s[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> in Global.BYTE2;
 
-    {Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]'], 'Global.CLK32') %>} in {SEL_BYTE2_BIT19, BYTE2_BIT19};
+    {Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]'], 'Global.CLK32') %>} in {SEL_BYTE2_BIT21, BYTE2_BIT21};
 
     /*******
     *
