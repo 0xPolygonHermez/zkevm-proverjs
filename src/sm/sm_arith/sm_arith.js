@@ -18,7 +18,7 @@ const arithEq10 = require('./sm_arith_eq10');
 const F1Field = require("ffjavascript").F1Field;
 
 module.exports.buildConstants = async function(pols) {
-    const N = pols.SEL_BYTE2_BIT19.length;
+    const N = pols.SEL_BYTE2_BIT21.length;
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
@@ -48,14 +48,14 @@ function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
 
 function buildByte2Bits16(pols, N) {
     let p = 0;
-    // when SEL_BYTE2_BIT19 is zero, only values from 0 to (2**16)-1 are included
+    // when SEL_BYTE2_BIT21 is zero, only values from 0 to (2**16)-1 are included
     for (let i = 0; i < 2**16; ++i) {
         pols.SEL_BYTE2_BIT21[p] = 0n;
         pols.BYTE2_BIT21[p] = BigInt(i);
         ++p;
     }
 
-    // when SEL_BYTE2_BIT19 is one, only values from 0 to (2**19)-1 are included
+    // when SEL_BYTE2_BIT21 is one, only values from 0 to (2**21)-1 are included
     for (let i = 0; i < 2**21; ++i) {
         pols.SEL_BYTE2_BIT21[p] = 1n;
         pols.BYTE2_BIT21[p] = BigInt(i);
