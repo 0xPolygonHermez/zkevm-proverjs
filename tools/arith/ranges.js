@@ -1,16 +1,6 @@
 const path = require('path');
+const pilTools = require(__dirname + '/pilTools');
 const arithEqPath = path.join(__dirname, '/../../src/sm/sm_arith/');
-const arithEq0 = require(arithEqPath + 'sm_arith_eq0.js');
-const arithEq1 = require(arithEqPath + 'sm_arith_eq1.js');
-const arithEq2 = require(arithEqPath + 'sm_arith_eq2.js');
-const arithEq3 = require(arithEqPath + 'sm_arith_eq3.js');
-const arithEq4 = require(arithEqPath + 'sm_arith_eq4.js');
-const arithEq5 = require(arithEqPath + 'sm_arith_eq5.js');
-const arithEq6 = require(arithEqPath + 'sm_arith_eq6.js');
-const arithEq7 = require(arithEqPath + 'sm_arith_eq7.js');
-const arithEq8 = require(arithEqPath + 'sm_arith_eq8.js');
-const arithEq9 = require(arithEqPath + 'sm_arith_eq9.js');
-const arithEq10 = require(arithEqPath + 'sm_arith_eq10.js');
 const F1Field = require("ffjavascript").F1Field;
 
 const max256bits = (2n ** 256n)-1n;
@@ -23,24 +13,12 @@ const limits = {
     x3: [0n, max256bits],
     y3: [0n, max256bits],
     s: [0n, max256bits],
-    q: [0n,  (2n ** 259n)-1n],
-    carry: [-(2n ** 22n), 0n, (2n ** 22n)-1n]
+    q0: [0n,  (2n ** 261n)-1n],
+    q1: [0n,  (2n ** 261n)-1n],
+    q2: [0n,  (2n ** 261n)-1n],
+    carry: [-(2n ** 22n)+1n, (2n ** 22n)-1n]
 }
-const qs = ['q0', 'q0', 'q0', 'q1', 'q2', 'q1', 'q2', 'q1', 'q2', 'q1', 'q2'];
-const eqCalculates = [
-    arithEq0.calculate,
-    arithEq1.calculate,
-    arithEq2.calculate,
-    arithEq3.calculate,
-    arithEq4.calculate,
-    arithEq5.calculate,
-    arithEq6.calculate,
-    arithEq7.calculate,
-    arithEq8.calculate,
-    arithEq9.calculate,
-    arithEq10.calculate,
-];
-
+const qs = ['q0', 'q1', 'q2'];
 
 function log2 (value)
 {
@@ -53,290 +31,279 @@ function log2 (value)
     }
     return bits;
 }
-/*
- M = 2**256-1
- MC = max-carry
 
- M2+M = (0xFFFF..FF000...000) 128 bits
+function index2aindex (index, lengths) {
+    let res = lengths.map(x => 0);
+    let ires = 0;
+    while (index != 0) {
+        if (ires >= lengths.length) {
+            return false;
+        }
+        res[ires] = index % lengths[ires];
+        index = Math.floor(index / lengths[ires]);
+        ++ires;
+    }
+    return res;
+}
 
+function valueToChunks(value, chunks = 16, chunkSize = 2n**16n) {
+    let res = new Array(chunks).fill(0n);
+    let ires = 0;
+    chunkSize = BigInt(chunkSize);
+    while (value > 0) {
+        if (ires >= chunks.length) {
+            throw new Error(`invalid value ${value} on ${ires}th chunk`);
+        }
+        res[ires] = value % chunkSize;
+        value = value / chunkSize;
+        ++ires;
+    }
+    return res;
+}
 
- eq1: s * x2 - s * x1 - y2 + y1
-    max = M*M-0-0+M+MC = M2+M+MC
+function evaluateProdSums(prods, sums, values) {
+    let res = 0n;
 
-    (M2+M)/P = Q = 0x100000000000000000000000000000000000000000000000000000001000003d0 => 257 bits (without sign, without carry)
-            MC < P => Q <= 0x100000000000000000000000000000000000000000000000000000001000003d1 => 257 bits
-            SIGN_OFFSET = (2**258) => 2*258
+    for (const prod of prods) {
+        const term1 = prod[0];
+        const term2 = prod[1];
+        const negative = (prod[2] ?? '') === '-';
+        const value1 = values[term1];
+        const value2 = values[term2];
+        // console.log([term1, term2, value1, value2, values]);
+        if (negative) res = res - (value1 * value2);
+        else res = res + (value1 * value2);
+    }
+    for (const sum of sums) {
+        const negative = sum.at(0) === '-';
+        const _sum = negative ? sum.slice(1):sum;
+        const value1 = '0123456789'.includes(_sum.at(0)) ? BigInt(_sum):values[_sum];
+        if (negative) res = res - value1;
+        else res = res + value1;
+    }
+    return res;
+}
 
- eq2 = s * 2n * y1 - 3n * x1 * x1;
-    max = M*M*2 = M2*2+MC
-    min = M*M*3 = M2*3+MC
-
-    (M*M*3)/P = Q = 0x30000000000000000000000000000000000000000000000000000000300000b6d => 258 bits (without sign, without carry)
-        MC < P => Q <= 0x30000000000000000000000000000000000000000000000000000000300000b6e => 258 bits
-        SIGN_OFFSET = (2**258) => 2*259
-
- eq3 = s * s - x1 - x2 - x3;
-    max = M*M-0-0-0 = M*M+MC (as eq1)
-    min = 0*0-M-M-M = 3*M + MC (very small)
-
- eq4 = s * x1 - s * x3 - y1 - y3;
-    max = M*M-0-0-0 = M*M+MC (as eq1)
-    min = 0*0-M*M-M-M = M*M+2M+MC (as positive eq2)
-
-CONCLUSION
-
-            q2 = -(pq2/pFr);
-
-            if ((pq2 + pFr*q2) != 0n) {
-                console.log('PROBLEM q2!!!');
-                // EXIT_HERE;
-            }
-            q2 += 2n ** 259n;
-*/
-
-
-
-function calculateLimits(limits)
+function calculateLimits(limits, qs)
 {
-    const keys = Object.keys(limits);
-    let maxValues = [], minValues = [];
-    let maxValue = 0n;
-    let minValue = 2n ** 2048n;
-    let maxTotalValue = 0n;
-    let minTotalValue = 2n ** 2048n;
+    const equations = pilTools.extractPilEquations(__dirname+'/arith.ejs.pil');
+    const cbits = limits['carry'].map(x => log2(x));
 
-    for (let eqIndex = 0; eqIndex < 4; ++eqIndex) {
-        maxValues.push([]);
-        minValues.push([]);
-        for (let step = 0; step < 32; ++step) {
-            maxValues[eqIndex].push(0n);
-            minValues[eqIndex].push(2n ** 2048n);
+    let tdata = [[],[],[],[],[]];
+    for (let eqIndex = 0; eqIndex < equations.length; ++eqIndex) {
+        let eqInfo = equations[eqIndex];
+
+        // load equation JS lib
+        const calculate = require(arithEqPath + `sm_arith_${eqInfo.name}.js`).calculate;
+
+        const [prods, sums] = pilTools.decomposeStrEquation(eqInfo.equation);
+        eqInfo.prods = prods;
+        eqInfo.sums = sums;
+
+        // extract terms, remove signs, numbers, constants and repeated terms
+        eqInfo.terms = [...(prods.reduce((values, value) => [...values,...value], [])),...sums]
+                .map(x => x.startsWith('-') ? x.slice(1):x)
+                .filter((x,index,_x) => x !== '' && typeof eqInfo.constants[x] === 'undefined' && +x !== +x &&  _x.indexOf(x) === index);
+
+        let lengths = eqInfo.terms.map(x => limits[x].length);
+        let stats = [];
+        let terms = eqInfo.terms.slice();
+
+        // obtain information about q term
+        let qterm = terms.find(x => qs.includes(x)) ?? false;
+        let qsign = false;
+        if (qterm !== false) {
+            for (const prod of prods) {
+                if (prod.includes(qterm)) {
+                    qsign = (prod.slice(-1)[0].slice(0,1) === '-') ? '-':'+';
+                    break;
+                }
+            }
+            if (qsign === false) {
+                if (sums.includes(qterm)) {
+                    qsign = '+';
+                } else if (sums.includes('-'+qterm)) {
+                    qsign = '-';
+                }
+            }
+            eqInfo.q = qsign+qterm;
+            eqInfo.qterm = qterm;
+            eqInfo.qsign = qsign;
         }
-    }
+        for (let step = 0; step < 6; ++step) {
+            // step 0 - natural limits
+            // step 1 - map carry limits
+            // step 2 - calculate q last chunk
+            // step 3 - calculate q last chunk (assume inputs values alias free)
+            // step 4 - calculate offset
+            // step 5 - calculate q last chunk with calculated offset
+            
+            let sts = step < 2 ?  { carry: {min: false, max: false}, eq: {min: false, max: false}, step } :
+                                  { eqtot: {min: false, max: false, _min: false, _max: false}, q: {min: false, max: false, bits: false} };
+            if (step > 1 && qterm == false) break;
+            stats.push(sts);
 
-    const maskLimit = 2 ** keys.length;
-    for (let mask = 0; mask < maskLimit; ++mask) {
-        for (let eqIndex = 0; eqIndex < 4; ++eqIndex) {
-            let pols = [];
-            let _mask = mask;
-            let carry = 0n;
-            let values = [];
-            for (let i = 0; i < keys.length; ++i) {
-                key = keys[i];
-                value = limits[key][_mask & 0x01 ? 1:0];
-                if (key !== 'q' && key !== 'carry') {
-                    values[key] = value;
-                }
-                if (key == 'q') key = qs[eqIndex];
-                pols[key] = [];
-                if (key == 'carry') {
-                    carry = value;
-                }
-                else {
-                    for (let part = 0; part < 16; ++part) {
-                        pols[key].push([value & (part < 15 ? 0xFFFFn:0xFFFFFFFFn)]);
-                        value = value >> 16n;
+            let index = 0;
+            let res;
+            if (step < 2) {
+                while ((res = index2aindex(index, lengths)) !== false) {      
+                    // load on pols chunk values specified in res (array of limits index)          
+                    let pols = terms.reduce((_pols, term, index) =>  { _pols[term] = valueToChunks(limits[term][res[index]]).map(x => [x]); return _pols;}, {});
+                    let carry = 0n;
+                    for (let clk = 0; clk < 32; ++clk) {               
+                        let eqv = calculate(pols, clk, 0);
+                        if (step === 1) {
+                            // assume worse case of carry
+                            carry = eqv > 0n ? limits.carry[1] : limits.carry[0];
+                        }
+                        eqv += carry;
+                        carry = eqv / 2n**16n;
+                        if (sts.eq.min === false || sts.eq.min > eqv) sts.eq.min = eqv;
+                        if (sts.eq.max === false || sts.eq.max < eqv) sts.eq.max = eqv;
+                        if (sts.carry.min === false || sts.carry.min > carry) sts.carry.min = carry;
+                        if (sts.carry.max === false || sts.carry.max < carry) sts.carry.max = carry;
                     }
+                    ++index;
+                } 
+            } else {
+                let plimit = step !== 3 || typeof eqInfo.constants.p === 'undefined' ? false : (eqInfo.constants.p - 1n);
+                while ((res = index2aindex(index, lengths)) !== false) {                
+                    // load on pols values specified in res (array of limits index)          
+                    let values = terms.reduce((_values, term, index) =>  { 
+                            const limit = limits[term][res[index]]; 
+                            _values[term] = (plimit === false || plimit > limit)? limit:plimit; 
+                            return _values;
+                        }, {});
+
+                    // setting qterm to zero.
+                    values[qterm] = 0n;
+
+                    // adding constants as variables
+                    let valuesAndConstants = {...values, ...eqInfo.constants};
+                    if (step === 4) {
+                        valuesAndConstants.p = 0n;
+                        valuesAndConstants.offset = 0n;
+                    }
+                    if (step === 5) {
+                        valuesAndConstants.offset = eqInfo.offset < 0n ? -eqInfo.offset : eqInfo.offset;
+                    }
+                    const eqtot = evaluateProdSums(step === 5 ? eqInfo._prods : eqInfo.prods, eqInfo.sums, valuesAndConstants);
+
+                    if (sts.eqtot.min === false || sts.eqtot.min > eqtot) { sts.eqtot.min = eqtot; sts.eqtot._min = res; sts.eqtot.minbits = log2(sts.eqtot.min); }
+                    if (sts.eqtot.max === false || sts.eqtot.max < eqtot) { sts.eqtot.max = eqtot; sts.eqtot._max = res; sts.eqtot.maxbits = log2(sts.eqtot.max); }
+                    ++index;
                 }
-                _mask = _mask >> 1;
-            }
-            let result = 0n;
-            switch (eqIndex) {
-                case 1: result = values.s * values.x2 - values.s * values.x1 - values.y2 + values.y1; break;
-                case 2: result = 2n * values.s * values.y1 - 3n * values.x1 * values.x1; break;
-                case 3: result = values.s * values.s - values.x1 - values.x2 - values.x3; break;
-                case 4: result = values.s * values.x1 - values.s * values.x3 - values.y1 - values.y3; break;
-                default: result = 0n;
-            }
-            if (result > maxTotalValue) maxTotalValue = result;
-            if (result < minTotalValue) minTotalValue = result;
-            for (let step = 0; step < 32; ++step) {
-                let result = eqCalculates[eqIndex](pols, step, 0) + carry - (2n ** 22n);
-                if (result > maxValues[eqIndex][step]) maxValues[eqIndex][step] = result;
-                if (result < minValues[eqIndex][step]) minValues[eqIndex][step] = result;
-                if (result > maxValue) maxValue = result;
-                if (result < minValue) minValue = result;
+                if (step === 4) {
+                    sts.q.max = sts.eqtot.max / eqInfo.constants.p;                
+                    sts.q.min = sts.eqtot.min / eqInfo.constants.p;
+                    sts.q.maxSign = sts.q.max < 0n ? '-':'+';
+                    sts.q.minSign = sts.q.min < 0n ? '-':'+';
+                    const maxabs = sts.q.max < 0n ? -sts.q.max:sts.q.max;
+                    const minabs = sts.q.min < 0n ? -sts.q.min:sts.q.min;
+                    if (sts.q.maxSign === sts.q.minSign) {
+                        sts.offset = 0n;
+                        sts.offsetLabel = '0';
+                        sts.offsetSign = sts.q.maxSign;
+                    } else if (maxabs > minabs) {
+                        sts.offset = -sts.q.max;
+                        sts.offsetSign = sts.offset < 0n ? '-':'+';
+                    } else {
+                        sts.offset = -sts.q.min;
+                        sts.offsetSign = sts.offset < 0n ? '-':'+';
+                    }
+                    eqInfo.offset = sts.offset;
+                    let _prods = [];
+                    if (sts.offset < 0n) {
+                        _prods = [['p', 'offset', '-'], ['p', qterm]];
+                    }
+                    else {
+                        _prods = [['p', 'offset'], ['p', qterm, '-']];
+                    }
+                    eqInfo._prods = [...eqInfo.prods.filter(x => x.includes('offset') === false && x.includes(qterm) === false),..._prods];
+                } else {
+                    sts.q.max = sts.eqtot.max / eqInfo.constants.p;                
+                    sts.q.min = sts.eqtot.min / eqInfo.constants.p;
+                    sts.q.bits = Math.max(log2(sts.q.max), log2(sts.q.min));
+                    sts.q15bits = Math.max(sts.q.bits-240, 16);
+                }
             }
         }
+        tdata[0].push([eqInfo.name, eqInfo.equation, eqInfo.q, 
+                       eqInfo.constants.offset ? '0x' + eqInfo.constants.offset.toString(16):'',
+                       eqInfo.constants.offset ? log2(eqInfo.constants.offset):'',
+                       eqInfo.constants.p ? '0x' + eqInfo.constants.p.toString(16):'',
+                       eqInfo.constants.p ? log2(eqInfo.constants.p):'']);
+
+        tdata[1].push([eqInfo.name,
+                       stats[0].eq.min, log2, stats[0].eq.max, log2, 
+                       stats[0].carry.min, log2, stats[0].carry.max, log2,
+                       stats[1].eq.min, log2, stats[1].eq.max, log2]);
+
+        
+        if (stats[2]) {
+            tdata[2].push([eqInfo.name,
+                           log2(stats[2].eqtot.min), log2(stats[2].eqtot.max),
+                           log2(stats[2].q.min), log2(stats[2].q.max), stats[2].q15bits,
+                           log2(stats[3].eqtot.min), log2(stats[3].eqtot.max),
+                           log2(stats[3].q.min), log2(stats[3].q.max), stats[3].q15bits]);
+        }
+        if (stats[4]) {
+            tdata[3].push([eqInfo.name,
+                           stats[4].q.minSign+stats[4].q.maxSign, 
+                           stats[4].offsetSign+'0x'+(stats[4].offset < 0n ? -stats[4].offset:stats[4].offset).toString(16), 
+                           log2(stats[4].offset),
+                           log2(stats[5].eqtot.min), log2(stats[5].eqtot.max),
+                           log2(stats[5].q.min), log2(stats[5].q.max), stats[5].q15bits]);
+        }
+                                 
     }
-    const p = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
-    const minQ = (minTotalValue / p) +  (minTotalValue % p ? 1n:0n);
-    const maxQ = (maxTotalValue / p) +  (maxTotalValue % p ? 1n:0n);
-    console.log(minValues);
-    console.log(maxValues);
-    let bits = log2(minValue);
-    console.log(['minValue:', minValue, 'bits:', bits, 'bits-carry', bits-16]);
-    bits = log2(maxValue);
-    console.log(['maxValue:', maxValue, 'bits:', bits, 'bits-carry', bits-16]);
-    bits = log2(minTotalValue);
-    console.log(['minTotalValue:', minTotalValue, 'bits:', bits]);
-    bits = log2(maxTotalValue);
-    console.log(['maxTotalValue:', maxTotalValue, 'bits:', bits]);
-    bits = log2(minQ);
-    console.log(['minQ:', minQ, 'bits:', bits]);
-    bits = log2(maxQ);
-    console.log(['maxQ:', maxQ, 'bits:', bits]);
-    const qOffset = 0x40000000000000000000000000000000000000000000000000000000000000000n;
-    bits = log2(qOffset);
-    console.log(['qOffset:', qOffset, 'bits:', bits]);
-    bits = log2(minQ+qOffset);
-    console.log(['minQ+qOffset:', minQ+qOffset, 'bits:', bits]);
-    bits = log2(maxQ+qOffset);
-    console.log(['maxQ+qOffset:', maxQ+qOffset, 'bits:', bits, 'q15-bits:', bits-(256-16)]);
-    return 0;
+    const titles = ['id', 'equation', 'q', 'eq.min','b','eq.max','b','carry.min','b','carry.max','b',`eq.min+c${cbits[0]}`,'b',`eq.max+c${cbits[1]}`,'b',
+                    'tmin.b','tmax.b','qmin.b','qmax.b','q15.b', 'tpmin.b','tpmax.b','qpmin.b','qpmax.b','qp15.b',];
+    console.log("\n\x1b[36m======================== General Information =========================\x1b[0m\n");
+    drawTable(tdata[0], ['id', 'equation', 'q', 'offset', '#b', 'prime', '#b'], '┃││┃┆┃┆┃');
+    console.log("\n\x1b[36m================== Equation Chunk and Carry limits ===================\x1b[0m\n");
+    drawTable(tdata[1], ['id', 'eq.min','#b','eq.max','#b','carry.min','#b','carry.max','#b',`eq.min+c${cbits[0]}`,'b',`eq.max+c${cbits[1]}`,'b'], '┃┃┆│┆┃┆│┆┃┆│┆┃');
+    console.log("\n\x1b[36m=============== Q analysis with full limits and prime ================\x1b[0m\n");
+    drawTable(tdata[2], ['id', 'tmin.b','tmax.b','qmin.b','qmax.b','q15.b', 'tpmin.b','tpmax.b','qpmin.b','qpmax.b','qp15.b'], '┃┃┆│┆┆┃┆│┆┆┃');
+    console.log("\n\x1b[36m========================= Offset calculation =========================\x1b[0m\n");
+    drawTable(tdata[3], ['id', 'mm','offset','b', 'tmin.b*','tmax.b*','qmin.b*','qmax.b*','q15.b*'], '┃┃│┆┃│┃││┃');
 }
 
-module.exports.execute = async function (pols, polsDef, input) {
-    // Get N from definitions
-    // const N = Number(polsDef.freeInA.polDeg);
-    const N = 2 ** 16;
 
-    let pFr = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
-    const Fr = new F1Field(pFr);
-
-    // Split the input in little-endian bytes
-    prepareInput256bits(input, N);
-    let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate];
-
-    // Initialization
-    for (let i = 0; i < N; i++) {
-        for (let j = 0; j < 16; j++) {
-            pols.x1[j].push(0n);
-            pols.y1[j].push(0n);
-            pols.x2[j].push(0n);
-            pols.y2[j].push(0n);
-            pols.x3[j].push(0n);
-            pols.y3[j].push(0n);
-            pols.q0[j].push(0n);
-            pols.q1[j].push(0n);
-            pols.q2[j].push(0n);
-            pols.s[j].push(0n);
-            if (j < pols.carry.length) pols.carry[j].push(0n);
-            if (j < pols.sel_eq.length) pols.sel_eq[j].push(0n);
-        }
-    }
-    let s, q0, q1, q2;
-    for (let i = 0; i < input.length; i++) {
-        // TODO: if not have x1, need to componse it
-
-        let x1 = BigInt(input[i]["x1"]);
-        let y1 = BigInt(input[i]["y1"]);
-        let x2 = BigInt(input[i]["x2"]);
-        let y2 = BigInt(input[i]["y2"]);
-        let x3 = BigInt(input[i]["x3"]);
-        let y3 = BigInt(input[i]["y3"]);
-
-        if (input[i].sel_eq1) {
-            s = Fr.div(Fr.sub(y2, y1), Fr.sub(x2, x1));
-            let pq0 = s * x2 - s * x1 - y2 + y1;
-            q0 = -(pq0/pFr);
-            if ((pq0 + pFr*q0) != 0n) {
-                console.log('PROBLEM q0 2!!!');
-                // EXIT_HERE;
+function drawTable(rows, titles, separators) {
+    let cols = titles.length;
+    let widths = new Array(cols).fill(0);
+    let pcol = false;
+    let mins = new Array(cols).fill(false);
+    let maxs = new Array(cols).fill(false);
+    let _rows = rows.map(row => row.map(col => pcol = (typeof col === 'function') ? col(pcol):col));
+    _rows.forEach(row => row.forEach((value, index) => {
+            if (typeof value === 'number' || typeof value === 'bigint') {
+                if (mins[index] === false || mins[index] > value) mins[index] = value;
+                if (maxs[index] === false || maxs[index] < value) maxs[index] = value;
             }
-            q0 += 2n ** 259n;
-        }
-        else if (input[i].sel_eq2) {
-            s = Fr.div(Fr.mul(3n, Fr.mul(x1, x1)), Fr.add(y1, y1));
-            let pq0 = s * 2n * y1 - 3n * x1 * x1;
-            q0 = -(pq0/pFr);
-            if ((pq0 + pFr*q0) != 0n) {
-                console.log('PROBLEM q0 2!!!');
-                // EXIT_HERE;
+            const len = (''+(value ?? '')).length;
+            if (Math.abs(widths[index]) < len) {
+                widths[index] = (typeof(value) === 'string' && value.startsWith('0x') && value.startsWith('-0x') && value.startsWith('+0x'))  ? len : -len;
             }
-            q0 += 2n ** 259n;
-        }
-        else {
-            s = 0n;
-            q0 = 0n;
-        }
-
-        if (input[i].sel_eq3) {
-            let pq1 = s * s - x1 - x2 - x3;
-            q1 = pq1/pFr;
-            if ((pq1 - pFr*q1) != 0n) {
-                console.log('PROBLEM q1!!!');
-                // EXIT_HERE;
+        }));
+    titles.forEach((value, index) => {if (Math.abs(widths[index]) < value.length) widths[index] = widths[index] < 0 ? -value.length : value.length;});
+    const rseps = titles.map((x,index) => ''.padStart(Math.abs(widths[index]),'─'));
+    for (const row of [titles, rseps,..._rows]) {
+        let line = '';
+        for (let index = 0; index < cols; ++index) {
+            let col = ''+(row[index] ?? '');
+            const width = widths[index];
+            col = (width > 0) ? col.padEnd(width) : col.padStart(Math.abs(width));
+            if (mins[index] !== false) {
+                if (maxs[index] === row[index]) col = '\x1B[32m'+col+'\x1B[0m';
+                else if (mins[index] === row[index]) col = '\x1B[34m'+col+'\x1B[0m';
             }
-            let pq2 = s * x1 - s * x3 - y1 - y3;
-            q2 = -(pq2/pFr);
-            if ((pq2 + pFr*q2) != 0n) {
-                console.log('PROBLEM q2!!!');
-                // EXIT_HERE;
-            }
-            q2 += 2n ** 259n;
-            console.log([x1,y1,x2,y2,s,q0.toString(16),q1.toString(16),q2.toString(16), pq2]);
+            line += (separators[index]??'|')+''+col;
         }
-        else {
-            q1 = 0n;
-            q2 = 0n;
-        }
-        input[i]['_s'] = to16bitsRegisters(s);
-        input[i]['_q0'] = to16bitsRegisters(q0);
-        input[i]['_q1'] = to16bitsRegisters(q1);
-        input[i]['_q2'] = to16bitsRegisters(q2);
-    }
-
-    for (let i = 0; i < input.length; i++) {
-        let offset = i * 32;
-        for (let step = 0; step < 32; ++step) {
-            for (let j = 0; j < 16; j++) {
-                pols.x1[j][offset + step] = BigInt(input[i]["_x1"][j])
-                pols.y1[j][offset + step] = BigInt(input[i]["_y1"][j])
-                pols.x2[j][offset + step] = BigInt(input[i]["_x2"][j])
-                pols.y2[j][offset + step] = BigInt(input[i]["_y2"][j])
-                pols.x3[j][offset + step] = BigInt(input[i]["_x3"][j])
-                pols.y3[j][offset + step] = BigInt(input[i]["_y3"][j])
-                pols.s[j][offset + step] = BigInt(input[i]["_s"][j])
-                pols.q0[j][offset + step] = BigInt(input[i]["_q0"][j])
-                pols.q1[j][offset + step] = BigInt(input[i]["_q1"][j])
-                pols.q2[j][offset + step] = BigInt(input[i]["_q2"][j])
-            }
-            pols.sel_eq[0][offset + step] = BigInt(input[i].sel_eq0);
-            pols.sel_eq[1][offset + step] = BigInt(input[i].sel_eq1);
-            pols.sel_eq[2][offset + step] = BigInt(input[i].sel_eq2);
-            pols.sel_eq[3][offset + step] = BigInt(input[i].sel_eq3);
-        }
-        let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2];
-        let eq = [0n, 0n , 0n, 0n, 0n]
-
-        let eqIndexes = [];
-        if (pols.sel_eq[0][offset]) eqIndexes.push(0);
-        if (pols.sel_eq[1][offset]) eqIndexes.push(1);
-        if (pols.sel_eq[2][offset]) eqIndexes.push(2);
-        if (pols.sel_eq[3][offset]) eqIndexes = eqIndexes.concat([3, 4]);
-
-        for (let step = 0; step < 32; ++step) {
-            eqIndexes.forEach((eqIndex) => {
-                let carryIndex = eqIndexToCarryIndex[eqIndex];
-                eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
-                pols.carry[carryIndex][offset + step] = carry[carryIndex];
-                carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
-            });
-        }
+        line += (separators[cols]??'|');
+        console.log(line);
     }
 }
 
-function prepareInput256bits(input, N) {
-    for (let i = 0; i < input.length; i++) {
-        for (var key of Object.keys(input[i])) {
-            input[i][`_${key}`] = to16bitsRegisters(input[i][key]);
-        }
-    }
-}
-
-function to16bitsRegisters(value) {
-    if (typeof value !== 'bigint') {
-        value = BigInt(value);
-    }
-
-    let parts = [];
-    for (let part = 0; part < 16; ++part) {
-        parts.push(value & (part < 15 ? 0xFFFFn:0xFFFFFn));
-        value = value >> 16n;
-    }
-    return parts;
-}
-
-calculateLimits(limits);
+calculateLimits(limits, qs);
