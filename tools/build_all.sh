@@ -19,7 +19,11 @@ while [ $# -gt 0 ]; do
     [ ! -z "$PREV_STEP" ] && [ "$PREV_STEP" = "$LAST_STEP" ] && SKIP=0
     [ $SKIP -eq 1 ] && continue
     mkdir -p $BDIR/steps
-    (circom --version && npm ls) | tee $BDIR/dependencies.txt > $BDIR/steps/$STEP
+    COMMIT=`git log --pretty=format:'%H' -n 1`
+    CIRCOM_BIN=`whereis -b circom | tr ' ' "\n" | tail -1`
+    CIRCOM_HASH=`sha256sum $CIRCOM_BIN|cut -d' ' -f1`
+    CIRCOM_VERSION=`circom --version`
+    (echo "COMMIT: $COMMIT" && echo "$CIRCOM_VERSION ($CIRCOM_HASH)" && npm ls) | tee $BDIR/dependencies.txt > $BDIR/steps/$STEP
     echo "\e[35;1m####### $STEP #######\e[0m"
     START_STEP_TIME=$(date +%s)
     npm run $STEP

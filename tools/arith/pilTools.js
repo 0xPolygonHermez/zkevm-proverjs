@@ -446,4 +446,6 @@ module.exports = {
     expandTerms: expandTerms,
     generatePilFromTemplate: generatePilFromTemplate,
     generatePilHelpers: generatePilHelpers,
+    decomposeStrEquation,
+    extractPilEquations
 };
