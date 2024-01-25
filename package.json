@@ -120,9 +120,9 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#feature/new-l2hash",
+    "@0xpolygonhermez/zkevm-commonjs": "https://github.com/0xpolygonhermez/zkevm-commonjs.git#v4.0.0-rc.4-fork.7",
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#v2.0.0-rc.2-fork.7",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom-internal.git#feature/new-l2hash",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom-internal.git#v4.0.0-rc.5-fork.7",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom-internal.git#v4.0.0-rc.2-fork.7",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
