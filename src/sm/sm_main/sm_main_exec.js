@@ -1460,7 +1460,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const lm = fe2n(Fr, op0, ctx);
             if (lm != lh) throw new Error(`HashPLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
             if (typeof ctx.hashP[addr].digest === "undefined") {
-                // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
                 ctx.hashP[addr].digestCalled = false;
                 await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);

@@ -1,6 +1,6 @@
 {
-  "oldStateRoot": "0xd68d8fc0ff993112065c2e7093b5bcf6fb02c5228ab4a3b939c3f207b15c1ffc",
-  "newStateRoot": "0x4f46c5a7d73f0e8e74ddd7267f16383628a70f557f6bf7a93be94e768b735e92",
+  "oldStateRoot": "0xc136050b509e5575c021810b1c7c8b19254be115805f34ef77cc6bc401bf007f",
+  "newStateRoot": "0x00fe32f4bd75e8bd9878987d1fc0651c5f01a7251aec4d620ea7663083c51038",
   "oldAccInputHash": "0xe90aebab9b50f404ab1b422b3577c9bd8c1261ea3483eb1a3c5283049c0ba3bf",
   "newAccInputHash": "0xff32f9fc37d2cffdc3ee7acb4cc1592b9e32cb6189871d37f6765676a47e4a2e",
   "newLocalExitRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -17,11 +17,11 @@
   "contractsBytecode": {},
   "l1InfoTree": {},
   "db": {
-    "0xd68d8fc0ff993112065c2e7093b5bcf6fb02c5228ab4a3b939c3f207b15c1ffc": [
-      "89a4e8f8b75fa007",
-      "fef4400fc3e6aca7",
-      "e028fa0d6884567a",
-      "e87b45e1d526062a",
+    "0xc136050b509e5575c021810b1c7c8b19254be115805f34ef77cc6bc401bf007f": [
+      "7ca831e75a979ff8",
+      "6a6eba52731f7763",
+      "e2cf98dcb2a7382e",
+      "7f278d9c750d2709",
       "454412d46c9025e7",
       "9c3307f935b813ba",
       "b46dca61198096e9",
@@ -31,11 +31,11 @@
       "0000000000000000",
       "0000000000000000"
     ],
-    "0xe87b45e1d526062ae028fa0d6884567afef4400fc3e6aca789a4e8f8b75fa007": [
-      "caa58a104eacd406",
-      "43e9a872d0c21ca8",
-      "db862193f4c2e27a",
-      "1142678f25e47cee",
+    "0x7f278d9c750d2709e2cf98dcb2a7382e6a6eba52731f77637ca831e75a979ff8": [
+      "4c71876fbff84d23",
+      "d95cb6ec4520c40a",
+      "0779cb1dbaabf8c1",
+      "32d1504e39c2e788",
       "d01578686ecfd5fd",
       "9859011cad5dba7b",
       "65a85905a5c95557",
@@ -45,29 +45,29 @@
       "0000000000000000",
       "0000000000000000"
     ],
-    "0x1142678f25e47ceedb862193f4c2e27a43e9a872d0c21ca8caa58a104eacd406": [
+    "0x32d1504e39c2e7880779cb1dbaabf8c1d95cb6ec4520c40a4c71876fbff84d23": [
       "40ec72fd7db6a1e5",
       "6bba532b78666608",
       "d16fececc9dbf194",
       "62dc6ae3ffcc2dbc",
-      "76f3f612bbeba56b",
-      "74c0a232c2d401ce",
-      "c570653dfee26fb6",
-      "9439018b1dd7fe2f",
+      "d918e7da65af25e1",
+      "0150dcddcc778da7",
+      "75d02f9c4ba212ed",
+      "79534ffd8de71459",
       "0000000000000001",
       "0000000000000000",
       "0000000000000000",
       "0000000000000000"
     ],
-    "0x9439018b1dd7fe2fc570653dfee26fb674c0a232c2d401ce76f3f612bbeba56b": [
-      "00000000812f325f",
-      "00000000af639bc7",
-      "000000009a831e9c",
-      "000000002305388d",
-      "00000000181b3571",
-      "000000006acaeb54",
-      "000000000214e3aa",
-      "00000000b3345239"
+    "0x79534ffd8de7145975d02f9c4ba212ed0150dcddcc778da7d918e7da65af25e1": [
+      "00000000a52d655b",
+      "000000009d7c8626",
+      "0000000088ed8b8e",
+      "00000000e5e990ae",
+      "0000000085321a9c",
+      "000000007d91ee61",
+      "00000000dfedc359",
+      "00000000f756aec1"
     ],
     "0x375197b32e014d8365a85905a5c955579859011cad5dba7bd01578686ecfd5fd": [
       "080ac86ff8076620",
