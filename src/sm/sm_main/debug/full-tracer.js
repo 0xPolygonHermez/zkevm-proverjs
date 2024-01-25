@@ -751,7 +751,9 @@ class FullTracer {
                 prevTraceCall.gas_cost = String(Number(prevTraceCall.gas) - Number(gasCTX));
             } else if (prevTraceCall.depth !== singleInfo.depth) {
                 // Means opcode failed with error (ex: oog, invalidStaticTx...)
-                prevTraceCall.gas_cost = prevTraceCall.gas;
+                if (prevTraceCall.error !== '') {
+                    prevTraceCall.gas_cost = prevTraceCall.gas;
+                }
             } else {
                 prevTraceCall.gas_cost = String(gasCost);
             }
