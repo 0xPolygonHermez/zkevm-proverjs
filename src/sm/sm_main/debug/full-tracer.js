@@ -252,7 +252,7 @@ class FullTracer {
         this.currentBlock = {
             block_number: blockNumber,
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
-            gas_limit: Constants.BLOCK_GAS_LIMIT,
+            gas_limit: `0x${Constants.BLOCK_GAS_LIMIT.toString(16)}`,
             responses: [],
             error: '',
         };
@@ -953,6 +953,7 @@ class FullTracer {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }
+
         fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(this.finalTrace, null, 2));
     }
 
