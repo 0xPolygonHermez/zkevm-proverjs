@@ -48,6 +48,7 @@ async function checkBlockInfoRootsFromTrace(testName) {
                 gasPrice: Number(context.gas_price).toString(16),
                 data: context.data,
                 from: context.from,
+                chainID: context.chain_id === 0 ? undefined : context.chain_id,
             });
             if (l2TxHash !== response.tx_hash_l2) {
                 throw new Error(`L2 tx hash mismatch at block ${i} tx ${j}`);
@@ -116,6 +117,7 @@ async function checkBlockInfoRootsFromProverTrace(joinedTraces) {
                 gasPrice: Number(context.gas_price).toString(16),
                 data: context.data.toString('hex'),
                 from: context.from,
+                chainID: context.chain_id === 0 ? undefined : context.chain_id,
             });
             if (l2TxHash !== `0x${response.tx_hash_l2.toString('hex')}`) {
                 throw new Error(`L2 tx hash mismatch at block ${i} tx ${j}`);

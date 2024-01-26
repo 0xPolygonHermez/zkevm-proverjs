@@ -26,13 +26,13 @@ const config = require('./config.json');
 
 const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
-const ethereumTestsPath = '../../../zkevm-testvectors-internal/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
-const stTestsPath = '../../../zkevm-testvectors-internal/tools-inputs/data/';
+const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
+const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
-const noExec = require('../../../zkevm-testvectors-internal/tools-inputs/tools-eth/no-exec.json');
+const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
 const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
 const regen = false;
@@ -237,7 +237,7 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 j++;
             }
         } else {
-            const t = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors-internal/tools-inputs/data/${folderName}/${file}`)));
+            const t = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/data/${folderName}/${file}`)));
             if (Array.isArray(t)) {
                 t.map((v) => {
                     const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
@@ -809,7 +809,7 @@ async function runTxsFromEthTest(test) {
     // In case test index not specified, only tx 0 is tested
     const txsHashes = [];
     const txTest = test.blocks[0].transactions[0];
-    const jsonFile = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors-internal/tools-inputs/tools-eth/tests/GeneralStateTests/${test.folderName}/${test.testName}.json`)))[test.testName];
+    const jsonFile = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/tools-eth/tests/GeneralStateTests/${test.folderName}/${test.testName}.json`)))[test.testName];
     const pvtKey = jsonFile.transaction.secretKey;
     const wallet = (new ethers.Wallet(pvtKey)).connect(provider);
     const tx = {
