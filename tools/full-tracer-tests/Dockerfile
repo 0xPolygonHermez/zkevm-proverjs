@@ -1,4 +1,4 @@
-FROM ethereum/client-go:latest
+FROM ethereum/client-go:v1.12.0
 
 COPY node1 /node1
 COPY boot.key /

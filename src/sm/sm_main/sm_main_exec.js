@@ -1,6 +1,7 @@
 const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
+const { createHash } = require('node:crypto');
 
 const {
     scalar2fea,
@@ -16,12 +17,20 @@ const SMT = require("@0xpolygonhermez/zkevm-commonjs").SMT;
 const Database = require("@0xpolygonhermez/zkevm-commonjs").Database;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
 const { byteArray2HexString, hexString2byteArray } = require("@0xpolygonhermez/zkevm-commonjs").utils;
-const { encodedStringToArray, decodeCustomRawTxProverMethod} = require("@0xpolygonhermez/zkevm-commonjs").processorUtils;
+const {
+    encodedStringToArray,
+    decodeCustomRawTxProverMethod,
+    decodeChangeL2BlockTx,
+} = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
+
+const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 
 const FullTracer = require("./debug/full-tracer");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { lstat } = require("fs");
+const MyHelperClass = require("./helpers/helpers");
+const Constants = require('./const-sm-main-exec');
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -36,7 +45,7 @@ let fullTracer;
 let debug;
 let statsTracer;
 let sourceRef;
-let nameRomErrors = [];
+let nameRomErrors;
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
     const required = {
@@ -44,11 +53,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Binary: [],
         PaddingKK: [],
         PaddingPG: [],
+        PaddingSha256: [],
         PoseidonG: [],
         Mem: [],
         MemAlign: [],
         Storage: []
     };
+    nameRomErrors = [];
 
     debug = config && config.debug;
     const flagTracer = config && config.tracer;
@@ -56,6 +67,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
+    let helpers = (config && config.helpers) ? config.helpers : false;
 
     const POSEIDONG_PERMUTATION1_ID = 1;
     const POSEIDONG_PERMUTATION2_ID = 2;
@@ -73,6 +85,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fr = poseidon.F;
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
+
+    let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+    const FpBN254 = new F1Field(pBN254);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -92,22 +107,25 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const smt = new SMT(db, poseidon, Fr);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
-
+    const Fr8zero = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
     const ctx = {
         mem: [],
         hashK: [],
         hashP: [],
+        hashS: [],
         pols: pols,
         input: input,
         vars:[],
         Fr: Fr,
         Fec: Fec,
         Fnec: Fnec,
+        FpBN254,
         sto: input.keys,
         rom: rom,
         outLogs: {},
         N,
-        stepsN
+        stepsN,
+        helpers
     }
 
     if (config.stats) {
@@ -124,8 +142,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             config.debugInfo.inputName,
             smt,
             {
-                verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer
-            }
+                verbose: typeof verboseOptions.fullTracer === 'undefined' ? {} : verboseOptions.fullTracer,
+                skipFirstChangeL2Block: input.skipFirstChangeL2Block,
+                tracerOptions: config.tracerOptions,
+            },
         );
     }
 
@@ -133,7 +153,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         statsTracer = new StatsTracer(config.debugInfo.inputName);
     }
 
-    const iPrint = new Prints(ctx, smt);
+    const iPrint = new Prints(ctx, smt, verboseOptions.externalLogs);
     let fastDebugExit = false;
 
     let pendingCmds = false;
@@ -148,6 +168,38 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
     const checkHashNoDigest = config.checkHashNoDigest ? (config.checkHashNoDigest === "warning" ? WarningCheck:ErrorCheck) : false;
 
+    if(helpers){
+        console.log('USING custom helpers ....');
+        if (!Array.isArray(helpers)) {
+            helpers = [new MyHelperClass()].concat([helpers]);
+        } else {
+            helpers = [new MyHelperClass()].concat(helpers);
+        }
+    } else {
+        helpers = [new MyHelperClass()];
+    }
+
+    for (const helper of helpers) {
+        if (typeof helper.setup !== 'function') {
+            throw new Error('Helpers must be an instance with at least setup method');
+        }
+        helper.setup({
+            evalCommand,
+            safeFea2scalar,
+            scalar2fea,
+            Scalar,
+            fullTracer,
+            nameRomErrors,
+            checkParams,
+            sr8to4,
+            sr4to8
+        });
+        for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(helper))) {
+            if (!method.startsWith('eval_')) continue;
+            // console.log(`  found helper ${method.substring(5)} => ${method}`);
+        }
+    }
+    ctx.helpers = helpers;
     try {
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
@@ -169,6 +221,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.cntArith = pols.cntArith[i];
         ctx.cntBinary = pols.cntBinary[i];
         ctx.cntKeccakF = pols.cntKeccakF[i];
+        ctx.cntSha256F = pols.cntSha256F[i];
         ctx.cntMemAlign = pols.cntMemAlign[i];
         ctx.cntPoseidonG = pols.cntPoseidonG[i];
         ctx.cntPaddingPG = pols.cntPaddingPG[i];
@@ -226,6 +279,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
             }
+        }
+
+        // print external logs
+        if (verboseOptions.enableExternalLogs && verboseOptions.externalLogs) {
+            iPrint.processExternalLogs();
         }
 
 //////////
@@ -413,6 +471,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inCntKeccakF[i] = Fr.zero;
         }
 
+        if (l.inCntSha256F) {
+            op0 = Fr.add(op0, Fr.mul(Fr.e(l.inCntSha256F), Fr.e(ctx.cntSha256F)));
+            pols.inCntSha256F[i] = Fr.e(l.inCntSha256F);
+        } else {
+            pols.inCntSha256F[i] = Fr.zero;
+        }
+
         if (l.inCntPoseidonG) {
             op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntPoseidonG), Fr.e(ctx.cntPoseidonG)));
             pols.inCntPoseidonG[i] = Fr.e(l.inCntPoseidonG);
@@ -500,7 +565,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||  l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest) {
+            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||
+            l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest ||
+            l.hashS || l.hashS1 || l.hashSLen || l.hashSDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -558,7 +625,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 // CALCULATE AND LOAD FREE INPUT
 //////
 
-        if (l.inFREE) {
+        if (l.inFREE || l.inFREE0) {
 
             if (!l.freeInTag) {
                 throw new Error(`Instruction with freeIn without freeInTag ${sourceRef}`);
@@ -576,39 +643,66 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
                 if (l.sRD == 1) {
-                    const Kin0 = [
-                        ctx.C[0],
-                        ctx.C[1],
-                        ctx.C[2],
-                        ctx.C[3],
-                        ctx.C[4],
-                        ctx.C[5],
-                        ctx.C[6],
-                        ctx.C[7],
-                    ];
+                    const address = fea2scalar(ctx.Fr, ctx.A);
+                    const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
+                    const keyType = fea2scalar(ctx.Fr, ctx.B);
+                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
 
-                    const Kin1 = [
-                        ctx.A[0],
-                        ctx.A[1],
-                        ctx.A[2],
-                        ctx.A[3],
-                        ctx.A[4],
-                        ctx.A[5],
-                        ctx.B[0],
-                        ctx.B[1]
-                    ];
+                    let res = {};
+                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
+                        res.value = input.stateOverride[addressHex].balance.startsWith("0x") ?
+                        Scalar.e(input.stateOverride[addressHex].balance, 16) : Scalar.e(input.stateOverride[addressHex].balance);
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(ConstantsCommon.SMT_KEY_NONCE)){
+                        res.value = input.stateOverride[addressHex].nonce.startsWith("0x") ?
+                        Scalar.e(input.stateOverride[addressHex].nonce.startsWith("0x"), 16) : Scalar.e(input.stateOverride[addressHex].nonce.startsWith("0x"));
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_CODE)){
+                        res.value = Scalar.e(await hashContractBytecode(input.stateOverride[addressHex].code),16);
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_LENGTH)){
+                        res.value = Scalar.e(input.stateOverride[addressHex].code.replace('0x','').length/2);
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)){
+                        if (input.stateOverride[addressHex].state[keyStorage]){
+                            res.value = Scalar.e(input.stateOverride[addressHex].state[keyStorage], 16);
+                        } else {
+                            res.value = Scalar.e(0);
+                        }
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)
+                    && input.stateOverride[addressHex].stateDiff[keyStorage]){
+                        res.value = Scalar.e(input.stateOverride[addressHex].stateDiff[keyStorage], 16);
+                    } else {
+                        const Kin0 = [
+                            ctx.C[0],
+                            ctx.C[1],
+                            ctx.C[2],
+                            ctx.C[3],
+                            ctx.C[4],
+                            ctx.C[5],
+                            ctx.C[6],
+                            ctx.C[7],
+                        ];
 
-                    const keyI = poseidon(Kin0);
-                    const key = poseidon(Kin1, keyI);
+                        const Kin1 = [
+                            ctx.A[0],
+                            ctx.A[1],
+                            ctx.A[2],
+                            ctx.A[3],
+                            ctx.A[4],
+                            ctx.A[5],
+                            ctx.B[0],
+                            ctx.B[1]
+                        ];
 
-                    // commented since readings are done directly in the smt
-                    // const keyS = Fr.toString(key, 16).padStart(64, "0");
-                    // if (typeof ctx.sto[keyS] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
+                        const keyI = poseidon(Kin0);
+                        const key = poseidon(Kin1, keyI);
 
-                    // fi = scalar2fea(Fr, Scalar.e("0x" + ctx.sto[ keyS ]));
-                    const res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
+                        // commented since readings are done directly in the smt
+                        // const keyS = Fr.toString(key, 16).padStart(64, "0");
+                        // if (typeof ctx.sto[keyS] === "undefined" ) throw new Error(`Storage not initialized: ${ctx.ln}`);
+
+                        // fi = scalar2fea(Fr, Scalar.e("0x" + ctx.sto[ keyS ]));
+                        res = await smt.get(sr8to4(ctx.Fr, ctx.SR), key);
+                    }
+
                     incCounter = res.proofHashCounter + 2;
-
                     // save readWriteAddress
                     if (fullTracer){
                         fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, res.value);
@@ -618,6 +712,23 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
                 if (l.sWR == 1) {
+                    const address = fea2scalar(ctx.Fr, ctx.A);
+                    const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
+                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
+                    const keyType = fea2scalar(ctx.Fr, ctx.B)
+                    if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
+                        input.stateOverride[addressHex].balance = safeFea2scalar(Fr, ctx.D).toString();
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(ConstantsCommon.SMT_KEY_NONCE)){
+                        input.stateOverride[addressHex].nonce = safeFea2scalar(Fr, ctx.D).toString();
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].code && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_CODE)){
+                        input.stateOverride[addressHex].code = input.contractsBytecode["0x" + safeFea2scalar(Fr, ctx.D).toString(16)];
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].state && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)){
+                        input.stateOverride[addressHex].state[keyStorage] = safeFea2scalar(Fr, ctx.D).toString();
+                    } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].stateDiff && keyType === Scalar.e(ConstantsCommon.SMT_KEY_SC_STORAGE)
+                    && input.stateOverride[addressHex].stateDiff[keyStorage]){
+                        input.stateOverride[addressHex].stateDiff[keyStorage] = safeFea2scalar(Fr, ctx.D).toString();
+                    }
+
                     ctx.lastSWrite = {};
 
                     const Kin0 = [
@@ -698,6 +809,30 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
                     nHits++;
                 }
+                if (l.hashS || l.hashS1) {
+                    if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
+                    const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const pos = fe2n(Fr, ctx.HASHPOS, ctx);
+                    if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS(${addr}) ${sourceRef}`);
+                    if (pos+size > ctx.hashS[addr].data.length) throw new Error(`Accessing hashS(${addr}) out of bounds (${pos+size} > ${ctx.hashS[addr].data.length}) ${sourceRef}`);
+                    let s = Scalar.zero;
+                    for (let k=0; k<size; k++) {
+                        if (typeof ctx.hashS[addr].data[pos + k] === "undefined") throw new Error(`Accessing hashS(${addr}) not defined place ${pos+k} ${sourceRef}`);
+                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashS[addr].data[pos + k]));
+                    }
+                    fi = scalar2fea(Fr, s);
+                    nHits++;
+                }
+                if (l.hashSDigest == 1) {
+                    if (typeof ctx.hashS[addr] === "undefined") {
+                        throw new Error(`digest sha256(${addr}) not defined ${sourceRef}`);
+                    }
+                    if (typeof ctx.hashS[addr].digest === "undefined") {
+                        throw new Error(`digest sha256(${addr}) not calculated. Call hashSlen to finish digest ${sourceRef}`);
+                    }
+                    fi = scalar2fea(Fr, ctx.hashS[addr].digest);
+                    nHits++;
+                }
                 if (l.hashP || l.hashP1) {
                     if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
@@ -774,6 +909,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         const c = Scalar.bxor(a, b);
                         fi = scalar2fea(Fr, c);
                         nHits ++;
+                    } else if (l.binOpcode == 8) { // LT4
+                        const a = safeFea2scalar(Fr, ctx.A);
+                        const b = safeFea2scalar(Fr, ctx.B);
+                        const c = lt4(a, b);
+                        fi = scalar2fea(Fr, c);
+                        nHits ++;
                     } else {
                         throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
                     }
@@ -807,7 +948,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = fi;
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add( Fr.mul(Fr.e(l.inFREE), fi[0]), op0 ),
+                [Fr.add( Fr.mul(Fr.add(Fr.e(l.inFREE), Fr.e(l.inFREE0)), fi[0]), op0 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[1]), op1 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[2]), op2 ),
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[3]), op3 ),
@@ -817,9 +958,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                  Fr.add( Fr.mul(Fr.e(l.inFREE), fi[7]), op7 )
                 ];
             pols.inFREE[i] = Fr.e(l.inFREE);
+            pols.inFREE0[i] = Fr.e(l.inFREE0);
         } else {
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
             pols.inFREE[i] = Fr.zero;
+            pols.inFREE0[i] = Fr.zero;
         }
 
         if (Fr.isZero(op0)) {
@@ -914,7 +1057,37 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.mWR[i] = 0n;
         }
 
-        if (l.SRD || l.sWR) {
+        // overwrite 'op' when hiting 'checkFirstTxType' label
+        if ((Number(ctx.zkPC) === rom.labels.checkFirstTxType) && input.skipFirstChangeL2Block === true) {
+            [op0, op1, op2, op3, op4, op5, op6, op7] =
+                [
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                    Fr.e(1),
+                ];
+        }
+
+        // overwrite 'op' when hiting 'writeBlockInfoRoot' label
+        if ((Number(ctx.zkPC) === rom.labels.writeBlockInfoRoot) && input.skipWriteBlockInfoRoot === true) {
+            [op0, op1, op2, op3, op4, op5, op6, op7] =
+                [
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                    Fr.e(0),
+                ];
+        }
+
+        if (l.sRD || l.sWR) {
             if (!Fr.isZero(ctx.A[7]) || !Fr.isZero(ctx.A[6]) || !Fr.isZero(ctx.A[5])) {
                 const values = '0x' + ([ctx.A[7], ctx.A[6], ctx.A[5]].map(x => x.toString(16)).join(',0x'));
                 throw new Error(`Storage invalid key (address) [A7..A5] = [${values}] on ${sourceRef}`);
@@ -970,7 +1143,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     insKey: res.insKey ? [...res.insKey] : new Array(4).fill(Scalar.zero),
                     insValue: res.insValue,
                     isOld0: res.isOld0,
-                    value: res.value
+                    value: res.value,
+                    incCounter: res.proofHashCounter
+                },
+                main: {
+                    w: i,
+                    sourceRef
                 }});
 
             if (!Scalar.eq(res.value,safeFea2scalar(Fr,[op0, op1, op2, op3, op4, op5, op6, op7]))) {
@@ -1046,7 +1224,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     isOld0: ctx.lastSWrite.res.isOld0,
                     oldValue: ctx.lastSWrite.res.oldValue,
                     newValue: ctx.lastSWrite.res.newValue,
-                    mode: ctx.lastSWrite.res.mode
+                    mode: ctx.lastSWrite.res.mode,
+                    incCounter: ctx.lastSWrite.res.proofHashCounter,
+                    siblingLeftChild: [...ctx.lastSWrite.res.siblingLeftChild],
+                    siblingRightChild: [...ctx.lastSWrite.res.siblingRightChild]
+                },
+                main: {
+                    w: i,
+                    sourceRef
                 }});
 
             if (!nodeIsEq(ctx.lastSWrite.newRoot, sr8to4(ctx.Fr, [op0, op1, op2, op3, op4, op5, op6, op7 ]), ctx.Fr)) {
@@ -1150,6 +1335,86 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashKDigest[i] = 0n;
         }
 
+
+        if (l.hashS || l.hashS1) {
+            if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
+            pols.hashS[i] = l.hashS ? 1n : 0n;
+            pols.hashS1[i] = l.hashS1 ? 1n : 0n;
+            const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const pos = fe2n(Fr, ctx.HASHPOS, ctx);
+            if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS ${sourceRef}`);
+            const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            const maskByte = Scalar.e("0xFF");
+            for (let k=0; k<size; k++) {
+                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
+                const bh = ctx.hashS[addr].data[pos + k];
+                if (typeof bh === "undefined") {
+                    ctx.hashS[addr].data[pos + k] = bm;
+                } else if (bm != bh) {
+                    throw new Error(`HashS(${addr}) do not match, pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
+                }
+            }
+            const paddingA = Scalar.shr(a, size * 8);
+            if (!Scalar.isZero(paddingA)) {
+                throw new Error(`HashS(${addr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
+            }
+
+            if ((typeof ctx.hashS[addr].reads[pos] !== "undefined") &&
+                (ctx.hashS[addr].reads[pos] != size))
+            {
+                throw new Error(`HashS(${addr}) diferent read sizes (${ctx.hashS[addr].reads[pos]} != ${size}) in the same position ${pos} ${sourceRef}`)
+            }
+            ctx.hashS[addr].reads[pos] = size;
+            ctx.hashS[addr].sourceRef = sourceRef;
+            incHashPos = size;
+        } else {
+            pols.hashS[i] = 0n;
+            pols.hashS1[i] = 0n;
+        }
+
+        if (l.hashSLen) {
+            pols.hashSLen[i] = 1n;
+            const lm = fe2n(Fr, op0, ctx);
+            // If it's undefined compute hash of 0 bytes
+            if(typeof ctx.hashS[addr] === "undefined") {
+                // len must be 0
+                if (lm != 0) throw new Error(`HashSLen(${addr}) length does not match is ${lm} and should be 0 ${sourceRef}`);
+                ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false};
+                ctx.hashS[addr].digest = `0x${createHash('sha256').update(Uint8Array.from([])).digest('hex')}`;
+            }
+            ctx.hashS[addr].sourceRef = sourceRef;
+
+            if (ctx.hashS[addr].lenCalled) {
+                throw new Error(`Call HASHSLEN @${addr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
+            }
+            ctx.hashS[addr].lenCalled = true;
+            const lh = ctx.hashS[addr].data.length;
+            if (lm != lh) throw new Error(`HashSLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
+            if (typeof ctx.hashS[addr].digest === "undefined") {
+                ctx.hashS[addr].digest = `0x${createHash('sha256').update(Uint8Array.from(ctx.hashS[addr].data)).digest('hex')}`;
+            }
+        } else {
+            pols.hashSLen[i] = 0n;
+        }
+
+        if (l.hashSDigest) {
+            pols.hashSDigest[i] = 1n;
+            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+            if (typeof ctx.hashS[addr].digest === "undefined") {
+                throw new Error(`HASHSDIGEST(${addr}) cannot load sha256 from DB ${sourceRef}`);
+            }
+            if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashS[addr].digest))) {
+                throw new Error(`HashSDigest(${addr}) doesn't match ${sourceRef}`);
+            }
+            if (ctx.hashS[addr].digestCalled) {
+                throw new Error(`Call HASHSDIGEST(${addr}) more than once: ${sourceRef}`);
+            }
+            ctx.hashS[addr].digestCalled = true;
+            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1) / 64)
+        } else {
+            pols.hashSDigest[i] = 0n;
+        }
+
         if (l.hashP || l.hashP1) {
             if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
             pols.hashP[i] = l.hashP ? 1n : 0n;
@@ -1195,7 +1460,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const lm = fe2n(Fr, op0, ctx);
             if (lm != lh) throw new Error(`HashPLen(${addr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
             if (typeof ctx.hashP[addr].digest === "undefined") {
-                // ctx.hashP[addr].digest = poseidonLinear(ctx.hash[addr].data);
                 ctx.hashP[addr].digest = await hashContractBytecode(byteArray2HexString(ctx.hashP[addr].data));
                 ctx.hashP[addr].digestCalled = false;
                 await db.setProgram(stringToH4(ctx.hashP[addr].digest), ctx.hashP[addr].data);
@@ -1238,11 +1502,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.hashPDigest || l.sWR) {
             const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            required.Binary.push({a: op, b: 0n, c: op, opcode: 1, type: 2});
+            required.Binary.push({a: op, b: 0xFFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001n, c: 1n, opcode: 8, type: 2});
         }
 
-        if (l.arithEq0 || l.arithEq1 || l.arithEq2) {
-            if (l.arithEq0 && (!l.arithEq1) && (!l.arithEq2)) {
+        if (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5) {
+            if (l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3 && !l.arithEq4 && !l.arithEq5) {
                 const A = safeFea2scalar(Fr, ctx.A);
                 const B = safeFea2scalar(Fr, ctx.B);
                 const C = safeFea2scalar(Fr, ctx.C);
@@ -1261,9 +1525,114 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic(Eq0) does not match ${sourceRef}`);
                 }
                 pols.arithEq0[i] = 1n;
-                pols.arithEq1[i] = 0n;
-                pols.arithEq2[i] = 0n;
-                required.Arith.push({x1: A, y1: B, x2: C, y2: D, x3: Fr.zero, y3: op, selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0});
+                pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = pols.arithEq4[i] = pols.arithEq5[i] = 0n;
+                required.Arith.push({ x1: ctx.A, y1: ctx.B,
+                                      x2: ctx.C, y2: ctx.D,
+                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
+                                      selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 0});
+            }
+            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && l.arithEq3 && !l.arithEq4 && !l.arithEq5) {
+                const x1 = safeFea2scalar(Fr, ctx.A);
+                const y1 = safeFea2scalar(Fr, ctx.B);
+                const x2 = safeFea2scalar(Fr, ctx.C);
+                const y2 = safeFea2scalar(Fr, ctx.D);
+
+                // fields output must be less than 32 bits
+                const x3 = safeFea2scalar(Fr, ctx.E);
+                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+
+                // EQ5:  x1 * x2 - y1 * y2 = x3
+                // EQ6:  y1 * x2 + x1 * y2 = y3
+
+                const _x3 = FpBN254.sub(FpBN254.mul(FpBN254.e(x1), FpBN254.e(x2)), FpBN254.mul(FpBN254.e(y1), FpBN254.e(y2)));
+                const _y3 = FpBN254.add(FpBN254.mul(FpBN254.e(y1), FpBN254.e(x2)), FpBN254.mul(FpBN254.e(x1), FpBN254.e(y2)));
+
+                const x3eq = Scalar.eq(x3, _x3);
+                const y3eq = Scalar.eq(y3, _y3);
+
+                if (!x3eq || !y3eq) {
+                    console.log(`(${x1.toString()} + ${y1.toString()}i) * (${x2.toString()} + ${y2.toString()}i)`);
+
+                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
+                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
+
+                    throw new Error(`Arithmetic FP2 multiplication point does not match: ${sourceRef}`);
+                }
+
+                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq4[i] = pols.arithEq5[i] = 0n;
+                pols.arithEq3[i] = 1n;
+                required.Arith.push({x1:ctx.A, y1:ctx.B,
+                                     x2:ctx.C, y2:ctx.D,
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
+                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 1, selEq5: 0, selEq6: 0});
+            }
+            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3 && l.arithEq4 && !l.arithEq5) {
+                const x1 = safeFea2scalar(Fr, ctx.A);
+                const y1 = safeFea2scalar(Fr, ctx.B);
+                const x2 = safeFea2scalar(Fr, ctx.C);
+                const y2 = safeFea2scalar(Fr, ctx.D);
+
+                const x3 = safeFea2scalar(Fr, ctx.E);
+                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+
+                // EQ7:  x1 + x2 = x3
+                // EQ8:  y1 + y2 = y3
+
+                const _x3 = FpBN254.add(FpBN254.e(x1), FpBN254.e(x2));
+                const _y3 = FpBN254.add(FpBN254.e(y1), FpBN254.e(y2));
+
+                const x3eq = FpBN254.eq(x3, _x3);
+                const y3eq = FpBN254.eq(y3, _y3);
+
+                if (!x3eq || !y3eq) {
+                    console.log(`(${x1.toString()} + ${y1.toString()}i) + (${x2.toString()} + ${y2.toString()}i)`);
+
+                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
+                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
+
+                    throw new Error(`Arithmetic FP2 addition does not match: ${sourceRef}`);
+                }
+
+                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = pols.arithEq5[i] = 0n;
+                pols.arithEq4[i] = 1n;
+                required.Arith.push({x1:ctx.A, y1:ctx.B,
+                                     x2:ctx.C, y2:ctx.D,
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
+                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 1, selEq6: 0});
+            }
+            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3 && !l.arithEq4 && l.arithEq5) {
+                const x1 = safeFea2scalar(Fr, ctx.A);
+                const y1 = safeFea2scalar(Fr, ctx.B);
+                const x2 = safeFea2scalar(Fr, ctx.C);
+                const y2 = safeFea2scalar(Fr, ctx.D);
+
+                const x3 = safeFea2scalar(Fr, ctx.E);
+                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+
+                // EQ9:   x1 - x2 = x3
+                // EQ10:  y1 - y2 = y3
+
+                const _x3 = FpBN254.sub(FpBN254.e(x1), FpBN254.e(x2));
+                const _y3 = FpBN254.sub(FpBN254.e(y1), FpBN254.e(y2));
+
+                const x3eq = FpBN254.eq(x3, _x3);
+                const y3eq = FpBN254.eq(y3, _y3);
+
+                if (!x3eq || !y3eq) {
+                    console.log(`(${x1.toString()} + ${y1.toString()}i) - (${x2.toString()} + ${y2.toString()}i)`);
+
+                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
+                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
+
+                    throw new Error(`Arithmetic FP2 subtraction does not match: ${sourceRef}`);
+                }
+
+                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = pols.arithEq4[i] = 0n;
+                pols.arithEq5[i] = 1n;
+                required.Arith.push({x1:ctx.A, y1:ctx.B,
+                                     x2:ctx.C, y2:ctx.D,
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
+                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 1});
             }
             else {
                 const x1 = safeFea2scalar(Fr, ctx.A);
@@ -1273,34 +1642,34 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const x3 = safeFea2scalar(Fr, ctx.E);
                 const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 let dbl = false;
-                if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2)) {
+                if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2) && (!l.arithEq3) && (!l.arithEq4) && (!l.arithEq5)) {
                     dbl = false;
-                } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2) {
+                } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2 && (!l.arithEq3) && (!l.arithEq4) && (!l.arithEq5)) {
                     dbl = true;
                 } else {
-                    throw new Error(`Invalid arithmetic op (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
+                    throw new Error(`Invalid arithmetic op (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}, aritEq3:${l.arithEq3}, aritEq4:${l.arithEq4}, aritEq5:${l.arithEq5}) ${sourceRef}`);
                 }
 
                 let s;
                 if (dbl) {
                     // Division by zero must be managed by ROM before call ARITH
-                    const divisor = Fec.add(y1, y1);
+                    const divisor = Fec.add(Fec.e(y1), Fec.e(y1));
                     if (Fec.isZero(divisor)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
+                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}, aritEq3:${l.arithEq3}, aritEq4:${l.arithEq4}, aritEq5:${l.arithEq5}) ${sourceRef}`);
                     }
-                    s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), divisor);
+                    s = Fec.div(Fec.mul(3n, Fec.mul(Fec.e(x1), Fec.e(x1))), divisor);
                 }
                 else {
                     // Division by zero must be managed by ROM before call ARITH
-                    const deltaX = Fec.sub(x2, x1)
+                    const deltaX = Fec.sub(Fec.e(x2), Fec.e(x1))
                     if (Fec.isZero(deltaX)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}) ${sourceRef}`);
+                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}, aritEq3:${l.arithEq3}, aritEq4:${l.arithEq4}, aritEq5:${l.arithEq5}) ${sourceRef}`);
                     }
-                    s = Fec.div(Fec.sub(y2, y1), deltaX);
+                    s = Fec.div(Fec.sub(Fec.e(y2), Fec.e(y1)), deltaX);
                 }
 
-                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(x1, dbl ? x1 : x2));
-                const _y3 = Fec.sub(Fec.mul(s, Fec.sub(x1,x3)), y1);
+                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), dbl ? Fec.e(x1) : Fec.e(x2)));
+                const _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
 
@@ -1319,12 +1688,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.arithEq0[i] = 0n;
                 pols.arithEq1[i] = dbl ? 0n : 1n;
                 pols.arithEq2[i] = dbl ? 1n : 0n;
-                required.Arith.push({x1: x1, y1: y1, x2: dbl ? x1:x2, y2: dbl? y1:y2, x3: x3, y3: y3, selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1});
+                pols.arithEq3[i] = 0n;
+                pols.arithEq4[i] = 0n;
+                pols.arithEq5[i] = 0n;
+                required.Arith.push({x1: ctx.A, y1: ctx.B,
+                                     x2: dbl ? ctx.A:ctx.C, y2: dbl? ctx.B:ctx.D,
+                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
+                                     selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1, selEq4: 0, selEq5: 0, selEq6: 0});
             }
         } else {
             pols.arithEq0[i] = 0n;
             pols.arithEq1[i] = 0n;
             pols.arithEq2[i] = 0n;
+            pols.arithEq3[i] = 0n;
+            pols.arithEq4[i] = 0n;
+            pols.arithEq5[i] = 0n;
         }
 
         if (l.bin) {
@@ -1420,6 +1798,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.binOpcode[i] = 7n;
                 pols.carry[i] = 0n;
                 required.Binary.push({a: a, b: b, c: c, opcode: 7, type: 1});
+            } else if (l.binOpcode == 8) { // LT4
+                const a = safeFea2scalar(Fr, ctx.A);
+                const b = safeFea2scalar(Fr, ctx.B);
+                const c = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
+                const expectedC = lt4(a,b);
+                if (!Scalar.eq(c, expectedC)) {
+                    const _a = a.toString(16).padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_');
+                    const _b = b.toString(16).padStart(64,'0').toUpperCase().match(/.{1,16}/g).join('_');
+                    throw new Error(`LT4 does not match ${expectedC} vs ${c} (A: ${_a}, B:${_b}) ${sourceRef}`);
+                }
+                pols.binOpcode[i] = 8n;
+                pols.carry[i] = c;
+                required.Binary.push({a: a, b: b, c: c, opcode: 8, type: 1});
             } else {
                 throw new Error(`Invalid bin opcode (${l.binOpcode}) ${sourceRef}`);
             }
@@ -1613,6 +2004,29 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
              pols.C6[i],
              pols.C7[i]
             ];
+
+            // Set C register with input.l1InfoRoot to process unsigned transactions
+            if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
+                const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
+                [pols.C0[nexti],
+                    pols.C1[nexti],
+                    pols.C2[nexti],
+                    pols.C3[nexti],
+                    pols.C4[nexti],
+                    pols.C5[nexti],
+                    pols.C6[nexti],
+                    pols.C7[nexti],
+                ] = [
+                    feaL1InfoRoot[0],
+                    feaL1InfoRoot[1],
+                    feaL1InfoRoot[2],
+                    feaL1InfoRoot[3],
+                    feaL1InfoRoot[4],
+                    feaL1InfoRoot[5],
+                    feaL1InfoRoot[6],
+                    feaL1InfoRoot[7],
+                ];
+            }
         }
 
         if (l.setD == 1) {
@@ -1747,7 +2161,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
         }
 
-        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2)) {
+        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5)) {
             pols.cntArith[nexti] = pols.cntArith[i] + 1n;
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
@@ -1851,7 +2265,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.JMPZ[i] = 1n;
                 const o = Fr.toObject(op0);
                 if (o > 0 && o >= FrFirst32Negative) {
-                    console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
+                    // console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
                 }
             } else if (l.JMP) {
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);
@@ -1883,7 +2297,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
         }
 
-        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest) {
+        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
             pols.incCounter[i] = Fr.e(incCounter);
         } else {
             pols.incCounter[i] = Fr.zero;
@@ -1899,6 +2313,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         } else {
             pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
+        }
+
+        if (l.hashSDigest) {
+            if (skipCounters) {
+                pols.cntSha256F[nexti] = pols.cntSha256F[i];
+            } else {
+                pols.cntSha256F[nexti] = pols.cntSha256F[i] + BigInt(incCounter);
+            }
+        } else {
+            pols.cntSha256F[nexti] = pols.cntSha256F[i];
         }
 
         if (l.hashPDigest) {
@@ -1981,8 +2405,43 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             console.log('WARNING:'+msg)
         }
-
         required.PaddingKK.push(h);
+    }
+
+
+    for (let i=0; i<ctx.hashS.length; i++) {
+        if (typeof ctx.hashS[i] === 'undefined') {
+            const nextAddr = Object.keys(ctx.hashS)[i];
+            throw new Error(`Reading hashS(${i}) not defined, next defined was ${nextAddr} on ${ctx.hashS[nextAddr].sourceRef||''}`);
+        }
+        const h = {
+            data: ctx.hashS[i].data,
+            reads: [],
+            digestCalled: ctx.hashS[i].digestCalled,
+            lenCalled: ctx.hashS[i].lenCalled
+        }
+        let p= 0;
+        while (p<ctx.hashS[i].data.length) {
+            if (ctx.hashS[i].reads[p]) {
+                h.reads.push(ctx.hashS[i].reads[p]);
+                p += ctx.hashS[i].reads[p];
+            } else {
+                h.reads.push(1);
+                p += 1;
+            }
+        }
+        if (p!= ctx.hashS[i].data.length) {
+            throw new Error(`Reading hashS(${i}) out of limits (${p} != ${ctx.hashS[i].data.length})`);
+        }
+        if (checkHashNoDigest && !ctx.hashS[i].digestCalled) {
+            const msg = `Reading hashS(${i}) not call to hashSDigest, last access on ${ctx.hashS[i].sourceRef||''}`;
+            if (checkHashNoDigest === ErrorCheck) {
+                throw new Error('ERROR:'+msg);
+            }
+            console.log('WARNING:'+msg)
+        }
+
+        required.PaddingSha256.push(h);
     }
 
     for (let i=0; i<ctx.hashP.length; i++) {
@@ -2025,6 +2484,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntArith: ctx.cntArith,
         cntBinary: ctx.cntBinary,
         cntKeccakF: ctx.cntKeccakF,
+        cntSha256F: ctx.cntSha256F,
         cntMemAlign: ctx.cntMemAlign,
         cntPoseidonG: ctx.cntPoseidonG,
         cntPaddingPG: ctx.cntPaddingPG,
@@ -2302,6 +2762,7 @@ function initState(Fr, pols, ctx) {
     pols.cntArith[0] = 0n;
     pols.cntBinary[0] = 0n;
     pols.cntKeccakF[0] = 0n;
+    pols.cntSha256F[0] = 0n;
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
@@ -2320,36 +2781,43 @@ async function eventsAsyncTracer(ctx, cmds) {
 }
 
 async function printBatchL2Data(batchL2Data, getNameSelector) {
-    console.log("/////////////////////////////");
-    console.log("/////// BATCH L2 DATA ///////");
-    console.log("/////////////////////////////\n");
+    console.log('/////////////////////////////');
+    console.log('/////// BATCH L2 DATA ///////');
+    console.log('/////////////////////////////\n');
 
     const txs = encodedStringToArray(batchL2Data);
-    console.log("Number of transactions: ", txs.length);
-
-    for (let i = 0; i < txs.length; i++){
-        console.log("\nTxNumber: ", i);
+    console.log('Number of transactions: ', txs.length);
+    console.log('--------------------------');
+    for (let i = 0; i < txs.length; i++) {
         const rawTx = txs[i];
-        const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
-        const digest = ethers.utils.keccak256(infoTx.rlpSignData);
-        const from = ethers.utils.recoverAddress(digest, {
-                    r: infoTx.txDecoded.r,
-                    s: infoTx.txDecoded.s,
-                    v: infoTx.txDecoded.v,
-        });
+        if (rawTx.startsWith(`0x${ConstantsCommon.TX_CHANGE_L2_BLOCK.toString(16).padStart(2, '0')}`)) {
+            console.log(`Tx ${i} --> new Block L2`);
+            const txDecoded = await decodeChangeL2BlockTx(rawTx);
+            console.log(txDecoded);
+        } else {
+            const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
-        infoTx.txDecoded.from = from;
+            const digest = ethers.utils.keccak256(infoTx.rlpSignData);
+            const from = ethers.utils.recoverAddress(digest, {
+                r: infoTx.txDecoded.r,
+                s: infoTx.txDecoded.s,
+                v: infoTx.txDecoded.v,
+            });
 
-        if (getNameSelector) {
-            infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+            infoTx.txDecoded.from = from;
+
+            if (getNameSelector) {
+                infoTx.txDecoded.selectorLink = `${getNameSelector}${infoTx.txDecoded.data.slice(0, 10)}`;
+            }
+            console.log(`Tx ${i} --> new Tx`);
+            console.log(infoTx.txDecoded);
         }
-
-        console.log(infoTx.txDecoded);
+        console.log('--------------------------');
     }
 
-    console.log("/////////////////////////////");
-    console.log("/////////////////////////////\n");
+    console.log('/////////////////////////////');
+    console.log('/////////////////////////////\n');
 }
 
 function evalCommands(ctx, cmds) {
@@ -2395,7 +2863,6 @@ function evalCommand(ctx, tag) {
     } else {
         throw new Error(`Invalid operation ${tag.op} ${ctx.sourceRef}`);
     }
-
 }
 
 function eval_number(ctx, tag) {
@@ -2440,17 +2907,17 @@ function eval_getVar(ctx, tag) {
 
 function eval_getReg(ctx, tag) {
     if (tag.regName == "A") {
-        return safeFea2scalar(ctx.Fr, ctx.A);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.A) : safeFea2scalar(ctx.Fr, ctx.A);
     } else if (tag.regName == "B") {
-        return safeFea2scalar(ctx.Fr, ctx.B);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.B) : safeFea2scalar(ctx.Fr, ctx.B);
     } else if (tag.regName == "C") {
-        return safeFea2scalar(ctx.Fr, ctx.C);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.C) : safeFea2scalar(ctx.Fr, ctx.C);
     } else if (tag.regName == "D") {
-        return safeFea2scalar(ctx.Fr, ctx.D);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.D) : safeFea2scalar(ctx.Fr, ctx.D);
     } else if (tag.regName == "E") {
-        return safeFea2scalar(ctx.Fr, ctx.E);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.E) : safeFea2scalar(ctx.Fr, ctx.E);
     } else if (tag.regName == "SR") {
-        return safeFea2scalar(ctx.Fr, ctx.SR);
+        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.SR) : safeFea2scalar(ctx.Fr, ctx.SR);
     } else if (tag.regName == "CTX") {
         return Scalar.e(ctx.CTX);
     } else if (tag.regName == "SP") {
@@ -2469,6 +2936,8 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.cntBinary);
     } else if (tag.regName == "CNT_KECCAK_F") {
         return Scalar.e(ctx.cntKeccakF);
+    } else if (tag.regName == 'CNT_SHA256_F') {
+        return Scalar.e(ctx.cntSha256F);
     } else if (tag.regName == "CNT_MEM_ALIGN") {
         return Scalar.e(ctx.cntMemAlign);
     } else if (tag.regName == "CNT_PADDING_PG") {
@@ -2565,21 +3034,51 @@ function eval_logical_operation(ctx, tag)
 }
 
 function eval_getMemValue(ctx, tag) {
-    // to be compatible with
-    return safeFea2scalar(ctx.Fr, ctx.mem[tag.offset]);
+    let addr = tag.offset;
+
+    if (tag.useCTX === 1) {
+        addr += Number(ctx.CTX) * 0x40000;
+    }
+
+    if (ctx.fullFe) {
+        return fea2scalar(ctx.Fr, ctx.mem[addr]);
+    }
+
+    return safeFea2scalar(ctx.Fr, ctx.mem[addr]);
 }
 
 function eval_functionCall(ctx, tag) {
-    if (tag.funcName == "getSequencerAddr") {
+    if (ctx.helpers) {
+        const method = 'eval_'+ tag.funcName;
+        for (const helper of ctx.helpers) {
+            if (typeof helper[method] !== 'function') continue;
+            const res = helper[method](ctx, tag);
+            if (res !== null) {
+                return res;
+            }
+        }
+    }
+
+    if (tag.funcName == 'getSequencerAddr') {
         return eval_getSequencerAddr(ctx, tag);
-    } else if (tag.funcName == "getTimestamp") {
-        return eval_getTimestamp(ctx, tag);
-    } else if (tag.funcName == "getGlobalExitRoot") {
-        return eval_getGlobalExitRoot(ctx, tag);
+    } if (tag.funcName == 'getTimestampLimit') {
+        return eval_getTimestampLimit(ctx, tag);
+    } if (tag.funcName == 'getForcedBlockHashL1') {
+        return eval_getForcedBlockHashL1(ctx, tag);
+    } if (tag.funcName == 'getL1InfoRoot') {
+        return eval_getL1InfoRoot(ctx, tag);
+    } if (tag.funcName == 'getL1InfoGER') {
+        return eval_getL1InfoGER(ctx, tag);
+    } if (tag.funcName == 'getL1InfoBlockHash') {
+        return eval_getL1InfoBlockHash(ctx, tag);
+    } if (tag.funcName == 'getL1InfoTimestamp') {
+        return eval_getL1InfoTimestamp(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
+    } else if (tag.funcName == "getSmtProof") {scalar2fea
+        return eval_getSmtProof(ctx, tag);
     } else if (tag.funcName == "eventLog") {
         return eval_eventLog(ctx, tag);
     } else if (tag.funcName == "cond") {
@@ -2628,6 +3127,14 @@ function eval_functionCall(ctx, tag) {
         return eval_memAlignWR_W1(ctx, tag);
     } else if (tag.funcName == "memAlignWR8_W0") {
         return eval_memAlignWR8_W0(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_MULFP2_X") {
+        return eval_ARITH_BN254_MULFP2_X(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_MULFP2_Y") {
+        return eval_ARITH_BN254_MULFP2_Y(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_ADDFP2") {
+        return eval_ARITH_BN254_ADDFP2(ctx, tag);
+    } else if (tag.funcName == "ARITH_BN254_SUBFP2") {
+        return eval_ARITH_BN254_SUBFP2(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
@@ -2652,14 +3159,62 @@ function eval_getTxsLen(ctx, tag) {
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getGlobalExitRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.globalExitRoot));
+function eval_getSmtProof(ctx, tag) {
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    const index = Number(evalCommand(ctx, tag.params[0]));
+    const level = Number(evalCommand(ctx, tag.params[1]));
+
+    const leafValue = (ctx.input.l1InfoTree.skipVerifyL1InfoRoot === true)
+        ? Constants.MOCK_VALUE_SMT_PROOF
+        : ctx.input.l1InfoTree[index].smtProof[level];
+
+    return scalar2fea(ctx.Fr, Scalar.e(leafValue));
 }
 
-function eval_getTimestamp(ctx, tag) {
+function eval_getL1InfoRoot(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e(ctx.input.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.l1InfoRoot));
+}
+
+function eval_getL1InfoGER(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const gerL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].globalExitRoot;
+
+    return scalar2fea(ctx.Fr, Scalar.e(gerL1InfoTree));
+}
+
+function eval_getL1InfoBlockHash(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const blockHashL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].blockHash;
+
+    return scalar2fea(ctx.Fr, Scalar.e(blockHashL1InfoTree));
+}
+
+function eval_getL1InfoTimestamp(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const timestampL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].timestamp;
+
+    return scalar2fea(ctx.Fr, Scalar.e(timestampL1InfoTree));
+}
+
+function eval_getTimestampLimit(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+}
+
+function eval_getForcedBlockHashL1(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.forcedBlockHashL1));
 }
 
 function eval_eventLog(ctx, tag) {
@@ -2843,11 +3398,19 @@ function eval_dumpRegs(ctx, tag) {
 
     console.log(`dumpRegs ${ctx.fileName}:${ctx.line}`);
 
-    console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
-    console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
-    console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
-    console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
-    console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
+    if (ctx.fullFe) {
+        console.log(['A', fea2scalar(ctx.Fr, ctx.A)]);
+        console.log(['B', fea2scalar(ctx.Fr, ctx.B)]);
+        console.log(['C', fea2scalar(ctx.Fr, ctx.C)]);
+        console.log(['D', fea2scalar(ctx.Fr, ctx.D)]);
+        console.log(['E', fea2scalar(ctx.Fr, ctx.E)]);
+    } else {
+        console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
+        console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
+        console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
+        console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
+        console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
+    }
 
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
@@ -2879,8 +3442,9 @@ function eval_dumphex(ctx, tag) {
 
     return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
+
 function eval_inverseFpEc(ctx, tag) {
-    const a = evalCommand(ctx, tag.params[0]);
+    const a = ctx.Fec.e(evalCommand(ctx, tag.params[0]));
     if (ctx.Fec.isZero(a)) {
         throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
     }
@@ -2888,7 +3452,7 @@ function eval_inverseFpEc(ctx, tag) {
 }
 
 function eval_inverseFnEc(ctx, tag) {
-    const a = evalCommand(ctx, tag.params[0]);
+    const a = ctx.Fnec.e(evalCommand(ctx, tag.params[0]));
     if (ctx.Fnec.isZero(a)) {
         throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
     }
@@ -2926,10 +3490,11 @@ function eval_yDblPointEc(ctx, tag) {
 
 function eval_AddPointEc(ctx, tag, dbl)
 {
-    const x1 = evalCommand(ctx, tag.params[0]);
-    const y1 = evalCommand(ctx, tag.params[1]);
-    const x2 = evalCommand(ctx, tag.params[dbl ? 0 : 2]);
-    const y2 = evalCommand(ctx, tag.params[dbl ? 1 : 3]);
+    const x1 = ctx.Fec.e(evalCommand(ctx, tag.params[0]));
+    const y1 = ctx.Fec.e(evalCommand(ctx, tag.params[1]));
+    const x2 = ctx.Fec.e(evalCommand(ctx, tag.params[dbl ? 0 : 2]));
+    const y2 = ctx.Fec.e(evalCommand(ctx, tag.params[dbl ? 1 : 3]));
+
     let s;
     if (dbl) {
         // Division by zero must be managed by ROM before call ARITH
@@ -2953,6 +3518,46 @@ function eval_AddPointEc(ctx, tag, dbl)
     return [x3, y3];
 }
 
+function eval_ARITH_BN254_MULFP2_X(ctx, tag)
+{
+    // const ctxFullFe = {...ctx, fullFe: true};
+    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
+    const y1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
+    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[2]));
+    const y2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[3]));
+
+    return ctx.FpBN254.sub(ctx.FpBN254.mul(x1,x2), ctx.FpBN254.mul(y1, y2));
+}
+
+function eval_ARITH_BN254_MULFP2_Y(ctx, tag)
+{
+    // const ctxFullFe = {...ctx, fullFe: true};
+    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
+    const y1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
+    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[2]));
+    const y2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[3]));
+
+    return ctx.FpBN254.add(ctx.FpBN254.mul(x1,y2), ctx.FpBN254.mul(x2, y1));
+}
+
+function eval_ARITH_BN254_ADDFP2(ctx, tag)
+{
+    // const ctxFullFe = {...ctx, fullFe: true};
+    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
+    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
+
+    return ctx.FpBN254.add(x1,x2);
+}
+
+function eval_ARITH_BN254_SUBFP2(ctx, tag)
+{
+    // const ctxFullFe = {...ctx, fullFe: true};
+    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
+    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
+
+    return ctx.FpBN254.sub(x1,x2);
+}
+
 function printRegs(Fr, ctx) {
     printReg8(Fr, "A", ctx.A);
     printReg8(Fr, "B", ctx.B);
@@ -2970,7 +3575,7 @@ function printRegs(Fr, ctx) {
     console.log(ctx.fileName + ":" + ctx.line);
 }
 
-function printReg4(Fr, name, V) {
+function printReg8(Fr, name, V) {
     printReg(Fr, name+"7", V[7], true);
     printReg(Fr, name+"6", V[6], true);
     printReg(Fr, name+"5", V[5], true);
@@ -2984,7 +3589,6 @@ function printReg4(Fr, name, V) {
 
 
 function printReg4(Fr, name, V) {
-
     printReg(Fr, name+"3", V[3], true);
     printReg(Fr, name+"2", V[2], true);
     printReg(Fr, name+"1", V[1], true);
@@ -3070,4 +3674,22 @@ function safeFea2scalar(Fr, arr) {
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+/**
+* Computes the comparison of 256-bit values a,b by dividing them in 4 chunks of 64 bits
+* and comparing the chunks one-to-one.
+* lt4 = (a[0] < b[0]) && (a[1] < b[1]) && (a[2] < b[2]) && (a[3] < b[3]).
+* @param a - Scalar
+* @param b - Scalar
+* @returns 1 if ALL chunks of a are less than those of b, 0 otherwise.
+*/
+function lt4(a, b) {
+    const MASK64 = 0xFFFFFFFFFFFFFFFFn;
+    for (let index = 0; index < 4; ++index) {
+        if (Scalar.lt(Scalar.band(Scalar.shr(a, 64 * index), MASK64), Scalar.band(Scalar.shr(b, 64 * index), MASK64)) == false) {
+            return 0n;
+        }
+    }
+    return 1n;
 }

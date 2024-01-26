@@ -9,6 +9,7 @@ include "padding_pg.pil";
 include "storage.pil";
 include "padding_kk.pil";
 include "mem.pil";
+include "padding_sha256.pil";
 
 namespace Main(%N);
 
@@ -45,7 +46,7 @@ namespace Main(%N);
     ///////  Instruction related polynomials
     pol commit CONST7, CONST6, CONST5, CONST4, CONST3, CONST2, CONST1, CONST0;
     pol commit FREE7, FREE6, FREE5, FREE4, FREE3, FREE2, FREE1, FREE0;
-    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
+    pol commit inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, inCTX, inSP, inPC, inGAS, inSTEP, inRR, inHASHPOS, inRCX;
     pol commit setA, setB, setC, setD, setE, setSR, setCTX, setSP, setPC, setGAS, setRR, setHASHPOS, setRCX;
     pol commit JMP, JMPN, JMPC, JMPZ, offset;
     pol commit incStack;
@@ -58,10 +59,11 @@ namespace Main(%N);
     // operations
     pol commit mOp, mWR;
     pol commit sWR, sRD;
-    pol commit arithEq0, arithEq1, arithEq2;
+    pol commit arithEq0, arithEq1, arithEq2, arithEq3, arithEq4, arithEq5;
     pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashK1, hashKLen, hashKDigest;
     pol commit hashP, hashP1, hashPLen, hashPDigest;
+    pol commit hashS, hashS1, hashSLen, hashSDigest;
     pol commit bin;
     pol commit binOpcode;
     pol commit assert;
@@ -71,8 +73,8 @@ namespace Main(%N);
     pol commit isNeg;
 
     /// Counters
-    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntPoseidonG, cntPaddingPG;
-    pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntPoseidonG, inCntPaddingPG;
+    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntSha256F, cntPoseidonG, cntPaddingPG;
+    pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntSha256F, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
 ///////////
@@ -88,7 +90,7 @@ namespace Main(%N);
         C7 * inROTL_C +
         D0 * inD +
         E0 * inE +
-        FREE0 * inFREE +
+        FREE0 * (inFREE + inFREE0) +
         SR0 * inSR +
         CTX * inCTX +
         SP * inSP +
@@ -101,6 +103,7 @@ namespace Main(%N);
         cntBinary * inCntBinary +
         cntMemAlign * inCntMemAlign +
         cntKeccakF * inCntKeccakF +
+        cntSha256F * inCntSha256F +
         cntPoseidonG * inCntPoseidonG +
         cntPaddingPG * inCntPaddingPG +
         RCX * inRCX +
@@ -303,7 +306,7 @@ namespace Main(%N);
     pol decRCX = repeat * (1-RCXIsZero);
     RCX' = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX);
 
-    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP)*D0 + hashK1 + hashP1;
+    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP + hashS)*D0 + hashK1 + hashP1 + hashS1;
 
     pol doJMP = JMPN*isNeg + JMP + JMPC*carry + JMPZ*op0IsZero + return + call;
     pol elseJMP = JMPN*(1-isNeg) + JMPC*(1-carry) + JMPZ*(1-op0IsZero);
@@ -433,10 +436,14 @@ namespace Main(%N);
 
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
-        op0, op1, op2, op3, op4, op5, op6, op7
+        op0, op1, op2, op3, op4, op5, op6, op7,
+        %GL_L, %GL_H, %GL_L, %GL_H, %GL_L, %GL_H, %GL_L, %GL_H,
+        8, 1
     } is
     Binary.resultValidRange {
-        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7]
+        Binary.a[0], Binary.a[1], Binary.a[2], Binary.a[3], Binary.a[4], Binary.a[5], Binary.a[6], Binary.a[7],
+        Binary.b[0], Binary.b[1], Binary.b[2], Binary.b[3], Binary.b[4], Binary.b[5], Binary.b[6], Binary.b[7],
+        Binary.lOpcode, Binary.lCout
     };
 
 /////////
@@ -445,22 +452,24 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1" -b
     */
 
     pol operations =
-                  2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
-                + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
-                + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
-                + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
-                + 2**16 * JMPC          + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
-                + 2**20 * memAlignWR8   + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
-                + 2**24 * setA          + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
-                + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
-                + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
-                + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
-                + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-                + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr;
+              2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
+            + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
+            + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
+            + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
+            + 2**16 * JMPC          + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
+            + 2**20 * memAlignWR8   + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
+            + 2**24 * setA          + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
+            + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
+            + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
+            + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
+            + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
+            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * arithEq3
+            + 2**48 * arithEq4      + 2**49 * arithEq5      + 2**50 * hashS         + 2**51 * hashSDigest
+            + 2**52 * hashSLen      + 2**53 * hashS1;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -509,18 +518,25 @@ namespace Main(%N);
     (1 - hashK1) * hashK1 = 0;
     (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
+    (1 - arithEq3) * arithEq3 = 0;
+    (1 - arithEq4) * arithEq4 = 0;
+    (1 - arithEq5) * arithEq5 = 0;
+    (1 - hashS) * hashS = 0;
+    (1 - hashSDigest) * hashSDigest = 0;
+    (1 - hashSLen) * hashSLen = 0;
+    (1 - hashS1) * hashS1 = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE,
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0,
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
-        inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
+        inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE,
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
-        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
+        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
 
@@ -585,14 +601,16 @@ namespace Main(%N);
     pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
     pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
 
-    arithEq0 {  1, 0, 0, 0,
+    // We group arithmetic operations by the number of inputs they have
+    // 1] 5 inputs (A * B + C = D * 2^256 + E)
+    arithEq0 {  1, 0, 0, 0, 0, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
         C0, C1, C2, C3, C4, C5, C6, C7,
         D0, D1, D2, D3, D4, D5, D6, D7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq0 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -600,7 +618,9 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    arithEq1 {  0, 1, 0, 1,
+    // 2] 6 inputs (Point addition, complex multiplication, complex addition, complex subtraction)
+    arithEq1 + arithEq3 + arithEq4 + arithEq5 {
+        0, arithEq1, 0, arithEq1, arithEq3, arithEq4, arithEq5,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
         C0, C1, C2, C3, C4, C5, C6, C7,
@@ -608,7 +628,7 @@ namespace Main(%N);
         E0, E1, E2, E3, E4, E5, E6, E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq1 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -617,7 +637,8 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    arithEq2 {  0, 0, 1, 1,
+    // 3] 4 inputs (Point doubling)
+    arithEq2 { 0, 0, 1, 1, 0, 0, 0,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
         A0, A1, A2, A3, A4, A5, A6, A7,
@@ -625,7 +646,7 @@ namespace Main(%N);
         E0, E1, E2, E3, E4, E5, E6, E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq2 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3],
+        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
@@ -634,7 +655,7 @@ namespace Main(%N);
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2;
+    cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2 + arithEq3 + arithEq4 + arithEq5;
 
 /////////
 // Binary Plookpups
@@ -698,6 +719,51 @@ namespace Main(%N);
     };
 
     cntKeccakF' = cntKeccakF*(1-Global.L1) + incCounter*hashKDigest;
+
+/////////
+// HASHS Plookpups (Sha256)
+/////////
+
+    hashS + hashS1 {
+        addr,
+        HASHPOS,
+        D0 * hashS + hashS1,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7
+    } in
+    PaddingSha256.crLatch * PaddingSha256.r8valid {
+        PaddingSha256.addr,
+        PaddingSha256.len - PaddingSha256.rem - PaddingSha256.crLen + 1,
+        PaddingSha256.crLen,
+        PaddingSha256.crV0C, PaddingSha256.crV1C, PaddingSha256.crV2C, PaddingSha256.crV3C,
+        PaddingSha256.crV4C, PaddingSha256.crV5C, PaddingSha256.crV6C, PaddingSha256.crV7C
+    };
+
+    hashSLen {
+        addr,
+        op0
+    } is
+    PaddingSha256.lastHashLen {
+        PaddingSha256.addr,
+        PaddingSha256.len
+    };
+
+    // The Sha digest's chunks are ordered from most to least significant.
+    // (hash0 => op7, hash1 => op6, ..)
+    hashSDigest {
+        addr,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7,
+        incCounter
+    } is
+    PaddingSha256.lastHashDigest {
+        PaddingSha256.addr,
+        PaddingSha256.hash7, PaddingSha256.hash6, PaddingSha256.hash5, PaddingSha256.hash4,
+        PaddingSha256.hash3, PaddingSha256.hash2, PaddingSha256.hash1, PaddingSha256.hash0,
+        PaddingSha256.incCounter
+    };
+
+    cntSha256F' = cntSha256F*(1-Global.L1) + incCounter*hashSDigest;
 
 /////////
 // HASHP Plookpups
@@ -829,7 +895,7 @@ namespace Main(%N);
         op4, op5, op6, op7,
         incCounter
     } is
-    Storage.iLatchGet {
+    Storage.latchGet {
         Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
         Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
         Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
@@ -846,7 +912,7 @@ namespace Main(%N);
         op0 + 2**32*op1, op2 + 2**32*op3, op4 + 2**32*op5, op6 + 2**32*op7,
         incCounter
     } is
-    Storage.iLatchSet {
+    Storage.latchSet {
         Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
         Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
         Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,

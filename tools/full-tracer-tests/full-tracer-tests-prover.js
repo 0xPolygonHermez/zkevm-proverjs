@@ -31,7 +31,7 @@ const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/state-transition';
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'RevertDepthCreateAddressCollisionBerlin'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'RevertDepthCreateAddressCollisionBerlin', 'over-calldata.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
 const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
@@ -93,6 +93,9 @@ async function main() {
         if (!fs.existsSync(path.join(__dirname, 'geth-traces'))) {
             fs.mkdirSync(path.join(__dirname, 'geth-traces'));
         }
+        if (!fs.existsSync(path.join(__dirname, 'ft-traces'))) {
+            fs.mkdirSync(path.join(__dirname, 'ft-traces'));
+        }
         // Compile rom file
         const zkasmFile = path.join(__dirname, '../../node_modules/@0xpolygonhermez/zkevm-rom/main/main.zkasm');
         const rom = await zkasm.compile(zkasmFile, null, {});
@@ -113,7 +116,7 @@ async function main() {
                 console.log(chalk.green(`Checking ${test.testName}-${test.id}`));
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
-                || t.name === `${test.folderName}/${test.testName}`).length > 0) {
+                    || t.name === `${test.folderName}/${test.testName}`).length > 0) {
                     continue;
                 }
                 // Find test from folder if not regen
@@ -126,8 +129,11 @@ async function main() {
                     }
                 });
                 if (regen || (!isEthereumTest && gethTraces.length !== test.txs.length) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
-                // Configure genesis for test
-                    await configureGenesis(test, isEthereumTest);
+                    // Configure genesis for test
+                    const isGethSupported = await configureGenesis(test, isEthereumTest);
+                    if (!isGethSupported) {
+                        continue;
+                    }
 
                     // Init geth node
 
@@ -168,13 +174,13 @@ async function main() {
     }
 }
 
-function includesInvalidError(changes, executorTrace) {
+function includesInvalidError(changes, fullTrace) {
     for (const error of invalidErrors) {
         if (JSON.stringify(changes).includes(error)) {
             return true;
         }
     }
-    if (JSON.stringify(executorTrace).includes('ROM_ERROR_INVALID_BYTECODE_STARTS_EF')) {
+    if (JSON.stringify(fullTrace).includes('ROM_ERROR_INVALID_BYTECODE_STARTS_EF')) {
         return true;
     }
 
@@ -197,6 +203,9 @@ function includesInvalidOpcode(steps) {
 }
 function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName) {
     if (!folderName) {
+        if (invalidTests.includes(`${testName}.json`)) {
+            return [];
+        }
         let test = isEthereumTest ? [JSON.parse(fs.readFileSync(testPath))][0] : [JSON.parse(fs.readFileSync(testPath))[testToDebug]];
         if (isEthereumTest) {
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
@@ -231,6 +240,10 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 if (!key.includes('Berlin')) {
                     continue;
                 }
+
+                if (value.network !== 'Berlin') {
+                    continue;
+                }
                 const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
                 Object.assign(value, {
                     testName: file.split('.')[0], folderName, inputTestPath, testToDebug: j, id: j,
@@ -258,7 +271,7 @@ function compareTracesByMethod(geth, fullTracer, method, key) {
     case 'defaultTracer':
         return compareDefaultTracer(geth, fullTracer, key);
     case 'callTracer':
-        return compareCallTracer(geth, fullTracer, key);
+        return compareFullTracer(geth, fullTracer, key);
     default:
         return compareDefaultTrace(geth, fullTracer, key);
     }
@@ -270,8 +283,8 @@ function compareTracesByMethod(geth, fullTracer, method, key) {
  * @param {Object} fullTracer trace
  * @returns Array with the differences found
  */
-function compareCallTracer(geth, fullTracer, i) {
-    const { context } = fullTracer.call_trace;
+function compareFullTracer(geth, fullTracer, i) {
+    const { context } = fullTracer.full_trace;
     // Generate geth trace from fullTracer trace
     const newFT = {
         from: context.from,
@@ -298,7 +311,7 @@ function compareCallTracer(geth, fullTracer, i) {
     for (const step of fullTracer.call_trace.steps) {
         // Previous step analysis
         if (currentStep > 0) {
-            const previousStep = fullTracer.call_trace.steps[currentStep - 1];
+            const previousStep = fullTracer.full_trace.steps[currentStep - 1];
             // Increase depth
             if (previousStep.depth < step.depth) {
                 ctx++;
@@ -418,7 +431,7 @@ function compareCallTracer(geth, fullTracer, i) {
         currentStep++;
     }
 
-    fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
+    fs.writeFileSync(path.join(__dirname, `ft-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
     return compareTraces(geth, newFT);
 }
@@ -463,22 +476,25 @@ function compareDefaultTracer(geth, fullTracer, i) {
         newFT.returnValue = fullTracer.return_value.toString('hex');
     }
     // Format return value to match geth. If return is all zeros, set to '00'
-    if (newFT.returnValue.match(/^0+$/)) {
-        newFT.returnValue = '00';
-    }
+    // if (newFT.returnValue.match(/^0+$/)) {
+    //     newFT.returnValue = '00';
+    // }
+    let currentStep = 0;
     // Fill steps array
-    for (const step of fullTracer.execution_trace) {
+    for (const step of fullTracer.full_trace.steps) {
         const newStep = {
             pc: Number(step.pc),
             op: step.op,
             gas: Number(step.remaining_gas),
             gasCost: Number(step.gas_cost),
             memory: step.memory.toString('hex'),
-            // memSize?
             stack: step.stack,
             depth: step.depth,
             // returndata?
         };
+        if (Number(step.memory_size) > 0) {
+            newStep.memSize = Number(step.memory_size);
+        }
         // Split memory in hunks of 32 bytes
         if (!_.isEmpty(newStep.memory)) {
             newStep.memory = newStep.memory.match(/.{64}/g);
@@ -505,6 +521,14 @@ function compareDefaultTracer(geth, fullTracer, i) {
         }
 
         newFT.structLogs.push(newStep);
+        if (currentStep > 0) {
+            const prevStep = newFT.structLogs[currentStep - 1];
+            if (newStep.op === 'STOP' && opCall.includes(prevStep.op)) {
+                newFT.structLogs.pop();
+            }
+        }
+
+        currentStep++;
     }
     fs.writeFileSync(path.join(__dirname, `geth-traces/${i}.json`), JSON.stringify(newFT, null, 2));
 
@@ -578,7 +602,7 @@ function compareDefaultTrace(geth, fullTracer, i) {
         newFT.returnValue = '00';
     }
     // Fill steps array
-    for (const step of fullTracer.execution_trace) {
+    for (const step of fullTracer.full_trace.steps) {
         const newStep = {
             pc: step.pc,
             op: step.opcode,
@@ -695,8 +719,8 @@ function processBatch(input, txsHashes, currentHash, traceMethod) {
             }
             // Compare trace
             const changes = compareTracesByMethod(gethTraces[currentHash], res.responses[currentHash], traceMethod, currentHash);
-            if (!_.isEmpty(changes) && !includesInvalidOpcode(res.responses[currentHash].execution_trace)
-            && !includesInvalidError(changes, res.responses[currentHash].execution_trace)) {
+            if (!_.isEmpty(changes) && !includesInvalidOpcode(res.responses[currentHash].full_trace.steps)
+                && !includesInvalidError(changes, res.responses[currentHash].full_trace)) {
                 const message = `Diff found at test ${fn}/${tn}-${tid}-${currentHash}: ${JSON.stringify(changes)}`;
                 console.log(chalk.red(message));
                 process.exit(1);
@@ -809,7 +833,7 @@ async function runTxs(test) {
                 value: ethers.utils.parseEther(txTest.value),
                 gasLimit: ethers.BigNumber.from(txTest.gasLimit).toHexString(),
                 gasPrice: ethers.BigNumber.from(txTest.gasPrice).toHexString(),
-                data: txTest.data,
+                data: formatNotOddData(txTest.data),
             };
             const signature = {
                 v: Number(txTest.v),
@@ -882,7 +906,7 @@ async function runTxsFromEthTest(test) {
         gasPrice: Number(txTest.gasPrice),
         chainId: CHAIN_ID,
     };
-        // Check deploy
+    // Check deploy
     if (tx.to === '0x') {
         delete tx.to;
     }
@@ -914,6 +938,7 @@ function getPvtKeyfromTest(test, address) {
  * @param {Object} test containing the genesis of the geth instance to configure
  */
 async function configureGenesis(test, isEthereumTest) {
+    let isGethSupported = true;
     const genesis = {
         config: {
             chainId: CHAIN_ID,
@@ -941,8 +966,13 @@ async function configureGenesis(test, isEthereumTest) {
 
     if (isEthereumTest) {
         for (const account of Object.keys(test.pre)) {
+            const nonce = Number(test.pre[account].nonce);
+            if (nonce > 2 ** 32) {
+                isGethSupported = false;
+                break;
+            }
             genesis.alloc[account.slice(2)] = {
-                nonce: String(Number(test.pre[account].nonce)),
+                nonce: String(nonce),
                 balance: String(BigInt(test.pre[account].balance)),
                 code: test.pre[account].code,
                 storage: test.pre[account].storage,
@@ -950,8 +980,13 @@ async function configureGenesis(test, isEthereumTest) {
         }
     } else {
         for (const account of test.genesis) {
+            const nonce = Number(account.nonce);
+            if (nonce > 2 ** 32) {
+                isGethSupported = false;
+                break;
+            }
             genesis.alloc[account.address.slice(2)] = {
-                nonce: String(account.nonce),
+                nonce: String(nonce),
                 balance: String(account.balance),
                 code: account.bytecode,
                 storage: account.storage,
@@ -959,6 +994,7 @@ async function configureGenesis(test, isEthereumTest) {
         }
     }
     fs.writeFileSync(path.join(__dirname, 'genesis.json'), JSON.stringify(genesis, null, 2));
+    return isGethSupported;
 }
 
 /**
