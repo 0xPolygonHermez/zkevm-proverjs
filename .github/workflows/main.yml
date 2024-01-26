@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - develop
+      - develop-etrog
   push:
     branches:
       - main
@@ -27,18 +28,15 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.INT_BOT_SSH_KEY }}          
       - name: Clone repos
         run: |
           cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch v2.0.0-fork.5
-          cd zkevm-testvectors/tools/ethereum-tests
+          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop
+          cd zkevm-testvectors/tools-inputs/tools-eth
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests
           git checkout test-vectors
-          cd ../../../../zkevm-proverjs-internal
+          cd ../../../../zkevm-proverjs
       - name: setup zkevm-proverjs
         run: |
           npm i
