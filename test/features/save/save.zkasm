@@ -1,0 +1,121 @@
+; constants needed by executor C++
+CONST %N = 2**19
+
+VAR GLOBAL lastHashKId
+VAR GLOBAL lastHashPId
+
+VAR GLOBAL initial_A
+VAR GLOBAL initial_B
+VAR GLOBAL initial_C
+VAR GLOBAL initial_D
+VAR GLOBAL initial_E
+VAR GLOBAL initial_CTX
+VAR GLOBAL initial_SP
+VAR GLOBAL initial_PC
+VAR GLOBAL initial_GAS
+VAR GLOBAL initial_SR
+VAR GLOBAL initial_RR
+VAR GLOBAL initial_HASHPOS
+VAR GLOBAL initial_RCX
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+
+        A           :MSTORE(initial_A)
+        B           :MSTORE(initial_B)
+        C           :MSTORE(initial_C)
+        D           :MSTORE(initial_D)
+        E           :MSTORE(initial_E)
+        CTX         :MSTORE(initial_CTX)
+        SP          :MSTORE(initial_SP)
+        PC          :MSTORE(initial_PC)
+        GAS         :MSTORE(initial_GAS)
+        SR          :MSTORE(initial_SR)
+        RR          :MSTORE(initial_RR)
+        HASHPOS     :MSTORE(initial_HASHPOS)
+        RCX         :MSTORE(initial_RCX)
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, RR, HASHPOS, RCX
+
+
+        1 => A
+        2 => B
+        3 => C
+
+        ${dump(NRID)}
+        :SAVE(A,B,C,D,E,RR,RCX,HASHPOS)
+        ${dump(NRID)}
+        10 => A
+        20 => B
+        30 => C
+        ${dump(RID)}
+        :RESTORE(A,B,C,D,E,RR,RCX,HASHPOS)
+        ${dump(RID)}
+        ${dump(NRID)}
+            
+        1   :ASSERT
+        B => A
+        2   :ASSERT
+        C => A
+        3   :ASSERT
+
+        32 => A :CALL(f1)
+        128 :ASSERT
+
+        32 => A  :CALL(fact)
+        ${dump(A)}
+        263130836933693530167218012160000000n :ASSERT
+        B => A
+        2   :ASSERT
+        C => A
+        3   :ASSERT
+        :JMP(end)
+f1:
+        :SAVE(B,C,D,E,RR,RCX,HASHPOS)
+        A * 3 => A :CALL(f2)
+        :RESTORE(B,C,D,E,RR,RCX,HASHPOS),RETURN
+
+f2:
+        :SAVE(B,C,D,E,RR,RCX,HASHPOS)
+        A + 32 => A
+        :RESTORE(B,C,D,E,RR,RCX,HASHPOS),RETURN
+
+fact:   :SAVE(B,C,D,E,RR,RCX,HASHPOS)
+        1 => B
+        $ :EQ,JMPC(fact_finish)
+        A => C
+        $ => A  :SUB
+        :CALL(fact)
+        C => B
+        0 => D,C
+        ${A * B} => A :ARITH
+fact_finish:        
+        :RESTORE(B,C,D,E,RR,RCX,HASHPOS),RETURN
+end:
+        0 => RID
+
+        $ => A           :MLOAD(initial_A)
+        $ => B           :MLOAD(initial_B)
+        $ => C           :MLOAD(initial_C)
+        $ => D           :MLOAD(initial_D)
+        $ => E           :MLOAD(initial_E)
+        $ => CTX         :MLOAD(initial_CTX)
+        $ => SP          :MLOAD(initial_SP)
+        $ => PC          :MLOAD(initial_PC)
+        $ => GAS         :MLOAD(initial_GAS)
+        $ => SR          :MLOAD(initial_SR)
+        $ => RR          :MLOAD(initial_RR)
+        $ => HASHPOS     :MLOAD(initial_HASHPOS)
+        $ => RCX         :MLOAD(initial_RCX)
+
+; label finalizeExecution needed by executor C++
+finalizeExecution:
+        ${beforeLast()}  : JMPN(finalizeExecution)
+
+                         : JMP(start)
+opINVALID:
+; label checkAndSaveFrom needed by executor C++
+checkAndSaveFrom:
+                         :JMP(opINVALID)

@@ -125,7 +125,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         outLogs: {},
         N,
         stepsN,
-        helpers
+        helpers,
+        saved:{}
     }
 
     if (config.stats) {
@@ -216,6 +217,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.PC = pols.PC[i];
         ctx.RR = pols.RR[i];
         ctx.HASHPOS = pols.HASHPOS[i];
+        ctx.RID = pols.RID[i];
+        ctx.NRID = pols.NRID[i];
         ctx.GAS = pols.GAS[i];
         ctx.zkPC = pols.zkPC[i];
         ctx.cntArith = pols.cntArith[i];
@@ -1887,214 +1890,342 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.repeat[i] = 0n;
         }
 
+        if (l.save) {
+            const nrid = pols.NRID[i];
+            if (ctx.saved[nrid]) {
+                throw new Error(`Save using a RID ${nrid} already used on ${sourceRef}. This RID is previously used on row ${ctx.saved[nrid].row} at ${ctx.saved[nrid].sourceRef} [nrid: ${nrid} rid:${pols.RID[i]}])`);
+            }
+            const data = {}
+            if (l.inA) {
+                data.A = [pols.A0[i], pols.A1[i], pols.A2[i], pols.A3[i], pols.A4[i], pols.A5[i], pols.A6[i], pols.A7[i]];
+            }
+            data.B = [pols.B0[i], pols.B1[i], pols.B2[i], pols.B3[i], pols.B4[i], pols.B5[i], pols.B6[i], pols.B7[i]]
+            data.C = [pols.C0[i], pols.C1[i], pols.C2[i], pols.C3[i], pols.C4[i], pols.C5[i], pols.C6[i], pols.C7[i]]
+            data.D = [pols.D0[i], pols.D1[i], pols.D2[i], pols.D3[i], pols.D4[i], pols.D5[i], pols.D6[i], pols.D7[i]]
+            if (l.inE) {
+                data.E = [pols.E0[i], pols.E1[i], pols.E2[i], pols.E3[i], pols.E4[i], pols.E5[i], pols.E6[i], pols.E7[i]];
+            }
+            data.RCX = pols.RCX[i];
+            data.RR = pols.RR[i];
+            if (l.inHASHPOS) {
+                data.HASHPOS = pols.HASHPOS[i];
+            }
+            data.RID = pols.RID[i];
+            data.sourceRef = sourceRef;
+            data.row = i;
+            console.log(`saving ${nrid} on ${sourceRef} (rid:${data.RID})`);
+            ctx.saved[nrid] = data;
+            pols.save[i] = 1n;            
+        } else {
+            pols.save[i] = 0n;
+        }
+
+        const nexti = (i+1) % N;
+
+        if (l.restore) {
+            const rid = pols.RID[i];
+            pols.restore[i] = 1n;
+            
+            // check if exists saved data with current RID value
+            if (!ctx.saved[rid]) {
+                throw new Error(`Not found saved data with RID ${rid} on ${sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+            }                
+            const data = ctx.saved[rid];
+            console.log(`restoring ${rid} on ${sourceRef} (rid:${data.RID})`);
+
+            // verify that saving wasn't restored previously
+            if (data.restored) {
+                throw new Error(`On ${sourceRef} try to restore RID ${rid} previously restored on row ${data.restored.row} at ${data.restored.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+            }
+        
+            if (l.restoreA) {
+                if (data.A) {
+                    pols.restoreA[i] = 1n;
+                    [pols.A0[nexti], pols.A1[nexti], pols.A2[nexti], pols.A3[nexti], pols.A4[nexti], pols.A5[nexti], pols.A6[nexti], pols.A7[nexti]] = data.A;
+                } else {
+                    throw new Error(`On ${sourceRef} try to restore A with RID ${rid} but A isn't saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+                }
+            } else if (data.A) {
+                throw new Error(`On ${sourceRef} no restore previously saved register A with RID ${rid}, A is saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+            } else {
+                pols.restoreA[i] = 0n;
+            }
+
+            [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = data.B;
+            [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = data.C;
+            [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = data.D;
+
+            if (l.restoreE) {
+                if (data.E) {
+                    pols.restoreE[i] = 1n;
+                    [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = data.E;
+                } else {
+                    throw new Error(`On ${sourceRef} try to restore E with RID ${rid} but E isn't saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+                }
+            } else if (data.E) {
+                throw new Error(`On ${sourceRef} no restore previously saved register E with RID ${rid}, E is saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+            } else {
+                pols.restoreE[i] = 0n;
+            }
+            pols.RCX[nexti] = data.RCX;
+            pols.RR[nexti] = data.RR;
+            if (l.restoreHASHPOS) {
+                pols.restoreHASHPOS[i] = 1n;
+                if (typeof data.HASHPOS !== 'undefined') {
+                    pols.HASHPOS[nexti] = data.HASHPOS;
+                } else {
+                    throw new Error(`On ${sourceRef} try to restore HASHPOS with RID ${rid} but HASHPOS isn't saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+                }
+            } else if (data.HASHPOS) {
+                throw new Error(`On ${sourceRef} no restore previously saved register HASHPOS with RID ${rid}, HASHPOS is saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
+            } else {
+                pols.restoreHASHPOS[i] = 0n;
+            }
+            console.log(`restore on ${sourceRef} RID=${data.RID}`)
+            pols.RID[nexti] = data.RID;
+            data.restored = {sourceRef, row: i };
+        } else {
+            pols.restore[i] = 0n;
+            pols.restoreA[i] = 0n;
+            pols.restoreE[i] = 0n;
+            pols.restoreHASHPOS[i] = 0n;
+        }
+
     //////////
     // SET NEXT REGISTERS
     //////////
 
-        const nexti = (i+1) % N;
-
-        if (l.setA == 1) {
-            pols.setA[i]=1n;
-            [pols.A0[nexti],
-             pols.A1[nexti],
-             pols.A2[nexti],
-             pols.A3[nexti],
-             pols.A4[nexti],
-             pols.A5[nexti],
-             pols.A6[nexti],
-             pols.A7[nexti]
+            [pols.op0[i],
+             pols.op1[i],
+             pols.op2[i],
+             pols.op3[i],
+             pols.op4[i],
+             pols.op5[i],
+             pols.op6[i],
+             pols.op7[i]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-        } else {
-            pols.setA[i]=0n;
-            [pols.A0[nexti],
-             pols.A1[nexti],
-             pols.A2[nexti],
-             pols.A3[nexti],
-             pols.A4[nexti],
-             pols.A5[nexti],
-             pols.A6[nexti],
-             pols.A7[nexti]
-            ] = [
-             pols.A0[i],
-             pols.A1[i],
-             pols.A2[i],
-             pols.A3[i],
-             pols.A4[i],
-             pols.A5[i],
-             pols.A6[i],
-             pols.A7[i]
-            ];
 
-            // Set A register with input.from to process unsigned transactions
-            if ((Number(ctx.zkPC) === rom.labels.checkAndSaveFrom) && config.unsigned){
-                const feaFrom = scalar2fea(Fr, input.from);
+        if (!l.restoreA) {
+            if (l.setA == 1) {
+                pols.setA[i]=1n;
                 [pols.A0[nexti],
-                 pols.A1[nexti],
-                 pols.A2[nexti],
-                 pols.A3[nexti],
-                 pols.A4[nexti],
-                 pols.A5[nexti],
-                 pols.A6[nexti],
-                 pols.A7[nexti]
-                ] = [feaFrom[0], feaFrom[1], feaFrom[2], feaFrom[3], feaFrom[4], feaFrom[5], feaFrom[6], feaFrom[7]];
-            }
-        }
-
-        if (l.setB == 1) {
-            pols.setB[i]=1n;
-            [pols.B0[nexti],
-             pols.B1[nexti],
-             pols.B2[nexti],
-             pols.B3[nexti],
-             pols.B4[nexti],
-             pols.B5[nexti],
-             pols.B6[nexti],
-             pols.B7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-        } else {
-            pols.setB[i]=0n;
-            [pols.B0[nexti],
-             pols.B1[nexti],
-             pols.B2[nexti],
-             pols.B3[nexti],
-             pols.B4[nexti],
-             pols.B5[nexti],
-             pols.B6[nexti],
-             pols.B7[nexti]
-            ] = [
-             pols.B0[i],
-             pols.B1[i],
-             pols.B2[i],
-             pols.B3[i],
-             pols.B4[i],
-             pols.B5[i],
-             pols.B6[i],
-             pols.B7[i]
-            ];
-        }
-
-        if (l.setC == 1) {
-            pols.setC[i]=1n;
-            [pols.C0[nexti],
-             pols.C1[nexti],
-             pols.C2[nexti],
-             pols.C3[nexti],
-             pols.C4[nexti],
-             pols.C5[nexti],
-             pols.C6[nexti],
-             pols.C7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-        } else {
-            pols.setC[i]=0n;
-            [pols.C0[nexti],
-             pols.C1[nexti],
-             pols.C2[nexti],
-             pols.C3[nexti],
-             pols.C4[nexti],
-             pols.C5[nexti],
-             pols.C6[nexti],
-             pols.C7[nexti]
-            ] = [
-             pols.C0[i],
-             pols.C1[i],
-             pols.C2[i],
-             pols.C3[i],
-             pols.C4[i],
-             pols.C5[i],
-             pols.C6[i],
-             pols.C7[i]
-            ];
-
-            // Set C register with input.l1InfoRoot to process unsigned transactions
-            if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
-                const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
-                [pols.C0[nexti],
-                    pols.C1[nexti],
-                    pols.C2[nexti],
-                    pols.C3[nexti],
-                    pols.C4[nexti],
-                    pols.C5[nexti],
-                    pols.C6[nexti],
-                    pols.C7[nexti],
+                pols.A1[nexti],
+                pols.A2[nexti],
+                pols.A3[nexti],
+                pols.A4[nexti],
+                pols.A5[nexti],
+                pols.A6[nexti],
+                pols.A7[nexti]
+                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            } else {
+                pols.setA[i]=0n;
+                [pols.A0[nexti],
+                pols.A1[nexti],
+                pols.A2[nexti],
+                pols.A3[nexti],
+                pols.A4[nexti],
+                pols.A5[nexti],
+                pols.A6[nexti],
+                pols.A7[nexti]
                 ] = [
-                    feaL1InfoRoot[0],
-                    feaL1InfoRoot[1],
-                    feaL1InfoRoot[2],
-                    feaL1InfoRoot[3],
-                    feaL1InfoRoot[4],
-                    feaL1InfoRoot[5],
-                    feaL1InfoRoot[6],
-                    feaL1InfoRoot[7],
+                pols.A0[i],
+                pols.A1[i],
+                pols.A2[i],
+                pols.A3[i],
+                pols.A4[i],
+                pols.A5[i],
+                pols.A6[i],
+                pols.A7[i]
+                ];
+
+                // Set A register with input.from to process unsigned transactions
+                if ((Number(ctx.zkPC) === rom.labels.checkAndSaveFrom) && config.unsigned){
+                    const feaFrom = scalar2fea(Fr, input.from);
+                    [pols.A0[nexti],
+                    pols.A1[nexti],
+                    pols.A2[nexti],
+                    pols.A3[nexti],
+                    pols.A4[nexti],
+                    pols.A5[nexti],
+                    pols.A6[nexti],
+                    pols.A7[nexti]
+                    ] = [feaFrom[0], feaFrom[1], feaFrom[2], feaFrom[3], feaFrom[4], feaFrom[5], feaFrom[6], feaFrom[7]];
+                }
+            }
+        } else {
+            pols.setA[i] = 0n;
+        }
+
+        if (!l.restore) {
+            if (l.setB == 1) {
+                pols.setB[i]=1n;
+                [pols.B0[nexti],
+                pols.B1[nexti],
+                pols.B2[nexti],
+                pols.B3[nexti],
+                pols.B4[nexti],
+                pols.B5[nexti],
+                pols.B6[nexti],
+                pols.B7[nexti]
+                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            } else {
+                pols.setB[i]=0n;
+                [pols.B0[nexti],
+                pols.B1[nexti],
+                pols.B2[nexti],
+                pols.B3[nexti],
+                pols.B4[nexti],
+                pols.B5[nexti],
+                pols.B6[nexti],
+                pols.B7[nexti]
+                ] = [
+                pols.B0[i],
+                pols.B1[i],
+                pols.B2[i],
+                pols.B3[i],
+                pols.B4[i],
+                pols.B5[i],
+                pols.B6[i],
+                pols.B7[i]
                 ];
             }
-        }
-
-        if (l.setD == 1) {
-            pols.setD[i]=1n;
-            [pols.D0[nexti],
-             pols.D1[nexti],
-             pols.D2[nexti],
-             pols.D3[nexti],
-             pols.D4[nexti],
-             pols.D5[nexti],
-             pols.D6[nexti],
-             pols.D7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
-            pols.setD[i]=0n;
-            [pols.D0[nexti],
-             pols.D1[nexti],
-             pols.D2[nexti],
-             pols.D3[nexti],
-             pols.D4[nexti],
-             pols.D5[nexti],
-             pols.D6[nexti],
-             pols.D7[nexti]
-            ] = [
-             pols.D0[i],
-             pols.D1[i],
-             pols.D2[i],
-             pols.D3[i],
-             pols.D4[i],
-             pols.D5[i],
-             pols.D6[i],
-             pols.D7[i]
-            ];
+            pols.setB[i] = 0n;
         }
 
-        if (l.setE == 1) {
-            pols.setE[i]=1n;
-            [pols.E0[nexti],
-             pols.E1[nexti],
-             pols.E2[nexti],
-             pols.E3[nexti],
-             pols.E4[nexti],
-             pols.E5[nexti],
-             pols.E6[nexti],
-             pols.E7[nexti]
-            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+        if (!l.restore) {
+            if (l.setC == 1) {
+                pols.setC[i]=1n;
+                [pols.C0[nexti],
+                pols.C1[nexti],
+                pols.C2[nexti],
+                pols.C3[nexti],
+                pols.C4[nexti],
+                pols.C5[nexti],
+                pols.C6[nexti],
+                pols.C7[nexti]
+                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            } else {
+                pols.setC[i]=0n;
+                [pols.C0[nexti],
+                pols.C1[nexti],
+                pols.C2[nexti],
+                pols.C3[nexti],
+                pols.C4[nexti],
+                pols.C5[nexti],
+                pols.C6[nexti],
+                pols.C7[nexti]
+                ] = [
+                pols.C0[i],
+                pols.C1[i],
+                pols.C2[i],
+                pols.C3[i],
+                pols.C4[i],
+                pols.C5[i],
+                pols.C6[i],
+                pols.C7[i]
+                ];
+
+                // Set C register with input.l1InfoRoot to process unsigned transactions
+                if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
+                    const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
+                    [pols.C0[nexti],
+                        pols.C1[nexti],
+                        pols.C2[nexti],
+                        pols.C3[nexti],
+                        pols.C4[nexti],
+                        pols.C5[nexti],
+                        pols.C6[nexti],
+                        pols.C7[nexti],
+                    ] = [
+                        feaL1InfoRoot[0],
+                        feaL1InfoRoot[1],
+                        feaL1InfoRoot[2],
+                        feaL1InfoRoot[3],
+                        feaL1InfoRoot[4],
+                        feaL1InfoRoot[5],
+                        feaL1InfoRoot[6],
+                        feaL1InfoRoot[7],
+                    ];
+                }
+            }
         } else {
-            pols.setE[i]=0n;
-            [pols.E0[nexti],
-             pols.E1[nexti],
-             pols.E2[nexti],
-             pols.E3[nexti],
-             pols.E4[nexti],
-             pols.E5[nexti],
-             pols.E6[nexti],
-             pols.E7[nexti]
-            ] = [
-             pols.E0[i],
-             pols.E1[i],
-             pols.E2[i],
-             pols.E3[i],
-             pols.E4[i],
-             pols.E5[i],
-             pols.E6[i],
-             pols.E7[i]
-            ];
+            pols.setC[i] = 0n;
+        }
+    
+        if (!l.restore) {
+            if (l.setD == 1) {
+                pols.setD[i]=1n;
+                [pols.D0[nexti],
+                pols.D1[nexti],
+                pols.D2[nexti],
+                pols.D3[nexti],
+                pols.D4[nexti],
+                pols.D5[nexti],
+                pols.D6[nexti],
+                pols.D7[nexti]
+                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            } else {
+                pols.setD[i]=0n;
+                [pols.D0[nexti],
+                pols.D1[nexti],
+                pols.D2[nexti],
+                pols.D3[nexti],
+                pols.D4[nexti],
+                pols.D5[nexti],
+                pols.D6[nexti],
+                pols.D7[nexti]
+                ] = [
+                pols.D0[i],
+                pols.D1[i],
+                pols.D2[i],
+                pols.D3[i],
+                pols.D4[i],
+                pols.D5[i],
+                pols.D6[i],
+                pols.D7[i]
+                ];
+            }
+        } else {
+            pols.setD[i] = 0n;
         }
 
+        if (!l.restoreE) {
+            if (l.setE == 1) {
+                pols.setE[i]=1n;
+                [pols.E0[nexti],
+                pols.E1[nexti],
+                pols.E2[nexti],
+                pols.E3[nexti],
+                pols.E4[nexti],
+                pols.E5[nexti],
+                pols.E6[nexti],
+                pols.E7[nexti]
+                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+            } else {
+                pols.setE[i]=0n;
+                [pols.E0[nexti],
+                pols.E1[nexti],
+                pols.E2[nexti],
+                pols.E3[nexti],
+                pols.E4[nexti],
+                pols.E5[nexti],
+                pols.E6[nexti],
+                pols.E7[nexti]
+                ] = [
+                pols.E0[i],
+                pols.E1[i],
+                pols.E2[i],
+                pols.E3[i],
+                pols.E4[i],
+                pols.E5[i],
+                pols.E6[i],
+                pols.E7[i]
+                ];
+            }
+        } else {
+            pols.setE[i] = 0n;
+        }
 
         if (l.setSR == 1) {
             pols.setSR[i]=1n;
@@ -2153,12 +2284,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.PC[nexti] = pols.PC[i];
         }
 
-        if (l.setRR == 1) {
-            pols.setRR[i]=1n;
-            pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
+        if (!l.restore) {
+            if (l.setRR == 1) {
+                pols.setRR[i]=1n;
+                pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            } else {
+                pols.setRR[i]=0n;
+                pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
+            }
         } else {
-            pols.setRR[i]=0n;
-            pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
+            pols.setRR[i] = 0n;
         }
 
         if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5)) {
@@ -2179,16 +2314,20 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
         }
 
-        if (l.setRCX == 1) {
-            pols.setRCX[i] = 1n;
-            pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+        if (!l.restore) {
+            if (l.setRCX == 1) {
+                pols.setRCX[i] = 1n;
+                pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            } else {
+                pols.setRCX[i] = 0n;
+                if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
+                    pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
+                } else {
+                    pols.RCX[nexti] = pols.RCX[i];
+                }
+            }
         } else {
             pols.setRCX[i] = 0n;
-            if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
-                pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
-            } else {
-                pols.RCX[nexti] = pols.RCX[i];
-            }
         }
 
         if (Fr.isZero(pols.RCX[nexti])) {
@@ -2274,7 +2413,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 pols.call[i] = 1n;
             } else if (l.return) {
-                pols.zkPC[nexti] = ctx.RR;
+                pols.zkPC[nexti] = pols.RR[nexti];
                 pols.return[i] = 1n;
             } else {
                 pols.zkPC[nexti] = nextNoJmpZkPC;
@@ -2289,12 +2428,36 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.GAS[nexti] = pols.GAS[i];
         }
 
-        if (l.setHASHPOS == 1) {
-            pols.setHASHPOS[i]=1n;
-            pols.HASHPOS[nexti] = BigInt(fe2n(Fr, op0, ctx) + incHashPos);
+        if (!l.restoreHASHPOS) {
+            if (l.setHASHPOS == 1) {
+                pols.setHASHPOS[i]=1n;
+                pols.HASHPOS[nexti] = BigInt(fe2n(Fr, op0, ctx) + incHashPos);
+            } else {
+                pols.setHASHPOS[i]=0n;
+                pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
+            }
         } else {
-            pols.setHASHPOS[i]=0n;
-            pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
+            pols.setHASHPOS[i] = 0n;
+        }
+
+        if (!l.restore) {
+            if (l.setRID == 1) {
+                pols.setRID[i]=1n;
+                pols.RID[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            } else if (l.save) {
+                pols.setRID[i] = 0n;
+                pols.RID[nexti] = pols.NRID[i];
+            } else {
+                pols.setRID[i] = 0n;
+                pols.RID[nexti] = pols.RID[i];
+            }
+        } else {
+            pols.setRID[i] = 0n;
+        }
+        if (l.save == 1) {
+            pols.NRID[nexti] = pols.NRID[i] + 1n;
+        } else if (nexti != 0) {
+            pols.NRID[nexti] = pols.NRID[i];
         }
 
         if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
@@ -2769,6 +2932,8 @@ function initState(Fr, pols, ctx) {
     pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
+    pols.RID[0] = 0n;
+    pols.NRID[0] = 0n;
 }
 
 async function eventsAsyncTracer(ctx, cmds) {
@@ -2950,6 +3115,10 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.HASHPOS);
     } else if (tag.regName == "RCX") {
         return Scalar.e(ctx.RCX);
+    } else if (tag.regName == "RID") {
+        return Scalar.e(ctx.RID);
+    } else if (tag.regName == "NRID") {
+        return Scalar.e(ctx.NRID);
     } else {
         throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }
