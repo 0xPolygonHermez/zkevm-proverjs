@@ -80,17 +80,6 @@ function getVarFromCtx(ctx, global, varLabel, customCTX) {
 }
 
 /**
- * Set a global variable
- * @param {Object} ctx current context object
- * @param {String} varLabel name of the label
- * @param {Array[BigInt]} valueToSet value in the form of [op0, .., op7]
- */
-function setGlobalVar(ctx, varLabel, valueToSet) {
-    const addressMem = findOffsetLabel(ctx.rom.program, varLabel);
-    ctx.mem[addressMem] = valueToSet;
-}
-
-/**
  * Get the value of a reg (A, B, C, D, E...)
  * @param {Object} ctx current context object
  * @param {String} reg label string of the reg to retrieve
@@ -207,5 +196,4 @@ module.exports = {
     getConstantFromCtx,
     bnToPaddedHex,
     convertBigIntsToNumbers,
-    setGlobalVar,
 };

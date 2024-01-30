@@ -226,9 +226,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
             const feaInitSR = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
             const res = await smt.get(sr8to4(ctx.Fr, feaInitSR), keyToRead);
-            const timestampFromSR = Scalar.e(res.value);
-            console.log('timestampFromSR: ', timestampFromSR);
-            fullTracerUtils.setGlobalVar(ctx, 'timestamp', scalar2fea(ctx.Fr, timestampFromSR));
+
+            // write in memory
+            const addressMem = fullTracerUtils.findOffsetLabel(ctx.rom.program, 'timestamp');
+            ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
         }
 
     for (let step = 0; step < stepsN; step++) {
