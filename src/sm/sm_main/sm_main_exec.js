@@ -26,11 +26,13 @@ const {
 const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 
 const FullTracer = require("./debug/full-tracer");
+const fullTracerUtils = require("./debug/full-tracer-utils");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const { lstat } = require("fs");
 const MyHelperClass = require("./helpers/helpers");
 const Constants = require('./const-sm-main-exec');
+const { get } = require("lodash");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -201,6 +203,35 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     }
     ctx.helpers = helpers;
     try {
+
+        // This code is only used when 'skipFirstChangeL2Block = true'
+        // This only is triggered when executong transaction by transaction across batches
+        // This cannot be executed in prover mode
+        // This code aims to set the timestamp of the batch to the one read from the state
+        // Issue fixed: timestamp is set when processed a 'changeL2Block', stored on state and hold on memory.
+        // Later on, 'opTIMESTAMP' loads the value hold on memory.
+        // Hence, execution transaction by transaction lost track of the timestamp
+        // This function aims to solve the abive issue by loading the timestamp from the state
+        if (input.skipFirstChangeL2Block === true) {
+            // this smt key is built with the following registers:
+            // A: `0x000000000000000000000000000000005ca1ab1e` (%ADDRESS_SYSTEM)
+            // B: `3` (%SMT_KEY_SC_STORAGE)
+            // C: `2` (%TIMESTAMP_STORAGE_POS)
+            const keyToRead = [
+                13748230500842749409n,
+                4428676446262882967n,
+                12167292013585018040n,
+                12161933621946006603n,
+            ];
+
+            const feaInitSR = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+            const res = await smt.get(sr8to4(ctx.Fr, feaInitSR), keyToRead);
+
+            // write in memory
+            const addressMem = fullTracerUtils.findOffsetLabel(ctx.rom.program, 'timestamp');
+            ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
+        }
+
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
