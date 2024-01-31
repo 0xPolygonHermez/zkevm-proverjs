@@ -424,11 +424,16 @@ module.exports = class myHelper {
      *
      * @param ctx - Context.
      * @param tag - Tag.
-     * @returns Length of the binary representation of the input scalar.
+     * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
      */
     eval_receiveLen(ctx, tag) {
-        const kname = tag.params[0].offsetLabel;
-        return ctx[kname].len;
+        let len = 0;
+        for (let i = 0; i < tag.params.length; ++i) {
+            const leni = ctx[tag.params[i].offsetLabel].len;
+            len = leni > len ? leni : len;
+        }
+
+        return len;
     }
 
     /**
