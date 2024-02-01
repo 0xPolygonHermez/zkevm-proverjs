@@ -83,11 +83,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     const poseidon = await buildPoseidon();
     const Fr = poseidon.F;
+
+    // Base field of the Secp256k1 curve
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
+    // Scalar field of the Secp256k1 curve
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
 
-    let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const FpBN254 = new F1Field(pBN254);
+    // Base field of the BN254 curve
+    const FpBN254 = new F1Field(21888242871839275222246405745257275088696311157297823662689037894645226208583n);
+
+    // Scalar field of the BLS12_381 curve
+    const FrBLS12_381 = new F1Field(21888242871839275222246405745257275088696311157297823662689037894645226208583n);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -120,6 +126,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fec: Fec,
         Fnec: Fnec,
         FpBN254,
+        FrBLS12_381,
         sto: input.keys,
         rom: rom,
         outLogs: {},
