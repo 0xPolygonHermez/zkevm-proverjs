@@ -371,80 +371,17 @@ module.exports = class myHelper {
      *
      * @param ctx - Context.
      * @param tag - Tag.
-     * @returns Binary representation of the input scalar, from LSB to MSB, with the MSB removed.
-     */
-    eval_uintToBin(ctx, tag) {
-        let k = this.evalCommand(ctx, tag.params[0]);
-        const kname = tag.params[0].offsetLabel;
-
-        let kbin = [];
-        while (k > 1n) {
-            kbin.push(k & 1n);
-            k >>= 1n;
-        }
-
-        ctx[kname] = { k: kbin, len: kbin.length };
-    }
-
-    /**
-     *
-     * @param ctx - Context.
-     * @param tag - Tag.
-     * @returns Binary representation of the two input scalars, from LSB to MSB.
-     */
-    eval_uintToBin2(ctx, tag) {
-        let k1 = this.evalCommand(ctx, tag.params[0]);
-        let k2 = this.evalCommand(ctx, tag.params[1]);
-        const kname1 = tag.params[0].offsetLabel;
-        const kname2 = tag.params[1].offsetLabel;
-
-        let kbin1 = [];
-        let kbin2 = [];
-        while (k1 > 0n || k2 > 0n) {
-            kbin1.push(k1 & 1n);
-            kbin2.push(k2 & 1n);
-            k1 >>= 1n;
-            k2 >>= 1n;
-        }
-
-        let len1 = kbin1.length;
-        let len2 = kbin2.length;
-        while (kbin1[len1 - 1] === 0n) {
-            len1--;
-        }
-        while (kbin2[len2 - 1] === 0n) {
-            len2--;
-        }
-
-        ctx[kname1] = { k: kbin1, len: len1 };
-        ctx[kname2] = { k: kbin2, len: len2 };
-    }
-
-    /**
-     *
-     * @param ctx - Context.
-     * @param tag - Tag.
      * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
      */
     eval_receiveLen(ctx, tag) {
         let len = 0;
         for (let i = 0; i < tag.params.length; ++i) {
-            const leni = ctx[tag.params[i].offsetLabel].len;
+            const k = this.evalCommand(ctx, tag.params[i]);
+            const leni = k.toString(2).length - 1;
             len = leni > len ? leni : len;
         }
 
         return len;
-    }
-
-    /**
-     *
-     * @param ctx - Context.
-     * @param tag - Tag.
-     * @returns Next bit of the binary representation of the input scalar.
-     */
-    eval_receiveNextBit(ctx, tag) {
-        const kname = tag.params[0].offsetLabel;
-        return ctx[kname].k.pop();
     }
 
     ///////////// PAIRINGS
