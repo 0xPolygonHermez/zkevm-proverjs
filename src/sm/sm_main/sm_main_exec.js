@@ -2162,7 +2162,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setCTX == 1) {
             pols.setCTX[i]=1n;
-            pols.CTX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.CTX[nexti] = op0;
         } else {
             pols.setCTX[i]=0n;
             pols.CTX[nexti] = pols.CTX[i];
@@ -2170,7 +2170,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setSP == 1) {
             pols.setSP[i]=1n;
-            pols.SP[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.SP[nexti] = op0;
         } else {
             pols.setSP[i]=0n;
             pols.SP[nexti] = pols.SP[i] + BigInt((l.incStack || 0));
@@ -2178,7 +2178,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setPC == 1) {
             pols.setPC[i]=1n;
-            pols.PC[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.PC[nexti] = op0;
         } else {
             pols.setPC[i]=0n;
             pols.PC[nexti] = pols.PC[i];
@@ -2186,7 +2186,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setRR == 1) {
             pols.setRR[i]=1n;
-            pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.RR[nexti] = op0;
         } else {
             pols.setRR[i]=0n;
             pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
@@ -2212,7 +2212,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setRCX == 1) {
             pols.setRCX[i] = 1n;
-            pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.RCX[nexti] = op0;
         } else {
             pols.setRCX[i] = 0n;
             if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
@@ -2314,7 +2314,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setGAS == 1) {
             pols.setGAS[i]=1n;
-            pols.GAS[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.GAS[nexti] = op0;
         } else {
             pols.setGAS[i]=0n;
             pols.GAS[nexti] = pols.GAS[i];
@@ -2322,10 +2322,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setHASHPOS == 1) {
             pols.setHASHPOS[i]=1n;
-            pols.HASHPOS[nexti] = BigInt(fe2n(Fr, op0, ctx) + incHashPos);
+            pols.HASHPOS[nexti] = Fr.add(op0, Fr.e(incHashPos));
         } else {
             pols.setHASHPOS[i]=0n;
-            pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
+            pols.HASHPOS[nexti] = Fr.add(pols.HASHPOS[i], Fr.e(incHashPos));
         }
 
         if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
