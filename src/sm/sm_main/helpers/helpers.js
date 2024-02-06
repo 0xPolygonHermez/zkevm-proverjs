@@ -376,8 +376,13 @@ module.exports = class myHelper {
     eval_receiveLen(ctx, tag) {
         let len = 0;
         for (let i = 0; i < tag.params.length; ++i) {
-            const k = this.evalCommand(ctx, tag.params[i]);
-            const leni = k.toString(2).length - 1;
+            let ki = this.evalCommand(ctx, tag.params[i]);
+            if (ki === 0n) continue;
+            let leni = 0;
+            while (ki !== 1n) {
+                ki >>= 1n;
+                leni++;
+            }
             len = leni > len ? leni : len;
         }
 
