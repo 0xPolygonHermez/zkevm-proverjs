@@ -5,6 +5,11 @@
         "isEthereumTest": false
     },
     {
+        "folderName": "calldata",
+        "traceMethod": "defaultTracer",
+        "isEthereumTest": false
+    },
+    {
         "testName": "op-invalid",
         "testToDebug": 0,
         "traceMethod": "defaultTracer"
@@ -17,56 +22,6 @@
     },
     {
         "testName": "erc20",
-        "testToDebug": 0,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "pre-ecrecover",
-        "testToDebug": 0,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "pre-ecrecover",
-        "testToDebug": 3,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "pre-identity",
-        "testToDebug": 0,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "pre-identity",
-        "testToDebug": 1,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "op-call",
-        "testToDebug": 14,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "op-call",
-        "testToDebug": 0,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "op-call-revert",
-        "testToDebug": 0,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "test-deploy",
-        "testToDebug": 3,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "uniswapv2-benchmark",
-        "testToDebug": 0,
-        "traceMethod": "defaultTracer"
-    },
-    {
-        "testName": "mynft",
         "testToDebug": 0,
         "traceMethod": "defaultTracer"
     }

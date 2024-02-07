@@ -16,6 +16,7 @@ const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 const _ = require('lodash');
 const chalk = require('chalk');
 const zkasm = require('@0xpolygonhermez/zkasmcom');
+const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 const smMain = require('../../src/sm/sm_main/sm_main');
 
 const CHAIN_ID = 1000;
@@ -25,13 +26,14 @@ const config = require('./config.json');
 
 const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
-const ethereumTestsPath = '../../../zkevm-testvectors/tools/ethereum-tests/tests/BlockchainTests/GeneralStateTests/';
-const stTestsPath = '../../../zkevm-testvectors/state-transition';
+const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
+const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
-const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection'];
-const noExec = require('../../../zkevm-testvectors/tools/ethereum-tests/no-exec.json');
+const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
+const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
+const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
 const regen = false;
 const errorsMap = {
@@ -71,9 +73,13 @@ async function main() {
             const testPath = isEthereumTest ? path.join(__dirname, `${ethereumTestsPath}/${testName}.json`) : path.join(__dirname, `${stTestsPath}/calldata/${testName}.json`);
 
             const tests = createTestsArray(isEthereumTest, testName, testPath, testToDebug, folderName);
+            // Read files
+            const files = fs.readdirSync(path.join(__dirname, 'geth-traces'));
+            // Sort files by id
+            files.sort((a, b) => Number(a.split('_')[3]) - Number(b.split('_')[3]));
             for (let j = 0; j < tests.length; j++) {
                 const test = tests[j];
-                console.log(chalk.green(`Checking ${test.testName}-${test.id}`));
+                console.log(chalk.green(`Checking test number ${j}/${tests.length}: ${test.testName}-${test.id}   ----  ${traceMethod}`));
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
                     || t.name === `${test.folderName}/${test.testName}`).length > 0) {
@@ -81,15 +87,15 @@ async function main() {
                 }
                 // Find test from folder if not regen
                 let gethTraces = [];
-                // Read files
-                const files = fs.readdirSync(path.join(__dirname, 'geth-traces'));
                 files.forEach((file) => {
                     const parts = file.split('_');
                     if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
                         gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
                     }
                 });
-                if (regen || (!isEthereumTest && gethTraces.length !== test.txs.length) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
+                // Get num of non changeL2Block txs
+                const ethTxs = isEthereumTest ? test.blocks[0].transactions.length : test.txs.filter((tx) => typeof tx.type === 'undefined').length;
+                if (regen || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
                     // Configure genesis for test
                     const isGethSupported = await configureGenesis(test, isEthereumTest);
                     if (!isGethSupported) {
@@ -107,12 +113,19 @@ async function main() {
                 }
 
                 // Get trace from full tracer
-                const ftTraces = await getFtTrace(test.inputTestPath, test.testName, gethTraces.length, rom);
+                if (!fs.existsSync(test.inputTestPath)) {
+                    console.log(`Test not found ${test.testName}`);
+                    continue;
+                }
+                const ftTraces = await getFtTrace(test, gethTraces.length, rom, isEthereumTest);
+
+                // Check block info root
+                await checkBlockInfoRootsFromTrace(test.testName);
 
                 // Compare traces
                 for (let i = 0; i < ftTraces.length; i++) {
                     const changes = await compareTracesByMethod(gethTraces[i], ftTraces[i], traceMethod, i, testName);
-                    if (!_.isEmpty(changes) && !includesInvalidOpcode(ftTraces[i].call_trace.steps) && !includesInvalidError(changes, ftTraces[i].call_trace)) {
+                    if (!_.isEmpty(changes) && !includesInvalidOpcode(ftTraces[i].full_trace.steps) && !includesInvalidError(changes, ftTraces[i].full_trace)) {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
@@ -120,7 +133,7 @@ async function main() {
                             process.exit(1);
                         }
                     } else {
-                        console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i}  -- ${traceMethod}`));
+                        console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i} -- ${traceMethod}`));
                     }
                 }
             }
@@ -133,6 +146,7 @@ async function main() {
         console.log('Finished');
     } catch (e) {
         console.log(e);
+        process.exit(1);
     }
 }
 
@@ -178,7 +192,7 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
             test = [test[keysTests[testToDebug]]];
         }
-        const inputTestPath = isEthereumTest ? path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
+        const inputTestPath = isEthereumTest ? path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
         const tn = isEthereumTest ? testName.split('/')[1] : testName;
         const fn = isEthereumTest ? testName.split('/')[0] : testName;
         Object.assign(test[0], {
@@ -210,13 +224,11 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 if (value.network !== 'Berlin') {
                     continue;
                 }
-                let inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
                 // Check input exists
                 if (!fs.existsSync(inputTestPath)) {
-                    inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/GeneralStateTests/${folderName}/${file}`);
-                    if (!fs.existsSync(inputTestPath)) {
-                        continue;
-                    }
+                    console.log(`Input not found: ${inputTestPath}`);
+                    continue;
                 }
                 Object.assign(value, {
                     testName: file.split('.')[0], folderName, inputTestPath, testToDebug: j, id: j,
@@ -225,17 +237,17 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 j++;
             }
         } else {
-            const t = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/state-transition/${folderName}/${file}`)));
+            const t = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/data/${folderName}/${file}`)));
             if (Array.isArray(t)) {
                 t.map((v) => {
-                    const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
+                    const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
                     Object.assign(v, { testName: file.split('.')[0], folderName, inputTestPath });
 
                     return v;
                 });
                 tests = tests.concat(t);
             } else {
-                const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${t.id}.json`);
+                const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${folderName}/${file.split('.')[0]}_${t.id}.json`);
                 Object.assign(t, { testName: file.split('.')[0], folderName, inputTestPath });
                 tests = tests.concat([t]);
             }
@@ -261,8 +273,8 @@ async function compareTracesByMethod(geth, fullTracer, method, key, testName) {
  * @param {Object} fullTracer trace
  * @returns Array with the differences found
  */
-async function compareCallTracer(geth, fullTracer, i, testName) {
-    const { context } = fullTracer.call_trace;
+async function compareCallTracer(geth, fullTracer, i) {
+    const { context } = fullTracer.full_trace;
     // Generate geth trace from fullTracer trace
     const newFT = {
         from: context.from,
@@ -286,10 +298,10 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
     const callData = [];
     let ctx = 0;
     let currentStep = 0;
-    for (const step of fullTracer.call_trace.steps) {
+    for (const step of fullTracer.full_trace.steps) {
         // Previous step analysis
         if (currentStep > 0) {
-            const previousStep = fullTracer.call_trace.steps[currentStep - 1];
+            const previousStep = fullTracer.full_trace.steps[currentStep - 1];
             // Increase depth
             if (previousStep.depth < step.depth) {
                 ctx++;
@@ -354,11 +366,16 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
                         calls: [],
                     };
                     // Compute call gas cost
-                    const callGastCost = computeCallGasCost(previousStep.memory, previousStep.stack, previousStep.opcode) + 100;
-                    callData[ctx + 1].gasUsed = `0x${(Number(callData[ctx + 1].gasUsed) - callGastCost).toString(16)}`;
+                    const callGasCost = computeCallGasCost(previousStep.memory, previousStep.stack, previousStep.opcode) + 100;
+                    callData[ctx + 1].gasUsed = `0x${(Number(callData[ctx + 1].gasUsed) - callGasCost).toString(16)}`;
                     // Compute gas sent to call
-                    let gasSent = Number(previousStep.gas) - callGastCost;
+                    let gasSent = Number(previousStep.gas) - callGasCost;
                     gasSent -= Math.floor(gasSent / 64);
+                    // If precompiled call failed, gas sent is obtained from call stack
+                    const gasCall = Number(previousStep.stack[previousStep.stack.length - 1]);
+                    if (callData[ctx + 1].gasUsed === `0x${gasCall.toString(16)}`) {
+                        gasSent = gasCall;
+                    }
                     callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
                     // Remove value from staticcall
                     if (previousStep.opcode === 'STATICCALL' || previousStep.opcode === 'DELEGATECALL') {
@@ -406,8 +423,8 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
             } else if (opCall.includes(previousStep.opcode) && previousStep.depth === step.depth) {
                 callData[ctx + 1] = {
                     from: previousStep.contract.address,
-                    gas: `0x${Number(previousStep.stack[previousStep.stack.length - 1])}`,
-                    gasUsed: `0x${Number(previousStep.stack[previousStep.stack.length - 1])}`,
+                    gas: previousStep.stack[previousStep.stack.length - 1],
+                    gasUsed: previousStep.stack[previousStep.stack.length - 1],
                     to: ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(previousStep.stack[previousStep.stack.length - 2])), 20),
                     input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
                     output: step.return_data,
@@ -440,7 +457,7 @@ async function compareCallTracer(geth, fullTracer, i, testName) {
     }
     // Set revert reason
     if (newFT.error === 'execution reverted') {
-        const step = fullTracer.call_trace.steps[currentStep - 1];
+        const step = fullTracer.full_trace.steps[currentStep - 1];
         const reason = getFromMemory(step.memory, step.stack, step.opcode);
         try {
             const decodedReason = ethers.utils.defaultAbiCoder.decode(['string'], `0x${reason.slice(10)}`)[0];
@@ -534,7 +551,7 @@ async function compareDefaultTracer(geth, fullTracer, i) {
     // }
     let currentStep = 0;
     // Fill steps array
-    for (const step of fullTracer.execution_trace) {
+    for (const step of fullTracer.full_trace.steps) {
         const newStep = {
             pc: step.pc,
             op: step.opcode,
@@ -599,14 +616,17 @@ function compareTraces(geth, fullTracer) {
 }
 
 /**
- * Get full tracer trace executing the transaction at prverjs an retrieving trace from ft folder
- * @param {String} inputPath path of the input
- * @param {String} testName Name of the test
+ * Get tx hashes from executing the transaction at proverjs an retrieving trace from ft folder
+ * @param {Object} test test input to get traces from
  * @param {Number} txsCount Number of transactions executed
- * @returns Array of full traces outputs
+ * @param {Object} rom Build rom
+ * @param {Boolean} isEthereumTest Flag to know if is an ethereum test
+ * @returns Array of tx hashes
  */
-async function getFtTrace(inputPath, testName, txsCount, rom) {
-    const input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+
+async function getFtTrace(test, txsCount, rom, isEthereumTest) {
+    const input = JSON.parse(fs.readFileSync(test
+        .inputTestPath, 'utf8'));
     const poseidon = await buildPoseidon();
     const { F } = poseidon;
 
@@ -628,25 +648,58 @@ async function getFtTrace(inputPath, testName, txsCount, rom) {
     const execConfig = {
         debug: true,
         debugInfo: {
-            inputName: path.basename(testName),
+            inputName: path.basename(test.testName),
         },
         stepsN: 8388608,
         tracer: true,
         counters: true,
         stats: true,
         assertOutputs: true,
+        tracerOptions: {
+            enableMemory: true,
+            disableStack: false,
+            disableStorage: false,
+            enableReturnData: true,
+        },
     };
     await smMain.execute(cmPols.Main, input, rom, execConfig);
 
     const ftTraces = [];
     for (let i = 0; i < txsCount; i++) {
-        const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${testName}__full_trace_${i}.json`), 'utf8'));
+        const blockNum = isEthereumTest ? [1, i] : getBlockNumFromTxCount(test, i);
+        const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_${blockNum[0]}_${blockNum[1]}.json`), 'utf8'));
         ftTraces.push(ftTrace);
     }
 
     return ftTraces;
 }
 
+/**
+ * Returns block and tx index from tx count
+ * @param {Object} input Test vector input
+ * @param {Number} txCount tx count
+ * @returns Array with block(0) and tx index(1)
+ */
+function getBlockNumFromTxCount(input, txCount) {
+    let counter = -1;
+    let block = 0;
+    let txInBlock = -1;
+    for (const tx of input.txs) {
+        if (tx.type === Constants.TX_CHANGE_L2_BLOCK) {
+            block++;
+            txInBlock = -1;
+            continue;
+        } else {
+            counter++;
+            txInBlock++;
+        }
+        if (counter === txCount) {
+            break;
+        }
+    }
+
+    return [block, txInBlock];
+}
 /**
  * Retrieves all the geth traces of the given tx hashes
  * @param {Array} txHashes to debug
@@ -689,6 +742,10 @@ async function runTxs(test) {
     const txsHashes = [];
     for (let i = 0; i < test.txs.length; i++) {
         const txTest = test.txs[i];
+        // Skip changeL2Block txs
+        if (txTest.type === Constants.TX_CHANGE_L2_BLOCK) {
+            continue;
+        }
         const isSigned = !!(txTest.r && txTest.v && txTest.s);
         let sentTx;
         if (isSigned) {
@@ -712,7 +769,7 @@ async function runTxs(test) {
                 sentTx = e;
             }
         } else {
-            const pvtKey = getPvtKeyfromTest(test, txTest.from);
+            const pvtKey = getPvtKeyFromTest(test, txTest.from);
             const wallet = (new ethers.Wallet(pvtKey)).connect(provider);
             const tx = {
                 to: txTest.to,
@@ -752,7 +809,7 @@ async function runTxsFromEthTest(test) {
     // In case test index not specified, only tx 0 is tested
     const txsHashes = [];
     const txTest = test.blocks[0].transactions[0];
-    const jsonFile = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools/ethereum-tests/tests/GeneralStateTests/${test.folderName}/${test.testName}.json`)))[test.testName];
+    const jsonFile = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/tools-eth/tests/GeneralStateTests/${test.folderName}/${test.testName}.json`)))[test.testName];
     const pvtKey = jsonFile.transaction.secretKey;
     const wallet = (new ethers.Wallet(pvtKey)).connect(provider);
     const tx = {
@@ -786,7 +843,7 @@ async function runTxsFromEthTest(test) {
  * @param {String} address in hex string
  * @returns The privet key of the address contained in the genesis
  */
-function getPvtKeyfromTest(test, address) {
+function getPvtKeyFromTest(test, address) {
     const account = test.genesis.find((o) => o.address === address);
 
     return account.pvtKey;

@@ -42,7 +42,7 @@ mkdir -p $BDIR
 # NODE="--trace-gc --trace-gc-ignore-scavenger --max-semi-space-size=1024 --max-old-space-size=524288"
 if [ -z ${npm_config_mem} ]; then
 	MEM=130000
-	type head free tail sed >/dev/null 2>&1 && MEM=`free|head -2|tail -1|sed 's/Mem: *\([0-9]*\).*/\1/'`
+	type head free tail sed >/dev/null 2>&1 && MEM=`free|head -2|tail -1|sed 's/Mem[a-zA-Z]*: *\([0-9]*\).*/\1/'`
 	MEM=$((MEM * 9/10000))
 	[ $MEM -gt 524288 ] && MEM=524288
 else

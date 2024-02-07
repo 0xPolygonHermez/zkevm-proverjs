@@ -22,6 +22,7 @@ const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
 const smStorage = require("../src/sm/sm_storage/sm_storage.js");
+const smClimbKey = require("../src/sm/sm_climb_key.js");
 
 describe("test main sm", async function () {
     this.timeout(10000000);
@@ -91,7 +92,10 @@ describe("test main sm", async function () {
         console.log("Exec Arith...");
         await smArith.execute(cmPols.Arith, requiredMain.Arith);
         console.log("Exec Binary...");
-        await smBinary.execute(cmPols.Binary, requiredMain.Binary);*/
+        await smBinary.execute(cmPols.Binary, requiredMain.Binary);
+        console.log("Exec ClimbKey...");
+        await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
+*/
         const res = await verifyPil(Fr, pil, cmPols, constPols);
 
 /*

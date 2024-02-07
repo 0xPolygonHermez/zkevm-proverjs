@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - develop
+      - develop-feijoa
   push:
     branches:
       - main
@@ -30,8 +31,8 @@ jobs:
       - name: Clone repos
         run: |
           cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch v3.0.0-rc.1-fork.6
-          cd zkevm-testvectors/tools/ethereum-tests
+          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop
+          cd zkevm-testvectors/tools-inputs/tools-eth
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests
           git checkout test-vectors
