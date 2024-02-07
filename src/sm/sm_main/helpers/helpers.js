@@ -365,6 +365,30 @@ module.exports = class myHelper {
         return ctx.quotient_short.length;
     }
 
+    ///////////// ecAdd, ecMul
+
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
+     */
+    eval_receiveLen(ctx, tag) {
+        let len = 0;
+        for (let i = 0; i < tag.params.length; ++i) {
+            let ki = this.evalCommand(ctx, tag.params[i]);
+            if (ki === 0n) continue;
+            let leni = 0;
+            while (ki !== 1n) {
+                ki >>= 1n;
+                leni++;
+            }
+            len = leni > len ? leni : len;
+        }
+
+        return len;
+    }
+
     ///////////// PAIRINGS
 
     /**
