@@ -88,6 +88,7 @@ class FullTracer {
         this.setTracerOptions();
 
         this.verbose = new Verbose(options.verbose, smt, logFileName);
+        this.lastBlockCTX = 0;
     }
 
     /**
@@ -241,6 +242,9 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onStartBlock(ctx) {
+        // We set last block ctx value, it will be used later to set block ger and blockHashL1
+        this.lastBlockCTX = ctx.CTX;
+
         // when the event is triggered, the block number is not updated yet, so we must add 1
         // if this.options.skipFirstChangeL2Block is not active
         let blockNumber;
@@ -272,8 +276,8 @@ class FullTracer {
     onFinishBlock(ctx) {
         this.currentBlock.parent_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'previousBlockHash'), 64);
         this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
-        this.currentBlock.ger = bnToPaddedHex(getVarFromCtx(ctx, true, 'gerL1InfoTree'), 64);
-        this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockHashL1InfoTree'), 64);
+        this.currentBlock.ger = bnToPaddedHex(getVarFromCtx(ctx, false, 'gerL1InfoTree', this.lastBlockCTX), 64);
+        this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, false, 'blockHashL1InfoTree', this.lastBlockCTX), 64);
         this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
         this.currentBlock.block_info_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockInfoSR'), 64);
         this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
