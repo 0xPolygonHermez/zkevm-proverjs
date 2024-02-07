@@ -276,7 +276,7 @@ class FullTracer {
         this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockHashL1InfoTree'), 64);
         this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
         this.currentBlock.block_info_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockInfoSR'), 64);
-        this.currentBlock.block_hash = bnToPaddedHex((fea2scalar(ctx.Fr, ctx.SR), 64));
+        this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         this.currentBlock.logs = [];
 
         // Append logs correctly formatted to block response logs
