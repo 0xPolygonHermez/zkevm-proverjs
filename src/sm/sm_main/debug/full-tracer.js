@@ -266,14 +266,17 @@ class FullTracer {
     }
 
     /**
-     * Triggered when a block is finished (at begining of next block or after finishing processing last tx of the batch)
+     * Triggered when a block is finished (at beginning of next block or after finishing processing last tx of the batch)
      * @param {Object} ctx Current context object
      */
     onFinishBlock(ctx) {
+        // recover changeL2Block context to get data from there
+        const ctxBlock = this.currentBlock.ctx;
+
         this.currentBlock.parent_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'previousBlockHash'), 64);
         this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
-        this.currentBlock.ger = bnToPaddedHex(getVarFromCtx(ctx, true, 'gerL1InfoTree'), 64);
-        this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockHashL1InfoTree'), 64);
+        this.currentBlock.ger = bnToPaddedHex(getVarFromCtx(ctx, false, 'gerL1InfoTree', ctxBlock), 64);
+        this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, false, 'blockHashL1InfoTree', ctxBlock), 64);
         this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
         this.currentBlock.block_info_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockInfoSR'), 64);
         this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
@@ -436,8 +439,8 @@ class FullTracer {
      */
     onFinishTx(ctx) {
         // if the 'onFinishTx' is triggered with no previous transactions, do nothing
-        // this can happen when the first transaction of the batch is a changeL2BlockTx or a new block is started with no transactions
-        if (this.currentBlock.responses.length === 0) {
+        // this can happen when the first transaction of the batch is a changeL2BlockTx, a new block is started with no transactions or there is an out of counters error while processing the rlp
+        if (typeof this.currentBlock.responses === 'undefined' || this.currentBlock.responses.length === 0) {
             return;
         }
 
@@ -520,7 +523,7 @@ class FullTracer {
         // Sort auxLogs by index
         auxLogs.sort((a, b) => a.index - b.index);
 
-        // filder txIndex logs
+        // filter txIndex logs
         const finalLogs = auxLogs.filter((log) => log.tx_index === this.txIndex);
 
         // Update index to be sequential
@@ -554,7 +557,7 @@ class FullTracer {
     }
 
     /**
-     * Trigered at the very beginning of a batch process
+     * Triggered at the very beginning of a batch process
      * @param {Object} ctx Current context object
      */
     onStartBatch(ctx) {
@@ -599,7 +602,7 @@ class FullTracer {
             console.log('WARNING: max mem align counters exceed');
         }
         if (Number(ctx.cntKeccakF) > Number(getConstantFromCtx(ctx, 'MAX_CNT_KECCAK_F'))) {
-            console.log('WARNING: max keccack counters exceed');
+            console.log('WARNING: max keccak counters exceed');
         }
         if (Number(ctx.cntPaddingPG) > Number(getConstantFromCtx(ctx, 'MAX_CNT_PADDING_PG'))) {
             console.log('WARNING: max padding counters exceed');
@@ -622,7 +625,7 @@ class FullTracer {
         this.verbose.printBatch('finish');
         this.verbose.saveFinalStateRoot(this.finalTrace.new_state_root);
 
-        // Create ouput files and dirs
+        // Create output files and dirs
         this.exportTrace();
     }
 
@@ -891,7 +894,7 @@ class FullTracer {
     }
 
     /**
-     * Triggered when any address or storage is accesed
+     * Triggered when any address or storage is accessed
      * Only used in verbose mode
      * @param {Field} _fieldElement - field Element
      * @param {Array[Field]} _address - address accessed
