@@ -270,7 +270,7 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onFinishBlock(ctx) {
-        // recover chnageL2Block context to get data from there
+        // recover changeL2Block context to get data from there
         const ctxBlock = this.currentBlock.ctx;
 
         // get data ctx
@@ -442,7 +442,7 @@ class FullTracer {
      */
     onFinishTx(ctx) {
         // if the 'onFinishTx' is triggered with no previous transactions, do nothing
-        // this can happen when the first transaction of the batch is a changeL2BlockTx, a new block is started with no transactions or there is an out of counters error while processing the rlp
+        // this can happen when the first transaction of the batch is a changeL2BlockTx, a new block is started with no transactions or if the oock is before triggering `onStartBlock` event. In this last situation, the object this.currentBlock.responses has not been initialized
         if (typeof this.currentBlock.responses === 'undefined' || this.currentBlock.responses.length === 0) {
             return;
         }
