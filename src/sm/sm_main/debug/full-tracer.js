@@ -270,13 +270,16 @@ class FullTracer {
      * @param {Object} ctx Current context object
      */
     onFinishBlock(ctx) {
-        // recover changeL2Block context to get data from there
+        // recover chnageL2Block context to get data from there
         const ctxBlock = this.currentBlock.ctx;
 
-        this.currentBlock.parent_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'previousBlockHash'), 64);
-        this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
+        // get data ctx
         this.currentBlock.ger = bnToPaddedHex(getVarFromCtx(ctx, false, 'gerL1InfoTree', ctxBlock), 64);
         this.currentBlock.block_hash_l1 = bnToPaddedHex(getVarFromCtx(ctx, false, 'blockHashL1InfoTree', ctxBlock), 64);
+
+        // get global data
+        this.currentBlock.parent_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'previousBlockHash'), 64);
+        this.currentBlock.timestamp = Number(getVarFromCtx(ctx, true, 'timestamp'));
         this.currentBlock.gas_used = Number(getVarFromCtx(ctx, true, 'cumulativeGasUsed'));
         this.currentBlock.block_info_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'blockInfoSR'), 64);
         this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
