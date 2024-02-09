@@ -18,6 +18,8 @@
 	EQ9:   x1 - x2 - x3 + (q1 * p2)                              - selEq[6]
 	EQ10:  y1 - y2 - y3 + (q2 * p2)                              - selEq[6]
 
+    EQ11:  A(x1) * B(y1) + C(x2) - op(y3) + (q0 * D(y2))         - selEq[7]
+
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
     and p2 refers to the base field order of:
@@ -42,6 +44,10 @@ namespace Arith(%N);
     pol commit q0[16];
     pol commit q1[16];
     pol commit q2[16];
+
+    pol commit y2clock;
+    pol commit x3clock;
+    pol commit y3clock;
 
     pol commit resultEq0;
     pol commit resultEq1;
@@ -261,7 +267,7 @@ namespace Arith(%N);
     //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
     //    CLK16   0xFFFF  0xFFFF      0  0  1
 
-    // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime.
+    // valueLtPrime indicates whether we know that the value is smaller than the prime.
     // If selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
     pol commit valueLtPrime;
 
@@ -278,8 +284,8 @@ namespace Arith(%N);
     valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
-    // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6] equals 1.
-    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    // This constraint is applied when one of selEq[3..7] equals 1.
+    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
     pol constant RANGE_SEL; // 0:2**16,
                             // 1:2**16-1,0
@@ -307,6 +313,35 @@ namespace Arith(%N);
                         + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
                         + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
                         + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[4] + selEq[5] + selEq[6]);
+
+    // Correctness of the y2clock, x3clock and y3clock
+    0 = (y2[15]-y2clock)*Global.CLK32[0] + (y2[14]-y2clock)*Global.CLK32[1] + (y2[13]-y2clock)*Global.CLK32[2] + (y2[12]-y2clock)*Global.CLK32[3] + (y2[11]-y2clock)*Global.CLK32[4] + (y2[10]-y2clock)*Global.CLK32[5] + (y2[9]-y2clock)*Global.CLK32[6] + (y2[8]-y2clock)*Global.CLK32[7]
+	   + (y2[7]-y2clock)*Global.CLK32[8] + (y2[6]-y2clock)*Global.CLK32[9] + (y2[5]-y2clock)*Global.CLK32[10] + (y2[4]-y2clock)*Global.CLK32[11] + (y2[3]-y2clock)*Global.CLK32[12] + (y2[2]-y2clock)*Global.CLK32[13] + (y2[1]-y2clock)*Global.CLK32[14] + (y2[0]-y2clock)*Global.CLK32[15]
+	   + (y2[15]-y2clock)*Global.CLK32[16] + (y2[14]-y2clock)*Global.CLK32[17] + (y2[13]-y2clock)*Global.CLK32[18] + (y2[12]-y2clock)*Global.CLK32[19] + (y2[11]-y2clock)*Global.CLK32[20] + (y2[10]-y2clock)*Global.CLK32[21] + (y2[9]-y2clock)*Global.CLK32[22] + (y2[8]-y2clock)*Global.CLK32[23]
+	   + (y2[7]-y2clock)*Global.CLK32[24] + (y2[6]-y2clock)*Global.CLK32[25] + (y2[5]-y2clock)*Global.CLK32[26] + (y2[4]-y2clock)*Global.CLK32[27] + (y2[3]-y2clock)*Global.CLK32[28] + (y2[2]-y2clock)*Global.CLK32[29] + (y2[1]-y2clock)*Global.CLK32[30] + (y2[0]-y2clock)*Global.CLK32[31];
+    0 = (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[0] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[1] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[2] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[3] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[4] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[5] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[6] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[7]
+	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[8] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[9] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[10] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[11] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[12] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[13] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[14] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[15]
+	   + (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[16] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[17] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[18] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[19] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[20] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[21] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[22] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[23]
+	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[24] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[25] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[26] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[27] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[28] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[29] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[30] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[31];
+    0 = (y3[15]-y3clock)*Global.CLK32[0] + (y3[14]-y3clock)*Global.CLK32[1] + (y3[13]-y3clock)*Global.CLK32[2] + (y3[12]-y3clock)*Global.CLK32[3] + (y3[11]-y3clock)*Global.CLK32[4] + (y3[10]-y3clock)*Global.CLK32[5] + (y3[9]-y3clock)*Global.CLK32[6] + (y3[8]-y3clock)*Global.CLK32[7]
+	   + (y3[7]-y3clock)*Global.CLK32[8] + (y3[6]-y3clock)*Global.CLK32[9] + (y3[5]-y3clock)*Global.CLK32[10] + (y3[4]-y3clock)*Global.CLK32[11] + (y3[3]-y3clock)*Global.CLK32[12] + (y3[2]-y3clock)*Global.CLK32[13] + (y3[1]-y3clock)*Global.CLK32[14] + (y3[0]-y3clock)*Global.CLK32[15]
+	   + (y3[15]-y3clock)*Global.CLK32[16] + (y3[14]-y3clock)*Global.CLK32[17] + (y3[13]-y3clock)*Global.CLK32[18] + (y3[12]-y3clock)*Global.CLK32[19] + (y3[11]-y3clock)*Global.CLK32[20] + (y3[10]-y3clock)*Global.CLK32[21] + (y3[9]-y3clock)*Global.CLK32[22] + (y3[8]-y3clock)*Global.CLK32[23]
+	   + (y3[7]-y3clock)*Global.CLK32[24] + (y3[6]-y3clock)*Global.CLK32[25] + (y3[5]-y3clock)*Global.CLK32[26] + (y3[4]-y3clock)*Global.CLK32[27] + (y3[3]-y3clock)*Global.CLK32[28] + (y3[2]-y3clock)*Global.CLK32[29] + (y3[1]-y3clock)*Global.CLK32[30] + (y3[0]-y3clock)*Global.CLK32[31];
+
+    // Now, prove that x3 == 2**16 - 1 + y3 - y2 + chunkLtPrime (1)
+    // Since we ensure that x3 ∈ [0, 2¹⁶) we have that (2**16 - 1 + y3 - y2 + chunkLtPrime) ∈ [0, 2¹⁶).
+    // Moreover, we also make sure that y2,y3 ∈ [0, 2¹⁶). Both checks imply that y3 is smaller than y2, as needed.
+    pol y3LTy2InEq7 = selEq[7] * (1 - valueLtPrime);
+    y3LTy2InEq7 * (2**16 - 1 + y3clock - y2clock + chunkLtPrime - x3clock) = 0;
+
+    //      ┌── y3clock       ┌───── chunkLtPrime (y3[i] < y2[i], i ∈ [15..0])
+    //      │     ┌─ y2clock  │     ┌─── (1) value
+    //      │     │           │     |
+    //    0xFFFF  0xFFFF      0  0xFFFF            OK
+    //    0x8584  0x968E      1  0xEEf6            OK
+    //    0xFFFF  0xFFFE      x  0x10000 > 0xFFFF  KO
+
+    // Note: In the (mathematical) undefined case where y2 = 0, we have y3 = chunkLtPrime = 0 and therefore that x3 = 0xFFFF
 
     // lookup with RANGE_SEL as first column and BYTE2 as second column
     {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
@@ -3674,7 +3709,6 @@ namespace Arith(%N);
 		0;
 
 
-
     /*******
     *
     * EQ9:  x1 - x2 - x3 + p * (q1 - offset) = 0
@@ -4361,6 +4395,349 @@ namespace Arith(%N);
 		0;
 
 
+    /*******
+    *
+    * EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - D(y2) * (q0 - offset) = 0
+    *
+    *******/
+    pol eq11_0 =
+		(x1[0] * y1[0] - y2[0] * q0[0])
+		 + x2[0] - y3[0];
+
+	pol eq11_1 =
+		(x1[0] * y1[1] - y2[0] * q0[1]) +
+		(x1[1] * y1[0] - y2[1] * q0[0])
+		 + x2[1] - y3[1];
+
+	pol eq11_2 =
+		(x1[0] * y1[2] - y2[0] * q0[2]) +
+		(x1[1] * y1[1] - y2[1] * q0[1]) +
+		(x1[2] * y1[0] - y2[2] * q0[0])
+		 + x2[2] - y3[2];
+
+	pol eq11_3 =
+		(x1[0] * y1[3] - y2[0] * q0[3]) +
+		(x1[1] * y1[2] - y2[1] * q0[2]) +
+		(x1[2] * y1[1] - y2[2] * q0[1]) +
+		(x1[3] * y1[0] - y2[3] * q0[0])
+		 + x2[3] - y3[3];
+
+	pol eq11_4 =
+		(x1[0] * y1[4] - y2[0] * q0[4]) +
+		(x1[1] * y1[3] - y2[1] * q0[3]) +
+		(x1[2] * y1[2] - y2[2] * q0[2]) +
+		(x1[3] * y1[1] - y2[3] * q0[1]) +
+		(x1[4] * y1[0] - y2[4] * q0[0])
+		 + x2[4] - y3[4];
+
+	pol eq11_5 =
+		(x1[0] * y1[5] - y2[0] * q0[5]) +
+		(x1[1] * y1[4] - y2[1] * q0[4]) +
+		(x1[2] * y1[3] - y2[2] * q0[3]) +
+		(x1[3] * y1[2] - y2[3] * q0[2]) +
+		(x1[4] * y1[1] - y2[4] * q0[1]) +
+		(x1[5] * y1[0] - y2[5] * q0[0])
+		 + x2[5] - y3[5];
+
+	pol eq11_6 =
+		(x1[0] * y1[6] - y2[0] * q0[6]) +
+		(x1[1] * y1[5] - y2[1] * q0[5]) +
+		(x1[2] * y1[4] - y2[2] * q0[4]) +
+		(x1[3] * y1[3] - y2[3] * q0[3]) +
+		(x1[4] * y1[2] - y2[4] * q0[2]) +
+		(x1[5] * y1[1] - y2[5] * q0[1]) +
+		(x1[6] * y1[0] - y2[6] * q0[0])
+		 + x2[6] - y3[6];
+
+	pol eq11_7 =
+		(x1[0] * y1[7] - y2[0] * q0[7]) +
+		(x1[1] * y1[6] - y2[1] * q0[6]) +
+		(x1[2] * y1[5] - y2[2] * q0[5]) +
+		(x1[3] * y1[4] - y2[3] * q0[4]) +
+		(x1[4] * y1[3] - y2[4] * q0[3]) +
+		(x1[5] * y1[2] - y2[5] * q0[2]) +
+		(x1[6] * y1[1] - y2[6] * q0[1]) +
+		(x1[7] * y1[0] - y2[7] * q0[0])
+		 + x2[7] - y3[7];
+
+	pol eq11_8 =
+		(x1[0] * y1[8] - y2[0] * q0[8]) +
+		(x1[1] * y1[7] - y2[1] * q0[7]) +
+		(x1[2] * y1[6] - y2[2] * q0[6]) +
+		(x1[3] * y1[5] - y2[3] * q0[5]) +
+		(x1[4] * y1[4] - y2[4] * q0[4]) +
+		(x1[5] * y1[3] - y2[5] * q0[3]) +
+		(x1[6] * y1[2] - y2[6] * q0[2]) +
+		(x1[7] * y1[1] - y2[7] * q0[1]) +
+		(x1[8] * y1[0] - y2[8] * q0[0])
+		 + x2[8] - y3[8];
+
+	pol eq11_9 =
+		(x1[0] * y1[9] - y2[0] * q0[9]) +
+		(x1[1] * y1[8] - y2[1] * q0[8]) +
+		(x1[2] * y1[7] - y2[2] * q0[7]) +
+		(x1[3] * y1[6] - y2[3] * q0[6]) +
+		(x1[4] * y1[5] - y2[4] * q0[5]) +
+		(x1[5] * y1[4] - y2[5] * q0[4]) +
+		(x1[6] * y1[3] - y2[6] * q0[3]) +
+		(x1[7] * y1[2] - y2[7] * q0[2]) +
+		(x1[8] * y1[1] - y2[8] * q0[1]) +
+		(x1[9] * y1[0] - y2[9] * q0[0])
+		 + x2[9] - y3[9];
+
+	pol eq11_10 =
+		(x1[0] * y1[10] - y2[0] * q0[10]) +
+		(x1[1] * y1[9] - y2[1] * q0[9]) +
+		(x1[2] * y1[8] - y2[2] * q0[8]) +
+		(x1[3] * y1[7] - y2[3] * q0[7]) +
+		(x1[4] * y1[6] - y2[4] * q0[6]) +
+		(x1[5] * y1[5] - y2[5] * q0[5]) +
+		(x1[6] * y1[4] - y2[6] * q0[4]) +
+		(x1[7] * y1[3] - y2[7] * q0[3]) +
+		(x1[8] * y1[2] - y2[8] * q0[2]) +
+		(x1[9] * y1[1] - y2[9] * q0[1]) +
+		(x1[10] * y1[0] - y2[10] * q0[0])
+		 + x2[10] - y3[10];
+
+	pol eq11_11 =
+		(x1[0] * y1[11] - y2[0] * q0[11]) +
+		(x1[1] * y1[10] - y2[1] * q0[10]) +
+		(x1[2] * y1[9] - y2[2] * q0[9]) +
+		(x1[3] * y1[8] - y2[3] * q0[8]) +
+		(x1[4] * y1[7] - y2[4] * q0[7]) +
+		(x1[5] * y1[6] - y2[5] * q0[6]) +
+		(x1[6] * y1[5] - y2[6] * q0[5]) +
+		(x1[7] * y1[4] - y2[7] * q0[4]) +
+		(x1[8] * y1[3] - y2[8] * q0[3]) +
+		(x1[9] * y1[2] - y2[9] * q0[2]) +
+		(x1[10] * y1[1] - y2[10] * q0[1]) +
+		(x1[11] * y1[0] - y2[11] * q0[0])
+		 + x2[11] - y3[11];
+
+	pol eq11_12 =
+		(x1[0] * y1[12] - y2[0] * q0[12]) +
+		(x1[1] * y1[11] - y2[1] * q0[11]) +
+		(x1[2] * y1[10] - y2[2] * q0[10]) +
+		(x1[3] * y1[9] - y2[3] * q0[9]) +
+		(x1[4] * y1[8] - y2[4] * q0[8]) +
+		(x1[5] * y1[7] - y2[5] * q0[7]) +
+		(x1[6] * y1[6] - y2[6] * q0[6]) +
+		(x1[7] * y1[5] - y2[7] * q0[5]) +
+		(x1[8] * y1[4] - y2[8] * q0[4]) +
+		(x1[9] * y1[3] - y2[9] * q0[3]) +
+		(x1[10] * y1[2] - y2[10] * q0[2]) +
+		(x1[11] * y1[1] - y2[11] * q0[1]) +
+		(x1[12] * y1[0] - y2[12] * q0[0])
+		 + x2[12] - y3[12];
+
+	pol eq11_13 =
+		(x1[0] * y1[13] - y2[0] * q0[13]) +
+		(x1[1] * y1[12] - y2[1] * q0[12]) +
+		(x1[2] * y1[11] - y2[2] * q0[11]) +
+		(x1[3] * y1[10] - y2[3] * q0[10]) +
+		(x1[4] * y1[9] - y2[4] * q0[9]) +
+		(x1[5] * y1[8] - y2[5] * q0[8]) +
+		(x1[6] * y1[7] - y2[6] * q0[7]) +
+		(x1[7] * y1[6] - y2[7] * q0[6]) +
+		(x1[8] * y1[5] - y2[8] * q0[5]) +
+		(x1[9] * y1[4] - y2[9] * q0[4]) +
+		(x1[10] * y1[3] - y2[10] * q0[3]) +
+		(x1[11] * y1[2] - y2[11] * q0[2]) +
+		(x1[12] * y1[1] - y2[12] * q0[1]) +
+		(x1[13] * y1[0] - y2[13] * q0[0])
+		 + x2[13] - y3[13];
+
+	pol eq11_14 =
+		(x1[0] * y1[14] - y2[0] * q0[14]) +
+		(x1[1] * y1[13] - y2[1] * q0[13]) +
+		(x1[2] * y1[12] - y2[2] * q0[12]) +
+		(x1[3] * y1[11] - y2[3] * q0[11]) +
+		(x1[4] * y1[10] - y2[4] * q0[10]) +
+		(x1[5] * y1[9] - y2[5] * q0[9]) +
+		(x1[6] * y1[8] - y2[6] * q0[8]) +
+		(x1[7] * y1[7] - y2[7] * q0[7]) +
+		(x1[8] * y1[6] - y2[8] * q0[6]) +
+		(x1[9] * y1[5] - y2[9] * q0[5]) +
+		(x1[10] * y1[4] - y2[10] * q0[4]) +
+		(x1[11] * y1[3] - y2[11] * q0[3]) +
+		(x1[12] * y1[2] - y2[12] * q0[2]) +
+		(x1[13] * y1[1] - y2[13] * q0[1]) +
+		(x1[14] * y1[0] - y2[14] * q0[0])
+		 + x2[14] - y3[14];
+
+	pol eq11_15 =
+		(x1[0] * y1[15] - y2[0] * q0[15] + y2[0] * 32768) +
+		(x1[1] * y1[14] - y2[1] * q0[14]) +
+		(x1[2] * y1[13] - y2[2] * q0[13]) +
+		(x1[3] * y1[12] - y2[3] * q0[12]) +
+		(x1[4] * y1[11] - y2[4] * q0[11]) +
+		(x1[5] * y1[10] - y2[5] * q0[10]) +
+		(x1[6] * y1[9] - y2[6] * q0[9]) +
+		(x1[7] * y1[8] - y2[7] * q0[8]) +
+		(x1[8] * y1[7] - y2[8] * q0[7]) +
+		(x1[9] * y1[6] - y2[9] * q0[6]) +
+		(x1[10] * y1[5] - y2[10] * q0[5]) +
+		(x1[11] * y1[4] - y2[11] * q0[4]) +
+		(x1[12] * y1[3] - y2[12] * q0[3]) +
+		(x1[13] * y1[2] - y2[13] * q0[2]) +
+		(x1[14] * y1[1] - y2[14] * q0[1]) +
+		(x1[15] * y1[0] - y2[15] * q0[0])
+		 + x2[15] - y3[15];
+
+	pol eq11_16 =
+		(x1[1] * y1[15] - y2[1] * q0[15] + y2[1] * 32768) +
+		(x1[2] * y1[14] - y2[2] * q0[14]) +
+		(x1[3] * y1[13] - y2[3] * q0[13]) +
+		(x1[4] * y1[12] - y2[4] * q0[12]) +
+		(x1[5] * y1[11] - y2[5] * q0[11]) +
+		(x1[6] * y1[10] - y2[6] * q0[10]) +
+		(x1[7] * y1[9] - y2[7] * q0[9]) +
+		(x1[8] * y1[8] - y2[8] * q0[8]) +
+		(x1[9] * y1[7] - y2[9] * q0[7]) +
+		(x1[10] * y1[6] - y2[10] * q0[6]) +
+		(x1[11] * y1[5] - y2[11] * q0[5]) +
+		(x1[12] * y1[4] - y2[12] * q0[4]) +
+		(x1[13] * y1[3] - y2[13] * q0[3]) +
+		(x1[14] * y1[2] - y2[14] * q0[2]) +
+		(x1[15] * y1[1] - y2[15] * q0[1]);
+
+	pol eq11_17 =
+		(x1[2] * y1[15] - y2[2] * q0[15] + y2[2] * 32768) +
+		(x1[3] * y1[14] - y2[3] * q0[14]) +
+		(x1[4] * y1[13] - y2[4] * q0[13]) +
+		(x1[5] * y1[12] - y2[5] * q0[12]) +
+		(x1[6] * y1[11] - y2[6] * q0[11]) +
+		(x1[7] * y1[10] - y2[7] * q0[10]) +
+		(x1[8] * y1[9] - y2[8] * q0[9]) +
+		(x1[9] * y1[8] - y2[9] * q0[8]) +
+		(x1[10] * y1[7] - y2[10] * q0[7]) +
+		(x1[11] * y1[6] - y2[11] * q0[6]) +
+		(x1[12] * y1[5] - y2[12] * q0[5]) +
+		(x1[13] * y1[4] - y2[13] * q0[4]) +
+		(x1[14] * y1[3] - y2[14] * q0[3]) +
+		(x1[15] * y1[2] - y2[15] * q0[2]);
+
+	pol eq11_18 =
+		(x1[3] * y1[15] - y2[3] * q0[15] + y2[3] * 32768) +
+		(x1[4] * y1[14] - y2[4] * q0[14]) +
+		(x1[5] * y1[13] - y2[5] * q0[13]) +
+		(x1[6] * y1[12] - y2[6] * q0[12]) +
+		(x1[7] * y1[11] - y2[7] * q0[11]) +
+		(x1[8] * y1[10] - y2[8] * q0[10]) +
+		(x1[9] * y1[9] - y2[9] * q0[9]) +
+		(x1[10] * y1[8] - y2[10] * q0[8]) +
+		(x1[11] * y1[7] - y2[11] * q0[7]) +
+		(x1[12] * y1[6] - y2[12] * q0[6]) +
+		(x1[13] * y1[5] - y2[13] * q0[5]) +
+		(x1[14] * y1[4] - y2[14] * q0[4]) +
+		(x1[15] * y1[3] - y2[15] * q0[3]);
+
+	pol eq11_19 =
+		(x1[4] * y1[15] - y2[4] * q0[15] + y2[4] * 32768) +
+		(x1[5] * y1[14] - y2[5] * q0[14]) +
+		(x1[6] * y1[13] - y2[6] * q0[13]) +
+		(x1[7] * y1[12] - y2[7] * q0[12]) +
+		(x1[8] * y1[11] - y2[8] * q0[11]) +
+		(x1[9] * y1[10] - y2[9] * q0[10]) +
+		(x1[10] * y1[9] - y2[10] * q0[9]) +
+		(x1[11] * y1[8] - y2[11] * q0[8]) +
+		(x1[12] * y1[7] - y2[12] * q0[7]) +
+		(x1[13] * y1[6] - y2[13] * q0[6]) +
+		(x1[14] * y1[5] - y2[14] * q0[5]) +
+		(x1[15] * y1[4] - y2[15] * q0[4]);
+
+	pol eq11_20 =
+		(x1[5] * y1[15] - y2[5] * q0[15] + y2[5] * 32768) +
+		(x1[6] * y1[14] - y2[6] * q0[14]) +
+		(x1[7] * y1[13] - y2[7] * q0[13]) +
+		(x1[8] * y1[12] - y2[8] * q0[12]) +
+		(x1[9] * y1[11] - y2[9] * q0[11]) +
+		(x1[10] * y1[10] - y2[10] * q0[10]) +
+		(x1[11] * y1[9] - y2[11] * q0[9]) +
+		(x1[12] * y1[8] - y2[12] * q0[8]) +
+		(x1[13] * y1[7] - y2[13] * q0[7]) +
+		(x1[14] * y1[6] - y2[14] * q0[6]) +
+		(x1[15] * y1[5] - y2[15] * q0[5]);
+
+	pol eq11_21 =
+		(x1[6] * y1[15] - y2[6] * q0[15] + y2[6] * 32768) +
+		(x1[7] * y1[14] - y2[7] * q0[14]) +
+		(x1[8] * y1[13] - y2[8] * q0[13]) +
+		(x1[9] * y1[12] - y2[9] * q0[12]) +
+		(x1[10] * y1[11] - y2[10] * q0[11]) +
+		(x1[11] * y1[10] - y2[11] * q0[10]) +
+		(x1[12] * y1[9] - y2[12] * q0[9]) +
+		(x1[13] * y1[8] - y2[13] * q0[8]) +
+		(x1[14] * y1[7] - y2[14] * q0[7]) +
+		(x1[15] * y1[6] - y2[15] * q0[6]);
+
+	pol eq11_22 =
+		(x1[7] * y1[15] - y2[7] * q0[15] + y2[7] * 32768) +
+		(x1[8] * y1[14] - y2[8] * q0[14]) +
+		(x1[9] * y1[13] - y2[9] * q0[13]) +
+		(x1[10] * y1[12] - y2[10] * q0[12]) +
+		(x1[11] * y1[11] - y2[11] * q0[11]) +
+		(x1[12] * y1[10] - y2[12] * q0[10]) +
+		(x1[13] * y1[9] - y2[13] * q0[9]) +
+		(x1[14] * y1[8] - y2[14] * q0[8]) +
+		(x1[15] * y1[7] - y2[15] * q0[7]);
+
+	pol eq11_23 =
+		(x1[8] * y1[15] - y2[8] * q0[15] + y2[8] * 32768) +
+		(x1[9] * y1[14] - y2[9] * q0[14]) +
+		(x1[10] * y1[13] - y2[10] * q0[13]) +
+		(x1[11] * y1[12] - y2[11] * q0[12]) +
+		(x1[12] * y1[11] - y2[12] * q0[11]) +
+		(x1[13] * y1[10] - y2[13] * q0[10]) +
+		(x1[14] * y1[9] - y2[14] * q0[9]) +
+		(x1[15] * y1[8] - y2[15] * q0[8]);
+
+	pol eq11_24 =
+		(x1[9] * y1[15] - y2[9] * q0[15] + y2[9] * 32768) +
+		(x1[10] * y1[14] - y2[10] * q0[14]) +
+		(x1[11] * y1[13] - y2[11] * q0[13]) +
+		(x1[12] * y1[12] - y2[12] * q0[12]) +
+		(x1[13] * y1[11] - y2[13] * q0[11]) +
+		(x1[14] * y1[10] - y2[14] * q0[10]) +
+		(x1[15] * y1[9] - y2[15] * q0[9]);
+
+	pol eq11_25 =
+		(x1[10] * y1[15] - y2[10] * q0[15] + y2[10] * 32768) +
+		(x1[11] * y1[14] - y2[11] * q0[14]) +
+		(x1[12] * y1[13] - y2[12] * q0[13]) +
+		(x1[13] * y1[12] - y2[13] * q0[12]) +
+		(x1[14] * y1[11] - y2[14] * q0[11]) +
+		(x1[15] * y1[10] - y2[15] * q0[10]);
+
+	pol eq11_26 =
+		(x1[11] * y1[15] - y2[11] * q0[15] + y2[11] * 32768) +
+		(x1[12] * y1[14] - y2[12] * q0[14]) +
+		(x1[13] * y1[13] - y2[13] * q0[13]) +
+		(x1[14] * y1[12] - y2[14] * q0[12]) +
+		(x1[15] * y1[11] - y2[15] * q0[11]);
+
+	pol eq11_27 =
+		(x1[12] * y1[15] - y2[12] * q0[15] + y2[12] * 32768) +
+		(x1[13] * y1[14] - y2[13] * q0[14]) +
+		(x1[14] * y1[13] - y2[14] * q0[13]) +
+		(x1[15] * y1[12] - y2[15] * q0[12]);
+
+	pol eq11_28 =
+		(x1[13] * y1[15] - y2[13] * q0[15] + y2[13] * 32768) +
+		(x1[14] * y1[14] - y2[14] * q0[14]) +
+		(x1[15] * y1[13] - y2[15] * q0[13]);
+
+	pol eq11_29 =
+		(x1[14] * y1[15] - y2[14] * q0[15] + y2[14] * 32768) +
+		(x1[15] * y1[14] - y2[15] * q0[14]);
+
+	pol eq11_30 =
+		(x1[15] * y1[15] - y2[15] * q0[15] + y2[15] * 32768);
+
+	pol eq11_31 =
+		0;
+
+
     pol eq0 = eq0_0*Global.CLK32[0] + eq0_1*Global.CLK32[1] + eq0_2*Global.CLK32[2] + eq0_3*Global.CLK32[3] + eq0_4*Global.CLK32[4] + eq0_5*Global.CLK32[5] + eq0_6*Global.CLK32[6] + eq0_7*Global.CLK32[7]
 	   + eq0_8*Global.CLK32[8] + eq0_9*Global.CLK32[9] + eq0_10*Global.CLK32[10] + eq0_11*Global.CLK32[11] + eq0_12*Global.CLK32[12] + eq0_13*Global.CLK32[13] + eq0_14*Global.CLK32[14] + eq0_15*Global.CLK32[15]
 	   + eq0_16*Global.CLK32[16] + eq0_17*Global.CLK32[17] + eq0_18*Global.CLK32[18] + eq0_19*Global.CLK32[19] + eq0_20*Global.CLK32[20] + eq0_21*Global.CLK32[21] + eq0_22*Global.CLK32[22] + eq0_23*Global.CLK32[23]
@@ -4405,8 +4782,12 @@ namespace Arith(%N);
 	   + eq10_8*Global.CLK32[8] + eq10_9*Global.CLK32[9] + eq10_10*Global.CLK32[10] + eq10_11*Global.CLK32[11] + eq10_12*Global.CLK32[12] + eq10_13*Global.CLK32[13] + eq10_14*Global.CLK32[14] + eq10_15*Global.CLK32[15]
 	   + eq10_16*Global.CLK32[16] + eq10_17*Global.CLK32[17] + eq10_18*Global.CLK32[18] + eq10_19*Global.CLK32[19] + eq10_20*Global.CLK32[20] + eq10_21*Global.CLK32[21] + eq10_22*Global.CLK32[22] + eq10_23*Global.CLK32[23]
 	   + eq10_24*Global.CLK32[24] + eq10_25*Global.CLK32[25] + eq10_26*Global.CLK32[26] + eq10_27*Global.CLK32[27] + eq10_28*Global.CLK32[28] + eq10_29*Global.CLK32[29] + eq10_30*Global.CLK32[30] + eq10_31*Global.CLK32[31];
+    pol eq11 = eq11_0*Global.CLK32[0] + eq11_1*Global.CLK32[1] + eq11_2*Global.CLK32[2] + eq11_3*Global.CLK32[3] + eq11_4*Global.CLK32[4] + eq11_5*Global.CLK32[5] + eq11_6*Global.CLK32[6] + eq11_7*Global.CLK32[7]
+	   + eq11_8*Global.CLK32[8] + eq11_9*Global.CLK32[9] + eq11_10*Global.CLK32[10] + eq11_11*Global.CLK32[11] + eq11_12*Global.CLK32[12] + eq11_13*Global.CLK32[13] + eq11_14*Global.CLK32[14] + eq11_15*Global.CLK32[15]
+	   + eq11_16*Global.CLK32[16] + eq11_17*Global.CLK32[17] + eq11_18*Global.CLK32[18] + eq11_19*Global.CLK32[19] + eq11_20*Global.CLK32[20] + eq11_21*Global.CLK32[21] + eq11_22*Global.CLK32[22] + eq11_23*Global.CLK32[23]
+	   + eq11_24*Global.CLK32[24] + eq11_25*Global.CLK32[25] + eq11_26*Global.CLK32[26] + eq11_27*Global.CLK32[27] + eq11_28*Global.CLK32[28] + eq11_29*Global.CLK32[29] + eq11_30*Global.CLK32[30] + eq11_31*Global.CLK32[31];
 
-    pol commit selEq[7];
+    pol commit selEq[8];
 
     selEq[0]' * (1-Global.CLK32[31]) = selEq[0] * (1-Global.CLK32[31]);
 	selEq[1]' * (1-Global.CLK32[31]) = selEq[1] * (1-Global.CLK32[31]);
@@ -4415,6 +4796,7 @@ namespace Arith(%N);
 	selEq[4]' * (1-Global.CLK32[31]) = selEq[4] * (1-Global.CLK32[31]);
 	selEq[5]' * (1-Global.CLK32[31]) = selEq[5] * (1-Global.CLK32[31]);
 	selEq[6]' * (1-Global.CLK32[31]) = selEq[6] * (1-Global.CLK32[31]);
+	selEq[7]' * (1-Global.CLK32[31]) = selEq[7] * (1-Global.CLK32[31]);
 
     selEq[0] * (1-selEq[0]) = 0;
 	selEq[1] * (1-selEq[1]) = 0;
@@ -4423,6 +4805,7 @@ namespace Arith(%N);
 	selEq[4] * (1-selEq[4]) = 0;
 	selEq[5] * (1-selEq[5]) = 0;
 	selEq[6] * (1-selEq[6]) = 0;
+	selEq[7] * (1-selEq[7]) = 0;
 
 
     pol commit carry[3];
@@ -4446,3 +4829,4 @@ namespace Arith(%N);
     selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;
     selEq[6] * (eq9 + carry[1]) = selEq[6] * carry[1]' * 2**16;
     selEq[6] * (eq10 + carry[2]) = selEq[6] * carry[2]' * 2**16;
+    selEq[7] * (eq11 + carry[0]) = selEq[7] * carry[0]' * 2**16;

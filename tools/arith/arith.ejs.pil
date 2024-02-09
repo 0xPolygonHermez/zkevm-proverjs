@@ -18,6 +18,8 @@
 	EQ9:   x1 - x2 - x3 + (q1 * p2)                              - selEq[6]
 	EQ10:  y1 - y2 - y3 + (q2 * p2)                              - selEq[6]
 
+    EQ11:  A(x1) * B(y1) + C(x2) - op(y3) + (q0 * D(y2))         - selEq[7]
+
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
     and p2 refers to the base field order of:
@@ -42,6 +44,10 @@ namespace Arith(%N);
     pol commit q0[16];
     pol commit q1[16];
     pol commit q2[16];
+
+    pol commit y2clock;
+    pol commit x3clock;
+    pol commit y3clock;
 
     pol commit resultEq0;
     pol commit resultEq1;
@@ -259,7 +265,7 @@ namespace Arith(%N);
     //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
     //    CLK16   0xFFFF  0xFFFF      0  0  1
 
-    // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime.
+    // valueLtPrime indicates whether we know that the value is smaller than the prime.
     // If selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
     pol commit valueLtPrime;
 
@@ -276,8 +282,8 @@ namespace Arith(%N);
     valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
-    // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6] equals 1.
-    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    // This constraint is applied when one of selEq[3..7] equals 1.
+    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
     pol constant RANGE_SEL; // 0:2**16,
                             // 1:2**16-1,0
@@ -305,6 +311,35 @@ namespace Arith(%N);
                         + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
                         + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
                         + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[4] + selEq[5] + selEq[6]);
+
+    // Correctness of the y2clock, x3clock and y3clock
+    0 = (y2[15]-y2clock)*Global.CLK32[0] + (y2[14]-y2clock)*Global.CLK32[1] + (y2[13]-y2clock)*Global.CLK32[2] + (y2[12]-y2clock)*Global.CLK32[3] + (y2[11]-y2clock)*Global.CLK32[4] + (y2[10]-y2clock)*Global.CLK32[5] + (y2[9]-y2clock)*Global.CLK32[6] + (y2[8]-y2clock)*Global.CLK32[7]
+	   + (y2[7]-y2clock)*Global.CLK32[8] + (y2[6]-y2clock)*Global.CLK32[9] + (y2[5]-y2clock)*Global.CLK32[10] + (y2[4]-y2clock)*Global.CLK32[11] + (y2[3]-y2clock)*Global.CLK32[12] + (y2[2]-y2clock)*Global.CLK32[13] + (y2[1]-y2clock)*Global.CLK32[14] + (y2[0]-y2clock)*Global.CLK32[15]
+	   + (y2[15]-y2clock)*Global.CLK32[16] + (y2[14]-y2clock)*Global.CLK32[17] + (y2[13]-y2clock)*Global.CLK32[18] + (y2[12]-y2clock)*Global.CLK32[19] + (y2[11]-y2clock)*Global.CLK32[20] + (y2[10]-y2clock)*Global.CLK32[21] + (y2[9]-y2clock)*Global.CLK32[22] + (y2[8]-y2clock)*Global.CLK32[23]
+	   + (y2[7]-y2clock)*Global.CLK32[24] + (y2[6]-y2clock)*Global.CLK32[25] + (y2[5]-y2clock)*Global.CLK32[26] + (y2[4]-y2clock)*Global.CLK32[27] + (y2[3]-y2clock)*Global.CLK32[28] + (y2[2]-y2clock)*Global.CLK32[29] + (y2[1]-y2clock)*Global.CLK32[30] + (y2[0]-y2clock)*Global.CLK32[31];
+    0 = (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[0] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[1] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[2] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[3] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[4] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[5] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[6] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[7]
+	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[8] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[9] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[10] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[11] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[12] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[13] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[14] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[15]
+	   + (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[16] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[17] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[18] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[19] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[20] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[21] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[22] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[23]
+	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[24] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[25] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[26] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[27] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[28] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[29] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[30] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[31];
+    0 = (y3[15]-y3clock)*Global.CLK32[0] + (y3[14]-y3clock)*Global.CLK32[1] + (y3[13]-y3clock)*Global.CLK32[2] + (y3[12]-y3clock)*Global.CLK32[3] + (y3[11]-y3clock)*Global.CLK32[4] + (y3[10]-y3clock)*Global.CLK32[5] + (y3[9]-y3clock)*Global.CLK32[6] + (y3[8]-y3clock)*Global.CLK32[7]
+	   + (y3[7]-y3clock)*Global.CLK32[8] + (y3[6]-y3clock)*Global.CLK32[9] + (y3[5]-y3clock)*Global.CLK32[10] + (y3[4]-y3clock)*Global.CLK32[11] + (y3[3]-y3clock)*Global.CLK32[12] + (y3[2]-y3clock)*Global.CLK32[13] + (y3[1]-y3clock)*Global.CLK32[14] + (y3[0]-y3clock)*Global.CLK32[15]
+	   + (y3[15]-y3clock)*Global.CLK32[16] + (y3[14]-y3clock)*Global.CLK32[17] + (y3[13]-y3clock)*Global.CLK32[18] + (y3[12]-y3clock)*Global.CLK32[19] + (y3[11]-y3clock)*Global.CLK32[20] + (y3[10]-y3clock)*Global.CLK32[21] + (y3[9]-y3clock)*Global.CLK32[22] + (y3[8]-y3clock)*Global.CLK32[23]
+	   + (y3[7]-y3clock)*Global.CLK32[24] + (y3[6]-y3clock)*Global.CLK32[25] + (y3[5]-y3clock)*Global.CLK32[26] + (y3[4]-y3clock)*Global.CLK32[27] + (y3[3]-y3clock)*Global.CLK32[28] + (y3[2]-y3clock)*Global.CLK32[29] + (y3[1]-y3clock)*Global.CLK32[30] + (y3[0]-y3clock)*Global.CLK32[31];
+
+    // Now, prove that x3 == 2**16 - 1 + y3 - y2 + chunkLtPrime (1)
+    // Since we ensure that x3 ∈ [0, 2¹⁶) we have that (2**16 - 1 + y3 - y2 + chunkLtPrime) ∈ [0, 2¹⁶).
+    // Moreover, we also make sure that y2,y3 ∈ [0, 2¹⁶). Both checks imply that y3 is smaller than y2, as needed.
+    pol y3LTy2InEq7 = selEq[7] * (1 - valueLtPrime);
+    y3LTy2InEq7 * (2**16 - 1 + y3clock - y2clock + chunkLtPrime - x3clock) = 0;
+
+    //      ┌── y3clock       ┌───── chunkLtPrime (y3[i] < y2[i], i ∈ [15..0])
+    //      │     ┌─ y2clock  │     ┌─── (1) value
+    //      │     │           │     |
+    //    0xFFFF  0xFFFF      0  0xFFFF            OK
+    //    0x8584  0x968E      1  0xEEf6            OK
+    //    0xFFFF  0xFFFE      x  0x10000 > 0xFFFF  KO
+
+    // Note: In the (mathematical) undefined case where y2 = 0, we have y3 = chunkLtPrime = 0 and therefore that x3 = 0xFFFF
 
     // lookup with RANGE_SEL as first column and BYTE2 as second column
     {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
@@ -429,7 +464,6 @@ namespace Arith(%N);
     <%- equation('pol eq8_## =', 'y1+y2-y3-p*q2+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
                                                             offset: 0x8n}) %>
 
-
     /*******
     *
     * EQ9:  x1 - x2 - x3 + p * (q1 - offset) = 0
@@ -448,6 +482,13 @@ namespace Arith(%N);
     <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
                                                              offset: 0x8n}) %>
 
+    /*******
+    *
+    * EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - D(y2) * (q0 - offset) = 0
+    *
+    *******/
+    <%- equation('pol eq11_## =', 'x1*y1+x2-y3-y2*q0+y2*offset', {offset: 0x8000000000000000000000000000000000000000000000000000000000000000n}) %>
+
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
     pol eq2 = <%- clksel(['eq2_[0..31]'], 'Global.CLK32') %>;
@@ -459,11 +500,12 @@ namespace Arith(%N);
     pol eq8 = <%- clksel(['eq8_[0..31]'], 'Global.CLK32') %>;
     pol eq9 = <%- clksel(['eq9_[0..31]'], 'Global.CLK32') %>;
     pol eq10 = <%- clksel(['eq10_[0..31]'], 'Global.CLK32') %>;
+    pol eq11 = <%- clksel(['eq11_[0..31]'], 'Global.CLK32') %>;
 
-    pol commit selEq[7];
+    pol commit selEq[8];
 
-    <%- latch(['selEq[0..6]'],'Global.CLK32[31]') %>
-    <%- binary(['selEq[0..6]']) %>
+    <%- latch(['selEq[0..7]'],'Global.CLK32[31]') %>
+    <%- binary(['selEq[0..7]']) %>
 
     pol commit carry[3];
 
@@ -486,3 +528,4 @@ namespace Arith(%N);
     selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;
     selEq[6] * (eq9 + carry[1]) = selEq[6] * carry[1]' * 2**16;
     selEq[6] * (eq10 + carry[2]) = selEq[6] * carry[2]' * 2**16;
+    selEq[7] * (eq11 + carry[0]) = selEq[7] * carry[0]' * 2**16;
