@@ -1,4 +1,4 @@
-    const chai = require("chai");
+const chai = require("chai");
 const assert = chai.assert;
 const F1Field = require("ffjavascript").F1Field;
 const fs = require("fs");
@@ -22,6 +22,11 @@ const smPaddingPG = require("../src/sm/sm_padding_pg.js");
 const smPoseidonG = require("../src/sm/sm_poseidong.js");
 const smRom = require("../src/sm/sm_rom.js");
 const smStorage = require("../src/sm/sm_storage/sm_storage.js");
+const smClimbKey = require("../src/sm/sm_climb_key.js");
+const smPaddingSha256 = require("../src/sm/sm_padding_sha256.js");
+const smPaddingSha256Bit = require("../src/sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
+const smBits2FieldSha256 = require("../src/sm/sm_bits2field_sha256.js");
+const smSha256F = require("../src/sm/sm_sha256f/sm_sha256f.js");
 const { config } = require("yargs");
 
 module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
@@ -37,7 +42,9 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
     const verifyPilFlag = pilVerification ? true: false;
     let verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
-    const pil = await compile(Fr, "pil/main.pil", null,  pilConfig);
+    const pilFile = verifyPilConfig.pilFile || "pil/main.pil"
+
+    const pil = await compile(Fr, pilFile, null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
     }
@@ -85,6 +92,22 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log("Const KeccakF...");
         await smKeccakF.buildConstants(constPols.KeccakF);
     }
+    if (constPols.PaddingSha256) {
+        console.log("Const PaddingSha256...");
+        await smPaddingSha256.buildConstants(constPols.PaddingSha256);
+    }
+    if (constPols.PaddingSha256Bit) {
+        console.log("Const PaddingKKBit...");
+        await smPaddingSha256Bit.buildConstants(constPols.PaddingSha256Bit);
+    }
+    if (constPols.Bits2FieldSha256) {
+        console.log("Const Bits2FieldSha256...");
+        await smBits2FieldSha256.buildConstants(constPols.Bits2FieldSha256);
+    }
+    if (constPols.Sha256F) {
+        console.log("Const Sha256F...");
+        await smSha256F.buildConstants(constPols.Sha256F);
+    }
     if (constPols.Mem) {
         console.log("Const Mem...");
         await smMem.buildConstants(constPols.Mem);
@@ -114,11 +137,21 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         await smBinary.buildConstants(constPols.Binary);
     }
 
+    if (constPols.ClimbKey) {
+        console.log("Const ClimbKey...");
+        await smClimbKey.buildConstants(constPols.ClimbKey);
+    }
+
     if (constPols !== false) {
         for (let i=0; i<constPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
-                if (typeof constPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` )
+                const type = typeof constPols.$$array[i][j];
+                if (type !== 'bigint') {
+                    if (type === 'undefined') {
+                        throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` );
+                    } else {
+                        throw new Error(`Polinomial not valid type (${type}) on ${constPols.$$defArray[i].name} at ${j}` );
+                    }
                 }
             }
         }
@@ -177,6 +210,22 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
                             `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
         }
 
+        if (cmPols.PaddingSha256) console.log("Exec PaddingSha256...");
+        const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
+
+        if (cmPols.PaddingSha256Bit) console.log("Exec PaddingSha256bit...");
+        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
+
+        if (cmPols.Bits2FieldSha256) console.log("Exec Bits2FieldSha256...");
+        const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
+
+        if (cmPols.Sha256F) {
+            console.log("Exec Sha256F...");
+            await smSha256F.execute(cmPols.Sha256F, requiredBits2FieldSha256.Sha256F || []);
+        } else if (verifyPilFlag && requiredBits2FieldSha256.Sha256F) {
+            console.log(`WARNING: Namespace Sha256F isn't included, but there are ${requiredBits2FieldSha256.Sha256F.length} Sha256F operations`);
+        }
+
         if (cmPols.Arith) {
             console.log("Exec Arith...");
             await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
@@ -191,15 +240,29 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
         }
 
-        for (let i=0; i<cmPols.$$array.length; i++) {
-            for (let j=0; j<N; j++) {
-                if (typeof cmPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+        if (cmPols.ClimbKey) {
+            console.log("Exec ClimbKey...");
+            await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey || []);
+        } else if (verifyPilFlag && requiredStorage.ClimbKey && requiredStorage.ClimbKey.length) {
+            console.log(`WARNING: Namespace ClimbKey isn't included, but there are ${requiredStorage.ClimbKey.length} ClimbKey operations`);
+        }
+
+        if (!mainConfig.debug) {
+            for (let i=0; i<cmPols.$$array.length; i++) {
+                for (let j=0; j<N; j++) {
+                    const type = typeof cmPols.$$array[i][j];
+                    if (type !== 'bigint') {
+                        if (type === 'undefined') {
+                            throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}`);
+                        } else {
+                            throw new Error(`Polinomial not valid type (${type}) on ${cmPols.$$defArray[i].name} at ${j}` );
+                        }
+                    }
                 }
             }
         }
 
-        if (mainConfig && mainConfig.constFilename) {
+        if (mainConfig && mainConfig.constFilename && constPols !== false) {
             await constPols.saveToFile(mainConfig.constFilename);
         }
 

@@ -1,4 +1,4 @@
-constant %N = 2**17;
+constant %N = 2**22;
 include "../../../pil/global.pil";
 include "../../../pil/storage.pil";
 
@@ -17,13 +17,13 @@ sRD {
     op0, op1, op2, op3,
     op4, op5, op6, op7,
     incCounter
-} in
-Storage.iLatchGet {
+} is
+Storage.latchGet {
     Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
     Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
     Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,
     Storage.valueHigh0, Storage.valueHigh1, Storage.valueHigh2, Storage.valueHigh3,
-    incCounter
+    Storage.incCounter
 };
 
 sWR {
@@ -33,8 +33,8 @@ sWR {
     D4, D5, D6, D7,
     op0 + 2**32*op1, op2 + 2**32*op3, op4 + 2**32*op5, op6 + 2**32*op7,
     incCounter
-} in
-Storage.iLatchSet {
+} is
+Storage.latchSet {
     Storage.oldRoot0, Storage.oldRoot1, Storage.oldRoot2, Storage.oldRoot3,
     Storage.rkey0, Storage.rkey1, Storage.rkey2, Storage.rkey3,
     Storage.valueLow0, Storage.valueLow1, Storage.valueLow2, Storage.valueLow3,

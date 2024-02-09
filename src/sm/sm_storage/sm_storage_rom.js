@@ -7,16 +7,17 @@ class StorageRomLine
         this.fileName = "";
 
         // Instructions
-        this.iJmpz = false;
-        this.iJmp = false;
-        this.iRotateLevel = false;
-        this.iHash = false;
-        this.iHashType = 0;
-        this.iClimbRkey = false;
-        this.iClimbSiblingRkey = false;
-        this.iClimbSiblingRkeyN = false;
-        this.iLatchGet = false;
-        this.iLatchSet = false;
+        this.jmpz = false;
+        this.jmpnz = false;
+        this.jmp = false;
+        this.rotateLevel = false;
+        this.hash = false;
+        this.hashType = 0;
+        this.climbRkey = false;
+        this.climbSiblingRkey = false;
+        this.climbBitN = false;
+        this.latchGet = false;
+        this.latchSet = false;
 
         // Selectors
         this.inFREE = false;
@@ -28,6 +29,7 @@ class StorageRomLine
         this.inRKEY = false;
         this.inSIBLING_RKEY = false;
         this.inSIBLING_VALUE_HASH = false;
+        this.inLEVEL = false;
 
         // Setters
         this.setRKEY = false;
@@ -43,8 +45,8 @@ class StorageRomLine
         this.setSIBLING_VALUE_HASH = false;
 
         // Jump parameters
-        this.addressLabel = "";
-        this.address = 0;
+        this.jmpAddressLabel = "";
+        this.jmpAddress = 0;
 
         // inFREE parameters
         this.op = "";
@@ -78,28 +80,29 @@ class StorageRomLine
             }
         }
         if (this.CONST.length>0) logstr += "CONST=" + this.CONST + " "; // Constant
-        if (this.inOLD_ROOT) logstr += "inOLD_ROOT ";
-        if (this.inNEW_ROOT) logstr += "inNEW_ROOT ";
-        if (this.inRKEY_BIT) logstr += "inRKEY_BIT ";
-        if (this.inVALUE_LOW) logstr += "inVALUE_LOW ";
-        if (this.inVALUE_HIGH) logstr += "inVALUE_HIGH ";
-        if (this.inRKEY) logstr += "inRKEY ";
-        if (this.inSIBLING_RKEY) logstr += "inSIBLING_RKEY ";
-        if (this.inSIBLING_VALUE_HASH) logstr += "inSIBLING_VALUE_HASH ";
-        if (this.inROTL_VH) logstr += "inROTL_VH ";
+        if (this.inOLD_ROOT) logstr += (inOLD_ROOT == 1 ? '':inOLD_ROOT + '*') + "inOLD_ROOT ";
+        if (this.inNEW_ROOT) logstr += (inNEW_ROOT == 1 ? '':inNEW_ROOT + '*') + "inNEW_ROOT ";
+        if (this.inRKEY_BIT) logstr += (inRKEY_BIT == 1 ? '':inRKEY_BIT + '*') + "inRKEY_BIT ";
+        if (this.inVALUE_LOW) logstr += (inVALUE_LOW == 1 ? '':inVALUE_LOW + '*') + "inVALUE_LOW ";
+        if (this.inVALUE_HIGH) logstr += (inVALUE_HIGH == 1 ? '':inVALUE_HIGH + '*') + "inVALUE_HIGH ";
+        if (this.inRKEY) logstr += (inRKEY == 1 ? '':inRKEY + '*') + "inRKEY ";
+        if (this.inSIBLING_RKEY) logstr += (inSIBLING_RKEY == 1 ? '':inSIBLING_RKEY + '*') + "inSIBLING_RKEY ";
+        if (this.inSIBLING_VALUE_HASH) logstr += (inSIBLING_VALUE_HASH == 1 ? '':inSIBLING_VALUE_HASH + '*') + "inSIBLING_VALUE_HASH ";
+        if (this.inROTL_VH) logstr += (inROTL_VH == 1 ? '':inROTL_VH + '*') + "inROTL_VH ";
+        if (this.inLEVEL) logstr += (inLEVEL == 1 ? '':inLEVEL + '*') + "inLEVEL ";
 
         // Instructions
-        if (this.iJmpz) logstr += "iJmpz ";
-        if (this.iJmp) logstr += "iJmp ";
-        if (this.addressLabel.length>0) logstr += "addressLabel=" + this.addressLabel + " "; // Jump parameter
-        if (this.address>0) logstr += "address=" + this.address + " "; // Jump parameter
-        if (this.iRotateLevel) logstr += "iRotateLevel ";
-        if (this.iHash) logstr += "iHash " + "iHashType=" + this.iHashType + " ";
-        if (this.iClimbRkey) logstr += "iClimbRkey ";
-        if (this.iClimbSiblingRkey) logstr += "iClimbSiblingRkey ";
-        if (this.iClimbSiblingRkeyN) logstr += "iClimbSiblingRkeyN ";
-        if (this.iLatchGet) logstr += "iLatchGet ";
-        if (this.iLatchSet) logstr += "iLatchSet ";
+        if (this.jmpz) logstr += "jmpz ";
+        if (this.jmpz) logstr += "jmpnz ";
+        if (this.jmp) logstr += "jmp ";
+        if (this.jmpAddressLabel.length>0) logstr += "jmpAddressLabel=" + this.jmpAddressLabel + " "; // Jump parameter
+        if (this.jmpAddress>0) logstr += "jmpAddress=" + this.jmpAddress + " "; // Jump parameter
+        if (this.hash) logstr += "hash " + "hashType=" + this.iHashType + " ";
+        if (this.climbRkey) logstr += "climbRkey ";
+        if (this.climbSiblingRkey) logstr += "climbSiblingRkey ";
+        if (this.climbBitN) logstr += "climbBitN ";
+        if (this.latchGet) logstr += "latchGet ";
+        if (this.latchSet) logstr += "latchSet ";
 
         // Setters
         if (this.setRKEY) logstr += "setRKEY ";
@@ -132,77 +135,84 @@ class StorageRom
             process.exit(-1);
         }
 
+        // TODO: review lines padding !!!
+
         for (let i=0; i<j.program.length; i++) {
             let romLine = new StorageRomLine;
+            const l = j.program[i];
+
 
             // Mandatory fields
-            romLine.line = j.program[i].line;
-            romLine.fileName = j.program[i].fileName;
+            romLine.line = l.line;
+            romLine.fileName = l.fileName;
+            romLine.lineStr = l.lineStr;
 
             // Instructions
-            if (j.program[i].hasOwnProperty("iJmpz")) romLine.iJmpz = true;
-            if (j.program[i].hasOwnProperty("iJmp")) romLine.iJmp = true;
-            if (j.program[i].hasOwnProperty("iRotateLevel")) romLine.iRotateLevel = true;
-            if (j.program[i].hasOwnProperty("iHash")) romLine.iHash = true;
-            if (j.program[i].hasOwnProperty("iHashType")) romLine.iHashType = j.program[i].iHashType;
-            if (j.program[i].hasOwnProperty("iClimbRkey")) romLine.iClimbRkey = true;
-            if (j.program[i].hasOwnProperty("iClimbSiblingRkey")) romLine.iClimbSiblingRkey = true;
-            if (j.program[i].hasOwnProperty("iClimbSiblingRkeyN")) romLine.iClimbSiblingRkeyN = true;
-            if (j.program[i].hasOwnProperty("iLatchGet")) romLine.iLatchGet = true;
-            if (j.program[i].hasOwnProperty("iLatchSet")) romLine.iLatchSet = true;
+            if (l.jmpz) romLine.jmpz = true;
+            if (l.jmpnz) romLine.jmpnz = true;
+            if (l.jmp) romLine.jmp = true;
+            if (l.hash) romLine.hash = true;
+            if (l.hashType) romLine.hashType = l.hashType;
+
+            if (l.climbRkey) romLine.climbRkey = BigInt(l.climbRkey);
+            if (l.climbSiblingRkey) romLine.climbSiblingRkey = BigInt(l.climbSiblingRkey);
+            if (l.climbBitN) romLine.climbBitN = BigInt(l.climbBitN);
+
+            if (l.latchGet) romLine.latchGet = true;
+            if (l.latchSet) romLine.latchSet = true;
 
             // Selectors
-            if (j.program[i].hasOwnProperty("inFREE")) romLine.inFREE = true;
-            if (j.program[i].hasOwnProperty("inOLD_ROOT")) romLine.inOLD_ROOT = true;
-            if (j.program[i].hasOwnProperty("inNEW_ROOT")) romLine.inNEW_ROOT = true;
-            if (j.program[i].hasOwnProperty("inVALUE_LOW")) romLine.inVALUE_LOW = true;
-            if (j.program[i].hasOwnProperty("inVALUE_HIGH")) romLine.inVALUE_HIGH = true;
-            if (j.program[i].hasOwnProperty("inRKEY")) romLine.inRKEY = true;
-            if (j.program[i].hasOwnProperty("inRKEY_BIT")) romLine.inRKEY_BIT = true;
-            if (j.program[i].hasOwnProperty("inSIBLING_RKEY")) romLine.inSIBLING_RKEY = true;
-            if (j.program[i].hasOwnProperty("inSIBLING_VALUE_HASH")) romLine.inSIBLING_VALUE_HASH = true;
-            if (j.program[i].hasOwnProperty("inROTL_VH")) romLine.inROTL_VH = true;
+            if (l.inFREE) romLine.inFREE = BigInt(l.inFREE);
+            if (l.inOLD_ROOT) romLine.inOLD_ROOT = BigInt(l.inOLD_ROOT);
+            if (l.inNEW_ROOT) romLine.inNEW_ROOT = BigInt(l.inNEW_ROOT);
+            if (l.inVALUE_LOW) romLine.inVALUE_LOW = BigInt(l.inVALUE_LOW);
+            if (l.inVALUE_HIGH) romLine.inVALUE_HIGH = BigInt(l.inVALUE_HIGH);
+            if (l.inRKEY) romLine.inRKEY = BigInt(l.inRKEY);
+            if (l.inRKEY_BIT) romLine.inRKEY_BIT = BigInt(l.inRKEY_BIT);
+            if (l.inSIBLING_RKEY) romLine.inSIBLING_RKEY = BigInt(l.inSIBLING_RKEY);
+            if (l.inSIBLING_VALUE_HASH) romLine.inSIBLING_VALUE_HASH = BigInt(l.inSIBLING_VALUE_HASH);
+            if (l.inROTL_VH) romLine.inROTL_VH = BigInt(l.inROTL_VH);
+            if (l.inLEVEL) romLine.inLEVEL = BigInt(l.inLEVEL);
 
             // Setters
-            if (j.program[i].hasOwnProperty("setRKEY")) romLine.setRKEY = true;
-            if (j.program[i].hasOwnProperty("setRKEY_BIT")) romLine.setRKEY_BIT = true;
-            if (j.program[i].hasOwnProperty("setVALUE_LOW")) romLine.setVALUE_LOW = true;
-            if (j.program[i].hasOwnProperty("setVALUE_HIGH")) romLine.setVALUE_HIGH = true;
-            if (j.program[i].hasOwnProperty("setLEVEL")) romLine.setLEVEL = true;
-            if (j.program[i].hasOwnProperty("setOLD_ROOT")) romLine.setOLD_ROOT = true;
-            if (j.program[i].hasOwnProperty("setNEW_ROOT")) romLine.setNEW_ROOT = true;
-            if (j.program[i].hasOwnProperty("setHASH_LEFT")) romLine.setHASH_LEFT = true;
-            if (j.program[i].hasOwnProperty("setHASH_RIGHT")) romLine.setHASH_RIGHT = true;
-            if (j.program[i].hasOwnProperty("setSIBLING_RKEY")) romLine.setSIBLING_RKEY = true;
-            if (j.program[i].hasOwnProperty("setSIBLING_VALUE_HASH")) romLine.setSIBLING_VALUE_HASH = true;
+            if (l.setRKEY) romLine.setRKEY = true;
+            if (l.setRKEY_BIT) romLine.setRKEY_BIT = true;
+            if (l.setVALUE_LOW) romLine.setVALUE_LOW = true;
+            if (l.setVALUE_HIGH) romLine.setVALUE_HIGH = true;
+            if (l.setLEVEL) romLine.setLEVEL = true;
+            if (l.setOLD_ROOT) romLine.setOLD_ROOT = true;
+            if (l.setNEW_ROOT) romLine.setNEW_ROOT = true;
+            if (l.setHASH_LEFT) romLine.setHASH_LEFT = true;
+            if (l.setHASH_RIGHT) romLine.setHASH_RIGHT = true;
+            if (l.setSIBLING_RKEY) romLine.setSIBLING_RKEY = true;
+            if (l.setSIBLING_VALUE_HASH) romLine.setSIBLING_VALUE_HASH = true;
 
             // Jump parameters
-            if (romLine.iJmp || romLine.iJmpz)
+            if (romLine.jmp || romLine.jmpz || romLine.jmpnz)
             {
-                romLine.addressLabel = j.program[i].addressLabel;
-                romLine.address = j.program[i].address;
+                romLine.jmpAddressLabel = l.jmpAddressLabel;
+                romLine.jmpAddress = l.jmpAddress;
             }
 
             // inFREE parameters
-            if (romLine.inFREE)
+            if (romLine.inFREE && l.freeInTag)
             {
-                romLine.op = j.program[i].freeInTag.op;
+                romLine.op = l.freeInTag.op;
                 if (romLine.op=="functionCall")
                 {
-                    romLine.funcName = j.program[i].freeInTag.funcName;
-                    for (let p=0; p<j.program[i].freeInTag.params.length; p++)
+                    romLine.funcName = l.freeInTag.funcName;
+                    for (let p=0; p<l.freeInTag.params.length; p++)
                     {
-                        romLine.params.push(j.program[i].freeInTag.params[p].num);
+                        romLine.params.push(l.freeInTag.params[p].num);
                     }
                 }
             }
 
             // Constant
-            if (j.program[i].hasOwnProperty("CONST"))
+            if (l.hasOwnProperty("CONST"))
             {
-                romLine.CONST = j.program[i].CONST;
+                romLine.CONST = l.CONST;
             }
-
             this.line.push(romLine);
         }
     }

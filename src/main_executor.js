@@ -20,7 +20,11 @@ const smPaddingKKBit = require("./sm/sm_padding_kkbit/sm_padding_kkbit.js");
 const smPaddingPG = require("./sm/sm_padding_pg.js");
 const smPoseidonG = require("./sm/sm_poseidong.js");
 const smStorage = require("./sm/sm_storage/sm_storage.js");
-
+const smPaddingSha256 = require("./sm/sm_padding_sha256.js");
+const smPaddingSha256Bit = require("./sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
+const smBits2FieldSha256 = require("./sm/sm_bits2field_sha256.js");
+const smSha256F = require("./sm/sm_sha256f/sm_sha256f.js");
+const smClimbKey = require("./sm/sm_climb_key.js");
 
 const argv = require("yargs")
     .version(version)
@@ -46,6 +50,8 @@ const argv = require("yargs")
     .alias("B", "databaseurl")
     .alias("n", "dbnodestable")
     .alias("G", "dbprogramtable")
+    .alias("a", "assertOutputs")
+    .alias("TO", "tracerOptions")
     .argv;
 
 async function run() {
@@ -86,7 +92,7 @@ async function run() {
         logs: false,
         stats: 'program.stats',
         pil: path.join(__dirname, "/../pil/main.pil"),
-        pilConfig: false
+        pilConfig: false,
     };
 
     for (let name in configFiles) {
@@ -112,7 +118,7 @@ async function run() {
     config.databaseURL = typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local";
     config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
     config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";
-
+    config.assertOutputs = !(argv.assertOutputs === "false");
     for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
         config[value] = (argv[value] === true ? true : (config[value] ?? false));
     }
@@ -154,11 +160,22 @@ async function run() {
     config.pathVerboseFile = (typeof argv.verboseExecutor === 'string' ? argv.verboseExecutor.trim() : config.pathVerboseFile);
     config.verboseOptions = config.verboseOptions ?? {};
 
-    if (typeof config.pathVerboseFile !== 'undefined'){
+    if (typeof config.pathVerboseFile !== 'undefined') {
         if (!fs.existsSync(config.pathVerboseFile)) {
-            throw new Error("Cache pil file does not exist");
+            throw new Error('pathVerboseFile does not exist');
         } else {
             config.verboseOptions = JSON.parse(fs.readFileSync(config.pathVerboseFile));
+        }
+    }
+
+    const pathTracerOptions = (typeof argv.tracerOptions === 'string') ? argv.tracerOptions.trim() : undefined;
+    config.tracerOptions = config.tracerOptions ?? {};
+
+    if (typeof pathTracerOptions !== 'undefined') {
+        if (!fs.existsSync(pathTracerOptions)) {
+            throw new Error('pathTracerOptions does not exist');
+        } else {
+            config.tracerOptions = JSON.parse(fs.readFileSync(pathTracerOptions));
         }
     }
 
@@ -206,6 +223,20 @@ async function run() {
             await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF || []);
         }
 
+        if (cmPols.PaddingSha256) console.log("PaddingSha256...");
+        const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
+
+        if (cmPols.PaddingSha256Bit) console.log("PaddingSha256bit...");
+        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
+
+        if (cmPols.Bits2FieldSha256) console.log("Bits2FieldSha256...");
+        const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
+
+        if (cmPols.Sha256F) {
+            console.log("Sha256F...");
+            await smSha256F.execute(cmPols.Sha256F, requiredBits2FieldSha256.Sha256F || []);
+        }
+
         if (cmPols.PaddingPG) console.log("PaddingPG...");
         const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG || []) : false;
 
@@ -215,10 +246,15 @@ async function run() {
             await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         }
 
+        if (cmPols.ClimbKey) {
+            console.log("ClimbKey...");
+            await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
+        }
+
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof cmPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                    throw new Error(`Polynomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
                 }
             }
         }

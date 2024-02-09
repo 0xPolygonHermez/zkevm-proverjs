@@ -7,6 +7,7 @@ const argv = require("yargs")
     .help('h')
     .alias("p", "pil")
     .alias("P", "pilconfig")
+    .alias("c", "const")
     .argv;
 
 async function main(){
@@ -16,10 +17,11 @@ async function main(){
 
     const pil = await compile(Fr, pilFile, null, pilConfig);
     const pilDeg = Object.values(pil.references)[0].polDeg;
+    const pilReferenceType = argv.const ? 'constP':'cmP';
 
     let pols = {};
     for(let key in pil.references) {
-        if (pil.references[key].type != 'cmP') continue;
+        if (pil.references[key].type != pilReferenceType) continue;
         console.log(key);
     }
 }

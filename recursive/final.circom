@@ -17,7 +17,9 @@ Total: 1696
 
 include "sha256/sha256.circom";
 include "bitify.circom";
+include "lessthangl.circom";
 include "recursivef.verifier.circom";
+
 
 template Main() {
     signal output publicsHash;
@@ -30,12 +32,13 @@ template Main() {
     signal input root3;
     signal input root4;
 
-    signal input evals[70][3];
+    signal input evals[86][3]; // Evaluations of the set polynomials at a challenge value z and gz
 
+    // Leaves values of the merkle tree used to check all the queries
     signal input s0_vals1[32][12];
-    signal input s0_vals3[32][9];
-    signal input s0_vals4[32][24];
-    signal input s0_valsC[32][34];
+    signal input s0_vals3[32][21];
+    signal input s0_vals4[32][21];
+    signal input s0_valsC[32][39];
 
     signal input s0_siblings1[32][6][16];
     signal input s0_siblings3[32][6][16];
@@ -48,18 +51,18 @@ template Main() {
     signal input s4_root;
     signal input s5_root;
 
-    signal input s1_vals[32][24];
+    signal input s1_vals[32][48];
     signal input s1_siblings[32][5][16];
-    signal input s2_vals[32][48];
+    signal input s2_vals[32][24];
     signal input s2_siblings[32][4][16];
-    signal input s3_vals[32][48];
+    signal input s3_vals[32][24];
     signal input s3_siblings[32][3][16];
-    signal input s4_vals[32][48];
+    signal input s4_vals[32][24];
     signal input s4_siblings[32][2][16];
-    signal input s5_vals[32][48];
-    signal input s5_siblings[32][1][16];
+    signal input s5_vals[32][24];
+    signal input s5_siblings[32][2][16];
 
-    signal input finalPol[16][3];
+    signal input finalPol[32][3];
 
 
     component sv = StarkVerifier();
@@ -102,83 +105,81 @@ template Main() {
 
     component publicsHasher = Sha256(1696);
 
-    component n2bAggregatorAddr = Num2Bits(160);
-    n2bAggregatorAddr.in <== aggregatorAddr;
+    signal n2bAggregatorAddr[160] <== Num2Bits(160)(aggregatorAddr);
     for (var i=0; i<160; i++) {
-        publicsHasher.in[0 + 160 - 1 -i] <== n2bAggregatorAddr.out[i];
+        publicsHasher.in[0 + 160 - 1 -i] <== n2bAggregatorAddr[i];
     }
 
-    component n2bOldStateRoot[8];
+    signal n2bOldStateRoot[8][32];
     for (var i=0; i<8; i++) {
-        n2bOldStateRoot[i] = Num2Bits(32);
-        n2bOldStateRoot[i].in <== publics[0 + i];
+        n2bOldStateRoot[i] <== Num2Bits(32)(publics[0 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[160 + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i].out[j];
+            publicsHasher.in[160 + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i][j];
         }
     }
 
-    component n2bOldAccInputHash[8];
+    for (var i = 0; i < 4; i++) {
+        _<== LessThanGoldilocks()(publics[0 + 2*i] + (1 << 32) * publics[0 + 2*i + 1]);
+    }
+
+    signal n2bOldAccInputHash[8][32];
     for (var i=0; i<8; i++) {
-        n2bOldAccInputHash[i] = Num2Bits(32);
-        n2bOldAccInputHash[i].in <== publics[8 + i];
+        n2bOldAccInputHash[i] <== Num2Bits(32)(publics[8 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[416 + 32*(8-i) - 1 -j] <== n2bOldAccInputHash[i].out[j];
+            publicsHasher.in[416 + 32*(8-i) - 1 -j] <== n2bOldAccInputHash[i][j];
         }
     }
 
     // Do 63 bits to avoid aliasing
-    component n2bOldBatchNum = Num2Bits(63);
-    n2bOldBatchNum.in <== publics[16];
+    signal n2bOldBatchNum[63] <== Num2Bits(63)(publics[16]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[672 + 64 - 1 -i] <== n2bOldBatchNum.out[i];
+        publicsHasher.in[672 + 64 - 1 -i] <== n2bOldBatchNum[i];
     }
     publicsHasher.in[672] <== 0;
 
-    component n2bChainId = Num2Bits(63);
-    n2bChainId.in <== publics[17];
+    signal n2bChainId[63] <== Num2Bits(63)(publics[17]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[736 + 64 - 1 -i] <== n2bChainId.out[i];
+        publicsHasher.in[736 + 64 - 1 -i] <== n2bChainId[i];
     }
     publicsHasher.in[736] <== 0;
 
-    component n2bForkId = Num2Bits(63);
-    n2bForkId.in <== publics[18];
+    signal n2bForkId[63] <== Num2Bits(63)(publics[18]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[800 + 64 - 1 -i] <== n2bForkId.out[i];
+        publicsHasher.in[800 + 64 - 1 -i] <== n2bForkId[i];
     }
     publicsHasher.in[800] <== 0;
 
-    component n2bNewStateRoot[8];
+    signal n2bNewStateRoot[8][32];
     for (var i=0; i<8; i++) {
-        n2bNewStateRoot[i] = Num2Bits(32);
-        n2bNewStateRoot[i].in <== publics[19+i];
+        n2bNewStateRoot[i] <== Num2Bits(32)(publics[19 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[864 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i].out[j];
+            publicsHasher.in[864 + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i][j];
         }
     }
 
-    component n2bNewAccInputHash[8];
+    for (var i = 0; i < 4; i++) {
+        _<== LessThanGoldilocks()(publics[19 + 2*i] + (1 << 32)*publics[19 + 2*i + 1]);
+    }
+
+    signal n2bNewAccInputHash[8][32];
     for (var i=0; i<8; i++) {
-        n2bNewAccInputHash[i] = Num2Bits(32);
-        n2bNewAccInputHash[i].in <== publics[27+i];
+        n2bNewAccInputHash[i] <== Num2Bits(32)(publics[27+i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1120 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i].out[j];
+            publicsHasher.in[1120 + 32*(8-i) - 1 -j] <== n2bNewAccInputHash[i][j];
         }
     }
 
-    component n2bNewLocalExitRoot[8];
+    signal n2bNewLocalExitRoot[8][32];
     for (var i=0; i<8; i++) {
-        n2bNewLocalExitRoot[i] = Num2Bits(32);
-        n2bNewLocalExitRoot[i].in <== publics[35+i];
+        n2bNewLocalExitRoot[i] <== Num2Bits(32)(publics[35 + i]);
         for (var j=0; j<32; j++) {
-            publicsHasher.in[1376 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i].out[j];
+            publicsHasher.in[1376 + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i][j];
         }
     }
 
-    component n2bNewBatchNum = Num2Bits(63);
-    n2bNewBatchNum.in <== publics[43];
+    signal n2bNewBatchNum[63] <== Num2Bits(63)(publics[43]);
     for (var i=0; i<63; i++) {
-        publicsHasher.in[1632 + 64 - 1 -i] <== n2bNewBatchNum.out[i];
+        publicsHasher.in[1632 + 64 - 1 -i] <== n2bNewBatchNum[i];
     }
     publicsHasher.in[1632] <== 0;
 

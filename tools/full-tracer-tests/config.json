@@ -1,0 +1,28 @@
+[
+    {
+        "folderName": "calldata",
+        "traceMethod": "callTracer",
+        "isEthereumTest": false
+    },
+    {
+        "folderName": "calldata",
+        "traceMethod": "defaultTracer",
+        "isEthereumTest": false
+    },
+    {
+        "testName": "op-invalid",
+        "testToDebug": 0,
+        "traceMethod": "defaultTracer"
+    },
+    {
+        "testName": "stArgsZeroOneBalance/addmodNonConst",
+        "testToDebug": 1,
+        "traceMethod": "defaultTracer",
+        "isEthereumTest": true
+    },
+    {
+        "testName": "erc20",
+        "testToDebug": 0,
+        "traceMethod": "defaultTracer"
+    }
+]

@@ -1,0 +1,6 @@
+{
+    "disableStorageDefault":   true,
+    "disableStackDefault":     true,
+    "enableMemoryDefault":     false,
+    "enableReturnDataDefault": false
+}

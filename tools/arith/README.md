@@ -113,7 +113,7 @@ This macro was used to generate a polynomial that enables in each clock only a v
 Syntax:
 
 ```javascript
-cksel(values, clk)
+clksel(values, clk)
 ```
 Example:
 

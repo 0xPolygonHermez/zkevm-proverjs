@@ -5,7 +5,7 @@ const keccakF = require("./keccak.js").keccakF;
 const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 
 const { F1Field } = require("ffjavascript");
-const getKs = require("pilcom").getKs;
+const { getKs, getRoots } = require("pilcom");
 
 
 const SlotSize = 155286;
@@ -23,13 +23,14 @@ module.exports.buildConstants = async function (pols) {
     assert(1<<pow == N);
 
     const ks = getKs(F, 2);
-
+    const roots = getRoots(F);
+    const wi = roots[pow];
     let w = F.one;
     for (let i=0; i<N; i++) {
         pols.ConnSOutBit[i] = w;
         pols.ConnSInBit[i] = F.mul(w, ks[0]);
         pols.ConnBits2FieldBit[i] = F.mul(w, ks[1]);
-        w = F.mul(w, F.FFT.w[pow]);
+        w = F.mul(w, wi);
     }
 
     function connect(p1, i1, p2, i2) {
