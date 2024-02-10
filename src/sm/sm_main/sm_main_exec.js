@@ -218,7 +218,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.RR = pols.RR[i];
         ctx.HASHPOS = pols.HASHPOS[i];
         ctx.RID = pols.RID[i];
-        ctx.NRID = pols.NRID[i];
+        ctx.NEXT_RID = pols.NEXT_RID[i];
         ctx.GAS = pols.GAS[i];
         ctx.zkPC = pols.zkPC[i];
         ctx.cntArith = pols.cntArith[i];
@@ -295,98 +295,176 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         [op0, op1, op2, op3, op4, op5, op6, op7] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
 
-        if (l.inA) {
+        let inSaveRegs = {inA: l.inA, inB: l.inB, inC: l.inC, inD: l.inD, inE: l.inE, inSR: l.inSR, 
+                          inRCX: l.inRCX, inRR: l.inRR , inHASHPOS: l.inHASHPOS, inSP: l.inSP, inPC: l.inPC};
+        const nexti = (i+1) % N;
+
+        if (l.restore) {
+            const rid = pols.RID[i];
+            pols.restore[i] = 1n;
+            
+            // check if exists saved data with current RID value
+            if (!ctx.saved[rid]) {
+                throw new Error(`Not found saved data with RID ${rid} on ${sourceRef} [NEXT_RID: ${pols.NEXT_RID[i]} RID:${rid}]`);
+            }                
+            const data = ctx.saved[rid];
+            console.log(`restoring ${rid} on ${sourceRef} (rid:${data.RID})`);
+
+            // verify that saving wasn't restored previously
+            if (data.restored) {
+                throw new Error(`On ${sourceRef} try to restore RID ${rid} previously restored on row ${data.restored.row} at ${data.restored.sourceRef} [NEXT_RID: ${pols.NEXT_RID[i]} RID:${rid}]`);
+            }
+
+            let regs = [];
+            if (data.A) {
+                [pols.A0[nexti], pols.A1[nexti], pols.A2[nexti], pols.A3[nexti], pols.A4[nexti], pols.A5[nexti], pols.A6[nexti], pols.A7[nexti]] = data.A;
+                inSaveRegs.inA = 1n;
+            }
+            if (data.B) {
+                [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = data.B
+                inSaveRegs.inB = 1n;
+            }
+            if (data.C) {
+                [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = data.C;
+                inSaveRegs.inC = 1n;
+            }
+            if (data.D) {
+                [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = data.D;
+                inSaveRegs.inD = 1n;
+            }
+            if (data.E) {
+                [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = data.E;
+                inSaveRegs.inE = 1n;
+            }
+            if (data.SR) {
+                [pols.SR0[nexti], pols.SR1[nexti], pols.SR2[nexti], pols.SR3[nexti], pols.SR4[nexti], pols.SR5[nexti], pols.SR6[nexti], pols.SR7[nexti]] = data.SR;
+                inSaveRegs.inSR = 1n;
+            }
+            if (typeof data.RCX !== 'undefined') {
+                pols.RCX[nexti] = data.RCX;
+                inSaveRegs.inRCX = 1n;
+            }
+            if (typeof data.RR !== 'undefined') {
+                pols.RR[nexti] = data.RR;
+                inSaveRegs.inRR = 1n;
+            }
+            if (typeof data.HASHPOS !== 'undefined') {
+                pols.HASHPOS[nexti] = data.HASHPOS;
+                inSaveRegs.inHASHPOS = 1n;
+            }
+            if (typeof data.SP !== 'undefined') {
+                pols.SP[nexti] = data.SP;
+                inSaveRegs.inSP = 1n;
+            }
+            if (typeof data.PC !== 'undefined') {
+                pols.PC[nexti] = data.PC;
+                inSaveRegs.inPC = 1n;
+            }
+            
+            if (l.regs && data.regs !== l.regs) {
+                throw new Error(`On ${sourceRef} list of registers ${l.regs} to restore not match with list of registers ${data.regs} saved on ${data.sourceRef} are ${data.regs} [nrid: ${pols.NEXT_RID[i]} rid:${rid}]`);
+            }
+
+            console.log(`restore on ${sourceRef} RID=${data.RID}`)
+            pols.RID[nexti] = data.RID;
+            data.restored = {sourceRef, row: i };
+        } else {
+            pols.restore[i] = 0n;
+        }
+
+
+        if (inSaveRegs.inA) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inA), ctx.A[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inA), ctx.A[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inA), ctx.A[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inA), ctx.A[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inA), ctx.A[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inA), ctx.A[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inA), ctx.A[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inA), ctx.A[7]))
+                [Fr.add(op0 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[0])),
+                 Fr.add(op1 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[1])),
+                 Fr.add(op2 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[2])),
+                 Fr.add(op3 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[3])),
+                 Fr.add(op4 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[4])),
+                 Fr.add(op5 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[5])),
+                 Fr.add(op6 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[6])),
+                 Fr.add(op7 , Fr.mul( Fr.e(inSaveRegs.inA), ctx.A[7]))
                 ];
-            pols.inA[i] = Fr.e(l.inA);
+            pols.inA[i] = Fr.e(inSaveRegs.inA);
         } else {
             pols.inA[i] = Fr.zero;
         }
 
-        if (l.inB) {
+        if (inSaveRegs.inB) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inB), ctx.B[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inB), ctx.B[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inB), ctx.B[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inB), ctx.B[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inB), ctx.B[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inB), ctx.B[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inB), ctx.B[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inB), ctx.B[7]))
+                [Fr.add(op0 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[0])),
+                 Fr.add(op1 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[1])),
+                 Fr.add(op2 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[2])),
+                 Fr.add(op3 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[3])),
+                 Fr.add(op4 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[4])),
+                 Fr.add(op5 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[5])),
+                 Fr.add(op6 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[6])),
+                 Fr.add(op7 , Fr.mul( Fr.e(inSaveRegs.inB), ctx.B[7]))
                 ];
-            pols.inB[i] = Fr.e(l.inB);
+            pols.inB[i] = Fr.e(inSaveRegs.inB);
         } else {
             pols.inB[i] = Fr.zero;
         }
 
-        if (l.inC) {
+        if (inSaveRegs.inC) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inC), ctx.C[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inC), ctx.C[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inC), ctx.C[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inC), ctx.C[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inC), ctx.C[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inC), ctx.C[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inC), ctx.C[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inC), ctx.C[7]))
+                [Fr.add(op0 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[0])),
+                 Fr.add(op1 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[1])),
+                 Fr.add(op2 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[2])),
+                 Fr.add(op3 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[3])),
+                 Fr.add(op4 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[4])),
+                 Fr.add(op5 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[5])),
+                 Fr.add(op6 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[6])),
+                 Fr.add(op7 , Fr.mul( Fr.e(inSaveRegs.inC), ctx.C[7]))
                 ];
-            pols.inC[i] = Fr.e(l.inC);
+            pols.inC[i] = Fr.e(inSaveRegs.inC);
         } else {
             pols.inC[i] = Fr.zero;
         }
 
-        if (l.inD) {
+        if (inSaveRegs.inD) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inD), ctx.D[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inD), ctx.D[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inD), ctx.D[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inD), ctx.D[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inD), ctx.D[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inD), ctx.D[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inD), ctx.D[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inD), ctx.D[7]))
+                [Fr.add(op0 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[0])),
+                 Fr.add(op1 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[1])),
+                 Fr.add(op2 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[2])),
+                 Fr.add(op3 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[3])),
+                 Fr.add(op4 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[4])),
+                 Fr.add(op5 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[5])),
+                 Fr.add(op6 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[6])),
+                 Fr.add(op7 , Fr.mul( Fr.e(inSaveRegs.inD), ctx.D[7]))
                 ];
-            pols.inD[i] = Fr.e(l.inD);
+            pols.inD[i] = Fr.e(inSaveRegs.inD);
         } else {
             pols.inD[i] = Fr.zero;
         }
 
-        if (l.inE) {
+        if (inSaveRegs.inE) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inE), ctx.E[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inE), ctx.E[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inE), ctx.E[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inE), ctx.E[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inE), ctx.E[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inE), ctx.E[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inE), ctx.E[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inE), ctx.E[7]))
+                [Fr.add(op0 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[0])),
+                 Fr.add(op1 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[1])),
+                 Fr.add(op2 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[2])),
+                 Fr.add(op3 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[3])),
+                 Fr.add(op4 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[4])),
+                 Fr.add(op5 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[5])),
+                 Fr.add(op6 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[6])),
+                 Fr.add(op7 , Fr.mul( Fr.e(inSaveRegs.inE), ctx.E[7]))
                 ];
-            pols.inE[i] = Fr.e(l.inE);
+            pols.inE[i] = Fr.e(inSaveRegs.inE);
         } else {
             pols.inE[i] = Fr.zero;
         }
 
-        if (l.inSR) {
+        if (inSaveRegs.inSR) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
-                [Fr.add(op0 , Fr.mul( Fr.e(l.inSR), ctx.SR[0])),
-                 Fr.add(op1 , Fr.mul( Fr.e(l.inSR), ctx.SR[1])),
-                 Fr.add(op2 , Fr.mul( Fr.e(l.inSR), ctx.SR[2])),
-                 Fr.add(op3 , Fr.mul( Fr.e(l.inSR), ctx.SR[3])),
-                 Fr.add(op4 , Fr.mul( Fr.e(l.inSR), ctx.SR[4])),
-                 Fr.add(op5 , Fr.mul( Fr.e(l.inSR), ctx.SR[5])),
-                 Fr.add(op6 , Fr.mul( Fr.e(l.inSR), ctx.SR[6])),
-                 Fr.add(op7 , Fr.mul( Fr.e(l.inSR), ctx.SR[7]))
+                [Fr.add(op0 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[0])),
+                 Fr.add(op1 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[1])),
+                 Fr.add(op2 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[2])),
+                 Fr.add(op3 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[3])),
+                 Fr.add(op4 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[4])),
+                 Fr.add(op5 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[5])),
+                 Fr.add(op6 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[6])),
+                 Fr.add(op7 , Fr.mul( Fr.e(inSaveRegs.inSR), ctx.SR[7]))
                 ];
-            pols.inSR[i] = Fr.e(l.inSR);
+            pols.inSR[i] = Fr.e(inSaveRegs.inSR);
         } else {
             pols.inSR[i] = Fr.zero;
         }
@@ -398,16 +476,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inCTX[i] = Fr.zero;
         }
 
-        if (l.inSP) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inSP), Fr.e(ctx.SP)));
-            pols.inSP[i] = Fr.e(l.inSP);
+        if (inSaveRegs.inSP) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(inSaveRegs.inSP), Fr.e(ctx.SP)));
+            pols.inSP[i] = Fr.e(inSaveRegs.inSP);
         } else {
             pols.inSP[i] = Fr.zero;
         }
 
-        if (l.inPC) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inPC), Fr.e(ctx.PC)));
-            pols.inPC[i] = Fr.e(l.inPC);
+        if (inSaveRegs.inPC) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(inSaveRegs.inPC), Fr.e(ctx.PC)));
+            pols.inPC[i] = Fr.e(inSaveRegs.inPC);
         } else {
             pols.inPC[i] = Fr.zero;
         }
@@ -431,16 +509,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inSTEP[i] = Fr.zero;
         }
 
-        if (l.inRR) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inRR), Fr.e(ctx.RR)));
-            pols.inRR[i] = Fr.e(l.inRR);
+        if (inSaveRegs.inRR) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(inSaveRegs.inRR), Fr.e(ctx.RR)));
+            pols.inRR[i] = Fr.e(inSaveRegs.inRR);
         } else {
             pols.inRR[i] = Fr.zero;
         }
 
-        if (l.inHASHPOS) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inHASHPOS), Fr.e(ctx.HASHPOS)));
-            pols.inHASHPOS[i] = Fr.e(l.inHASHPOS);
+        if (inSaveRegs.inHASHPOS) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(inSaveRegs.inHASHPOS), Fr.e(ctx.HASHPOS)));
+            pols.inHASHPOS[i] = Fr.e(inSaveRegs.inHASHPOS);
         } else {
             pols.inHASHPOS[i] = Fr.zero;
         }
@@ -511,11 +589,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inROTL_C[i] = Fr.zero;
         }
 
-        if (l.inRCX) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inRCX), Fr.e(ctx.RCX)));
-            pols.inRCX[i] = Fr.e(l.inRCX);
+        if (inSaveRegs.inRCX) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(inSaveRegs.inRCX), Fr.e(ctx.RCX)));
+            pols.inRCX[i] = Fr.e(inSaveRegs.inRCX);
         } else {
             pols.inRCX[i] = Fr.zero;
+        }
+
+        if (l.inRID) {
+            console.log('******** inRID ********', l.inRID);
+            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inRID), Fr.e(ctx.RID)));
+            pols.inRID[i] = Fr.e(l.inRID);
+        } else {
+            pols.inRID[i] = Fr.zero;
         }
 
 
@@ -1891,25 +1977,58 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.save) {
-            const nrid = pols.NRID[i];
+            const nrid = pols.NEXT_RID[i];
             if (ctx.saved[nrid]) {
                 throw new Error(`Save using a RID ${nrid} already used on ${sourceRef}. This RID is previously used on row ${ctx.saved[nrid].row} at ${ctx.saved[nrid].sourceRef} [nrid: ${nrid} rid:${pols.RID[i]}])`);
             }
             const data = {}
+            let regs = [];
             if (l.inA) {
                 data.A = [pols.A0[i], pols.A1[i], pols.A2[i], pols.A3[i], pols.A4[i], pols.A5[i], pols.A6[i], pols.A7[i]];
+                regs.push('A');
             }
-            data.B = [pols.B0[i], pols.B1[i], pols.B2[i], pols.B3[i], pols.B4[i], pols.B5[i], pols.B6[i], pols.B7[i]]
-            data.C = [pols.C0[i], pols.C1[i], pols.C2[i], pols.C3[i], pols.C4[i], pols.C5[i], pols.C6[i], pols.C7[i]]
-            data.D = [pols.D0[i], pols.D1[i], pols.D2[i], pols.D3[i], pols.D4[i], pols.D5[i], pols.D6[i], pols.D7[i]]
+            if (l.inB) {
+                data.B = [pols.B0[i], pols.B1[i], pols.B2[i], pols.B3[i], pols.B4[i], pols.B5[i], pols.B6[i], pols.B7[i]]
+                regs.push('B');
+            }
+            if (l.inC) {
+                data.C = [pols.C0[i], pols.C1[i], pols.C2[i], pols.C3[i], pols.C4[i], pols.C5[i], pols.C6[i], pols.C7[i]]
+                regs.push('C');
+            }
+            if (l.inD) {
+                data.D = [pols.D0[i], pols.D1[i], pols.D2[i], pols.D3[i], pols.D4[i], pols.D5[i], pols.D6[i], pols.D7[i]]
+                regs.push('D');
+            }
             if (l.inE) {
                 data.E = [pols.E0[i], pols.E1[i], pols.E2[i], pols.E3[i], pols.E4[i], pols.E5[i], pols.E6[i], pols.E7[i]];
+                regs.push('E');
             }
-            data.RCX = pols.RCX[i];
-            data.RR = pols.RR[i];
+            if (l.inSR) {
+                data.SR = [pols.SR0[i], pols.SR1[i], pols.SR2[i], pols.SR3[i], pols.SR4[i], pols.SR5[i], pols.SR6[i], pols.SR7[i]];
+                regs.push('SR');
+            }
+            if (l.inRCX) {
+                data.RCX = pols.RCX[i];
+                regs.push('RCX');
+            }
+            if (l.inRR) {
+                data.RR = pols.RR[i];
+                regs.push('RR');
+            }
             if (l.inHASHPOS) {
                 data.HASHPOS = pols.HASHPOS[i];
+                regs.push('HASHPOS');
             }
+            if (l.inSP) {
+                data.SP = pols.SP[i];
+                regs.push('SP');
+            }
+            if (l.inPC) {
+                data.PC = pols.PC[i];
+                regs.push('PC');
+            }
+
+            data.regs = regs.join();
             data.RID = pols.RID[i];
             data.sourceRef = sourceRef;
             data.row = i;
@@ -1920,76 +2039,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.save[i] = 0n;
         }
 
-        const nexti = (i+1) % N;
-
-        if (l.restore) {
-            const rid = pols.RID[i];
-            pols.restore[i] = 1n;
-            
-            // check if exists saved data with current RID value
-            if (!ctx.saved[rid]) {
-                throw new Error(`Not found saved data with RID ${rid} on ${sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-            }                
-            const data = ctx.saved[rid];
-            console.log(`restoring ${rid} on ${sourceRef} (rid:${data.RID})`);
-
-            // verify that saving wasn't restored previously
-            if (data.restored) {
-                throw new Error(`On ${sourceRef} try to restore RID ${rid} previously restored on row ${data.restored.row} at ${data.restored.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-            }
-        
-            if (l.restoreA) {
-                if (data.A) {
-                    pols.restoreA[i] = 1n;
-                    [pols.A0[nexti], pols.A1[nexti], pols.A2[nexti], pols.A3[nexti], pols.A4[nexti], pols.A5[nexti], pols.A6[nexti], pols.A7[nexti]] = data.A;
-                } else {
-                    throw new Error(`On ${sourceRef} try to restore A with RID ${rid} but A isn't saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-                }
-            } else if (data.A) {
-                throw new Error(`On ${sourceRef} no restore previously saved register A with RID ${rid}, A is saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-            } else {
-                pols.restoreA[i] = 0n;
-            }
-
-            [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = data.B;
-            [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = data.C;
-            [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = data.D;
-
-            if (l.restoreE) {
-                if (data.E) {
-                    pols.restoreE[i] = 1n;
-                    [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = data.E;
-                } else {
-                    throw new Error(`On ${sourceRef} try to restore E with RID ${rid} but E isn't saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-                }
-            } else if (data.E) {
-                throw new Error(`On ${sourceRef} no restore previously saved register E with RID ${rid}, E is saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-            } else {
-                pols.restoreE[i] = 0n;
-            }
-            pols.RCX[nexti] = data.RCX;
-            pols.RR[nexti] = data.RR;
-            if (l.restoreHASHPOS) {
-                pols.restoreHASHPOS[i] = 1n;
-                if (typeof data.HASHPOS !== 'undefined') {
-                    pols.HASHPOS[nexti] = data.HASHPOS;
-                } else {
-                    throw new Error(`On ${sourceRef} try to restore HASHPOS with RID ${rid} but HASHPOS isn't saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-                }
-            } else if (data.HASHPOS) {
-                throw new Error(`On ${sourceRef} no restore previously saved register HASHPOS with RID ${rid}, HASHPOS is saved on row ${data.row} at ${data.sourceRef} [nrid: ${pols.NRID[i]} rid:${rid}]`);
-            } else {
-                pols.restoreHASHPOS[i] = 0n;
-            }
-            console.log(`restore on ${sourceRef} RID=${data.RID}`)
-            pols.RID[nexti] = data.RID;
-            data.restored = {sourceRef, row: i };
-        } else {
-            pols.restore[i] = 0n;
-            pols.restoreA[i] = 0n;
-            pols.restoreE[i] = 0n;
-            pols.restoreHASHPOS[i] = 0n;
-        }
 
     //////////
     // SET NEXT REGISTERS
@@ -2005,20 +2054,20 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
              pols.op7[i]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
 
-        if (!l.restoreA) {
-            if (l.setA == 1) {
-                pols.setA[i]=1n;
-                [pols.A0[nexti],
-                pols.A1[nexti],
-                pols.A2[nexti],
-                pols.A3[nexti],
-                pols.A4[nexti],
-                pols.A5[nexti],
-                pols.A6[nexti],
-                pols.A7[nexti]
-                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-            } else {
-                pols.setA[i]=0n;
+        if (l.setA == 1) {
+            pols.setA[i]=1n;
+            [pols.A0[nexti],
+            pols.A1[nexti],
+            pols.A2[nexti],
+            pols.A3[nexti],
+            pols.A4[nexti],
+            pols.A5[nexti],
+            pols.A6[nexti],
+            pols.A7[nexti]
+            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+        } else {
+            pols.setA[i]=0n;
+            if (!l.restore || !inSaveRegs.inA) {
                 [pols.A0[nexti],
                 pols.A1[nexti],
                 pols.A2[nexti],
@@ -2052,24 +2101,22 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ] = [feaFrom[0], feaFrom[1], feaFrom[2], feaFrom[3], feaFrom[4], feaFrom[5], feaFrom[6], feaFrom[7]];
                 }
             }
-        } else {
-            pols.setA[i] = 0n;
         }
 
-        if (!l.restore) {
-            if (l.setB == 1) {
-                pols.setB[i]=1n;
-                [pols.B0[nexti],
-                pols.B1[nexti],
-                pols.B2[nexti],
-                pols.B3[nexti],
-                pols.B4[nexti],
-                pols.B5[nexti],
-                pols.B6[nexti],
-                pols.B7[nexti]
-                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-            } else {
-                pols.setB[i]=0n;
+        if (l.setB == 1) {
+            pols.setB[i]=1n;
+            [pols.B0[nexti],
+            pols.B1[nexti],
+            pols.B2[nexti],
+            pols.B3[nexti],
+            pols.B4[nexti],
+            pols.B5[nexti],
+            pols.B6[nexti],
+            pols.B7[nexti]
+            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+        } else {
+            pols.setB[i]=0n;
+            if (!l.restore || !inSaveRegs.inB) {
                 [pols.B0[nexti],
                 pols.B1[nexti],
                 pols.B2[nexti],
@@ -2089,24 +2136,22 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.B7[i]
                 ];
             }
-        } else {
-            pols.setB[i] = 0n;
         }
 
-        if (!l.restore) {
-            if (l.setC == 1) {
-                pols.setC[i]=1n;
-                [pols.C0[nexti],
-                pols.C1[nexti],
-                pols.C2[nexti],
-                pols.C3[nexti],
-                pols.C4[nexti],
-                pols.C5[nexti],
-                pols.C6[nexti],
-                pols.C7[nexti]
-                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-            } else {
-                pols.setC[i]=0n;
+        if (l.setC == 1) {
+            pols.setC[i]=1n;
+            [pols.C0[nexti],
+            pols.C1[nexti],
+            pols.C2[nexti],
+            pols.C3[nexti],
+            pols.C4[nexti],
+            pols.C5[nexti],
+            pols.C6[nexti],
+            pols.C7[nexti]
+            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+        } else {
+            pols.setC[i]=0n;
+            if (!l.restore || !inSaveRegs.inC) {
                 [pols.C0[nexti],
                 pols.C1[nexti],
                 pols.C2[nexti],
@@ -2149,24 +2194,22 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     ];
                 }
             }
-        } else {
-            pols.setC[i] = 0n;
         }
     
-        if (!l.restore) {
-            if (l.setD == 1) {
-                pols.setD[i]=1n;
-                [pols.D0[nexti],
-                pols.D1[nexti],
-                pols.D2[nexti],
-                pols.D3[nexti],
-                pols.D4[nexti],
-                pols.D5[nexti],
-                pols.D6[nexti],
-                pols.D7[nexti]
-                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-            } else {
-                pols.setD[i]=0n;
+        if (l.setD == 1) {
+            pols.setD[i]=1n;
+            [pols.D0[nexti],
+            pols.D1[nexti],
+            pols.D2[nexti],
+            pols.D3[nexti],
+            pols.D4[nexti],
+            pols.D5[nexti],
+            pols.D6[nexti],
+            pols.D7[nexti]
+            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+        } else {
+            pols.setD[i]=0n;
+            if (!l.restore || !inSaveRegs.inD) {
                 [pols.D0[nexti],
                 pols.D1[nexti],
                 pols.D2[nexti],
@@ -2186,24 +2229,22 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.D7[i]
                 ];
             }
-        } else {
-            pols.setD[i] = 0n;
         }
 
-        if (!l.restoreE) {
-            if (l.setE == 1) {
-                pols.setE[i]=1n;
-                [pols.E0[nexti],
-                pols.E1[nexti],
-                pols.E2[nexti],
-                pols.E3[nexti],
-                pols.E4[nexti],
-                pols.E5[nexti],
-                pols.E6[nexti],
-                pols.E7[nexti]
-                ] = [op0, op1, op2, op3, op4, op5, op6, op7];
-            } else {
-                pols.setE[i]=0n;
+        if (l.setE == 1) {
+            pols.setE[i]=1n;
+            [pols.E0[nexti],
+            pols.E1[nexti],
+            pols.E2[nexti],
+            pols.E3[nexti],
+            pols.E4[nexti],
+            pols.E5[nexti],
+            pols.E6[nexti],
+            pols.E7[nexti]
+            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+        } else {
+            pols.setE[i]=0n;
+            if (!l.restore || !inSaveRegs.inE) {
                 [pols.E0[nexti],
                 pols.E1[nexti],
                 pols.E2[nexti],
@@ -2223,8 +2264,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.E7[i]
                 ];
             }
-        } else {
-            pols.setE[i] = 0n;
         }
 
         if (l.setSR == 1) {
@@ -2240,24 +2279,26 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setSR[i]=0n;
-            [pols.SR0[nexti],
-             pols.SR1[nexti],
-             pols.SR2[nexti],
-             pols.SR3[nexti],
-             pols.SR4[nexti],
-             pols.SR5[nexti],
-             pols.SR6[nexti],
-             pols.SR7[nexti]
-            ] = [
-             pols.SR0[i],
-             pols.SR1[i],
-             pols.SR2[i],
-             pols.SR3[i],
-             pols.SR4[i],
-             pols.SR5[i],
-             pols.SR6[i],
-             pols.SR7[i]
-            ];
+            if (!l.restore || !inSaveRegs.inSR) {
+                [pols.SR0[nexti],
+                pols.SR1[nexti],
+                pols.SR2[nexti],
+                pols.SR3[nexti],
+                pols.SR4[nexti],
+                pols.SR5[nexti],
+                pols.SR6[nexti],
+                pols.SR7[nexti]
+                ] = [
+                pols.SR0[i],
+                pols.SR1[i],
+                pols.SR2[i],
+                pols.SR3[i],
+                pols.SR4[i],
+                pols.SR5[i],
+                pols.SR6[i],
+                pols.SR7[i]
+                ];
+            }
         }
 
         if (l.setCTX == 1) {
@@ -2273,7 +2314,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.SP[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setSP[i]=0n;
-            pols.SP[nexti] = pols.SP[i] + BigInt((l.incStack || 0));
+            if (!l.restore || !inSaveRegs.inSP) pols.SP[nexti] = pols.SP[i] + BigInt((l.incStack || 0));
         }
 
         if (l.setPC == 1) {
@@ -2281,19 +2322,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.PC[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setPC[i]=0n;
-            pols.PC[nexti] = pols.PC[i];
+            if (!l.restore || !inSaveRegs.inPC) pols.PC[nexti] = pols.PC[i];
         }
 
-        if (!l.restore) {
-            if (l.setRR == 1) {
-                pols.setRR[i]=1n;
-                pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
-            } else {
-                pols.setRR[i]=0n;
-                pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
-            }
+        if (l.setRR == 1) {
+            pols.setRR[i]=1n;
+            pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
-            pols.setRR[i] = 0n;
+            pols.setRR[i]=0n;
+            if (!l.restore || !inSaveRegs.inRR) pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
         }
 
         if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5)) {
@@ -2314,20 +2351,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
         }
 
-        if (!l.restore) {
-            if (l.setRCX == 1) {
-                pols.setRCX[i] = 1n;
-                pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
-            } else {
-                pols.setRCX[i] = 0n;
-                if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
-                    pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
-                } else {
-                    pols.RCX[nexti] = pols.RCX[i];
-                }
-            }
+        if (l.setRCX == 1) {
+            pols.setRCX[i] = 1n;
+            pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
         } else {
             pols.setRCX[i] = 0n;
+            if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
+                pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
+            } else if (!l.restore || !inSaveRegs.inRCX) {
+                pols.RCX[nexti] = pols.RCX[i];
+            }
         }
 
         if (Fr.isZero(pols.RCX[nexti])) {
@@ -2428,16 +2461,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.GAS[nexti] = pols.GAS[i];
         }
 
-        if (!l.restoreHASHPOS) {
-            if (l.setHASHPOS == 1) {
-                pols.setHASHPOS[i]=1n;
-                pols.HASHPOS[nexti] = BigInt(fe2n(Fr, op0, ctx) + incHashPos);
-            } else {
-                pols.setHASHPOS[i]=0n;
-                pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
-            }
+        if (l.setHASHPOS == 1) {
+            pols.setHASHPOS[i]=1n;
+            pols.HASHPOS[nexti] = BigInt(fe2n(Fr, op0, ctx) + incHashPos);
         } else {
-            pols.setHASHPOS[i] = 0n;
+            pols.setHASHPOS[i]=0n;
+            if (!l.restore || !inSaveRegs.inHASHPOS) pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
         }
 
         if (!l.restore) {
@@ -2446,7 +2475,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.RID[nexti] = BigInt(fe2n(Fr, op0, ctx));
             } else if (l.save) {
                 pols.setRID[i] = 0n;
-                pols.RID[nexti] = pols.NRID[i];
+                pols.RID[nexti] = pols.NEXT_RID[i];
             } else {
                 pols.setRID[i] = 0n;
                 pols.RID[nexti] = pols.RID[i];
@@ -2455,9 +2484,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.setRID[i] = 0n;
         }
         if (l.save == 1) {
-            pols.NRID[nexti] = pols.NRID[i] + 1n;
+            pols.NEXT_RID[nexti] = pols.NEXT_RID[i] + 1n;
         } else if (nexti != 0) {
-            pols.NRID[nexti] = pols.NRID[i];
+            pols.NEXT_RID[nexti] = pols.NEXT_RID[i];
         }
 
         if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
@@ -2933,7 +2962,7 @@ function initState(Fr, pols, ctx) {
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
     pols.RID[0] = 0n;
-    pols.NRID[0] = 0n;
+    pols.NEXT_RID[0] = 0n;
 }
 
 async function eventsAsyncTracer(ctx, cmds) {
@@ -3117,8 +3146,8 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.RCX);
     } else if (tag.regName == "RID") {
         return Scalar.e(ctx.RID);
-    } else if (tag.regName == "NRID") {
-        return Scalar.e(ctx.NRID);
+    } else if (tag.regName == "NEXT_RID") {
+        return Scalar.e(ctx.NEXT_RID);
     } else {
         throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }
