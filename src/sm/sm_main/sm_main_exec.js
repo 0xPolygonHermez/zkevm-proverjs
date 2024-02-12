@@ -61,11 +61,24 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         MemAlign: [],
         Storage: []
     };
+    const outOfCounters = {
+        outOfCountersStep: 'MAX_CNT_STEPS',
+        outOfCountersBinary: 'MAX_CNT_BINARY',
+        outOfCountersPoseidon: 'MAX_CNT_POSEIDON_G',
+        outOfCountersMemalign: 'MAX_CNT_MEM_ALIGN',
+        outOfCountersArith: 'MAX_CNT_ARITH',
+        outOfCountersKeccak: 'MAX_CNT_KECCAK_F',
+        outOfCountersPadding: 'MAX_CNT_PADDING_PG_LIMIT',
+        outOfCountersSha256: 'MAX_CNT_SHA256_F'
+    }
+    let reservedCounters = {};
+
     nameRomErrors = [];
 
     debug = config && config.debug;
     const flagTracer = config && config.tracer;
     const verboseOptions = typeof config.verboseOptions === 'undefined' ? {} : config.verboseOptions;
+    const calculateReservedCounters = typeof config.reserved === 'undefined' ? false : config.reserved;
     const N = pols.zkPC.length;
     const stepsN = (debug && config.stepsN) ? config.stepsN : N;
     const skipAddrRelControl = (config && config.skipAddrRelControl) || false;
@@ -605,6 +618,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             if (l.indRR) {
                 addrRel += fe2n(Fr, ctx.RR, ctx);
             }
+            if (typeof l.maxInd !== 'undefined' && addrRel > l.maxInd) {
+                throw new Error(`Address out of bounds accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
+            }   
             if (l.offset) addrRel += l.offset;
             if (l.isStack == 1) addrRel += Number(ctx.SP);
             if (!skipAddrRelControl) {
@@ -2254,8 +2270,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         pols.elseAddr[i] = l.elseAddr ? BigInt(l.elseAddr) : 0n;
         pols.useElseAddr[i] = l.useElseAddr ? 1n: 0n;
 
-        if (l.JMPN) {
+        if (l.JMPN) {            
             const o = Fr.toObject(op0);
+            if (calculateReservedCounters) {
+                const maxLabel = outOfCounters[l.jmpAddrLabel] ?? false;
+                if (maxLabel !== false) {
+                    const reserv = BigInt(rom.constants[maxLabel].value) - (o < FrFirst32Negative ? o : o - (FrFirst32Negative + 0xFFFFFFFF))
+                    if (typeof reservedCounters[maxLabel] === 'undefined' || reservedCounters[maxLabel].reserv < reserv) {
+                        reservedCounters[maxLabel] = {reserv, sourceRef};
+                    }
+                }
+            }
             let jmpnCondValue = o;
             if (o > 0 && o >= FrFirst32Negative) {
                 pols.isNeg[i]=1n;
@@ -2520,6 +2545,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntPoseidonG: ctx.cntPoseidonG,
         cntPaddingPG: ctx.cntPaddingPG,
         cntSteps: ctx.step,
+    }
+    if (calculateReservedCounters) {
+        required.reservedCounters = reservedCounters;
+        console.log(reservedCounters);
     }
     required.output = {
         newStateRoot: auxNewStateRoot,
