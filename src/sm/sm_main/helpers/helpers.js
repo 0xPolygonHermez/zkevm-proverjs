@@ -286,6 +286,10 @@ module.exports = class myHelper {
      */
     eval_receiveRemainderChunk(ctx, tag) {
         const pos = Number(this.evalCommand(ctx, tag.params[0]));
+        const lenRem = ctx.remainder.length;
+        if ((lenRem === 0) && (pos === 0)) {
+            return 0n;
+        }
         const remi = ctx.remainder[pos];
         return remi;
     }
@@ -307,7 +311,8 @@ module.exports = class myHelper {
      * @returns Length of the remainder.
      */
     eval_receiveLenRemainder(ctx) {
-        return ctx.remainder.length;
+        const lenRem = ctx.remainder.length;
+        return lenRem === 0 ? 1 : lenRem;
     }
 
     /**
