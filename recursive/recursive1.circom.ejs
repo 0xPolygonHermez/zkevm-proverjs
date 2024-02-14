@@ -1,20 +1,20 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "recursive2.verifier.circom";
-include "mux1.circom";
-include "iszero.circom";
+include "c12a.verifier.circom";
 
 template Main() {
+
     signal input publics[44];
+    signal input rootC[4];
 
     signal input root1[4];
     signal input root2[4];
     signal input root3[4];
     signal input root4[4];
+    signal input evals[<%- starkInfo.evMap.length %>][3]; // Evaluations of the set polynomials at a challenge value z and gz
 
-    signal input evals[<%- starkInfo.evMap.length %>][3];
-
+    // Leaves values of the merkle tree used to check all the queries
     signal input s0_vals1[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm1_n %>];
 <% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
     signal input s0_vals2[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm2_n %>];
@@ -44,54 +44,42 @@ template Main() {
 <% }                                                  -%>
 
     signal input finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+    
+    component vA = StarkVerifier();
 
-    component sv = StarkVerifier();
-
-    for (var i=0; i<44; i++) {
-        sv.publics[i] <== publics[i];
-    }
-    sv.root1 <== root1;
-    sv.root2 <== root2;
-    sv.root3 <== root3;
-    sv.root4 <== root4;
-    sv.evals <== evals;
-    sv.s0_vals1 <== s0_vals1;
+    vA.publics <== publics;
+    vA.root1 <== root1;
+    vA.root2 <== root2;
+    vA.root3 <== root3;
+    vA.root4 <== root4;
+    vA.evals <== evals;
+    vA.s0_vals1 <== s0_vals1;
 <% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    sv.s0_vals2 <== s0_vals2;
+    vA.s0_vals2 <== s0_vals2;
 <% } -%>
 <% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    sv.s0_vals3 <== s0_vals3;
-<% } -%>
-    sv.s0_vals4 <== s0_vals4;
-    sv.s0_valsC <== s0_valsC;
-    sv.s0_siblings1 <== s0_siblings1;
+    vA.s0_vals3 <== s0_vals3;
+<% } -%>    
+    vA.s0_vals4 <== s0_vals4;
+    vA.s0_valsC <== s0_valsC;
+    vA.s0_siblings1 <== s0_siblings1;
 <% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    sv.s0_siblings2 <== s0_siblings2;
+    vA.s0_siblings2 <== s0_siblings2;
 <% } -%>
 <% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    sv.s0_siblings3 <== s0_siblings3;
+    vA.s0_siblings3 <== s0_siblings3;
 <% } -%>
-    sv.s0_siblings4 <== s0_siblings4;
-    sv.s0_siblingsC <== s0_siblingsC;
+    vA.s0_siblings4 <== s0_siblings4;
+    vA.s0_siblingsC <== s0_siblingsC;
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
-    sv.s<%- s %>_root <== s<%- s %>_root;
+    vA.s<%- s %>_root <== s<%- s %>_root;
 <% }                                                  -%>
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
-    sv.s<%- s %>_vals <== s<%- s %>_vals;
-    sv.s<%- s %>_siblings <== s<%- s %>_siblings;
+    vA.s<%- s %>_vals <== s<%- s %>_vals;
+    vA.s<%- s %>_siblings <== s<%- s %>_siblings;
 <% }                                                  -%>
-    sv.finalPol <== finalPol;
+    vA.finalPol <== finalPol;
 
-    var rootCBasic[4] = [<%- constRoot1.join(",") %>];
-    var rootCAgg[4] = [<%- constRoot2.join(",") %>];
-
-    signal isOne <== IsZero()(publics[43] -publics[16] -1);
-    sv.rootC <== MultiMux1(4)([rootCAgg, rootCBasic], isOne);
-
-    sv.publics[44] <== <%- constRoot2[0] %>;
-    sv.publics[45] <== <%- constRoot2[1] %>;
-    sv.publics[46] <== <%- constRoot2[2] %>;
-    sv.publics[47] <== <%- constRoot2[3] %>;
 }
 
-component main {public [publics]}= Main();
+component main {public [publics, rootC]}= Main();

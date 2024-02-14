@@ -6,9 +6,10 @@ const version = require("../package").version;
 
 const argv = require("yargs")
     .version(version)
-    .usage("node main_genrecursive.js --verkey1 <verification1_key.json> --verkey2 <verification2_key.json> -o <recursive.circom> ")
+    .usage("node main_genrecursive.js -s <starkinfo.json> --verkey1 <verification1_key.json> --verkey2 <verification2_key.json> -o <recursive.circom> ")
     .alias("v1", "verkey1")
     .alias("v2", "verkey2")
+    .alias("s", "starkinfo")
     .alias("o", "output")
     .argv;
 
@@ -16,8 +17,10 @@ async function run() {
 
     const verKey1File = typeof(argv.verkey1) === "string" ?  argv.verkey1.trim() : "recursive1.verkey.json";
     const verKey2File = typeof(argv.verkey2) === "string" ?  argv.verkey2.trim() : "recursive2.verkey.json";
+    const starkInfoFile = typeof(argv.starkinfo) === "string" ?  argv.starkinfo.trim() : "starkinfo.json";
     const outputFile = typeof(argv.output) === "string" ?  argv.output.trim() : "recursivef.circom";
 
+    const starkInfo = JSONbig.parse(await fs.promises.readFile(starkInfoFile, "utf8"));
     const verKey1 = JSONbig.parse(await fs.promises.readFile(verKey1File, "utf8"));
     const verKey2 = JSONbig.parse(await fs.promises.readFile(verKey2File, "utf8"));
     const constRoot1 = verKey1.constRoot;
@@ -26,6 +29,7 @@ async function run() {
     const template = await fs.promises.readFile(path.join(__dirname, "..", "recursive", "recursivef.circom.ejs"), "utf8");
 
     const obj = {
+        starkInfo: starkInfo,
         constRoot1: constRoot1,
         constRoot2: constRoot2,
     };
