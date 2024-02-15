@@ -15,6 +15,57 @@ module.exports = class myHelper {
      * Compares two unsigned integers represented as arrays of BigInts.
      * @param a - Unsigned integer represented as an array of BigInts.
      * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns i+1 if a > b, -i-1 if a < b, 0 if a == b, where i is the position of the first different chunk.
+     */
+    eval_getFirstDiffChunkSigned(ctx, tag) {
+        const addr1 = Number(this.evalCommand(ctx, tag.params[0]));
+        const addr2 = Number(this.evalCommand(ctx, tag.params[1]));
+        const len = Number(this.evalCommand(ctx, tag.params[2]));
+
+        let input1 = [];
+        let input2 = [];
+        for (let i = 0; i < len; ++i) {
+            input1.push(fea2scalar(ctx.Fr, ctx.mem[addr1 + i]));
+            input2.push(fea2scalar(ctx.Fr, ctx.mem[addr2 + i]));
+        }
+
+        for (let i = len - 1; i >= 0; i--) {
+            if (input1[i] !== input2[i]) {
+                return [ctx.Fr.e(input1[i] < input2[i] ? -i-1 : i+1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Gets the first different chunk between two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns i, where i is the position of the first different chunk.
+     */
+    eval_getFirstDiffChunkRem(ctx, tag) {
+        const addr = Number(this.evalCommand(ctx, tag.params[0]));
+        const len = Number(this.evalCommand(ctx, tag.params[1]));
+        const rem = ctx.remainder;
+
+        let input = [];
+        for (let i = 0; i < len; ++i) {
+            input.push(fea2scalar(ctx.Fr, ctx.mem[addr + i]));
+        }
+
+        for (let i = len - 1; i >= 0; i--) {
+            if (input[i] !== rem[i]) {
+                return i;
+            }
+        }
+
+        throw new Error("The input and the remainder are equal");
+    }
+
+    /**
+     * Compares two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
      * @returns 1 if a > b, -1 if a < b, 0 if a == b.
      */
     compare(a, b) {
