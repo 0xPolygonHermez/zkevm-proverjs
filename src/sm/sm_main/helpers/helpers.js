@@ -22,16 +22,12 @@ module.exports = class myHelper {
         const addr2 = Number(this.evalCommand(ctx, tag.params[1]));
         const len = Number(this.evalCommand(ctx, tag.params[2]));
 
-        let input1 = [];
-        let input2 = [];
-        for (let i = 0; i < len; ++i) {
-            input1.push(fea2scalar(ctx.Fr, ctx.mem[addr1 + i]));
-            input2.push(fea2scalar(ctx.Fr, ctx.mem[addr2 + i]));
-        }
-
         for (let i = len - 1; i >= 0; i--) {
-            if (input1[i] !== input2[i]) {
-                return [ctx.Fr.e(input1[i] < input2[i] ? -i-1 : i+1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+            const input1i = fea2scalar(ctx.Fr, ctx.mem[addr1 + i]);
+            const input2i = fea2scalar(ctx.Fr, ctx.mem[addr2 + i]);
+
+            if (input1i !== input2i) {
+                return [ctx.Fr.e(input1i < input2i ? -i-1 : i+1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
             }
         }
         return 0;
@@ -48,13 +44,10 @@ module.exports = class myHelper {
         const len = Number(this.evalCommand(ctx, tag.params[1]));
         const rem = ctx.remainder;
 
-        let input = [];
-        for (let i = 0; i < len; ++i) {
-            input.push(fea2scalar(ctx.Fr, ctx.mem[addr + i]));
-        }
-
         for (let i = len - 1; i >= 0; i--) {
-            if (input[i] !== rem[i]) {
+            const inputi = fea2scalar(ctx.Fr, ctx.mem[addr + i]);
+
+            if (inputi[i] !== rem[i]) {
                 return i;
             }
         }
