@@ -1,75 +1,28 @@
-const data = [
-    0x0651e0518ba2af8c7943b85e8bc7674bbf104694ee4ce931f3109a83af525806n,
-    0x5cdf521c5d103425b6eceed15440d71281af62412d7f046b89d327fc76bbd8f5n,
-    0x3de665797202b4818db7dfa38abb2a9c1bfcdf351780c30a242e1919b55a7a69n,
-    0x827e3f8a94386d70656db7e928d5e2154f94368b4fe62444255226d49bfa07fdn,
-    0xede2f060dca19e7909d6f3e853e1d33593a24ad0c74009c2fb67f94b6d90c855n,
-    0x4ff7b0849bccaa7868d6c308be95ddda23046c2f6bfe711189a45ee5833f4129n,
-    0x8c03648950a087f49f4a19f2cf1d876759ea3ae4f18faeb93506d96f0466a858n,
-    0x947921f34b25431ca619162bf1cba706072ddac0f04bfc39c7a4ce4f4124688en,
-    0x403502edf12380dea9a5f82dbbe708009bbb414c0ad2bc5a4be923fae9629aa2n,
-    0x461c706fc9233a82783dbdc36aa1ca6581325334afdbeb1b43de65d65d222ab8n,
-    0x60282aef8a13da936807a2676fcd918326fc461a4518e99aa0d13a48bcea7097n,
-    0xc8702cf910704a63bb92d3ebbd55b93fdea52ccf0c3fd134ed0ad9600fe101d0n,
-    0xbb85b6f2263140d6e73d7c9ef120aca53090b66b586a6887c6476d719423a284n,
-    0x9a57cd4f4e52bd6ec81a1c07402205dbf9f4d9e73c146fe81c9eaaa25558203en,
-    0xbfa344d0470a2344f0165304267c1ccb0aafa7928daedcc52e5254c71058b8efn,
-    0x92b50d449b997581702d31463b78536033b6c6da600e17f92f865cad962ae93bn,
-    0xda3e109898aee9905bdc7360b8e48a1567ffd65ebf3775238c825b6651a6916an,
-    0x006016a9b4ff7ebc57246f700336a0b0fedf41eacc11f56c8592acbfa9cb4918n,
-    0x9899b83939037a36701474397572e7e1638718ab64ad0982e551c36add3ed0a9n,
-    0xecdeb9d7c4f0eb376b556b4faa5eb13250c49402ffcdb44bb9a847291d8179f9n,
-    0x190e6ae337464ac1bfb43e649613021718122276c8c4ff1f1c4fa912c7f38f72n,
-    0x3528d6777202da4edf16ad75928e692760a36997134d3498f7fdad2a9c49645en,
-    0x1cac31500c54c568006c21d2dab38985b9f234633fb70a32ea0ed8b3864554f0n,
-    0x6f59be5609c60851866f38ca8a171eaf22391f5235aa516e41eab80e4769b6efn,
-    0x353bff9aac381a671f3d6c4408cec50c088b16b02620ef471cdec3bb9d36c3f6n,
-    0xe37234361eae8617c2d35bee50a9b1601dc5f51ac1466b935b903e223d97a15dn,
-    0x3762bdb77f0b2c4c7acd495459bbc03d6b7665232546cf97e6c053cdbd8be1f5n,
-    0x0fc93b51fe1803c4131659eaf31ff1694d0ce4d485dd728c7fe86257da643165n,
-    0x5e5470d6cf4471de25f0b5c54fa67f0c205f42eb5297472e07ae511a3672fc40n,
-    0xef6b592c31b6b1b30a1570e2352a0c2c7a3664ebb73c65a88a62ccc2ad852024n,
-    0xb4348f23442a15f9e9b15d123d814a0624e13162b71f93d5f1693e94ee2e5d52n,
-    0x4ce3e365fdf0780871bb6e2f7f415ca2e53f9bb9408f6c2b5b3f325d0e3cd817n,
-    0x7886d94c17f205c48ac1e9b39e7a9238d94b3cc18b43ca8152763024419aac7an,
-    0xd721c97e79ac95ed4dfb205e1e16e4766ede933c110dfeb07800ec102c85febbn,
-    0x9eaa2d14e9b9bc5653da0f7d4f3523e671591b3e9204b4b2863d1bf23428c6d9n,
-    0x8c5072a5f699ff94f34a14afb30f576c7ae3e8a7c6d0c1a50730f1fe892a6a35n,
-    0xa0f63cb04e008dadec617eafe9b89b4c0188194a33b9b1dd8e47753fb4018637n,
-    0xedb6bfb4e36d0fb5f73744876e784e605eab0efe467078ec623d269c92fbc397n,
-    0x43eac168095895659c81615e9eb4e51e72f680bdeba22453e90f28afd1dcf0bfn,
-    0x81d5091ec92d454e735082f1225743bfc060296bf71126ab56645ebf456f2dcen,
-    0x7e41b6834e2e4b061e3f411c5d031e871c73b60ae51b4b226906f1b9c5491710n,
-    0xd0da0ade1518e16bbfa4888ae28cd03ea982f6eb008d4bb66d127d9b05a91a9fn,
-    0x783f2a9062140dc0c0c29b4ba4b6db7508d3dbf2cf604bd5a206074c74104188n,
-    0xf1d136326cb76d371bf39ec93252fd5fd754cf75db868b7df02891eacf2cfa1cn,
-    0x7da7b5ff79160e7ddae53860fe4cf56947310ed2d8184ce6c85db8796b543dedn,
-    0xd93b509a5c945fca081657283cea6e8035611fc4e43c7c4f90e9e750d400ff18n,
-    0x669186d5bb980fe6caae6f2d54cae9194680c461b1a418c8eb20d9d4dac23e31n,
-    0xffbb29bb028f774589895aec64505161e25934e9c5a984929362490c29f36ed8n,
-    0x117d05ed7d699c1ed4218cdbce6fc20a3d1b16c22eeb62289302d5559ca172b6n,
-    0x48f0dbdebe902b692c4a902cde90e0b53e7f1c698e4b36dd2ded42246b6816b2n,
-    0x3dbb5b3560802e81eafa0c5c4829fab9dcb89435bf8d9a7622b53b1efcf648b1n,
-    0x28792e56f0d7229b91baa4dafba0c3dfd2439f979539449eda10022fc7c86665n,
-    0x86f450acb666659587dd91404bc3a5b8e6d5d31c85801b31f982998dc1cbf9bcn,
-    0x21326cb712060453607adc3b8db5940db5440edfcbd0cddb4459499f7102c17en,
-    0x802ddda0d7a5f5e411060ccd295b0496169a24f9a39c0835ef8be5d78155689bn,
-    0xa4756a4c02366448154b64898d499a88c6220fa9b02621a6dce3455f3dcc71fan,
-    0x50c1c7bcacd41c5c0ae76edd6992291307e92c7e510c4c2c9ffb4a939226197cn,
-    0x79b197ba4fd461f34d64313b03b27b63b3769b0328771a6d486e1170aac0087cn,
-    0xaeb7d0fedf5aeeb3c82258c31ad2e2f6510d2a8d1381fe3b6cf1b47806b0a2e9n,
-    0x2e5827e05bb5bc08ac26cff9d9583c74b0d5cfbead44bd9797825d38b9ec2609n,
-    0x4190577d8eced571b6dc7c5a7a49d978630a908fdf498c855d2cc1eb4110d6a1n,
-    0x143c23861e5b353279c1efc9ed5b3790400132db4e7d01fa2cfe637115f76d02n,
-    0xb2236aff2b9c295f1a81ccc9b86ea1a2df9107a77aea68d88f6fdb20fa306716n,
-    0xbc90f3ce977a385f27c728e5c7503704f452ad6774c9b0f303a48c393444277an,
-    0x516605ce44a4e5cbeb71db77a93176b95b262a9542c4fb6791b15115e553e5fan,
-    0x73c6b7537985a139558b451ef9bd1a73e68d5e3c34d86266ed2caf61071706c8n,
-]
+// (echo "module.exports = ["; dd if=/dev/urandom bs=32 count=600 | hexdump | colrm 1 8 | xargs | sed "s/ //g;" | sed "s/\(.\{64\}\)/\t0x\1n,\n/g"; echo "];")  > test/features/shl_shr/random_data.js
+
+const data = require(__dirname + '/random_data.js');
+
 const MASK_256 = 2n ** 256n - 1n;
+let base = 0;
+console.log("VAR GLOBAL _tmpRR")
+console.log("testSHLbytes:\n\n\tRR\t:MSTORE(_tmpRR)\n\n")
 for (let i = 0; i < 33; ++i) {
-    console.log(`\t${i} => D\n\t:CALL(SaveRegs)\n\t0x${data[i+33].toString(16).padStart(64, '0')}n => A  :CALL(SHLbytes)\n\t:CALL(CheckRegs)\n\t0x${((data[i+33] << BigInt(8*i)) & MASK_256).toString(16).padStart(64, '0')}n :ASSERT\n\n`);
+    console.log(`\t${i} => D\n\t:CALL(SaveRegs)\n\t0x${data[i+base].toString(16).padStart(64, '0')}n => A  :CALL(SHLbytes)\n\t:CALL(CheckRegs)\n\t0x${((data[i+base] << BigInt(8*i)) & MASK_256).toString(16).padStart(64, '0')}n :ASSERT\n\n`);
 }
+console.log("\t$ => RR\t:MLOAD(_tmpRR)\n\t:RETURN\n\ntestSHRbytes:\n\n\tRR\t:MSTORE(_tmpRR)\n\n\t0\t\t:MSTORE(totalSteps)\n");
+base = base + 33;
 for (let i = 0; i < 33; ++i) {
-    console.log(`\t${i} => D\n\t:CALL(SaveRegs)\n\t0x${data[i+33].toString(16).padStart(64, '0')}n => A  :CALL(SHRbytes)\n\t:CALL(CheckRegs)\n\t0x${(data[i+33] >> BigInt(8*i)).toString(16).padStart(64, '0')}n :ASSERT\n\n`);
+    console.log(`\t${i} => D\n\t:CALL(SaveRegs)\n\t0x${data[i+base].toString(16).padStart(64, '0')}n => A  :CALL(SHRbytes)\n\t:CALL(CheckRegs)\n\t0x${(data[i+base] >> BigInt(8*i)).toString(16).padStart(64, '0')}n :ASSERT\n\n`);
 }
+base = base + 33;
+console.log("\t$ => RR\t:MLOAD(_tmpRR)\n\t:RETURN\n\ntestSHLbits:\n\n\tRR\t:MSTORE(_tmpRR)\n\n\t0\t\t:MSTORE(totalSteps)\n");
+for (let i = 0; i < 257; ++i) {
+    console.log(`\t${i} => D\n\t:CALL(SaveRegs)\n\t0x${data[i+base].toString(16).padStart(64, '0')}n => A  :CALL(SHLbits)\n\t:CALL(CheckRegs)\n\t0x${((data[i+base] << BigInt(i)) & MASK_256).toString(16).padStart(64, '0')}n :ASSERT\n\n`);
+}
+
+base = base + 257;
+console.log("\t$ => RR\t:MLOAD(_tmpRR)\n\t:RETURN\n\ntestSHRbits:\n\n\tRR\t:MSTORE(_tmpRR)\n\n\t0\t\t:MSTORE(totalSteps)\n");
+for (let i = 0; i < 257; ++i) {
+    console.log(`\t${i} => D\n\t:CALL(SaveRegs)\n\t0x${data[i+base].toString(16).padStart(64, '0')}n => A  :CALL(SHRbits)\n\t:CALL(CheckRegs)\n\t0x${(data[i+base] >> BigInt(i)).toString(16).padStart(64, '0')}n :ASSERT\n\n`);
+}
+console.log("\t$ => RR\t:MLOAD(_tmpRR)\n\t:RETURN");
