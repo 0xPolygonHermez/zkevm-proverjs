@@ -603,7 +603,7 @@ namespace Main(%N);
     pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
 
     // We group arithmetic operations by the number of inputs they have
-    // 1] 5 inputs (A * B + C = D * 2^256 + E)
+    // 1] 5 inputs (A * B + C = D * 2^256 + op, A * B + C = op + (mod D)
     arithEq0 + arithEq6 {
         arithEq0, 0, 0, 0, 0, 0, 0, arithEq6,
         A0, A1, A2, A3, A4, A5, A6, A7,
