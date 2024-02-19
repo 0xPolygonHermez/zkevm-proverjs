@@ -219,10 +219,9 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 let eq = x1 * y1 + x2 - y3; // Worst values are {-(2^256-1),2^256*(2^256-1)}
                                             // with 2^256*(2^256-1) > |-(2^256-1)|
                 if (y2 === 0n) {
-                    q0 = 0n;
-                } else {
-                    q0 = eq / y2;
+                    throw new Error(`For input ${i}, y2 is zero on modular arithmetic`);
                 }
+                q0 = eq / y2;
                 nDivErrors = errorHandler(
                     eq - y2 * q0 != 0n,
                     `For input ${i}, with the calculated q0 the residual is not zero (modular arith)`,

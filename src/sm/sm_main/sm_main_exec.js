@@ -1672,6 +1672,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const D = safeFea2scalar(Fr, ctx.D);
                 const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
 
+                if (Scalar.isZero(D)) {
+                    throw new Error(`Modular arithmetic is undefined when D is zero ${sourceRef}`);
+                }
+
                 // EQ11: A(x1) * B(y1) + C(x2) = op(y3) (mod D(y2))
 
                 if (!Scalar.eq(Scalar.mod(Scalar.add(Scalar.mul(A, B), C), D),op)) {
