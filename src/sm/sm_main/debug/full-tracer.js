@@ -485,6 +485,9 @@ class FullTracer {
         // set refunded gas
         response.gas_refunded = Number(getVarFromCtx(ctx, false, 'gasRefund'));
 
+        // Set tx status
+        response.status = Number(getVarFromCtx(ctx, false, 'txStatus'));
+
         // if there is any processed opcode
         if (this.full_trace.length) {
             const lastOpcodeCall = this.full_trace[this.full_trace.length - 1];
