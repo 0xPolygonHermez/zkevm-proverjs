@@ -122,9 +122,9 @@
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#develop-eldelberry",
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v4.0.0-fork.7",
-    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#v4.0.0-fork.7",
+    "@0xpolygonhermez/zkevm-rom": "https://github.com/0xPolygonHermez/zkevm-rom.git#feature/reduce-push-steps",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
-    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v4.0.0-fork.7",
+    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#develop-no-opt",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
