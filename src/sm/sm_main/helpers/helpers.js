@@ -436,6 +436,21 @@ module.exports = class myHelper {
     ///////////// PAIRINGS
 
     /**
+     * Checks whether the given elements are zero
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
+    eval_checkIfZero(ctx, tag) {
+        const len = tag.params.length;
+        for (let i = 0; i < len; ++i) {
+            if (this.evalCommand(ctx, tag.params[i]) !== 0n) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    /**
      * Computes the inverse of the given Fp element.
      * @param ctx - Context.
      * @param tag - Tag.
