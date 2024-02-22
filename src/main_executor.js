@@ -52,7 +52,6 @@ const argv = require("yargs")
     .alias("G", "dbprogramtable")
     .alias("a", "assertOutputs")
     .alias("TO", "tracerOptions")
-    .alias("E", "reserved")
     .argv;
 
 async function run() {
@@ -120,7 +119,6 @@ async function run() {
     config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
     config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";
     config.assertOutputs = !(argv.assertOutputs === "false");
-    config.reserved = argv.reserved === true;
     for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
         config[value] = (argv[value] === true ? true : (config[value] ?? false));
     }
