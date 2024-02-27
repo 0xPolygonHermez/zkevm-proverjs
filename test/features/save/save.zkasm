@@ -82,17 +82,27 @@ f2:
         A + 32 => A
         :RESTORE(B,C,D,E,RR,RCX,HASHPOS),RETURN
 
-fact:   :SAVE(B,C,D,E,RR,RCX,HASHPOS)
+fact:   
+        :SAVE(B,C,D,E,RR,RCX,HASHPOS)
+
+        ; check if direct case (A == 1)
         1 => B
-        $ :EQ,JMPC(fact_finish)
+        $             :EQ,JMPC(fact_finish)
+
+        ; store current value of A in C
         A => C
-        $ => A  :SUB
-        :CALL(fact)
+
+        ; call again to fact with A - 1
+        $ => A        :SUB,CALL(fact)
+        
+        ; A * fact(A - 1)
         C => B
         0 => D,C
         ${A * B} => A :ARITH
+
 fact_finish:        
         :RESTORE(B,C,D,E,RR,RCX,HASHPOS),RETURN
+
 end:
         0 => RID
 
