@@ -6,40 +6,30 @@ include "mux1.circom";
 include "iszero.circom";
 
 template Main() {
-
+<%  let nPublics = starkInfo.nPublics - 4; -%>
     var rootCSingle[4] = [<%- constRoot.join(",") %>];
 
-    signal input publics[44];
+    signal input publics[<%- nPublics %>];
     signal input rootC[4];
 
-    signal input a_publics[44];
+    signal input a_publics[<%- nPublics %>];
 
-    signal input a_root1[4];
-    signal input a_root2[4];
-    signal input a_root3[4];
-    signal input a_root4[4];
-
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input a_root<%- s %>[4];
+<%  } -%>
+   
     signal input a_evals[<%- starkInfo.evMap.length %>][3];
 
-    signal input a_s0_vals1[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm1_n %>];
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    signal input a_s0_vals2[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm2_n %>];
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    signal input a_s0_vals3[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm3_n %>];
-<% } -%>
-    signal input a_s0_vals4[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm4_n %>];
     signal input a_s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
-    signal input a_s0_siblings1[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    signal input a_s0_siblings2[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    signal input a_s0_siblings3[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
-<% } -%>
-    signal input a_s0_siblings4[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
     signal input a_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input a_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input a_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+    
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
     signal input a_s<%- s %>_root[4];
 <% }                                                  -%>
@@ -51,33 +41,24 @@ template Main() {
    
     signal input a_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
-    signal input b_publics[44];
+    signal input b_publics[<%- nPublics %>];
+ 
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input b_root<%- s %>[4];
+<%  } -%>
 
-    signal input b_root1[4];
-    signal input b_root2[4];
-    signal input b_root3[4];
-    signal input b_root4[4];
     signal input b_evals[<%- starkInfo.evMap.length %>][3];
 
-    signal input b_s0_vals1[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm1_n %>];
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    signal input b_s0_vals2[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm2_n %>];
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    signal input b_s0_vals3[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm3_n %>];
-<% } -%>
-    signal input b_s0_vals4[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm4_n %>];
     signal input b_s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
-    signal input b_s0_siblings1[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    signal input b_s0_siblings2[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    signal input b_s0_siblings3[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
-<% } -%>
-    signal input b_s0_siblings4[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
     signal input b_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input b_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input b_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+    
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
     signal input b_s<%- s %>_root[4];
 <% }                                                  -%>
@@ -91,32 +72,26 @@ template Main() {
 
     component vA = StarkVerifier();
 
-    for (var i=0; i<44; i++) {
+    for (var i=0; i< <%- nPublics %>; i++) {
         vA.publics[i] <== a_publics[i];
     }
-    vA.root1 <== a_root1;
-    vA.root2 <== a_root2;
-    vA.root3 <== a_root3;
-    vA.root4 <== a_root4;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vA.root<%- s %> <== a_root<%- s %>;
+<% } -%>
+
     vA.evals <== a_evals;
-    vA.s0_vals1 <== a_s0_vals1;
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    vA.s0_vals2 <== a_s0_vals2;
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    vA.s0_vals3 <== a_s0_vals3;
-<% } -%>
-    vA.s0_vals4 <== a_s0_vals4;
+
     vA.s0_valsC <== a_s0_valsC;
-    vA.s0_siblings1 <== a_s0_siblings1;
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    vA.s0_siblings2 <== a_s0_siblings2;
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    vA.s0_siblings3 <== a_s0_siblings3;
-<% } -%>
-    vA.s0_siblings4 <== a_s0_siblings4;
     vA.s0_siblingsC <== a_s0_siblingsC;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vA.s0_vals<%- s %> <== a_s0_vals<%- s %>;
+    vA.s0_siblings<%- s %> <== a_s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
     vA.s<%- s %>_root <== a_s<%- s %>_root;
 <% }                                                  -%>
@@ -130,37 +105,31 @@ template Main() {
     vA.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchA);
     
     for (var i=0; i<4; i++) {
-        vA.publics[44+i] <== rootC[i];
+        vA.publics[<%- nPublics %> + i] <== rootC[i];
     }
 
     component vB = StarkVerifier();
 
-    for (var i=0; i<44; i++) {
+    for (var i=0; i< <%- nPublics %>; i++) {
         vB.publics[i] <== b_publics[i];
     }
-    vB.root1 <== b_root1;
-    vB.root2 <== b_root2;
-    vB.root3 <== b_root3;
-    vB.root4 <== b_root4;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vB.root<%- s %> <== b_root<%- s %>;
+<% } -%>
+   
     vB.evals <== b_evals;
-    vB.s0_vals1 <== b_s0_vals1;
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    vB.s0_vals2 <== b_s0_vals2;
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    vB.s0_vals3 <== b_s0_vals3;
-<% } -%>
-    vB.s0_vals4 <== b_s0_vals4;
+
     vB.s0_valsC <== b_s0_valsC;
-    vB.s0_siblings1 <== b_s0_siblings1;
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    vB.s0_siblings2 <== b_s0_siblings2;
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    vB.s0_siblings3 <== b_s0_siblings3;
-<% } -%>
-    vB.s0_siblings4 <== b_s0_siblings4;
     vB.s0_siblingsC <== b_s0_siblingsC;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vB.s0_vals<%- s %> <== b_s0_vals<%- s %>;
+    vB.s0_siblings<%- s %> <== b_s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
     vB.s<%- s %>_root <== b_s<%- s %>_root;
 <% }                                                  -%>
@@ -175,7 +144,7 @@ template Main() {
     vB.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchB);
 
     for (var i=0; i<4; i++) {
-        vB.publics[44+i] <== rootC[i];
+        vB.publics[<%- nPublics %> +i] <== rootC[i];
     }
 
     // oldStateRoot
@@ -234,6 +203,32 @@ template Main() {
 
     // newBatchNum
     publics[19+24] === b_publics[19+24];
+
+<% if(isEip4844 && !isBlobRecursion) { -%>
+    // oldL1InfoTreeRoot
+    for (var i=0; i<8; i++) {
+        a_publics[43+i] === publics[43+i];
+    }
+
+    // oldL1InfoTreeIndex
+    a_publics[51] === publics[51];
+
+    // midL1InfoTreeRoot
+    for (var i=0; i<8; i++) {
+        b_publics[43+i] === a_publics[53 + i];
+    }
+
+    // midL1InfoTreeIndex
+    b_publics[51] === a_publics[61];
+
+    // newL1InfoTreeRoot
+    for(var i=0; i<8; i++) {
+        publics[53+i] === b_publics[53+i];
+    }
+
+    // newL1InfoTreeIndex
+    publics[61] === b_publics[61];
+<% } -%>
 
 }
 

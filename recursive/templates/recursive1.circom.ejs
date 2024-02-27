@@ -1,0 +1,65 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+include "c12a.verifier.circom";
+
+template Main() {
+    signal input publics[<%- starkInfo.nPublics  %>];
+    signal input rootC[4];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input root<%- s %>[4];
+<%  } -%>
+
+    signal input evals[<%- starkInfo.evMap.length %>][3]; // Evaluations of the set polynomials at a challenge value z and gz
+
+    signal input s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
+    signal input s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input s<%- s %>_root[4];
+<% }                                                  -%>
+
+<% for (let s=1; s< starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input s<%- s %>_vals[<%- starkInfo.starkStruct.nQueries %>][<%- (1 << parseInt(starkInfo.starkStruct.steps[s-1].nBits - starkInfo.starkStruct.steps[s].nBits))*3 %>];
+    signal input s<%- s %>_siblings[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[s].nBits %>][4];
+<% }                                                  -%>
+
+    signal input finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+    
+    component vA = StarkVerifier();
+
+    vA.publics <== publics;
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vA.root<%- s %> <== root<%- s %>;
+<% } -%>
+
+    vA.evals <== evals;
+
+    vA.s0_valsC <== s0_valsC;
+    vA.s0_siblingsC <== s0_siblingsC;
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vA.s0_vals<%- s %> <== s0_vals<%- s %>;
+    vA.s0_siblings<%- s %> <== s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vA.s<%- s %>_root <== s<%- s %>_root;
+<% }                                                  -%>
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vA.s<%- s %>_vals <== s<%- s %>_vals;
+    vA.s<%- s %>_siblings <== s<%- s %>_siblings;
+<% }                                                  -%>
+    vA.finalPol <== finalPol;
+
+}
+
+component main {public [publics, rootC]}= Main();

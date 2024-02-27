@@ -1,18 +1,17 @@
 pragma circom 2.1.0;
 
 /*
-aggregatorAddr -> 160   -> 160
-oldStateRoot -> 256     -> 416
-oldAccInputHash -> 256  -> 672
-oldBathcNum -> 64       -> 736
-chainId -> 64           -> 800
-forkId -> 64            -> 864
-newStateRoot -> 256     -> 1120
-newAccInputHash -> 256  -> 1376
-newLocalExitRoot -> 256 -> 1632
-newBatchNum -> 64       -> 1696
-
-Total: 1696
+oldStateRoot (256 bits)                                 -> 256
+oldBatchAccInputHash / oldBlobAccInputHash (256 bits)   -> 512
+oldBatchNum / oldBlobNum (64 bits)                      -> 576
+chainId (64 bits)                                       -> 640
+forkId (64 bits)                                        -> 704
+newStateRoot (256 bits)                                 -> 960
+newBatchAccInputHash / newBlobAccInputHash (256 bits)   -> 1216
+newLocalExitRoot (256 bits)                             -> 1472
+newBatchNum / newBlobNum (64 bits)                      -> 1536
+aggregatorAddr (160 bits)                               -> 1696
+Total: 1696 bits
 */
 
 include "sha256/sha256.circom";
@@ -26,32 +25,23 @@ template Main() {
 
     signal input aggregatorAddr;
 
-    signal input publics[44];
-    signal input root1;
-    signal input root2;
-    signal input root3;
-    signal input root4;
+    signal input publics[<%- starkInfo.nPublics %>];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input root<%- s %>;
+<%  } -%>
 
     signal input evals[<%- starkInfo.evMap.length %>][3]; // Evaluations of the set polynomials at a challenge value z and gz
 
-    signal input s0_vals1[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm1_n %>];
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    signal input s0_vals2[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm2_n %>];
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    signal input s0_vals3[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm3_n %>];
-<% } -%>
-    signal input s0_vals4[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN.cm4_n %>];
     signal input s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
-    signal input s0_siblings1[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/4)+1 %>][16];
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    signal input s0_siblings2[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/4)+1 %>][16];
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    signal input s0_siblings3[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/4)+1 %>][16];
-<% } -%>
-    signal input s0_siblings4[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/4)+1 %>][16];
     signal input s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/4)+1 %>][16];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/4)+1 %>][16];
+<%     } -%>
+<% } -%>
 
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
     signal input s<%- s %>_root;
@@ -67,33 +57,22 @@ template Main() {
 
     component sv = StarkVerifier();
     sv.publics <== publics;
-    sv.root1 <== root1;
-    sv.root2 <== root2;
-    sv.root3 <== root3;
-    sv.root4 <== root4;
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    sv.root<%- s %> <== root<%- s %>;
+<% } -%>
 
     sv.evals <== evals;
 
-    sv.s0_vals1 <== s0_vals1;
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    sv.s0_vals2 <== s0_vals2;
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    sv.s0_vals3 <== s0_vals3;
-<% } -%>
-    sv.s0_vals4 <== s0_vals4;
     sv.s0_valsC <== s0_valsC;
-
-    sv.s0_siblings1 <== s0_siblings1;
-<% if (starkInfo.mapSectionsN.cm2_2ns > 0) { -%>
-    sv.s0_siblings2 <== s0_siblings2;
-<% } -%>
-<% if (starkInfo.mapSectionsN.cm3_2ns > 0) { -%>
-    sv.s0_siblings3 <== s0_siblings3;
-<% } -%>
-    sv.s0_siblings4 <== s0_siblings4;
     sv.s0_siblingsC <== s0_siblingsC;
 
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    sv.s0_vals<%- s %> <== s0_vals<%- s %>;
+    sv.s0_siblings<%- s %> <== s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+ 
 <% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
     sv.s<%- s %>_root <== s<%- s %>_root;
 <% }                                                  -%>
