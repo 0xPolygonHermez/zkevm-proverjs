@@ -304,19 +304,7 @@ namespace Main(%N);
     pol jmpnCondValue = JMPN*(isNeg*2**32 + op0);
     isNeg * (1 - isNeg) = 0;
 
-
-
-
-
-
-    // lJmpnCondValue in Global.STEP;
-
-
-
-
-
-
-
+    lJmpnCondValue in Global.STEP;
 
     pol commit hJmpnCondValueBit[9];
 
