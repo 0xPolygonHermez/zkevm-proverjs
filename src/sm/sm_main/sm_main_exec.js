@@ -161,6 +161,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 skipFirstChangeL2Block: input.skipFirstChangeL2Block,
                 tracerOptions: config.tracerOptions,
             },
+            counterControls,
         );
     }
 
