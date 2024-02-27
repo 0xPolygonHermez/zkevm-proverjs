@@ -365,6 +365,30 @@ module.exports = class myHelper {
         return ctx.quotient_short.length;
     }
 
+    ///////////// ecAdd, ecMul
+
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
+     */
+    eval_receiveLen(ctx, tag) {
+        let len = 0;
+        for (let i = 0; i < tag.params.length; ++i) {
+            let ki = this.evalCommand(ctx, tag.params[i]);
+            if (ki === 0n) continue;
+            let leni = 0;
+            while (ki !== 1n) {
+                ki >>= 1n;
+                leni++;
+            }
+            len = leni > len ? leni : len;
+        }
+
+        return len;
+    }
+
     ///////////// PAIRINGS
 
     /**
@@ -406,7 +430,7 @@ module.exports = class myHelper {
 
         return ctx.FpBN254.div(ctx.FpBN254.neg(b), den);
     }
-    eval_getRID(ctx, tag) {
+eval_getRID(ctx, tag) {
         const rid = Number(this.evalCommand(ctx, tag.params[0]));
         const _rid = Object.keys(ctx.saved).find(id => id != rid && !ctx.saved[id].restored);
 
