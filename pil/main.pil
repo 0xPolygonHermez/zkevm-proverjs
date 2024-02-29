@@ -61,9 +61,10 @@ namespace Main(%N);
     pol commit sWR, sRD;
     pol commit arithEq0, arithEq1, arithEq2, arithEq3, arithEq4, arithEq5;
     pol commit memAlignRD, memAlignWR, memAlignWR8;
-    pol commit hashK, hashK1, hashKLen, hashKDigest;
-    pol commit hashP, hashP1, hashPLen, hashPDigest;
-    pol commit hashS, hashS1, hashSLen, hashSDigest;
+    pol commit hashK, hashKLen, hashKDigest;
+    pol commit hashP, hashPLen, hashPDigest;
+    pol commit hashS, hashSLen, hashSDigest;
+    pol commit hashBytesInD, hashBytes;
     pol commit bin;
     pol commit binOpcode;
     pol commit assert;
@@ -402,7 +403,7 @@ namespace Main(%N);
     pol decRCX = repeat * (1-RCXIsZero);
     RCX' * (1 - restore)  = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX) - restore * (RCX - decRCX);
 
-    HASHPOS' * (1 - restore) = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP + hashS)*D0 + hashK1 + hashP1 + hashS1 - restore * HASHPOS;
+    HASHPOS' * (1 - restore) = setHASHPOS * (op0 - HASHPOS) + HASHPOS + hashBytesInD*D0 + hashBytes - restore * HASHPOS;
 
     pol doJMP = JMPN*isNeg + JMP + JMPC*carry + JMPZ*op0IsZero + return + call;
     pol elseJMP = JMPN*(1-isNeg) + JMPC*(1-carry) + JMPZ*(1-op0IsZero);
@@ -548,7 +549,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1,save,restore,setRID" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD" -b
     */
 
 
@@ -564,10 +565,9 @@ namespace Main(%N);
             + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
             + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
             + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * arithEq3
-            + 2**48 * arithEq4      + 2**49 * arithEq5      + 2**50 * hashS         + 2**51 * hashSDigest
-            + 2**52 * hashSLen      + 2**53 * hashS1        + 2**54 * save          + 2**55 * restore
-            + 2**56 * setRID;
+            + 2**44 * useElseAddr   + 2**45 * arithEq3      + 2**46 * arithEq4      + 2**47 * arithEq5
+            + 2**48 * hashS         + 2**49 * hashSDigest   + 2**50 * hashSLen      + 2**51 * save
+            + 2**52 * restore       + 2**53 * setRID        + 2**54 * hashBytesInD;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -613,8 +613,6 @@ namespace Main(%N);
     (1 - JMPZ) * JMPZ = 0;
     (1 - call) * call = 0;
     (1 - return) * return = 0;
-    (1 - hashK1) * hashK1 = 0;
-    (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
     (1 - arithEq3) * arithEq3 = 0;
     (1 - arithEq4) * arithEq4 = 0;
@@ -622,21 +620,21 @@ namespace Main(%N);
     (1 - hashS) * hashS = 0;
     (1 - hashSDigest) * hashSDigest = 0;
     (1 - hashSLen) * hashSLen = 0;
-    (1 - hashS1) * hashS1 = 0;
     (1 - save) * save = 0;
     (1 - restore) * restore = 0;
     (1 - setRID) * setRID = 0;
+    (1 - hashBytesInD) * hashBytesInD = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA * (1 - restore), inB * (1 - restore), inC * (1 - restore), inROTL_C * (1 - restore), inD * (1 - restore), inE * (1 - restore), inSR, inFREE, inFREE0,
-        inCTX, inSP, inPC, inGAS, inHASHPOS  * (1 - restore), inSTEP, inRR * (1 - restore), inRCX * (1 - restore),
+        inCTX, inSP, inPC, inGAS, inHASHPOS  * (1 - restore), inSTEP, inRR * (1 - restore), inRCX * (1 - restore), hashBytes,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG, inRID,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0,
-        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID, Rom.hashBytes,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
@@ -782,10 +780,10 @@ namespace Main(%N);
 /////////
 // HASHK Plookpups
 /////////
-    hashK + hashK1 {
+    hashK {
         addr,
         HASHPOS,
-        D0 * hashK + hashK1,
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in
@@ -825,10 +823,10 @@ namespace Main(%N);
 // HASHS Plookpups (Sha256)
 /////////
 
-    hashS + hashS1 {
+    hashS {
         addr,
         HASHPOS,
-        D0 * hashS + hashS1,
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in
@@ -869,10 +867,10 @@ namespace Main(%N);
 /////////
 // HASHP Plookpups
 /////////
-    hashP + hashP1 {
+    hashP {
         addr,
         HASHPOS,
-        D0 * hashP + hashP1,
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
         op0, op1, op2, op3,
         op4, op5, op6, op7
     } in
