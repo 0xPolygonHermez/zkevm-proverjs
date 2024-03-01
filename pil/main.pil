@@ -629,9 +629,9 @@ namespace Main(%N);
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA * (1 - restore), inB * (1 - restore), inC * (1 - restore), inROTL_C * (1 - restore), inD * (1 - restore), inE * (1 - restore), inSR, inFREE, inFREE0,
-        inCTX, inSP, inPC, inGAS, inHASHPOS  * (1 - restore), inSTEP, inRR * (1 - restore), inRCX * (1 - restore),
-        inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG, inRID,
+        inA * (1 - restore), inB * (1 - restore), inC * (1 - restore), inROTL_C * (1 - restore), inD * (1 - restore), inE * (1 - restore), inSR * (1 - restore), inFREE, inFREE0,
+        inCTX, inSP * (1 - restore), inPC * (1 - restore), inGAS, inHASHPOS  * (1 - restore), inSTEP, inRR * (1 - restore), inRCX * (1 - restore), inRID,
+        inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
