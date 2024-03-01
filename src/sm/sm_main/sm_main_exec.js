@@ -116,7 +116,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (key.length === 66) // "0x" + 32 bytes
             await db.setProgram(stringToH4(key), hexString2byteArray(value));
     }
-
+    // Load batchL2Data into DB
+    const batchHashData = await hashContractBytecode(input.batchL2Data);
+    await db.setProgram(stringToH4(batchHashData), hexString2byteArray(input.batchL2Data));
     // load smt
     const smt = new SMT(db, poseidon, Fr);
 
@@ -141,7 +143,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         stepsN,
         final: false,
         helpers,
-        saved:{}
+        saved:{},
+        batchHashData
     }
 
     if (config.stats) {
@@ -3243,6 +3246,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getTimestampLimit(ctx, tag);
     } if (tag.funcName == 'getForcedBlockHashL1') {
         return eval_getForcedBlockHashL1(ctx, tag);
+    }if (tag.funcName == 'getBatchHashData') {
+        return eval_getBatchHashData(ctx, tag);
     } if (tag.funcName == 'getL1InfoRoot') {
         return eval_getL1InfoRoot(ctx, tag);
     } if (tag.funcName == 'getL1InfoGER') {
@@ -3251,8 +3256,6 @@ function eval_functionCall(ctx, tag) {
         return eval_getL1InfoBlockHash(ctx, tag);
     } if (tag.funcName == 'getL1InfoTimestamp') {
         return eval_getL1InfoTimestamp(ctx, tag);
-    } else if (tag.funcName == "getTxs") {
-        return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
     } else if (tag.funcName == "getSmtProof") {scalar2fea
@@ -3322,16 +3325,6 @@ function eval_getSequencerAddr(ctx, tag) {
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
 }
 
-function eval_getTxs(ctx, tag) {
-    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    const txs = ctx.input.batchL2Data;
-    const offset = Number(evalCommand(ctx,tag.params[0]));
-    const len = Number(evalCommand(ctx,tag.params[1]));
-    let d = "0x" + txs.slice(2+offset*2, 2+offset*2 + len*2);
-    if (d.length == 2) d = d+'0';
-    return scalar2fea(ctx.Fr, Scalar.e(d));
-}
-
 function eval_getTxsLen(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
@@ -3393,6 +3386,10 @@ function eval_getForcedBlockHashL1(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.forcedBlockHashL1));
+}
+function eval_getBatchHashData(ctx, tag) {
+    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.batchHashData));
 }
 
 function eval_eventLog(ctx, tag) {
