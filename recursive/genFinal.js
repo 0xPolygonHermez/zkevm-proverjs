@@ -6,7 +6,7 @@ const path = require("path");
 const ejs = require("ejs");
 const { pil2circom } = require('pil-stark');
 
-module.exports.genFinalSetup = async function genFinalSetup(constRoot, verifierName, starkInfoJson, buildDir) {
+module.exports.genFinalSetup = async function genFinalSetup(constRoot, verifierName, fileName, starkInfoJson, buildDir) {
 
     //Generate circom
     let verifierFilename = `${buildDir}/${verifierName}.verifier.circom`;
@@ -19,7 +19,7 @@ module.exports.genFinalSetup = async function genFinalSetup(constRoot, verifierN
     const nStages = 3; // This will be obtained from the starkInfo when moving to Vadcops
 
     const finalVerifier = ejs.render(finalTemplate, {nStages, starkInfo: starkInfoJson});
-    const recursiveFilename = `${buildDir}/final.circom`;
+    const recursiveFilename = `${buildDir}/${fileName}.circom`;
     await fs.promises.writeFile(recursiveFilename, finalVerifier, "utf8");
 
 

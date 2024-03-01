@@ -13,7 +13,8 @@ const argv = require("yargs")
     .alias("b", "blobrecursion")
     .string("cols")
     .string("template")
-    .string("verifierName")
+    .string("filename")
+    .string("verifiername")
     .string("skipconsttree")
     .string("builddir")
     .argv;
@@ -23,6 +24,9 @@ async function run() {
 
     const template = argv.template;
     if(!template) throw new Error("A template name must be provided!");
+
+    const fileName = argv.filename;
+    if(!fileName) fileName = template;
 
     const starkInfoFile = typeof (argv.starkinfo) === "string" ? argv.starkinfo.trim() : "mycircuit.starkinfo.json";
     const starkStructFile = typeof(argv.starkstruct) === "string" ?  argv.starkstruct.trim() : "mycircuit.stark_struct.json";
@@ -52,12 +56,12 @@ async function run() {
         vks.push(verkey2.constRoot);
     }
     
-    let verifierName = argv.verifierName;
+    let verifierName = argv.verifiername;
     if(!verifierName) throw new Error("A verifier name must be provided!")
 
     let genCircomTemplate = ["recursive1", "recursive2", "recursivef"].includes(template) ? true : false;
 
-    await genSetup(template, verifierName, vks, starkInfo, starkStruct, buildDir, {compressorCols: cols, genCircomTemplate, skipConstTree, isEip4844, isBlobRecursion});
+    await genSetup(template, verifierName, vks, fileName, starkInfo, starkStruct, buildDir, {compressorCols: cols, genCircomTemplate, skipConstTree, isEip4844, isBlobRecursion});
     
     console.log("file Generated Correctly");
 

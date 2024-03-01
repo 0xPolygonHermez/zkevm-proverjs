@@ -8,7 +8,8 @@ const argv = require("yargs")
     .alias("v", "verkey")
     .alias("s", "starkinfo")
     .string("builddir")
-    .string("verifierName")
+    .string("filename")
+    .string("verifiername")
     .argv;
 
 async function run() {
@@ -22,11 +23,14 @@ async function run() {
     const verkey = JSONbig.parse(await fs.promises.readFile(verKeyFile, "utf8"));
     const constRoot = verkey.constRoot;
 
-    let verifierName = argv.verifierName;
+    let verifierName = argv.verifiername;
 
     if(!verifierName) verifierName = "recursivef";
 
-    await genFinalSetup(constRoot, verifierName, starkInfo, buildDir);
+    let fileName = argv.filename;
+    if(!fileName) fileName = "final";
+
+    await genFinalSetup(constRoot, verifierName, fileName, starkInfo, buildDir);
     
     console.log("file Generated Correctly");
 

@@ -12,7 +12,7 @@ const {buildConstTree} = require('pil-stark/src/stark/stark_buildConstTree.js');
 const {buildCHelpers} = require('pil-stark/src/stark/chelpers/stark_chelpers.js');
 const {compressorSetup} = require('pil-stark/src/compressor/compressor_setup');
 
-module.exports.genSetup = async function genSetup(template, verifierName, vks, starkInfoJson, starkStruct, buildDir, options) {
+module.exports.genSetup = async function genSetup(template, verifierName, vks, fileName, starkInfoJson, starkStruct, buildDir, options) {
 
     const F = new F3g();
 
@@ -35,7 +35,7 @@ module.exports.genSetup = async function genSetup(template, verifierName, vks, s
     const verifierCircomTemplate = await pil2circom(constRoot, starkInfoJson, { skipMain, verkeyInput });
     await fs.promises.writeFile(verifierFilename, verifierCircomTemplate, "utf8");
 
-    const recursiveFilename = genCircomTemplate ? `${buildDir}/${template}.circom` : verifierFilename;
+    const recursiveFilename = genCircomTemplate ? `${buildDir}/${fileName}.circom` : verifierFilename;
 
     const nStages = 3; // This will be obtained from the starkInfo when moving to Vadcops
 
@@ -52,29 +52,29 @@ module.exports.genSetup = async function genSetup(template, verifierName, vks, s
     console.log(execCompile.stdout);
 
     // Generate setup
-    const recursiveR1csFile = genCircomTemplate ? `${buildDir}/${template}.r1cs` : `${buildDir}/${verifierName}.verifier.r1cs`;
+    const recursiveR1csFile = genCircomTemplate ? `${buildDir}/${fileName}.r1cs` : `${buildDir}/${verifierName}.verifier.r1cs`;
     const {exec: execBuff, pilStr, constPols} = await compressorSetup(F, recursiveR1csFile, compressorCols);
 
-    await constPols.saveToFile(`${buildDir}/${template}.const`);
+    await constPols.saveToFile(`${buildDir}/${fileName}.const`);
 
-    const fd =await fs.promises.open(`${buildDir}/${template}.exec`, "w+");
+    const fd =await fs.promises.open(`${buildDir}/${fileName}.exec`, "w+");
     await fd.write(execBuff);
     await fd.close();
 
-    await fs.promises.writeFile(`${buildDir}/${template}.pil`, pilStr, "utf8");
+    await fs.promises.writeFile(`${buildDir}/${fileName}.pil`, pilStr, "utf8");
 
     // Build stark info
-    const pilRecursive = await compile(F, `${buildDir}/${template}.pil`);
+    const pilRecursive = await compile(F, `${buildDir}/${fileName}.pil`);
     const starkInfoRecursive = starkInfo(pilRecursive, starkStruct);
 
-    await fs.promises.writeFile(`${buildDir}/${template}.starkinfo.json`, JSON.stringify(starkInfoRecursive, null, 1), "utf8");
+    await fs.promises.writeFile(`${buildDir}/${fileName}.starkinfo.json`, JSON.stringify(starkInfoRecursive, null, 1), "utf8");
 
-    await fs.promises.writeFile(`${buildDir}/${template}.starkstruct.json`, JSON.stringify(starkStruct, null, 1), "utf8");
+    await fs.promises.writeFile(`${buildDir}/${fileName}.starkstruct.json`, JSON.stringify(starkStruct, null, 1), "utf8");
 
     // Build chelpers 
     // TODO: Modify this if we decide to integrate new parser
-    const cHelpersFile = `${buildDir}/${template}.chelpers/${template}.chelpers.cpp`;
-    const className = template.charAt(0).toUpperCase() + template.slice(1) + "Steps";
+    const cHelpersFile = `${buildDir}/${fileName}.chelpers/${fileName}.chelpers.cpp`;
+    const className = fileName.charAt(0).toUpperCase() + fileName.slice(1) + "Steps";
     await buildCHelpers(starkInfoRecursive, cHelpersFile, {multiple: true, optcodes: false, className})
 
     if(skipConstTree) return { starkInfo: starkInfoRecursive };
@@ -82,9 +82,9 @@ module.exports.genSetup = async function genSetup(template, verifierName, vks, s
     // Build const tree
     const {constTree, MH, verKey} = await buildConstTree(starkStruct, pilRecursive, constPols);
 
-    await fs.promises.writeFile(`${buildDir}/${template}.verkey.json`, JSONbig.stringify(verKey, null, 1), "utf8");
+    await fs.promises.writeFile(`${buildDir}/${fileName}.verkey.json`, JSONbig.stringify(verKey, null, 1), "utf8");
 
-    await MH.writeToFile(constTree, `${buildDir}/${template}.consttree`);
+    await MH.writeToFile(constTree, `${buildDir}/${fileName}.consttree`);
 
     return { constRoot: verKey, starkInfo: starkInfoRecursive}
 
