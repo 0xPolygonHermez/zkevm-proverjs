@@ -135,7 +135,6 @@
     0 => D
     $ => SR :SSTORE
 
-    ; CNT_POSEIDON_G - 112    :MLOAD(v_cnt_poseidon_g)
     CNT_POSEIDON_G - 109    :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 7          :MLOAD(v_cnt_binary)
 
@@ -144,7 +143,6 @@
     0 => B,C
     $ => SR                 :SSTORE
 
-    ; CNT_POSEIDON_G - 124    :MLOAD(v_cnt_poseidon_g)
     CNT_POSEIDON_G - 121    :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 8          :MLOAD(v_cnt_binary)
 

@@ -80,90 +80,26 @@ namespace Main(%N);
 
     pol commit inRID;
     pol commit RID;
-    pol commit NEXT_RID;
     pol commit save;
     pol commit restore;
     pol commit setRID;
 
-    restore  { RID, RID', inA, inB, inC, inD, inE, inSR, inRR, inRCX, inHASHPOS, inSP, inPC,
-                          inA * A0', inA * A1, inA * A2', inA * A3', 
-                          inA * A4', inA * A5, inA * A6', inA * A7', 
-                          inB * B0', inB * B1, inB * B2', inB * B3', 
-                          inB * B4', inB * B5, inB * B6', inB * B7', 
-                          inC * C0', inC * C1, inC * C2', inB * C3', 
-                          inC * C4', inC * C5, inC * C6', inB * C7', 
-                          inD * D0', inD * D1, inD * D2', inD * D3', 
-                          inD * D4', inD * D5, inD * D6', inD * D7', 
-                          inE * E0', inE * E1, inE * E2', inE * E3', 
-                          inE * E4', inE * E5, inE * E6', inE * E7', 
-                          inSR * SR0', inSR * SR1, inSR * SR2', inSR * SR3', 
-                          inSR * SR4', inSR * SR5, inSR * SR6', inSR * SR7', 
-                          inRR * RR', 
-                          inRCX * RCX',
-                          inHASHPOS * HASHPOS',
-                          inSP * SP',
-                          inPC * PC'
-    } is save { NEXT_RID, RID,  inA, inB, inC, inD, inE, inSR, inRR, inRCX, inHASHPOS, inSP, inPC,
-                            inA * A0, inA * A1, inA * A2, inA * A3, 
-                            inA * A4, inA * A5, inA * A6, inA * A7, 
-                            inB * B0, inB * B1, inB * B2, inB * B3, 
-                            inB * B4, inB * B5, inB * B6, inB * B7, 
-                            inC * C0, inC * C1, inC * C2, inB * C3, 
-                            inC * C4, inC * C5, inC * C6, inB * C7, 
-                            inD * D0, inD * D1, inD * D2, inD * D3, 
-                            inD * D4, inD * D5, inD * D6, inD * D7, 
-                            inE * E0, inE * E1, inE * E2, inE * E3, 
-                            inE * E4, inE * E5, inE * E6, inE * E7, 
-                            inSR * SR0, inSR * SR1, inSR * SR2, inSR * SR3, 
-                            inSR * SR4, inSR * SR5, inSR * SR6, inSR * SR7, 
-                            inRR * RR, 
-                            inRCX * RCX,
-                            inHASHPOS * HASHPOS,
-                            inSP * SP,
-                            inPC * PC };
+    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7, 
+                          B0', B1', B2', B3', B4', B5', B6', B7', 
+                          C0', C1', C2', C3', C4', C5', C6', C7', 
+                          D0', D1', D2', D3', D4', D5', D6', D7', 
+                          E0', E1', E2', E3', E4', E5', E6', E7', 
+                          RR', RCX'
+    } is save { Global.STEP, RID, op0, op1, op2, op3, op4, op5, op6, op7,
+                            B0, B1, B2, B3, B4, B5, B6, B7, 
+                            C0, C1, C2, C3, C4, C5, C6, C7, 
+                            D0, D1, D2, D3, D4, D5, D6, D7, 
+                            E0, E1, E2, E3, E4, E5, E6, E7, 
+                            RR, RCX};
 
-    restore { Global.STEP,  (1 - inA) * A0', (1 - inA) * A1', (1 - inA) * A2', (1 - inA) * A3', 
-                            (1 - inA) * A4', (1 - inA) * A5', (1 - inA) * A6', (1 - inA) * A7', 
-                            (1 - inB) * B0', (1 - inB) * B1', (1 - inB) * B2', (1 - inB) * B3', 
-                            (1 - inB) * B4', (1 - inB) * B5', (1 - inB) * B6', (1 - inB) * B7', 
-                            (1 - inC) * C0', (1 - inC) * C1', (1 - inC) * C2', (1 - inB) * C3', 
-                            (1 - inC) * C4', (1 - inC) * C5', (1 - inC) * C6', (1 - inB) * C7', 
-                            (1 - inD) * D0', (1 - inD) * D1', (1 - inD) * D2', (1 - inD) * D3', 
-                            (1 - inD) * D4', (1 - inD) * D5', (1 - inD) * D6', (1 - inD) * D7', 
-                            (1 - inE) * E0', (1 - inE) * E1', (1 - inE) * E2', (1 - inE) * E3', 
-                            (1 - inE) * E4', (1 - inE) * E5', (1 - inE) * E6', (1 - inE) * E7', 
-                            (1 - inSR) * SR0', (1 - inSR) * SR1', (1 - inSR) * SR2', (1 - inSR) * SR3', 
-                            (1 - inSR) * SR4', (1 - inSR) * SR5', (1 - inSR) * SR6', (1 - inSR) * SR7', 
-                            (1 - inRR) * RR', 
-                            (1 - inRCX) * RCX',
-                            (1 - inHASHPOS) * HASHPOS',
-                            (1 - inSP) * SP',
-                            (1 - inPC) * PC'
-    } is restore { 
-          Global.STEP ,     (1 - inA) * A0, (1 - inA) * A1, (1 - inA) * A2, (1 - inA) * A3, 
-                            (1 - inA) * A4, (1 - inA) * A5, (1 - inA) * A6, (1 - inA) * A7, 
-                            (1 - inB) * B0, (1 - inB) * B1, (1 - inB) * B2, (1 - inB) * B3, 
-                            (1 - inB) * B4, (1 - inB) * B5, (1 - inB) * B6, (1 - inB) * B7, 
-                            (1 - inC) * C0, (1 - inC) * C1, (1 - inC) * C2, (1 - inB) * C3, 
-                            (1 - inC) * C4, (1 - inC) * C5, (1 - inC) * C6, (1 - inB) * C7, 
-                            (1 - inD) * D0, (1 - inD) * D1, (1 - inD) * D2, (1 - inD) * D3, 
-                            (1 - inD) * D4, (1 - inD) * D5, (1 - inD) * D6, (1 - inD) * D7, 
-                            (1 - inE) * E0, (1 - inE) * E1, (1 - inE) * E2, (1 - inE) * E3, 
-                            (1 - inE) * E4, (1 - inE) * E5, (1 - inE) * E6, (1 - inE) * E7, 
-                            (1 - inSR) * SR0, (1 - inSR) * SR1, (1 - inSR) * SR2, (1 - inSR) * SR3, 
-                            (1 - inSR) * SR4, (1 - inSR) * SR5, (1 - inSR) * SR6, (1 - inSR) * SR7, 
-                            (1 - inRR) * RR, 
-                            (1 - inRCX) * RCX,
-                            (1 - inHASHPOS) * HASHPOS,
-                            (1 - inSP) * SP,
-                            (1 - inPC) * PC };
-
-
-    RID' * (1 - restore) = setRID * (op0 - RID) + save * (NEXT_RID - RID) + RID - restore * RID;
-    NEXT_RID' = save + (1 - Global.L1') * NEXT_RID;
+    RID' * (1 - restore) = setRID * (op0 - RID) + save * (Global.STEP - RID) + RID - restore * RID;
     
     Global.L1 * RID = 0;
-    Global.L1 * NEXT_RID = 0;
 
 ///////////
 // Intermediary calculations and checks
@@ -338,14 +274,14 @@ namespace Main(%N);
 // Calculate New State
 ///////////
 
-    A0' * (1 - restore) = setA * (op0 - A0) + A0 - restore * A0;
-    A1' * (1 - restore) = setA * (op1 - A1) + A1 - restore * A1;
-    A2' * (1 - restore) = setA * (op2 - A2) + A2 - restore * A2;
-    A3' * (1 - restore) = setA * (op3 - A3) + A3 - restore * A3;
-    A4' * (1 - restore) = setA * (op4 - A4) + A4 - restore * A4;
-    A5' * (1 - restore) = setA * (op5 - A5) + A5 - restore * A5;
-    A6' * (1 - restore) = setA * (op6 - A6) + A6 - restore * A6;
-    A7' * (1 - restore) = setA * (op7 - A7) + A7 - restore * A7;
+    A0' = setA * (op0 - A0) + A0;
+    A1' = setA * (op1 - A1) + A1;
+    A2' = setA * (op2 - A2) + A2;
+    A3' = setA * (op3 - A3) + A3;
+    A4' = setA * (op4 - A4) + A4;
+    A5' = setA * (op5 - A5) + A5;
+    A6' = setA * (op6 - A6) + A6;
+    A7' = setA * (op7 - A7) + A7;
 
     B0' * (1 - restore) = setB * (op0 - B0) + B0 - restore * B0;
     B1' * (1 - restore) = setB * (op1 - B1) + B1 - restore * B1;
@@ -383,18 +319,18 @@ namespace Main(%N);
     E6' * (1 - restore) = setE * (op6 - E6) + E6 - restore * E6;
     E7' * (1 - restore) = setE * (op7 - E7) + E7 - restore * E7;
 
-    SR0' * (1 - restore) = setSR * (op0 - SR0) + SR0 - SR0 * restore;
-    SR1' * (1 - restore) = setSR * (op1 - SR1) + SR1 - SR1 * restore;
-    SR2' * (1 - restore) = setSR * (op2 - SR2) + SR2 - SR2 * restore;
-    SR3' * (1 - restore) = setSR * (op3 - SR3) + SR3 - SR3 * restore;
-    SR4' * (1 - restore) = setSR * (op4 - SR4) + SR4 - SR4 * restore;
-    SR5' * (1 - restore) = setSR * (op5 - SR5) + SR5 - SR5 * restore;
-    SR6' * (1 - restore) = setSR * (op6 - SR6) + SR6 - SR6 * restore;
-    SR7' * (1 - restore) = setSR * (op7 - SR7) + SR7 - SR7 * restore;
+    SR0' = setSR * (op0 - SR0) + SR0;
+    SR1' = setSR * (op1 - SR1) + SR1;
+    SR2' = setSR * (op2 - SR2) + SR2;
+    SR3' = setSR * (op3 - SR3) + SR3;
+    SR4' = setSR * (op4 - SR4) + SR4;
+    SR5' = setSR * (op5 - SR5) + SR5;
+    SR6' = setSR * (op6 - SR6) + SR6;
+    SR7' = setSR * (op7 - SR7) + SR7;
 
     CTX' = setCTX * (op0 - CTX) + CTX;
-    SP' * (1 - restore) = setSP * (op0 - (SP +incStack)) + (SP +incStack) - (SP +incStack) * restore;
-    PC' * (1 - restore) = setPC * (op0 - PC) + PC - PC * restore;
+    SP' = setSP * (op0 - (SP +incStack)) + (SP +incStack);
+    PC' = setPC * (op0 - PC) + PC;
 
     // ROM constraint: call * setRR = 0
     RR' * (1 - restore) = setRR * (op0 - RR) + call * (zkPC + 1 - RR) + RR - restore * RR;
@@ -403,7 +339,7 @@ namespace Main(%N);
     pol decRCX = repeat * (1-RCXIsZero);
     RCX' * (1 - restore)  = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX) - restore * (RCX - decRCX);
 
-    HASHPOS' * (1 - restore) = setHASHPOS * (op0 - HASHPOS) + HASHPOS + hashBytesInD*D0 + hashBytes - restore * HASHPOS;
+    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + hashBytesInD*D0 + hashBytes;
 
     pol doJMP = JMPN*isNeg + JMP + JMPC*carry + JMPZ*op0IsZero + return + call;
     pol elseJMP = JMPN*(1-isNeg) + JMPC*(1-carry) + JMPZ*(1-op0IsZero);
@@ -529,8 +465,6 @@ namespace Main(%N);
     public newBatchNum = PC(%N-1);
     Global.LLAST * (PC - :newBatchNum) = 0;
 
-
-
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7,
@@ -551,7 +485,6 @@ namespace Main(%N);
        code generated with:
        node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD" -b
     */
-
 
     pol operations =
               2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
@@ -627,8 +560,8 @@ namespace Main(%N);
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA * (1 - restore), inB * (1 - restore), inC * (1 - restore), inROTL_C * (1 - restore), inD * (1 - restore), inE * (1 - restore), inSR * (1 - restore), inFREE, inFREE0,
-        inCTX, inSP * (1 - restore), inPC * (1 - restore), inGAS, inHASHPOS  * (1 - restore), inSTEP, inRR * (1 - restore), inRCX * (1 - restore), inRID, hashBytes,
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0,
+        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID, hashBytes,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
