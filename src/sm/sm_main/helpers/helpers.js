@@ -430,7 +430,7 @@ module.exports = class myHelper {
 
         return ctx.FpBN254.div(ctx.FpBN254.neg(b), den);
     }
-eval_getRID(ctx, tag) {
+    eval_getPendingRID(ctx, tag) {
         const rid = Number(this.evalCommand(ctx, tag.params[0]));
         const _rid = Object.keys(ctx.saved).find(id => id != rid && !ctx.saved[id].restored);
 

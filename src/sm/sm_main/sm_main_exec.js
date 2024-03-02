@@ -675,13 +675,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`Not found saved data with RID ${rid} on ${sourceRef}`);
             }                
             dataToRestore = ctx.saved[rid];
-            console.log(`restoring ${rid} on ${sourceRef} (rid:${data.RID})`);
 
             // verify that saving wasn't restored previously
-            if (data.restored) {
-                throw new Error(`On ${sourceRef} try to restore RID ${rid} previously restored on row ${data.restored.row} at ${data.restored.sourceRef}`);
+            if (dataToRestore.restored) {
+                throw new Error(`On ${sourceRef} try to restore RID ${rid} previously restored on row ${dataToRestore.restored.row} at ${dataToRestore.restored.sourceRef}`);
             }
-            data.restored = {sourceRef, row: i };
+
+            ctx.saved[rid].restored = { sourceRef, row: i };
         } else {
             pols.restore[i] = 0n;
         }
@@ -1027,7 +1027,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inFREE[i] = Fr.e(l.inFREE);
             pols.inFREE0[i] = Fr.e(l.inFREE0);
         } else {
-            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], 
+             pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = l.restore ? dataToRestore.op : Fr8zero;
             pols.inFREE[i] = Fr.zero;
             pols.inFREE0[i] = Fr.zero;
         }
@@ -1961,17 +1962,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             const data = {
                 op: [op0, op1, op2, op3, op4,  op5, op6, op7],
-                B: [CTX.B0, CTX.B1, CTX.B2, CTX.B3, CTX.B4, CTX.B5, CTX.B6, CTX.B7],
-                C: [CTX.C0, CTX.C1, CTX.C2, CTX.C3, CTX.C4, CTX.C5, CTX.C6, CTX.C7],
-                D: [CTX.D0, CTX.D1, CTX.D2, CTX.D3, CTX.D4, CTX.D5, CTX.D6, CTX.D7],
-                E: [CTX.E0, CTX.E1, CTX.E2, CTX.E3, CTX.E4, CTX.E5, CTX.E6, CTX.E7],
-                RCX: CTX.RCX,
-                RR: CTX.RR,
-                RID: CTX.RID,
+                B: ctx.B,
+                C: ctx.C,
+                D: ctx.D,
+                E: ctx.E,
+                RCX: ctx.RCX,
+                RR: ctx.RR,
+                RID: ctx.RID,
                 sourceRef,
                 row: i 
             }
-            console.log(`saving ${nrid} on ${sourceRef} (rid:${data.RID})`);
             ctx.saved[nrid] = data;
             pols.save[i] = 1n;            
         } else {
@@ -2054,8 +2054,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setB[i]=0n;
-            if (restore) {
-                [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = dataToRestore.B
+            if (l.restore) {
+                [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], 
+                 pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = dataToRestore.B
             } else {
                 [pols.B0[nexti],
                 pols.B1[nexti],
@@ -2092,7 +2093,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setC[i]=0n;
             if (l.restore) {
-                [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = dataToRestore.C;
+                [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], 
+                 pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = dataToRestore.C;
             } else {
                 [pols.C0[nexti],
                 pols.C1[nexti],
@@ -2152,7 +2154,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setD[i]=0n;
             if (l.restore) {
-                [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = data.D;
+                [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], 
+                 pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = dataToRestore.D;
             } else {
                 [pols.D0[nexti],
                 pols.D1[nexti],
@@ -2189,7 +2192,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setE[i]=0n;
             if (l.restore) {
-                [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = dataToRestore.E;
+                [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], 
+                 pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = dataToRestore.E;
             } else {
                 [pols.E0[nexti],
                 pols.E1[nexti],
@@ -2307,7 +2311,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
                 pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
             } else if (l.restore) {
-                pols.RCX[nexti] = data.RCX;
+                pols.RCX[nexti] = dataToRestore.RCX;
             } else {
                 pols.RCX[nexti] = pols.RCX[i];
             }
@@ -2416,20 +2420,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.HASHPOS[nexti] = Fr.add(op0, Fr.e(incHashPos));
         } else {
             pols.setHASHPOS[i]=0n;
-            if (!l.restore || !inSaveRegs.inHASHPOS) pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
+            pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
         }
 
         if (l.setRID == 1) {
             pols.setRID[i]=1n;
             pols.RID[nexti] = BigInt(fe2n(Fr, op0, ctx));
-        } else if (l.restore) {
-            pols.RID[nexti] = data.RID;
-        } else if (l.save) {
-            pols.setRID[i] = 0n;
-            pols.RID[nexti] = pols.NEXT_RID[i];
         } else {
             pols.setRID[i] = 0n;
-            pols.RID[nexti] = pols.RID[i];
+            if (l.restore) {
+                pols.RID[nexti] = dataToRestore.RID;
+            } else if (l.save) {
+                pols.RID[nexti] = BigInt(step);
+            } else {
+                pols.RID[nexti] = pols.RID[i];
+            }
         }
 
         if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
@@ -2905,7 +2910,6 @@ function initState(Fr, pols, ctx) {
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
     pols.RID[0] = 0n;
-    pols.NEXT_RID[0] = 0n;
 }
 
 async function eventsAsyncTracer(ctx, cmds) {
@@ -3089,8 +3093,6 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.RCX);
     } else if (tag.regName == "RID") {
         return Scalar.e(ctx.RID);
-    } else if (tag.regName == "NEXT_RID") {
-        return Scalar.e(ctx.NEXT_RID);
     } else {
         throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }

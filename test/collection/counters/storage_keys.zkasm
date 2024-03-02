@@ -67,21 +67,21 @@ CONST %_1111001 = 11 ; 1111001....0110 #11
     0n => D
     $ => SR :SSTORE
 
-    CNT_POSEIDON_G - 57     :MLOAD(v_cnt_poseidon_g)
+    CNT_POSEIDON_G - 58     :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 4          :MLOAD(v_cnt_binary)
 
     %_1101000 => A
     0n => D
     $ => SR :SSTORE
 
-    CNT_POSEIDON_G - 68     :MLOAD(v_cnt_poseidon_g)
+    CNT_POSEIDON_G - 69     :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 5          :MLOAD(v_cnt_binary)
 
     %_1100011 => A
     0n => D
     $ => SR :SSTORE
 
-    CNT_POSEIDON_G - 72     :MLOAD(v_cnt_poseidon_g)
+    CNT_POSEIDON_G - 73     :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 6          :MLOAD(v_cnt_binary)
 
     ; to verify that there are no correlations between counters

@@ -83,20 +83,20 @@ namespace Main(%N);
     pol commit restore;
     pol commit setRID;
 
-    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE, FREE7', 
-                          B0', B1, B2', B3', B4', B5, B6', B7', 
-                          C0', C1, C2', C3', C4', C5, C6', C7', 
-                          D0', D1, D2', D3', D4', D5, D6', D7', 
-                          E0', E1, E2', E3', E4', E5, E6', E7', 
-                          RR', RCX',
-    } is save { STEP, RID,  op0, op1, op2, op3, op4, op5, op6, op7,
+    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7, 
+                          B0', B1', B2', B3', B4', B5', B6', B7', 
+                          C0', C1', C2', C3', C4', C5', C6', C7', 
+                          D0', D1', D2', D3', D4', D5', D6', D7', 
+                          E0', E1', E2', E3', E4', E5', E6', E7', 
+                          RR', RCX'
+    } is save { Global.STEP, RID, op0, op1, op2, op3, op4, op5, op6, op7,
                             B0, B1, B2, B3, B4, B5, B6, B7, 
                             C0, C1, C2, C3, C4, C5, C6, C7, 
                             D0, D1, D2, D3, D4, D5, D6, D7, 
                             E0, E1, E2, E3, E4, E5, E6, E7, 
                             RR, RCX};
 
-    RID' * (1 - restore) = setRID * (op0 - RID) + save * (STEP - RID) + RID - restore * RID;
+    RID' * (1 - restore) = setRID * (op0 - RID) + save * (Global.STEP - RID) + RID - restore * RID;
     
     Global.L1 * RID = 0;
 
