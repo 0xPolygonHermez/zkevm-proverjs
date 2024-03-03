@@ -10,6 +10,7 @@ const { cwd } = require("process");
 const argv = require("yargs")
     .usage("node zkasmtest filename [-p <pil>] [-P <pilconfig>]")
     .help('h')
+    .alias("A", "all")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("c", "config")
@@ -57,6 +58,7 @@ async function main(){
     const constants = argv.constants ? true : false;
     const debug = argv.debug ? true : false;
     const stats = argv.stats ? true : false;
+    const all = argv.all ? true : false;
     let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
@@ -75,10 +77,13 @@ async function main(){
 
     let defaultPilConfig = {
         defines: {N: rows},
-        namespaces,
         verbose,
         color: true,
         disableUnusedError: true
+    }
+    
+    if (!all) {
+        defaultPilConfig.namespaces = namespaces;
     }
 
     let defaultConfig = {

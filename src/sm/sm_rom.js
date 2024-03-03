@@ -82,7 +82,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1,save,restore,setRID" -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
@@ -130,23 +130,20 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
             + (rom.program[pIndex].JMPZ ? (2n**41n * BigInt(rom.program[pIndex].JMPZ)) : 0n)
             + (rom.program[pIndex].call ? (2n**42n * BigInt(rom.program[pIndex].call)) : 0n)
             + (rom.program[pIndex].return ? (2n**43n * BigInt(rom.program[pIndex].return)) : 0n)
-            + (rom.program[pIndex].hashK1 ? (2n**44n * BigInt(rom.program[pIndex].hashK1)) : 0n)
-            + (rom.program[pIndex].hashP1 ? (2n**45n * BigInt(rom.program[pIndex].hashP1)) : 0n)
-            + (rom.program[pIndex].useElseAddr ? (2n**46n * BigInt(rom.program[pIndex].useElseAddr)) : 0n)
-            + (rom.program[pIndex].arithEq3 ? (2n**47n * BigInt(rom.program[pIndex].arithEq3)) : 0n)
-            + (rom.program[pIndex].arithEq4 ? (2n**48n * BigInt(rom.program[pIndex].arithEq4)) : 0n)
-            + (rom.program[pIndex].arithEq5 ? (2n**49n * BigInt(rom.program[pIndex].arithEq5)) : 0n)
-            + (rom.program[pIndex].hashS ? (2n**50n * BigInt(rom.program[pIndex].hashS)) : 0n)
-            + (rom.program[pIndex].hashSDigest ? (2n**51n * BigInt(rom.program[pIndex].hashSDigest)) : 0n)
-            + (rom.program[pIndex].hashSLen ? (2n**52n * BigInt(rom.program[pIndex].hashSLen)) : 0n)
-            + (rom.program[pIndex].hashS1 ? (2n**53n * BigInt(rom.program[pIndex].hashS1)) : 0n)
-            + (rom.program[pIndex].save ? (2n**54n * BigInt(rom.program[pIndex].save)) : 0n)
-            + (rom.program[pIndex].restore ? (2n**55n * BigInt(rom.program[pIndex].restore)) : 0n)
-            + (rom.program[pIndex].setRID ? (2n**56n * BigInt(rom.program[pIndex].setRID)) : 0n);
-
+            + (rom.program[pIndex].useElseAddr ? (2n**44n * BigInt(rom.program[pIndex].useElseAddr)) : 0n)
+            + (rom.program[pIndex].arithEq3 ? (2n**45n * BigInt(rom.program[pIndex].arithEq3)) : 0n)
+            + (rom.program[pIndex].arithEq4 ? (2n**46n * BigInt(rom.program[pIndex].arithEq4)) : 0n)
+            + (rom.program[pIndex].arithEq5 ? (2n**47n * BigInt(rom.program[pIndex].arithEq5)) : 0n)
+            + (rom.program[pIndex].hashS ? (2n**48n * BigInt(rom.program[pIndex].hashS)) : 0n)
+            + (rom.program[pIndex].hashSDigest ? (2n**49n * BigInt(rom.program[pIndex].hashSDigest)) : 0n)
+            + (rom.program[pIndex].hashSLen ? (2n**50n * BigInt(rom.program[pIndex].hashSLen)) : 0n)
+            + (rom.program[pIndex].save ? (2n**51n * BigInt(rom.program[pIndex].save)) : 0n)
+            + (rom.program[pIndex].restore ? (2n**52n * BigInt(rom.program[pIndex].restore)) : 0n)
+            + (rom.program[pIndex].setRID ? (2n**53n * BigInt(rom.program[pIndex].setRID)) : 0n)
+            + (rom.program[pIndex].hashBytesInD ? (2n**54n * BigInt(rom.program[pIndex].hashBytesInD)) : 0n);
 
         pols.incStack[i] = rom.program[pIndex].incStack ? BigInt(rom.program[pIndex].incStack) : 0n;
-
+        pols.hashBytes[i] = rom.program[pIndex].hashBytes ? BigInt(rom.program[pIndex].hashBytes) : 0n;
         pols.binOpcode[i] = rom.program[pIndex].binOpcode ? BigInt(rom.program[pIndex].binOpcode) : 0n;
         pols.jmpAddr[i] = rom.program[pIndex].jmpAddr ? BigInt(rom.program[pIndex].jmpAddr) : 0n;
         pols.elseAddr[i] = rom.program[pIndex].elseAddr ? BigInt(rom.program[pIndex].elseAddr) : 0n;

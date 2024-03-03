@@ -1,0 +1,3560 @@
+    $ => E              :MLOAD(lastHashPId)
+    E + 1 => E          :MSTORE(lastHashPId)
+
+	0 => HASHPOS
+	0x000000000000000000000000000000000000000000000000000000000000005cn :HASHP1(E)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000822bn :HASHP2(E)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000d26839n :HASHP3(E)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000e89b4a78n :HASHP4(E)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000b9e7b3147en :HASHP5(E)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000075c3999bf51dn :HASHP6(E)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000053af79c9926e84n :HASHP7(E)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000003b6b33f6bec5b2c0n :HASHP8(E)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000ca06b18102c9b7511cn :HASHP9(E)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000002115e9297d34866bafc3n :HASHP10(E)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000972a12ea8523af1371b2b4n :HASHP11(E)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000e1a8ecb4ffb1fddaad306249n :HASHP12(E)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000548bef9e44b782cdb34e378346n :HASHP13(E)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000019b66380040e1743a2149f7b8287n :HASHP14(E)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x00000000000000000000000000000000004e80e74fdddd933cf0dcc9c93b6373n :HASHP15(E)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x0000000000000000000000000000000031bc2bd3f905e976d27bfccf6513a6cbn :HASHP16(E)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x000000000000000000000000000000d439d7d0aa32b9211148351485ce4a9520n :HASHP17(E)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x000000000000000000000000000086b20f255fd2445e6da1c31daecced7895d8n :HASHP18(E)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x00000000000000000000000000204637ab13a617e622acbbdaa3839e3f543fedn :HASHP19(E)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x0000000000000000000000000957f40bfb9766cb3046594c03c7ec55134cee3an :HASHP20(E)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x00000000000000000000004c74d82c81d000edd18e3248d1d3bb038a62294487n :HASHP21(E)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x00000000000000000000fec407121ae93d94d15e350269b32982799997bf185en :HASHP22(E)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x0000000000000000009fb40a3825030e04b45d766566ccab7b78e9e5fb99e64en :HASHP23(E)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x00000000000000001138cb7b212a9d1b6b0229e42480812d843750e27a78298fn :HASHP24(E)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x000000000000002cc72cbc7e034d60b299ae9ae61f681bd8e1362450222d415an :HASHP25(E)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x0000000000005942795c64cfc1498366c1f8fff26a668cd486dc5737141abb33n :HASHP26(E)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x0000000000dbbe6673314fa19a2b47e4a3f4b79a4fcc4656d8532877758e3108n :HASHP27(E)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x00000000613b2069ef6bae1c489aca2ced04d45ac483f5b90b53455aba1562edn :HASHP28(E)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000670f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5a51b21e41eb29bn :HASHP29(E)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x00001204770a4cfd0f7c68a0b769231d5bfb59f4629a99e87cb70c96d00b44f0n :HASHP30(E)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x0018895c316732247eec318c2927fc2bdeb8b47a231f26ca7cfd52675e3128f8n :HASHP31(E)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x39daf459d95c2db858979bdd4eb9bcfd2d59357b5330fac558e9772c728c7a80n :HASHP32(E)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(E)
+	0xd2bda843978d05145b39b8e5bc11b4603a8c1911c74432d9c1729dfbee807d50n :HASHPDIGEST(E)
+
+	0 => HASHPOS
+	E + 1 => E
+	1 => D
+	0x000000000000000000000000000000000000000000000000000000000000009dn :HASHP(E)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x00000000000000000000000000000000000000000000000000000000000000c3n :HASHP(E)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000000f4629n :HASHP(E)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x000000000000000000000000000000000000000000000000000000000dc75044n :HASHP(E)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000ff4285dae3n :HASHP(E)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x0000000000000000000000000000000000000000000000000000f54c78e336e5n :HASHP(E)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x00000000000000000000000000000000000000000000000000fffe477e96fa4fn :HASHP(E)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x0000000000000000000000000000000000000000000000002e68b533b45c89b0n :HASHP(E)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x00000000000000000000000000000000000000000000000993f79dcd5ab6ea14n :HASHP(E)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x000000000000000000000000000000000000000000006c557a1ce8726aa02a26n :HASHP(E)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x0000000000000000000000000000000000000000002c788e974f8f972b415c20n :HASHP(E)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x0000000000000000000000000000000000000000005bfb5aed729e31ad8fb0c0n :HASHP(E)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x00000000000000000000000000000000000000f97f92ca27d74ff9289f8c114fn :HASHP(E)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x000000000000000000000000000000000000d91105ca2a727ecf4966bf59d5cen :HASHP(E)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x0000000000000000000000000000000000481baa0303257c425c822bd26839e8n :HASHP(E)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x000000000000000000000000000000009b4a78b9e7b3147e75c3999bf51d53afn :HASHP(E)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x00000000000000000000000000000079c9926e843b6b33f6bec5b2c0ca06b181n :HASHP(E)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x000000000000000000000000000002c9b7511c2115e9297d34866bafc3972a12n :HASHP(E)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x00000000000000000000000000ea8523af1371b2b4e1a8ecb4ffb1fddaad3062n :HASHP(E)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x00000000000000000000000049548bef9e44b782cdb34e37834619b66380040en :HASHP(E)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x00000000000000000000001743a2149f7b82874e80e74fdddd933cf0dcc9c93bn :HASHP(E)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x00000000000000000000637331bc2bd3f905e976d27bfccf6513a6cbd439d7d0n :HASHP(E)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000aa32b9211148351485ce4a952086b20f255fd2445e6da1n :HASHP(E)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000c31daecced7895d8204637ab13a617e622acbbdaa3839e3fn :HASHP(E)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x00000000000000543fed0957f40bfb9766cb3046594c03c7ec55134cee3a4c74n :HASHP(E)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000d82c81d000edd18e3248d1d3bb038a62294487fec407121ae93dn :HASHP(E)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x000000000094d15e350269b32982799997bf185e9fb40a3825030e04b45d7665n :HASHP(E)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x0000000066ccab7b78e9e5fb99e64e1138cb7b212a9d1b6b0229e42480812d84n :HASHP(E)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000003750e27a78298f2cc72cbc7e034d60b299ae9ae61f681bd8e136245022n :HASHP(E)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x00002d415a5942795c64cfc1498366c1f8fff26a668cd486dc5737141abb33dbn :HASHP(E)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00be6673314fa19a2b47e4a3f4b79a4fcc4656d8532877758e3108613b2069efn :HASHP(E)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x6bae1c489aca2ced04d45ac483f5b90b53455aba1562ed670f7e0c2c71bd78c8n :HASHP(E)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(E)
+	0x6513bf73f04497e5e499cd84f8458669ffda638be8130ff543235d10f212c430n :HASHPDIGEST(E)
+	0 => HASHPOS
+	0x00000000000000000000000000000000000000000000000000000000000000a5n :HASHP1(E+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000003c32n :HASHP2(E+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000c60f4dn :HASHP3(E+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000e4e0a5c2n :HASHP4(E+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000535ba5a51bn :HASHP5(E+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000021e41eb29b12n :HASHP6(E+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000004770a4cfd0f7cn :HASHP7(E+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000068a0b769231d5bfbn :HASHP8(E+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000059f4629a99e87cb70cn :HASHP9(E+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000096d00b44f018895c3167n :HASHP10(E+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000032247eec318c2927fc2bden :HASHP11(E+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000b8b47a231f26ca7cfd52675en :HASHP12(E+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000003128f839daf459d95c2db85897n :HASHP13(E+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000009bdd4eb9bcfd2d59357b5330fac5n :HASHP14(E+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x000000000000000000000000000000000058e9772c728c7a809d00c30f46290dn :HASHP15(E+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x00000000000000000000000000000000c75044ff4285dae3f54c78e336e5fffen :HASHP16(E+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x000000000000000000000000000000477e96fa4f2e68b533b45c89b00993f79dn :HASHP17(E+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x0000000000000000000000000000cd5ab6ea146c557a1ce8726aa02a262c788en :HASHP18(E+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x00000000000000000000000000974f8f972b415c20005bfb5aed729e31ad8fb0n :HASHP19(E+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x000000000000000000000000c0f97f92ca27d74ff9289f8c114fd91105ca2a72n :HASHP20(E+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x00000000000000000000007ecf4966bf59d5ce481baa0303257c425c822bd268n :HASHP21(E+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x0000000000000000000039e89b4a78b9e7b3147e75c3999bf51d53af79c9926en :HASHP22(E+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x000000000000000000843b6b33f6bec5b2c0ca06b18102c9b7511c2115e9297dn :HASHP23(E+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x000000000000000034866bafc3972a12ea8523af1371b2b4e1a8ecb4ffb1fddan :HASHP24(E+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000ad306249548bef9e44b782cdb34e37834619b66380040e1743n :HASHP25(E+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000a2149f7b82874e80e74fdddd933cf0dcc9c93b637331bc2bd3f9n :HASHP26(E+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x000000000005e976d27bfccf6513a6cbd439d7d0aa32b9211148351485ce4a95n :HASHP27(E+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000002086b20f255fd2445e6da1c31daecced7895d8204637ab13a617e622n :HASHP28(E+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000acbbdaa3839e3f543fed0957f40bfb9766cb3046594c03c7ec55134ceen :HASHP29(E+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x00003a4c74d82c81d000edd18e3248d1d3bb038a62294487fec407121ae93d94n :HASHP30(E+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00d15e350269b32982799997bf185e9fb40a3825030e04b45d766566ccab7b78n :HASHP31(E+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0xe9e5fb99e64e1138cb7b212a9d1b6b0229e42480812d843750e27a78298f2cc7n :HASHP32(E+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(E+1)
+	0x11052edc2e6bbdf79dcb2cdb8ac76b95c04ef4c81a1b6b54a3dc93a412e54fe4n :HASHPDIGEST(E+1)
+	0 => HASHPOS
+	1 => D
+	0x000000000000000000000000000000000000000000000000000000000000002cn :HASHP(E+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x000000000000000000000000000000000000000000000000000000000000bc7en :HASHP(E+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x0000000000000000000000000000000000000000000000000000000000034d60n :HASHP(E+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x00000000000000000000000000000000000000000000000000000000b299ae9an :HASHP(E+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000e61f681bd8n :HASHP(E+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x0000000000000000000000000000000000000000000000000000e1362450222dn :HASHP(E+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x00000000000000000000000000000000000000000000000000415a5942795c64n :HASHP(E+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000cfc1498366c1f8ffn :HASHP(E+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x0000000000000000000000000000000000000000000000f26a668cd486dc5737n :HASHP(E+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x00000000000000000000000000000000000000000000141abb33dbbe6673314fn :HASHP(E+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x000000000000000000000000000000000000000000a19a2b47e4a3f4b79a4fccn :HASHP(E+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x00000000000000000000000000000000000000004656d8532877758e3108613bn :HASHP(E+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x000000000000000000000000000000000000002069ef6bae1c489aca2ced04d4n :HASHP(E+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x0000000000000000000000000000000000005ac483f5b90b53455aba1562ed67n :HASHP(E+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x00000000000000000000000000000000000f7e0c2c71bd78c8a53c32c60f4de4n :HASHP(E+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000e0a5c2535ba5a51b21e41eb29b120477n :HASHP(E+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x0000000000000000000000000000000a4cfd0f7c68a0b769231d5bfb59f4629an :HASHP(E+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x000000000000000000000000000099e87cb70c96d00b44f018895c316732247en :HASHP(E+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x00000000000000000000000000ec318c2927fc2bdeb8b47a231f26ca7cfd5267n :HASHP(E+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x0000000000000000000000005e3128f839daf459d95c2db858979bdd4eb9bcfdn :HASHP(E+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x00000000000000000000002d59357b5330fac558e9772c728c7a809d00c30f46n :HASHP(E+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x00000000000000000000290dc75044ff4285dae3f54c78e336e5fffe477e96fan :HASHP(E+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x0000000000000000004f2e68b533b45c89b00993f79dcd5ab6ea146c557a1ce8n :HASHP(E+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000726aa02a262c788e974f8f972b415c20005bfb5aed729e31n :HASHP(E+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x00000000000000ad8fb0c0f97f92ca27d74ff9289f8c114fd91105ca2a727ecfn :HASHP(E+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x0000000000004966bf59d5ce481baa0303257c425c822bd26839e89b4a78b9e7n :HASHP(E+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x0000000000b3147e75c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b1n :HASHP(E+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x000000008102c9b7511c2115e9297d34866bafc3972a12ea8523af1371b2b4e1n :HASHP(E+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x000000a8ecb4ffb1fddaad306249548bef9e44b782cdb34e37834619b6638004n :HASHP(E+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x00000e1743a2149f7b82874e80e74fdddd933cf0dcc9c93b637331bc2bd3f905n :HASHP(E+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00e976d27bfccf6513a6cbd439d7d0aa32b9211148351485ce4a952086b20f25n :HASHP(E+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x5fd2445e6da1c31daecced7895d8204637ab13a617e622acbbdaa3839e3f543fn :HASHP(E+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(E+2)
+	0x507bbe0a5ca22586e52f51bd913d7a12d965b4d9e4264fbc2d1d92a503d27689n :HASHPDIGEST(E+2)
+
+	0 => HASHPOS
+	E + 3 => RR
+	0x00000000000000000000000000000000000000000000000000000000000000edn :HASHP1(RR)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000000957n :HASHP2(RR)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000f40bfbn :HASHP3(RR)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000009766cb30n :HASHP4(RR)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000046594c03c7n :HASHP5(RR)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000ec55134cee3an :HASHP6(RR)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000004c74d82c81d000n :HASHP7(RR)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000edd18e3248d1d3bbn :HASHP8(RR)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000038a62294487fec407n :HASHP9(RR)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000121ae93d94d15e350269n :HASHP10(RR)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000b32982799997bf185e9fb4n :HASHP11(RR)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000a3825030e04b45d766566ccn :HASHP12(RR)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000ab7b78e9e5fb99e64e1138cb7bn :HASHP13(RR)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000212a9d1b6b0229e42480812d8437n :HASHP14(RR)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x000000000000000000000000000000000050e27a78298f2cc72cbc7e034d60b2n :HASHP15(RR)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x0000000000000000000000000000000099ae9ae61f681bd8e1362450222d415an :HASHP16(RR)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x0000000000000000000000000000005942795c64cfc1498366c1f8fff26a668cn :HASHP17(RR)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x0000000000000000000000000000d486dc5737141abb33dbbe6673314fa19a2bn :HASHP18(RR)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x0000000000000000000000000047e4a3f4b79a4fcc4656d8532877758e310861n :HASHP19(RR)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x0000000000000000000000003b2069ef6bae1c489aca2ced04d45ac483f5b90bn :HASHP20(RR)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x000000000000000000000053455aba1562ed670f7e0c2c71bd78c8a53c32c60fn :HASHP21(RR)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x000000000000000000004de4e0a5c2535ba5a51b21e41eb29b1204770a4cfd0fn :HASHP22(RR)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x0000000000000000007c68a0b769231d5bfb59f4629a99e87cb70c96d00b44f0n :HASHP23(RR)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x000000000000000018895c316732247eec318c2927fc2bdeb8b47a231f26ca7cn :HASHP24(RR)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000fd52675e3128f839daf459d95c2db858979bdd4eb9bcfd2d59n :HASHP25(RR)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000357b5330fac558e9772c728c7a809d00c30f46290dc75044ff42n :HASHP26(RR)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x000000000085dae3f54c78e336e5fffe477e96fa4f2e68b533b45c89b00993f7n :HASHP27(RR)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000009dcd5ab6ea146c557a1ce8726aa02a262c788e974f8f972b415c2000n :HASHP28(RR)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x0000005bfb5aed729e31ad8fb0c0f97f92ca27d74ff9289f8c114fd91105ca2an :HASHP29(RR)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000727ecf4966bf59d5ce481baa0303257c425c822bd26839e89b4a78b9e7b3n :HASHP30(RR)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00147e75c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b18102c9b751n :HASHP31(RR)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x1c2115e9297d34866bafc3972a12ea8523af1371b2b4e1a8ecb4ffb1fddaad30n :HASHP32(RR)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(RR)
+	0x67c1a42d36cd5b7e0eeb803165cfbbf19757524da31d68c29ef21533152470f6n :HASHPDIGEST(RR)
+
+	0 => HASHPOS
+	RR + 1 => RR
+	1 => D
+	0x0000000000000000000000000000000000000000000000000000000000000062n :HASHP(RR)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x0000000000000000000000000000000000000000000000000000000000004954n :HASHP(RR)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000008bef9en :HASHP(RR)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x0000000000000000000000000000000000000000000000000000000044b782cdn :HASHP(RR)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000b34e378346n :HASHP(RR)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x000000000000000000000000000000000000000000000000000019b66380040en :HASHP(RR)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000001743a2149f7b82n :HASHP(RR)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000874e80e74fdddd93n :HASHP(RR)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x00000000000000000000000000000000000000000000003cf0dcc9c93b637331n :HASHP(RR)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x00000000000000000000000000000000000000000000bc2bd3f905e976d27bfcn :HASHP(RR)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x000000000000000000000000000000000000000000cf6513a6cbd439d7d0aa32n :HASHP(RR)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x0000000000000000000000000000000000000000b9211148351485ce4a952086n :HASHP(RR)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x00000000000000000000000000000000000000b20f255fd2445e6da1c31daeccn :HASHP(RR)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x000000000000000000000000000000000000ed7895d8204637ab13a617e622acn :HASHP(RR)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x0000000000000000000000000000000000bbdaa3839e3f543fed0957f40bfb97n :HASHP(RR)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x0000000000000000000000000000000066cb3046594c03c7ec55134cee3a4c74n :HASHP(RR)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x000000000000000000000000000000d82c81d000edd18e3248d1d3bb038a6229n :HASHP(RR)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x00000000000000000000000000004487fec407121ae93d94d15e350269b32982n :HASHP(RR)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x00000000000000000000000000799997bf185e9fb40a3825030e04b45d766566n :HASHP(RR)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000ccab7b78e9e5fb99e64e1138cb7b212a9d1b6b02n :HASHP(RR)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x000000000000000000000029e42480812d843750e27a78298f2cc72cbc7e034dn :HASHP(RR)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x0000000000000000000060b299ae9ae61f681bd8e1362450222d415a5942795cn :HASHP(RR)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x00000000000000000064cfc1498366c1f8fff26a668cd486dc5737141abb33dbn :HASHP(RR)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000be6673314fa19a2b47e4a3f4b79a4fcc4656d8532877758en :HASHP(RR)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000003108613b2069ef6bae1c489aca2ced04d45ac483f5b90b5345n :HASHP(RR)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x0000000000005aba1562ed670f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535bn :HASHP(RR)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x0000000000a5a51b21e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f462n :HASHP(RR)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x000000009a99e87cb70c96d00b44f018895c316732247eec318c2927fc2bdeb8n :HASHP(RR)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x000000b47a231f26ca7cfd52675e3128f839daf459d95c2db858979bdd4eb9bcn :HASHP(RR)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000fd2d59357b5330fac558e9772c728c7a809d00c30f46290dc75044ff4285n :HASHP(RR)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00dae3f54c78e336e5fffe477e96fa4f2e68b533b45c89b00993f79dcd5ab6ean :HASHP(RR)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x146c557a1ce8726aa02a262c788e974f8f972b415c20005bfb5aed729e31ad8fn :HASHP(RR)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(RR)
+	0x7bc4eccdca839eaa869177dc4a1253fad93e32b9ed95b43a9d95f54b0fac57ebn :HASHPDIGEST(RR)
+	0 => HASHPOS
+	0x00000000000000000000000000000000000000000000000000000000000000b0n :HASHP1(RR+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000c0f9n :HASHP2(RR+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000007f92can :HASHP3(RR+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000027d74ff9n :HASHP4(RR+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000289f8c114fn :HASHP5(RR+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000d91105ca2a72n :HASHP6(RR+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000007ecf4966bf59d5n :HASHP7(RR+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000ce481baa0303257cn :HASHP8(RR+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000425c822bd26839e89bn :HASHP9(RR+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000004a78b9e7b3147e75c399n :HASHP10(RR+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000009bf51d53af79c9926e843bn :HASHP11(RR+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000006b33f6bec5b2c0ca06b18102n :HASHP12(RR+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000c9b7511c2115e9297d34866bafn :HASHP13(RR+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000c3972a12ea8523af1371b2b4e1a8n :HASHP14(RR+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x0000000000000000000000000000000000ecb4ffb1fddaad306249548bef9e44n :HASHP15(RR+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x00000000000000000000000000000000b782cdb34e37834619b66380040e1743n :HASHP16(RR+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x000000000000000000000000000000a2149f7b82874e80e74fdddd933cf0dcc9n :HASHP17(RR+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x0000000000000000000000000000c93b637331bc2bd3f905e976d27bfccf6513n :HASHP18(RR+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x00000000000000000000000000a6cbd439d7d0aa32b9211148351485ce4a9520n :HASHP19(RR+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x00000000000000000000000086b20f255fd2445e6da1c31daecced7895d82046n :HASHP20(RR+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x000000000000000000000037ab13a617e622acbbdaa3839e3f543fed0957f40bn :HASHP21(RR+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x00000000000000000000fb9766cb3046594c03c7ec55134cee3a4c74d82c81d0n :HASHP22(RR+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x00000000000000000000edd18e3248d1d3bb038a62294487fec407121ae93d94n :HASHP23(RR+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x0000000000000000d15e350269b32982799997bf185e9fb40a3825030e04b45dn :HASHP24(RR+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000766566ccab7b78e9e5fb99e64e1138cb7b212a9d1b6b0229e4n :HASHP25(RR+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x0000000000002480812d843750e27a78298f2cc72cbc7e034d60b299ae9ae61fn :HASHP26(RR+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x0000000000681bd8e1362450222d415a5942795c64cfc1498366c1f8fff26a66n :HASHP27(RR+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000008cd486dc5737141abb33dbbe6673314fa19a2b47e4a3f4b79a4fcc46n :HASHP28(RR+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x00000056d8532877758e3108613b2069ef6bae1c489aca2ced04d45ac483f5b9n :HASHP29(RR+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x00000b53455aba1562ed670f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5n :HASHP30(RR+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00a51b21e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f4629a99e87cb7n :HASHP31(RR+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x0c96d00b44f018895c316732247eec318c2927fc2bdeb8b47a231f26ca7cfd52n :HASHP32(RR+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(RR+1)
+	0xefeb5cad64a0eaa8c154ddb7454cd1c9e41f542a836f557ee2fe49b0678f69abn :HASHPDIGEST(RR+1)
+	0 => HASHPOS
+	1 => D
+	0x0000000000000000000000000000000000000000000000000000000000000067n :HASHP(RR+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x0000000000000000000000000000000000000000000000000000000000005e31n :HASHP(RR+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x000000000000000000000000000000000000000000000000000000000028f839n :HASHP(RR+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x00000000000000000000000000000000000000000000000000000000daf459d9n :HASHP(RR+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x0000000000000000000000000000000000000000000000000000005c2db85897n :HASHP(RR+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x00000000000000000000000000000000000000000000000000009bdd4eb9bcfdn :HASHP(RR+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000002d59357b5330fan :HASHP(RR+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000c558e9772c728c7an :HASHP(RR+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x0000000000000000000000000000000000000000000000809d00c30f46290dc7n :HASHP(RR+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x000000000000000000000000000000000000000000005044ff4285dae3f54c78n :HASHP(RR+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x000000000000000000000000000000000000000000e336e5fffe477e96fa4f2en :HASHP(RR+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x000000000000000000000000000000000000000068b533b45c89b00993f79dcdn :HASHP(RR+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x000000000000000000000000000000000000005ab6ea146c557a1ce8726aa02an :HASHP(RR+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x000000000000000000000000000000000000262c788e974f8f972b415c20005bn :HASHP(RR+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x0000000000000000000000000000000000fb5aed729e31ad8fb0c0f97f92ca27n :HASHP(RR+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000d74ff9289f8c114fd91105ca2a727ecfn :HASHP(RR+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x0000000000000000000000000000004966bf59d5ce481baa0303257c425c822bn :HASHP(RR+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x0000000000000000000000000000d26839e89b4a78b9e7b3147e75c3999bf51dn :HASHP(RR+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x0000000000000000000000000053af79c9926e843b6b33f6bec5b2c0ca06b181n :HASHP(RR+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x00000000000000000000000002c9b7511c2115e9297d34866bafc3972a12ea85n :HASHP(RR+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x000000000000000000000023af1371b2b4e1a8ecb4ffb1fddaad306249548befn :HASHP(RR+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x000000000000000000009e44b782cdb34e37834619b66380040e1743a2149f7bn :HASHP(RR+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x00000000000000000082874e80e74fdddd933cf0dcc9c93b637331bc2bd3f905n :HASHP(RR+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000e976d27bfccf6513a6cbd439d7d0aa32b9211148351485cen :HASHP(RR+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000004a952086b20f255fd2445e6da1c31daecced7895d8204637abn :HASHP(RR+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x00000000000013a617e622acbbdaa3839e3f543fed0957f40bfb9766cb304659n :HASHP(RR+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x00000000004c03c7ec55134cee3a4c74d82c81d000edd18e3248d1d3bb038a62n :HASHP(RR+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x00000000294487fec407121ae93d94d15e350269b32982799997bf185e9fb40an :HASHP(RR+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000003825030e04b45d766566ccab7b78e9e5fb99e64e1138cb7b212a9d1b6bn :HASHP(RR+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x00000229e42480812d843750e27a78298f2cc72cbc7e034d60b299ae9ae61f68n :HASHP(RR+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x001bd8e1362450222d415a5942795c64cfc1498366c1f8fff26a668cd486dc57n :HASHP(RR+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x37141abb33dbbe6673314fa19a2b47e4a3f4b79a4fcc4656d8532877758e3108n :HASHP(RR+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHPLEN(RR+2)
+	0x6e81d2625ca6d9d41bc6a1694b4cdff7163c3a9c25be8ddf38b308fa74ef8dd3n :HASHPDIGEST(RR+2)
+
+    RR + 2              :MSTORE(lastHashPId)
+
+    $ => E              :MLOAD(lastHashKId)
+    E + 1 => E          :MSTORE(lastHashKId)
+
+    0 => HASHPOS
+
+	0x0000000000000000000000000000000000000000000000000000000000000020n :HASHK1(E)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000000086b2n :HASHK2(E)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000000f255fn :HASHK3(E)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000d2445e6dn :HASHK4(E)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000a1c31daeccn :HASHK5(E)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000ed7895d82046n :HASHK6(E)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000037ab13a617e622n :HASHK7(E)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000acbbdaa3839e3f54n :HASHK8(E)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000003fed0957f40bfb9766n :HASHK9(E)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000cb3046594c03c7ec5513n :HASHK10(E)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000004cee3a4c74d82c81d000edn :HASHK11(E)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000d18e3248d1d3bb038a622944n :HASHK12(E)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000087fec407121ae93d94d15e3502n :HASHK13(E)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000069b32982799997bf185e9fb40a38n :HASHK14(E)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x000000000000000000000000000000000025030e04b45d766566ccab7b78e9e5n :HASHK15(E)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x00000000000000000000000000000000fb99e64e1138cb7b212a9d1b6b0229e4n :HASHK16(E)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x0000000000000000000000000000002480812d843750e27a78298f2cc72cbc7en :HASHK17(E)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x0000000000000000000000000000034d60b299ae9ae61f681bd8e1362450222dn :HASHK18(E)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x00000000000000000000000000415a5942795c64cfc1498366c1f8fff26a668cn :HASHK19(E)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x000000000000000000000000d486dc5737141abb33dbbe6673314fa19a2b47e4n :HASHK20(E)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x0000000000000000000000a3f4b79a4fcc4656d8532877758e3108613b2069efn :HASHK21(E)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x000000000000000000006bae1c489aca2ced04d45ac483f5b90b53455aba1562n :HASHK22(E)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x000000000000000000ed670f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5n :HASHK23(E)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x0000000000000000a51b21e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59n :HASHK24(E)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000f4629a99e87cb70c96d00b44f018895c316732247eec318c29n :HASHK25(E)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x00000000000027fc2bdeb8b47a231f26ca7cfd52675e3128f839daf459d95c2dn :HASHK26(E)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x0000000000b858979bdd4eb9bcfd2d59357b5330fac558e9772c728c7a809d00n :HASHK27(E)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x00000000c30f46290dc75044ff4285dae3f54c78e336e5fffe477e96fa4f2e68n :HASHK28(E)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000b533b45c89b00993f79dcd5ab6ea146c557a1ce8726aa02a262c788e97n :HASHK29(E)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x00004f8f972b415c20005bfb5aed729e31ad8fb0c0f97f92ca27d74ff9289f8cn :HASHK30(E)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00114fd91105ca2a727ecf4966bf59d5ce481baa0303257c425c822bd26839e8n :HASHK31(E)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x9b4a78b9e7b3147e75c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b1n :HASHK32(E)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(E)
+	0xa00bbd67176ca17ecf1708e15efe724164cdd0a25bc01557de5628b0a3976e3dn :HASHKDIGEST(E)
+	0 => HASHPOS
+	E + 1 => E
+	1 => D
+	0x0000000000000000000000000000000000000000000000000000000000000081n :HASHK(E)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x00000000000000000000000000000000000000000000000000000000000002c9n :HASHK(E)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x0000000000000000000000000000000000000000000000000000000000b7511cn :HASHK(E)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x000000000000000000000000000000000000000000000000000000002115e929n :HASHK(E)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x0000000000000000000000000000000000000000000000000000007d34866bafn :HASHK(E)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x0000000000000000000000000000000000000000000000000000c3972a12ea85n :HASHK(E)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x0000000000000000000000000000000000000000000000000023af1371b2b4e1n :HASHK(E)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000a8ecb4ffb1fddaadn :HASHK(E)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x0000000000000000000000000000000000000000000000306249548bef9e44b7n :HASHK(E)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x0000000000000000000000000000000000000000000082cdb34e37834619b663n :HASHK(E)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x00000000000000000000000000000000000000000080040e1743a2149f7b8287n :HASHK(E)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x00000000000000000000000000000000000000004e80e74fdddd933cf0dcc9c9n :HASHK(E)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x000000000000000000000000000000000000003b637331bc2bd3f905e976d27bn :HASHK(E)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x000000000000000000000000000000000000fccf6513a6cbd439d7d0aa32b921n :HASHK(E)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x00000000000000000000000000000000001148351485ce4a952086b20f255fd2n :HASHK(E)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000445e6da1c31daecced7895d8204637abn :HASHK(E)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x00000000000000000000000000000013a617e622acbbdaa3839e3f543fed0957n :HASHK(E)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x0000000000000000000000000000f40bfb9766cb3046594c03c7ec55134cee3an :HASHK(E)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x000000000000000000000000004c74d82c81d000edd18e3248d1d3bb038a6229n :HASHK(E)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x0000000000000000000000004487fec407121ae93d94d15e350269b329827999n :HASHK(E)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x000000000000000000000097bf185e9fb40a3825030e04b45d766566ccab7b78n :HASHK(E)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x00000000000000000000e9e5fb99e64e1138cb7b212a9d1b6b0229e42480812dn :HASHK(E)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000843750e27a78298f2cc72cbc7e034d60b299ae9ae61f68n :HASHK(E)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x00000000000000001bd8e1362450222d415a5942795c64cfc1498366c1f8fff2n :HASHK(E)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000006a668cd486dc5737141abb33dbbe6673314fa19a2b47e4a3f4n :HASHK(E)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000b79a4fcc4656d8532877758e3108613b2069ef6bae1c489aca2cn :HASHK(E)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x0000000000ed04d45ac483f5b90b53455aba1562ed670f7e0c2c71bd78c8a53cn :HASHK(E)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x0000000032c60f4de4e0a5c2535ba5a51b21e41eb29b1204770a4cfd0f7c68a0n :HASHK(E)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x000000b769231d5bfb59f4629a99e87cb70c96d00b44f018895c316732247eecn :HASHK(E)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000318c2927fc2bdeb8b47a231f26ca7cfd52675e3128f839daf459d95c2db8n :HASHK(E)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x0058979bdd4eb9bcfd2d59357b5330fac558e9772c728c7a809d00c30f46290dn :HASHK(E)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0xc75044ff4285dae3f54c78e336e5fffe477e96fa4f2e68b533b45c89b00993f7n :HASHK(E)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(E)
+	0x14886bcf75f8b113d318c9284efedfb92e142bf0ae92191bee360408daaecf79n :HASHKDIGEST(E)
+	0 => HASHPOS
+	0x000000000000000000000000000000000000000000000000000000000000009dn :HASHK1(E+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000cd5an :HASHK2(E+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000b6ea14n :HASHK3(E+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000006c557a1cn :HASHK4(E+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000e8726aa02an :HASHK5(E+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000262c788e974fn :HASHK6(E+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000008f972b415c2000n :HASHK7(E+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000005bfb5aed729e31adn :HASHK8(E+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000008fb0c0f97f92ca27d7n :HASHK9(E+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000004ff9289f8c114fd91105n :HASHK10(E+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000ca2a727ecf4966bf59d5cen :HASHK11(E+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000481baa0303257c425c822bd2n :HASHK12(E+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000006839e89b4a78b9e7b3147e75c3n :HASHK13(E+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000999bf51d53af79c9926e843b6b33n :HASHK14(E+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x0000000000000000000000000000000000f6bec5b2c0ca06b18102c9b7511c21n :HASHK15(E+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x0000000000000000000000000000000015e9297d34866bafc3972a12ea8523afn :HASHK16(E+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x0000000000000000000000000000001371b2b4e1a8ecb4ffb1fddaad30624954n :HASHK17(E+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x00000000000000000000000000008bef9e44b782cdb34e37834619b66380040en :HASHK18(E+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x000000000000000000000000001743a2149f7b82874e80e74fdddd933cf0dcc9n :HASHK19(E+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x000000000000000000000000c93b637331bc2bd3f905e976d27bfccf6513a6cbn :HASHK20(E+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x0000000000000000000000d439d7d0aa32b9211148351485ce4a952086b20f25n :HASHK21(E+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x000000000000000000005fd2445e6da1c31daecced7895d8204637ab13a617e6n :HASHK22(E+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x00000000000000000022acbbdaa3839e3f543fed0957f40bfb9766cb3046594cn :HASHK23(E+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x000000000000000003c7ec55134cee3a4c74d82c81d000edd18e3248d1d3bb03n :HASHK24(E+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x000000000000008a62294487fec407121ae93d94d15e350269b32982799997bfn :HASHK25(E+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000185e9fb40a3825030e04b45d766566ccab7b78e9e5fb99e64e11n :HASHK26(E+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x000000000038cb7b212a9d1b6b0229e42480812d843750e27a78298f2cc72cbcn :HASHK27(E+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000007e034d60b299ae9ae61f681bd8e1362450222d415a5942795c64cfc1n :HASHK28(E+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000498366c1f8fff26a668cd486dc5737141abb33dbbe6673314fa19a2b47n :HASHK29(E+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000e4a3f4b79a4fcc4656d8532877758e3108613b2069ef6bae1c489aca2cedn :HASHK30(E+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x0004d45ac483f5b90b53455aba1562ed670f7e0c2c71bd78c8a53c32c60f4de4n :HASHK31(E+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0xe0a5c2535ba5a51b21e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f462n :HASHK32(E+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(E+1)
+	0xf8d69b024dadfe0ad77e96e89326e46f00cfe4f90c8ea961df2dd93c4110191an :HASHKDIGEST(E+1)
+	0 => HASHPOS
+	1 => D
+	0x000000000000000000000000000000000000000000000000000000000000009an :HASHK(E+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x00000000000000000000000000000000000000000000000000000000000099e8n :HASHK(E+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000007cb70cn :HASHK(E+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x0000000000000000000000000000000000000000000000000000000096d00b44n :HASHK(E+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000f018895c31n :HASHK(E+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x00000000000000000000000000000000000000000000000000006732247eec31n :HASHK(E+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000008c2927fc2bdeb8n :HASHK(E+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000b47a231f26ca7cfdn :HASHK(E+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x000000000000000000000000000000000000000000000052675e3128f839daf4n :HASHK(E+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x0000000000000000000000000000000000000000000059d95c2db858979bdd4en :HASHK(E+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x000000000000000000000000000000000000000000b9bcfd2d59357b5330fac5n :HASHK(E+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x000000000000000000000000000000000000000058e9772c728c7a809d00c30fn :HASHK(E+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x0000000000000000000000000000000000000046290dc75044ff4285dae3f54cn :HASHK(E+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x00000000000000000000000000000000000078e336e5fffe477e96fa4f2e68b5n :HASHK(E+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x000000000000000000000000000000000033b45c89b00993f79dcd5ab6ea146cn :HASHK(E+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000557a1ce8726aa02a262c788e974f8f97n :HASHK(E+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x0000000000000000000000000000002b415c20005bfb5aed729e31ad8fb0c0f9n :HASHK(E+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x00000000000000000000000000007f92ca27d74ff9289f8c114fd91105ca2a72n :HASHK(E+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x000000000000000000000000007ecf4966bf59d5ce481baa0303257c425c822bn :HASHK(E+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000d26839e89b4a78b9e7b3147e75c3999bf51d53afn :HASHK(E+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x000000000000000000000079c9926e843b6b33f6bec5b2c0ca06b18102c9b751n :HASHK(E+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x000000000000000000001c2115e9297d34866bafc3972a12ea8523af1371b2b4n :HASHK(E+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000e1a8ecb4ffb1fddaad306249548bef9e44b782cdb34e37n :HASHK(E+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000834619b66380040e1743a2149f7b82874e80e74fdddd933cn :HASHK(E+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x00000000000000f0dcc9c93b637331bc2bd3f905e976d27bfccf6513a6cbd439n :HASHK(E+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000d7d0aa32b9211148351485ce4a952086b20f255fd2445e6da1c3n :HASHK(E+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x00000000001daecced7895d8204637ab13a617e622acbbdaa3839e3f543fed09n :HASHK(E+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x0000000057f40bfb9766cb3046594c03c7ec55134cee3a4c74d82c81d000edd1n :HASHK(E+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000008e3248d1d3bb038a62294487fec407121ae93d94d15e350269b3298279n :HASHK(E+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x00009997bf185e9fb40a3825030e04b45d766566ccab7b78e9e5fb99e64e1138n :HASHK(E+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00cb7b212a9d1b6b0229e42480812d843750e27a78298f2cc72cbc7e034d60b2n :HASHK(E+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x99ae9ae61f681bd8e1362450222d415a5942795c64cfc1498366c1f8fff26a66n :HASHK(E+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(E+2)
+	0x4585d484a6963606fdf408b07c2c70160119952ca18c3ec919fbf0a3299cc8acn :HASHKDIGEST(E+2)
+
+	0 => HASHPOS
+	E + 3 => RR
+	0x000000000000000000000000000000000000000000000000000000000000008cn :HASHK1(RR)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000d486n :HASHK2(RR)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000dc5737n :HASHK3(RR)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000141abb33n :HASHK4(RR)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000dbbe667331n :HASHK5(RR)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000004fa19a2b47e4n :HASHK6(RR)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000a3f4b79a4fcc46n :HASHK7(RR)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000056d8532877758e31n :HASHK8(RR)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000008613b2069ef6bae1cn :HASHK9(RR)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000489aca2ced04d45ac483n :HASHK10(RR)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000f5b90b53455aba1562ed67n :HASHK11(RR)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000f7e0c2c71bd78c8a53c32c6n :HASHK12(RR)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000f4de4e0a5c2535ba5a51b21e4n :HASHK13(RR)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000001eb29b1204770a4cfd0f7c68a0b7n :HASHK14(RR)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x000000000000000000000000000000000069231d5bfb59f4629a99e87cb70c96n :HASHK15(RR)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x00000000000000000000000000000000d00b44f018895c316732247eec318c29n :HASHK16(RR)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x00000000000000000000000000000027fc2bdeb8b47a231f26ca7cfd52675e31n :HASHK17(RR)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x000000000000000000000000000028f839daf459d95c2db858979bdd4eb9bcfdn :HASHK18(RR)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x000000000000000000000000002d59357b5330fac558e9772c728c7a809d00c3n :HASHK19(RR)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x0000000000000000000000000f46290dc75044ff4285dae3f54c78e336e5fffen :HASHK20(RR)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x0000000000000000000000477e96fa4f2e68b533b45c89b00993f79dcd5ab6ean :HASHK21(RR)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x00000000000000000000146c557a1ce8726aa02a262c788e974f8f972b415c20n :HASHK22(RR)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x000000000000000000005bfb5aed729e31ad8fb0c0f97f92ca27d74ff9289f8cn :HASHK23(RR)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x0000000000000000114fd91105ca2a727ecf4966bf59d5ce481baa0303257c42n :HASHK24(RR)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x000000000000005c822bd26839e89b4a78b9e7b3147e75c3999bf51d53af79c9n :HASHK25(RR)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000926e843b6b33f6bec5b2c0ca06b18102c9b7511c2115e9297d34n :HASHK26(RR)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x0000000000866bafc3972a12ea8523af1371b2b4e1a8ecb4ffb1fddaad306249n :HASHK27(RR)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x00000000548bef9e44b782cdb34e37834619b66380040e1743a2149f7b82874en :HASHK28(RR)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x00000080e74fdddd933cf0dcc9c93b637331bc2bd3f905e976d27bfccf6513a6n :HASHK29(RR)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000cbd439d7d0aa32b9211148351485ce4a952086b20f255fd2445e6da1c31dn :HASHK30(RR)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00aecced7895d8204637ab13a617e622acbbdaa3839e3f543fed0957f40bfb97n :HASHK31(RR)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x66cb3046594c03c7ec55134cee3a4c74d82c81d000edd18e3248d1d3bb038a62n :HASHK32(RR)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(RR)
+	0xbaacc7367050d496536d640012af726ddc3f80569f930b03aa9ebddda92fd4ebn :HASHKDIGEST(RR)
+	0 => HASHPOS
+	RR + 1 => RR
+	1 => D
+	0x0000000000000000000000000000000000000000000000000000000000000029n :HASHK(RR)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x0000000000000000000000000000000000000000000000000000000000004487n :HASHK(RR)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x0000000000000000000000000000000000000000000000000000000000fec407n :HASHK(RR)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x00000000000000000000000000000000000000000000000000000000121ae93dn :HASHK(RR)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x00000000000000000000000000000000000000000000000000000094d15e3502n :HASHK(RR)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x000000000000000000000000000000000000000000000000000069b329827999n :HASHK(RR)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x0000000000000000000000000000000000000000000000000097bf185e9fb40an :HASHK(RR)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x0000000000000000000000000000000000000000000000003825030e04b45d76n :HASHK(RR)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x00000000000000000000000000000000000000000000006566ccab7b78e9e5fbn :HASHK(RR)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x0000000000000000000000000000000000000000000099e64e1138cb7b212a9dn :HASHK(RR)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x0000000000000000000000000000000000000000001b6b0229e42480812d8437n :HASHK(RR)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x000000000000000000000000000000000000000050e27a78298f2cc72cbc7e03n :HASHK(RR)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x000000000000000000000000000000000000004d60b299ae9ae61f681bd8e136n :HASHK(RR)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x0000000000000000000000000000000000002450222d415a5942795c64cfc149n :HASHK(RR)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x00000000000000000000000000000000008366c1f8fff26a668cd486dc573714n :HASHK(RR)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x000000000000000000000000000000001abb33dbbe6673314fa19a2b47e4a3f4n :HASHK(RR)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x000000000000000000000000000000b79a4fcc4656d8532877758e3108613b20n :HASHK(RR)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x000000000000000000000000000069ef6bae1c489aca2ced04d45ac483f5b90bn :HASHK(RR)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x0000000000000000000000000053455aba1562ed670f7e0c2c71bd78c8a53c32n :HASHK(RR)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000c60f4de4e0a5c2535ba5a51b21e41eb29b120477n :HASHK(RR)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x00000000000000000000000a4cfd0f7c68a0b769231d5bfb59f4629a99e87cb7n :HASHK(RR)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x000000000000000000000c96d00b44f018895c316732247eec318c2927fc2bden :HASHK(RR)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000b8b47a231f26ca7cfd52675e3128f839daf459d95c2db8n :HASHK(RR)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x000000000000000058979bdd4eb9bcfd2d59357b5330fac558e9772c728c7a80n :HASHK(RR)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000009d00c30f46290dc75044ff4285dae3f54c78e336e5fffe477en :HASHK(RR)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x00000000000096fa4f2e68b533b45c89b00993f79dcd5ab6ea146c557a1ce872n :HASHK(RR)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x00000000006aa02a262c788e974f8f972b415c20005bfb5aed729e31ad8fb0c0n :HASHK(RR)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x00000000f97f92ca27d74ff9289f8c114fd91105ca2a727ecf4966bf59d5ce48n :HASHK(RR)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000001baa0303257c425c822bd26839e89b4a78b9e7b3147e75c3999bf51d53n :HASHK(RR)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000af79c9926e843b6b33f6bec5b2c0ca06b18102c9b7511c2115e9297d3486n :HASHK(RR)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x006bafc3972a12ea8523af1371b2b4e1a8ecb4ffb1fddaad306249548bef9e44n :HASHK(RR)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0xb782cdb34e37834619b66380040e1743a2149f7b82874e80e74fdddd933cf0dcn :HASHK(RR)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(RR)
+	0xf36c2f8975ce7d98737b3cf799dd63f8bcea37d005d3b4ffc4ce0888337f73e8n :HASHKDIGEST(RR)
+	0 => HASHPOS
+	0x00000000000000000000000000000000000000000000000000000000000000c9n :HASHK1(RR+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000c93bn :HASHK2(RR+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000637331n :HASHK3(RR+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000bc2bd3f9n :HASHK4(RR+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000005e976d27bn :HASHK5(RR+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000fccf6513a6cbn :HASHK6(RR+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000d439d7d0aa32b9n :HASHK7(RR+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000211148351485ce4an :HASHK8(RR+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000952086b20f255fd244n :HASHK9(RR+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000005e6da1c31daecced7895n :HASHK10(RR+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000d8204637ab13a617e622acn :HASHK11(RR+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000bbdaa3839e3f543fed0957f4n :HASHK12(RR+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000bfb9766cb3046594c03c7ec55n :HASHK13(RR+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000134cee3a4c74d82c81d000edd18en :HASHK14(RR+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x00000000000000000000000000000000003248d1d3bb038a62294487fec40712n :HASHK15(RR+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x000000000000000000000000000000001ae93d94d15e350269b32982799997bfn :HASHK16(RR+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x000000000000000000000000000000185e9fb40a3825030e04b45d766566ccabn :HASHK17(RR+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x00000000000000000000000000007b78e9e5fb99e64e1138cb7b212a9d1b6b02n :HASHK18(RR+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x0000000000000000000000000029e42480812d843750e27a78298f2cc72cbc7en :HASHK19(RR+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x000000000000000000000000034d60b299ae9ae61f681bd8e1362450222d415an :HASHK20(RR+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x00000000000000000000005942795c64cfc1498366c1f8fff26a668cd486dc57n :HASHK21(RR+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x0000000000000000000037141abb33dbbe6673314fa19a2b47e4a3f4b79a4fccn :HASHK22(RR+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x0000000000000000004656d8532877758e3108613b2069ef6bae1c489aca2cedn :HASHK23(RR+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x000000000000000004d45ac483f5b90b53455aba1562ed670f7e0c2c71bd78c8n :HASHK24(RR+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000a53c32c60f4de4e0a5c2535ba5a51b21e41eb29b1204770a4cn :HASHK25(RR+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000fd0f7c68a0b769231d5bfb59f4629a99e87cb70c96d00b44f018n :HASHK26(RR+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x0000000000895c316732247eec318c2927fc2bdeb8b47a231f26ca7cfd52675en :HASHK27(RR+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000003128f839daf459d95c2db858979bdd4eb9bcfd2d59357b5330fac558n :HASHK28(RR+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000e9772c728c7a809d00c30f46290dc75044ff4285dae3f54c78e336e5ffn :HASHK29(RR+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000fe477e96fa4f2e68b533b45c89b00993f79dcd5ab6ea146c557a1ce8726an :HASHK30(RR+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00a02a262c788e974f8f972b415c20005bfb5aed729e31ad8fb0c0f97f92ca27n :HASHK31(RR+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0xd74ff9289f8c114fd91105ca2a727ecf4966bf59d5ce481baa0303257c425c82n :HASHK32(RR+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(RR+1)
+	0x92d7c00d61163975f5041b764bcb08af081de5427011d27df4ee78eab87d6ed7n :HASHKDIGEST(RR+1)
+	0 => HASHPOS
+	1 => D
+	0x000000000000000000000000000000000000000000000000000000000000002bn :HASHK(RR+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x000000000000000000000000000000000000000000000000000000000000d268n :HASHK(RR+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x000000000000000000000000000000000000000000000000000000000039e89bn :HASHK(RR+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x000000000000000000000000000000000000000000000000000000004a78b9e7n :HASHK(RR+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000b3147e75c3n :HASHK(RR+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x0000000000000000000000000000000000000000000000000000999bf51d53afn :HASHK(RR+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x0000000000000000000000000000000000000000000000000079c9926e843b6bn :HASHK(RR+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x00000000000000000000000000000000000000000000000033f6bec5b2c0ca06n :HASHK(RR+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x0000000000000000000000000000000000000000000000b18102c9b7511c2115n :HASHK(RR+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x00000000000000000000000000000000000000000000e9297d34866bafc3972an :HASHK(RR+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x00000000000000000000000000000000000000000012ea8523af1371b2b4e1a8n :HASHK(RR+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x0000000000000000000000000000000000000000ecb4ffb1fddaad306249548bn :HASHK(RR+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x00000000000000000000000000000000000000ef9e44b782cdb34e37834619b6n :HASHK(RR+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x0000000000000000000000000000000000006380040e1743a2149f7b82874e80n :HASHK(RR+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x0000000000000000000000000000000000e74fdddd933cf0dcc9c93b637331bcn :HASHK(RR+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x000000000000000000000000000000002bd3f905e976d27bfccf6513a6cbd439n :HASHK(RR+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x000000000000000000000000000000d7d0aa32b9211148351485ce4a952086b2n :HASHK(RR+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x00000000000000000000000000000f255fd2445e6da1c31daecced7895d82046n :HASHK(RR+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x0000000000000000000000000037ab13a617e622acbbdaa3839e3f543fed0957n :HASHK(RR+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000f40bfb9766cb3046594c03c7ec55134cee3a4c74n :HASHK(RR+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x0000000000000000000000d82c81d000edd18e3248d1d3bb038a62294487fec4n :HASHK(RR+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x0000000000000000000007121ae93d94d15e350269b32982799997bf185e9fb4n :HASHK(RR+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x0000000000000000000a3825030e04b45d766566ccab7b78e9e5fb99e64e1138n :HASHK(RR+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000cb7b212a9d1b6b0229e42480812d843750e27a78298f2cc7n :HASHK(RR+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000002cbc7e034d60b299ae9ae61f681bd8e1362450222d415a5942n :HASHK(RR+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000795c64cfc1498366c1f8fff26a668cd486dc5737141abb33dbben :HASHK(RR+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x00000000006673314fa19a2b47e4a3f4b79a4fcc4656d8532877758e3108613bn :HASHK(RR+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x000000002069ef6bae1c489aca2ced04d45ac483f5b90b53455aba1562ed670fn :HASHK(RR+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000007e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5a51b21e41eb29b1204n :HASHK(RR+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000770a4cfd0f7c68a0b769231d5bfb59f4629a99e87cb70c96d00b44f01889n :HASHK(RR+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x005c316732247eec318c2927fc2bdeb8b47a231f26ca7cfd52675e3128f839dan :HASHK(RR+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0xf459d95c2db858979bdd4eb9bcfd2d59357b5330fac558e9772c728c7a809d00n :HASHK(RR+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(RR+2)
+	0xafe79eb2d3802413208d50a26d2e09f85f633c131d3001b52a0a96c409008156n :HASHKDIGEST(RR+2)
+
+    RR + 2              :MSTORE(lastHashKId)
+
+    $ => E              :MLOAD(lastHashSId)
+    E + 1 => E          :MSTORE(lastHashSId)
+
+	0 => HASHPOS
+	0x000000000000000000000000000000000000000000000000000000000000007en :HASHS1(E)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000034dn :HASHS2(E)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000060b299n :HASHS3(E)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000ae9ae61fn :HASHS4(E)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000681bd8e136n :HASHS5(E)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000002450222d415an :HASHS6(E)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000005942795c64cfc1n :HASHS7(E)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000498366c1f8fff26an :HASHS8(E)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000668cd486dc5737141an :HASHS9(E)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000bb33dbbe6673314fa19an :HASHS10(E)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000002b47e4a3f4b79a4fcc4656n :HASHS11(E)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000d8532877758e3108613b2069n :HASHS12(E)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000ef6bae1c489aca2ced04d45ac4n :HASHS13(E)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000083f5b90b53455aba1562ed670f7en :HASHS14(E)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x00000000000000000000000000000000000c2c71bd78c8a53c32c60f4de4e0a5n :HASHS15(E)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x00000000000000000000000000000000c2535ba5a51b21e41eb29b1204770a4cn :HASHS16(E)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x000000000000000000000000000000fd0f7c68a0b769231d5bfb59f4629a99e8n :HASHS17(E)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x00000000000000000000000000007cb70c96d00b44f018895c316732247eec31n :HASHS18(E)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x000000000000000000000000008c2927fc2bdeb8b47a231f26ca7cfd52675e31n :HASHS19(E)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x00000000000000000000000028f839daf459d95c2db858979bdd4eb9bcfd2d59n :HASHS20(E)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x0000000000000000000000357b5330fac558e9772c728c7a809d00c30f46290dn :HASHS21(E)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x00000000000000000000c75044ff4285dae3f54c78e336e5fffe477e96fa4f2en :HASHS22(E)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x00000000000000000068b533b45c89b00993f79dcd5ab6ea146c557a1ce8726an :HASHS23(E)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x0000000000000000a02a262c788e974f8f972b415c20005bfb5aed729e31ad8fn :HASHS24(E)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000b0c0f97f92ca27d74ff9289f8c114fd91105ca2a727ecf4966n :HASHS25(E)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000bf59d5ce481baa0303257c425c822bd26839e89b4a78b9e7b314n :HASHS26(E)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x00000000007e75c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b18102n :HASHS27(E)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x00000000c9b7511c2115e9297d34866bafc3972a12ea8523af1371b2b4e1a8ecn :HASHS28(E)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000b4ffb1fddaad306249548bef9e44b782cdb34e37834619b66380040e17n :HASHS29(E)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x000043a2149f7b82874e80e74fdddd933cf0dcc9c93b637331bc2bd3f905e976n :HASHS30(E)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00d27bfccf6513a6cbd439d7d0aa32b9211148351485ce4a952086b20f255fd2n :HASHS31(E)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x445e6da1c31daecced7895d8204637ab13a617e622acbbdaa3839e3f543fed09n :HASHS32(E)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(E)
+	0x6649f36ba553e30448a06265e1967546b4e73ef6425a5ede75fdf6a092cd1341n :HASHSDIGEST(E)
+	0 => HASHPOS
+	E + 1 => E
+	1 => D
+	0x0000000000000000000000000000000000000000000000000000000000000057n :HASHS(E)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x000000000000000000000000000000000000000000000000000000000000f40bn :HASHS(E)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x0000000000000000000000000000000000000000000000000000000000fb9766n :HASHS(E)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x00000000000000000000000000000000000000000000000000000000cb304659n :HASHS(E)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x0000000000000000000000000000000000000000000000000000004c03c7ec55n :HASHS(E)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x0000000000000000000000000000000000000000000000000000134cee3a4c74n :HASHS(E)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x00000000000000000000000000000000000000000000000000d82c81d000edd1n :HASHS(E)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x0000000000000000000000000000000000000000000000008e3248d1d3bb038an :HASHS(E)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x000000000000000000000000000000000000000000000062294487fec407121an :HASHS(E)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x00000000000000000000000000000000000000000000e93d94d15e350269b329n :HASHS(E)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x00000000000000000000000000000000000000000082799997bf185e9fb40a38n :HASHS(E)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x000000000000000000000000000000000000000025030e04b45d766566ccab7bn :HASHS(E)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x0000000000000000000000000000000000000078e9e5fb99e64e1138cb7b212an :HASHS(E)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x0000000000000000000000000000000000009d1b6b0229e42480812d843750e2n :HASHS(E)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x00000000000000000000000000000000007a78298f2cc72cbc7e034d60b299aen :HASHS(E)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x000000000000000000000000000000009ae61f681bd8e1362450222d415a5942n :HASHS(E)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x000000000000000000000000000000795c64cfc1498366c1f8fff26a668cd486n :HASHS(E)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x0000000000000000000000000000dc5737141abb33dbbe6673314fa19a2b47e4n :HASHS(E)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x00000000000000000000000000a3f4b79a4fcc4656d8532877758e3108613b20n :HASHS(E)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x00000000000000000000000069ef6bae1c489aca2ced04d45ac483f5b90b5345n :HASHS(E)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x00000000000000000000005aba1562ed670f7e0c2c71bd78c8a53c32c60f4de4n :HASHS(E)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x00000000000000000000e0a5c2535ba5a51b21e41eb29b1204770a4cfd0f7c68n :HASHS(E)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000a0b769231d5bfb59f4629a99e87cb70c96d00b44f01889n :HASHS(E)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x00000000000000005c316732247eec318c2927fc2bdeb8b47a231f26ca7cfd52n :HASHS(E)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x00000000000000675e3128f839daf459d95c2db858979bdd4eb9bcfd2d59357bn :HASHS(E)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x0000000000005330fac558e9772c728c7a809d00c30f46290dc75044ff4285dan :HASHS(E)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x0000000000e3f54c78e336e5fffe477e96fa4f2e68b533b45c89b00993f79dcdn :HASHS(E)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x000000005ab6ea146c557a1ce8726aa02a262c788e974f8f972b415c20005bfbn :HASHS(E)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000005aed729e31ad8fb0c0f97f92ca27d74ff9289f8c114fd91105ca2a727en :HASHS(E)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000cf4966bf59d5ce481baa0303257c425c822bd26839e89b4a78b9e7b3147en :HASHS(E)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x0075c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b18102c9b7511c21n :HASHS(E)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x15e9297d34866bafc3972a12ea8523af1371b2b4e1a8ecb4ffb1fddaad306249n :HASHS(E)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(E)
+	0x3f9387060c72d84bf90ecbf2d3143843996f4d4770491b7ef3a13a6980813661n :HASHSDIGEST(E)
+	0 => HASHPOS
+	0x0000000000000000000000000000000000000000000000000000000000000054n :HASHS1(E+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000008befn :HASHS2(E+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000009e44b7n :HASHS3(E+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000082cdb34en :HASHS4(E+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000037834619b6n :HASHS5(E+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000006380040e1743n :HASHS6(E+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000a2149f7b82874en :HASHS7(E+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000080e74fdddd933cf0n :HASHS8(E+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000dcc9c93b637331bc2bn :HASHS9(E+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000d3f905e976d27bfccf65n :HASHS10(E+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000013a6cbd439d7d0aa32b921n :HASHS11(E+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000001148351485ce4a952086b20fn :HASHS12(E+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000255fd2445e6da1c31daecced78n :HASHS13(E+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000095d8204637ab13a617e622acbbdan :HASHS14(E+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x0000000000000000000000000000000000a3839e3f543fed0957f40bfb9766cbn :HASHS15(E+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x000000000000000000000000000000003046594c03c7ec55134cee3a4c74d82cn :HASHS16(E+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x00000000000000000000000000000081d000edd18e3248d1d3bb038a62294487n :HASHS17(E+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x0000000000000000000000000000fec407121ae93d94d15e350269b329827999n :HASHS18(E+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x0000000000000000000000000097bf185e9fb40a3825030e04b45d766566ccabn :HASHS19(E+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x0000000000000000000000007b78e9e5fb99e64e1138cb7b212a9d1b6b0229e4n :HASHS20(E+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x00000000000000000000002480812d843750e27a78298f2cc72cbc7e034d60b2n :HASHS21(E+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x0000000000000000000099ae9ae61f681bd8e1362450222d415a5942795c64cfn :HASHS22(E+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x000000000000000000c1498366c1f8fff26a668cd486dc5737141abb33dbbe66n :HASHS23(E+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x000000000000000073314fa19a2b47e4a3f4b79a4fcc4656d8532877758e3108n :HASHS24(E+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x00000000000000613b2069ef6bae1c489aca2ced04d45ac483f5b90b53455aban :HASHS25(E+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x0000000000001562ed670f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5a5n :HASHS26(E+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x00000000001b21e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f4629a99n :HASHS27(E+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x00000000e87cb70c96d00b44f018895c316732247eec318c2927fc2bdeb8b47an :HASHS28(E+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000231f26ca7cfd52675e3128f839daf459d95c2db858979bdd4eb9bcfd2dn :HASHS29(E+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x000059357b5330fac558e9772c728c7a809d00c30f46290dc75044ff4285dae3n :HASHS30(E+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00f54c78e336e5fffe477e96fa4f2e68b533b45c89b00993f79dcd5ab6ea146cn :HASHS31(E+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x557a1ce8726aa02a262c788e974f8f972b415c20005bfb5aed729e31ad8fb0c0n :HASHS32(E+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(E+1)
+	0xef6878509124478046ae98b06183176b9a8820781e1a9029f772af0740c828ebn :HASHSDIGEST(E+1)
+	0 => HASHPOS
+	1 => D
+	0x00000000000000000000000000000000000000000000000000000000000000f9n :HASHS(E+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x0000000000000000000000000000000000000000000000000000000000007f92n :HASHS(E+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x0000000000000000000000000000000000000000000000000000000000ca27d7n :HASHS(E+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x000000000000000000000000000000000000000000000000000000004ff9289fn :HASHS(E+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x0000000000000000000000000000000000000000000000000000008c114fd911n :HASHS(E+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x000000000000000000000000000000000000000000000000000005ca2a727ecfn :HASHS(E+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000004966bf59d5ce48n :HASHS(E+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x0000000000000000000000000000000000000000000000001baa0303257c425cn :HASHS(E+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x0000000000000000000000000000000000000000000000822bd26839e89b4a78n :HASHS(E+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x00000000000000000000000000000000000000000000b9e7b3147e75c3999bf5n :HASHS(E+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x0000000000000000000000000000000000000000001d53af79c9926e843b6b33n :HASHS(E+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x0000000000000000000000000000000000000000f6bec5b2c0ca06b18102c9b7n :HASHS(E+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x00000000000000000000000000000000000000511c2115e9297d34866bafc397n :HASHS(E+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x0000000000000000000000000000000000002a12ea8523af1371b2b4e1a8ecb4n :HASHS(E+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x0000000000000000000000000000000000ffb1fddaad306249548bef9e44b782n :HASHS(E+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000cdb34e37834619b66380040e1743a214n :HASHS(E+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x0000000000000000000000000000009f7b82874e80e74fdddd933cf0dcc9c93bn :HASHS(E+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x0000000000000000000000000000637331bc2bd3f905e976d27bfccf6513a6cbn :HASHS(E+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x00000000000000000000000000d439d7d0aa32b9211148351485ce4a952086b2n :HASHS(E+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x0000000000000000000000000f255fd2445e6da1c31daecced7895d8204637abn :HASHS(E+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x000000000000000000000013a617e622acbbdaa3839e3f543fed0957f40bfb97n :HASHS(E+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x0000000000000000000066cb3046594c03c7ec55134cee3a4c74d82c81d000edn :HASHS(E+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000d18e3248d1d3bb038a62294487fec407121ae93d94d15en :HASHS(E+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000350269b32982799997bf185e9fb40a3825030e04b45d7665n :HASHS(E+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x0000000000000066ccab7b78e9e5fb99e64e1138cb7b212a9d1b6b0229e42480n :HASHS(E+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000812d843750e27a78298f2cc72cbc7e034d60b299ae9ae61f681bn :HASHS(E+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x0000000000d8e1362450222d415a5942795c64cfc1498366c1f8fff26a668cd4n :HASHS(E+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x0000000086dc5737141abb33dbbe6673314fa19a2b47e4a3f4b79a4fcc4656d8n :HASHS(E+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x000000532877758e3108613b2069ef6bae1c489aca2ced04d45ac483f5b90b53n :HASHS(E+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000455aba1562ed670f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5a51bn :HASHS(E+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x0021e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f4629a99e87cb70c96n :HASHS(E+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0xd00b44f018895c316732247eec318c2927fc2bdeb8b47a231f26ca7cfd52675en :HASHS(E+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(E+2)
+	0x2ab4a2e6d2afbc945ac3a06fd6647bbd9d02e529fd25d3b8d854696cfefec5den :HASHSDIGEST(E+2)
+	0 => HASHPOS
+	E + 3 => RR
+	0x0000000000000000000000000000000000000000000000000000000000000031n :HASHS1(RR)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000000000028f8n :HASHS2(RR)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000039daf4n :HASHS3(RR)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000059d95c2dn :HASHS4(RR)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000b858979bddn :HASHS5(RR)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000004eb9bcfd2d59n :HASHS6(RR)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000357b5330fac558n :HASHS7(RR)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000e9772c728c7a809dn :HASHS8(RR)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000c30f46290dc75044n :HASHS9(RR)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000ff4285dae3f54c78e336n :HASHS10(RR)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000e5fffe477e96fa4f2e68b5n :HASHS11(RR)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000033b45c89b00993f79dcd5ab6n :HASHS12(RR)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000ea146c557a1ce8726aa02a262cn :HASHS13(RR)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000788e974f8f972b415c20005bfb5an :HASHS14(RR)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x0000000000000000000000000000000000ed729e31ad8fb0c0f97f92ca27d74fn :HASHS15(RR)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x00000000000000000000000000000000f9289f8c114fd91105ca2a727ecf4966n :HASHS16(RR)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x000000000000000000000000000000bf59d5ce481baa0303257c425c822bd268n :HASHS17(RR)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x000000000000000000000000000039e89b4a78b9e7b3147e75c3999bf51d53afn :HASHS18(RR)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x0000000000000000000000000079c9926e843b6b33f6bec5b2c0ca06b18102c9n :HASHS19(RR)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x000000000000000000000000b7511c2115e9297d34866bafc3972a12ea8523afn :HASHS20(RR)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x00000000000000000000001371b2b4e1a8ecb4ffb1fddaad306249548bef9e44n :HASHS21(RR)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x00000000000000000000b782cdb34e37834619b66380040e1743a2149f7b8287n :HASHS22(RR)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x0000000000000000004e80e74fdddd933cf0dcc9c93b637331bc2bd3f905e976n :HASHS23(RR)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x0000000000000000d27bfccf6513a6cbd439d7d0aa32b9211148351485ce4a95n :HASHS24(RR)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x000000000000002086b20f255fd2445e6da1c31daecced7895d8204637ab13a6n :HASHS25(RR)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x00000000000017e622acbbdaa3839e3f543fed0957f40bfb9766cb3046594c03n :HASHS26(RR)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x0000000000c7ec55134cee3a4c74d82c81d000edd18e3248d1d3bb038a622944n :HASHS27(RR)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x0000000087fec407121ae93d94d15e350269b32982799997bf185e9fb40a3825n :HASHS28(RR)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000030e04b45d766566ccab7b78e9e5fb99e64e1138cb7b212a9d1b6b0229n :HASHS29(RR)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000e42480812d843750e27a78298f2cc72cbc7e034d60b299ae9ae61f681bd8n :HASHS30(RR)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x00e1362450222d415a5942795c64cfc1498366c1f8fff26a668cd486dc573714n :HASHS31(RR)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x1abb33dbbe6673314fa19a2b47e4a3f4b79a4fcc4656d8532877758e3108613bn :HASHS32(RR)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(RR)
+	0x9a0fd1e9d95546d6c9e04cd1f17697ac9be4d7014eb5871f38282c13b173ef45n :HASHSDIGEST(RR)
+	0 => HASHPOS
+	RR + 1 => RR
+	1 => D
+	0x0000000000000000000000000000000000000000000000000000000000000020n :HASHS(RR)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x00000000000000000000000000000000000000000000000000000000000069efn :HASHS(RR)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000006bae1cn :HASHS(RR)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x00000000000000000000000000000000000000000000000000000000489aca2cn :HASHS(RR)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000ed04d45ac4n :HASHS(RR)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x000000000000000000000000000000000000000000000000000083f5b90b5345n :HASHS(RR)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000005aba1562ed670fn :HASHS(RR)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x0000000000000000000000000000000000000000000000007e0c2c71bd78c8a5n :HASHS(RR)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x00000000000000000000000000000000000000000000003c32c60f4de4e0a5c2n :HASHS(RR)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x00000000000000000000000000000000000000000000535ba5a51b21e41eb29bn :HASHS(RR)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x0000000000000000000000000000000000000000001204770a4cfd0f7c68a0b7n :HASHS(RR)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x000000000000000000000000000000000000000069231d5bfb59f4629a99e87cn :HASHS(RR)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x00000000000000000000000000000000000000b70c96d00b44f018895c316732n :HASHS(RR)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x000000000000000000000000000000000000247eec318c2927fc2bdeb8b47a23n :HASHS(RR)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x00000000000000000000000000000000001f26ca7cfd52675e3128f839daf459n :HASHS(RR)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000d95c2db858979bdd4eb9bcfd2d59357bn :HASHS(RR)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x0000000000000000000000000000005330fac558e9772c728c7a809d00c30f46n :HASHS(RR)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x0000000000000000000000000000290dc75044ff4285dae3f54c78e336e5fffen :HASHS(RR)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x00000000000000000000000000477e96fa4f2e68b533b45c89b00993f79dcd5an :HASHS(RR)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000b6ea146c557a1ce8726aa02a262c788e974f8f97n :HASHS(RR)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x00000000000000000000002b415c20005bfb5aed729e31ad8fb0c0f97f92ca27n :HASHS(RR)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x00000000000000000000d74ff9289f8c114fd91105ca2a727ecf4966bf59d5cen :HASHS(RR)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000481baa0303257c425c822bd26839e89b4a78b9e7b3147en :HASHS(RR)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x000000000000000075c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b1n :HASHS(RR)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000008102c9b7511c2115e9297d34866bafc3972a12ea8523af1371n :HASHS(RR)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000b2b4e1a8ecb4ffb1fddaad306249548bef9e44b782cdb34e3783n :HASHS(RR)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x00000000004619b66380040e1743a2149f7b82874e80e74fdddd933cf0dcc9c9n :HASHS(RR)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x000000003b637331bc2bd3f905e976d27bfccf6513a6cbd439d7d0aa32b92111n :HASHS(RR)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x00000048351485ce4a952086b20f255fd2445e6da1c31daecced7895d8204637n :HASHS(RR)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000ab13a617e622acbbdaa3839e3f543fed0957f40bfb9766cb3046594c03c7n :HASHS(RR)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00ec55134cee3a4c74d82c81d000edd18e3248d1d3bb038a62294487fec40712n :HASHS(RR)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x1ae93d94d15e350269b32982799997bf185e9fb40a3825030e04b45d766566ccn :HASHS(RR)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(RR)
+	0xbe333a206eaf4b5838c364afdbe3992213fb5881a38b6a116db43c35a11a2556n :HASHSDIGEST(RR)
+	0 => HASHPOS
+	0x00000000000000000000000000000000000000000000000000000000000000abn :HASHS1(RR+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000007b78n :HASHS2(RR+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000e9e5fbn :HASHS3(RR+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000099e64e11n :HASHS4(RR+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000000038cb7b212an :HASHS5(RR+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000000000009d1b6b0229e4n :HASHS6(RR+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000002480812d843750n :HASHS7(RR+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000e27a78298f2cc72cn :HASHS8(RR+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000bc7e034d60b299ae9an :HASHS9(RR+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000e61f681bd8e136245022n :HASHS10(RR+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000002d415a5942795c64cfc149n :HASHS11(RR+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000008366c1f8fff26a668cd486dcn :HASHS12(RR+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000005737141abb33dbbe6673314fa1n :HASHS13(RR+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000009a2b47e4a3f4b79a4fcc4656d853n :HASHS14(RR+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x00000000000000000000000000000000002877758e3108613b2069ef6bae1c48n :HASHS15(RR+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x000000000000000000000000000000009aca2ced04d45ac483f5b90b53455aban :HASHS16(RR+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x0000000000000000000000000000001562ed670f7e0c2c71bd78c8a53c32c60fn :HASHS17(RR+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x00000000000000000000000000004de4e0a5c2535ba5a51b21e41eb29b120477n :HASHS18(RR+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x000000000000000000000000000a4cfd0f7c68a0b769231d5bfb59f4629a99e8n :HASHS19(RR+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x0000000000000000000000007cb70c96d00b44f018895c316732247eec318c29n :HASHS20(RR+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x000000000000000000000027fc2bdeb8b47a231f26ca7cfd52675e3128f839dan :HASHS21(RR+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x00000000000000000000f459d95c2db858979bdd4eb9bcfd2d59357b5330fac5n :HASHS22(RR+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x00000000000000000058e9772c728c7a809d00c30f46290dc75044ff4285dae3n :HASHS23(RR+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x0000000000000000f54c78e336e5fffe477e96fa4f2e68b533b45c89b00993f7n :HASHS24(RR+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x000000000000009dcd5ab6ea146c557a1ce8726aa02a262c788e974f8f972b41n :HASHS25(RR+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x0000000000005c20005bfb5aed729e31ad8fb0c0f97f92ca27d74ff9289f8c11n :HASHS26(RR+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x00000000004fd91105ca2a727ecf4966bf59d5ce481baa0303257c425c822bd2n :HASHS27(RR+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000006839e89b4a78b9e7b3147e75c3999bf51d53af79c9926e843b6b33f6n :HASHS28(RR+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000bec5b2c0ca06b18102c9b7511c2115e9297d34866bafc3972a12ea8523n :HASHS29(RR+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000af1371b2b4e1a8ecb4ffb1fddaad306249548bef9e44b782cdb34e378346n :HASHS30(RR+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x0019b66380040e1743a2149f7b82874e80e74fdddd933cf0dcc9c93b637331bcn :HASHS31(RR+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0x2bd3f905e976d27bfccf6513a6cbd439d7d0aa32b9211148351485ce4a952086n :HASHS32(RR+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(RR+1)
+	0xd4b335866ceff4c87917382b9df51ced722f30e7b05316a367c361fb4077c035n :HASHSDIGEST(RR+1)
+	0 => HASHPOS
+	1 => D
+	0x00000000000000000000000000000000000000000000000000000000000000b2n :HASHS(RR+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x0000000000000000000000000000000000000000000000000000000000000f25n :HASHS(RR+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000005fd244n :HASHS(RR+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x000000000000000000000000000000000000000000000000000000005e6da1c3n :HASHS(RR+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x0000000000000000000000000000000000000000000000000000001daecced78n :HASHS(RR+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x000000000000000000000000000000000000000000000000000095d8204637abn :HASHS(RR+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x0000000000000000000000000000000000000000000000000013a617e622acbbn :HASHS(RR+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000daa3839e3f543fedn :HASHS(RR+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x00000000000000000000000000000000000000000000000957f40bfb9766cb30n :HASHS(RR+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x0000000000000000000000000000000000000000000046594c03c7ec55134ceen :HASHS(RR+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x0000000000000000000000000000000000000000003a4c74d82c81d000edd18en :HASHS(RR+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x00000000000000000000000000000000000000003248d1d3bb038a62294487fen :HASHS(RR+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x00000000000000000000000000000000000000c407121ae93d94d15e350269b3n :HASHS(RR+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x0000000000000000000000000000000000002982799997bf185e9fb40a382503n :HASHS(RR+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x00000000000000000000000000000000000e04b45d766566ccab7b78e9e5fb99n :HASHS(RR+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000e64e1138cb7b212a9d1b6b0229e42480n :HASHS(RR+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x000000000000000000000000000000812d843750e27a78298f2cc72cbc7e034dn :HASHS(RR+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x000000000000000000000000000060b299ae9ae61f681bd8e1362450222d415an :HASHS(RR+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x000000000000000000000000005942795c64cfc1498366c1f8fff26a668cd486n :HASHS(RR+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000dc5737141abb33dbbe6673314fa19a2b47e4a3f4n :HASHS(RR+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x0000000000000000000000b79a4fcc4656d8532877758e3108613b2069ef6baen :HASHS(RR+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x000000000000000000001c489aca2ced04d45ac483f5b90b53455aba1562ed67n :HASHS(RR+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x0000000000000000000f7e0c2c71bd78c8a53c32c60f4de4e0a5c2535ba5a51bn :HASHS(RR+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x000000000000000021e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f462n :HASHS(RR+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x000000000000009a99e87cb70c96d00b44f018895c316732247eec318c2927fcn :HASHS(RR+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x0000000000002bdeb8b47a231f26ca7cfd52675e3128f839daf459d95c2db858n :HASHS(RR+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x0000000000979bdd4eb9bcfd2d59357b5330fac558e9772c728c7a809d00c30fn :HASHS(RR+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x0000000046290dc75044ff4285dae3f54c78e336e5fffe477e96fa4f2e68b533n :HASHS(RR+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x000000b45c89b00993f79dcd5ab6ea146c557a1ce8726aa02a262c788e974f8fn :HASHS(RR+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x0000972b415c20005bfb5aed729e31ad8fb0c0f97f92ca27d74ff9289f8c114fn :HASHS(RR+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00d91105ca2a727ecf4966bf59d5ce481baa0303257c425c822bd26839e89b4an :HASHS(RR+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x78b9e7b3147e75c3999bf51d53af79c9926e843b6b33f6bec5b2c0ca06b18102n :HASHS(RR+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHSLEN(RR+2)
+	0xf4a6aea8c5a594c22b8944b0dd3d1abc4811e507ba27335bf7b76e1b9a1960b4n :HASHSDIGEST(RR+2)
+
+    RR + 2                      :MSTORE(lastHashSId)
+    0 => HASHPOS

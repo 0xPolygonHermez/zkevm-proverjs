@@ -605,9 +605,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||
-            l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest ||
-            l.hashS || l.hashS1 || l.hashSLen || l.hashSDigest) {
+            l.hashP || l.hashPLen || l.hashPDigest ||
+            l.hashK || l.hashKLen || l.hashKDigest ||
+            l.hashS || l.hashSLen || l.hashSDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -852,9 +852,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
 
-                if (l.hashK || l.hashK1) {
+                if (l.hashK) {
                     if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK(${addr}) out of bounds (${pos+size} > ${ctx.hashK[addr].data.length}) ${sourceRef}`);
@@ -876,9 +876,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
                     nHits++;
                 }
-                if (l.hashS || l.hashS1) {
+                if (l.hashS) {
                     if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashS[addr].data.length) throw new Error(`Accessing hashS(${addr}) out of bounds (${pos+size} > ${ctx.hashS[addr].data.length}) ${sourceRef}`);
@@ -900,9 +900,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashS[addr].digest);
                     nHits++;
                 }
-                if (l.hashP || l.hashP1) {
+                if (l.hashP) {
                     if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
@@ -1323,12 +1323,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
+        pols.hashBytesInD[i] = l.hashBytesInD ? 1n : 0n;
+        pols.hashBytes[i] = l.hashBytes ? BigInt(l.hashBytes) : 0n;
 
-        if (l.hashK || l.hashK1) {
+        if (l.hashK) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
             pols.hashK[i] = l.hashK ? 1n : 0n;
-            pols.hashK1[i] = l.hashK1 ? 1n : 0n;
-            const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1357,7 +1358,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashK[i] = 0n;
-            pols.hashK1[i] = 0n;
         }
 
         if (l.hashKLen) {
@@ -1404,11 +1404,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
 
-        if (l.hashS || l.hashS1) {
+        if (l.hashS) {
             if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
             pols.hashS[i] = l.hashS ? 1n : 0n;
-            pols.hashS1[i] = l.hashS1 ? 1n : 0n;
-            const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1437,7 +1436,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashS[i] = 0n;
-            pols.hashS1[i] = 0n;
         }
 
         if (l.hashSLen) {
@@ -1483,11 +1481,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashSDigest[i] = 0n;
         }
 
-        if (l.hashP || l.hashP1) {
+        if (l.hashP) {
             if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
             pols.hashP[i] = l.hashP ? 1n : 0n;
-            pols.hashP1[i] = l.hashP1 ? 1n : 0n;
-            const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`HashP(${addr}) invalid size ${size} ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1516,7 +1513,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashP[i] = 0n;
-            pols.hashP1[i] = 0n;
         }
 
         if (l.hashPLen) {
