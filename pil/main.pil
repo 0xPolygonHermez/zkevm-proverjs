@@ -77,13 +77,37 @@ namespace Main(%N);
     pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntSha256F, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
+    pol commit inRID;
+    pol commit RID;
+    pol commit save;
+    pol commit restore;
+    pol commit setRID;
+
+    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7, 
+                          B0', B1', B2', B3', B4', B5', B6', B7', 
+                          C0', C1', C2', C3', C4', C5', C6', C7', 
+                          D0', D1', D2', D3', D4', D5', D6', D7', 
+                          E0', E1', E2', E3', E4', E5', E6', E7', 
+                          RR', RCX'
+    } is save { Global.STEP, RID, op0, op1, op2, op3, op4, op5, op6, op7,
+                            B0, B1, B2, B3, B4, B5, B6, B7, 
+                            C0, C1, C2, C3, C4, C5, C6, C7, 
+                            D0, D1, D2, D3, D4, D5, D6, D7, 
+                            E0, E1, E2, E3, E4, E5, E6, E7, 
+                            RR, RCX};
+
+    RID' * (1 - restore) = setRID * (op0 - RID) + save * (Global.STEP - RID) + RID - restore * RID;
+    
+    Global.L1 * RID = 0;
+
 ///////////
 // Intermediary calculations and checks
 ///////////
 
 
     /////// op
-    pol op0 =
+    pol commit op0;
+    op0 =
         A0 * inA +
         B0 * inB +
         C0 * inC +
@@ -107,9 +131,11 @@ namespace Main(%N);
         cntPoseidonG * inCntPoseidonG +
         cntPaddingPG * inCntPaddingPG +
         RCX * inRCX +
+        RID * inRID +
         CONST0;
 
-    pol op1 =
+    pol commit op1;
+    op1 =
         A1 * inA +
         B1 * inB +
         C1 * inC +
@@ -120,7 +146,8 @@ namespace Main(%N);
         FREE1 * inFREE +
         CONST1;
 
-    pol op2 =
+    pol commit op2;
+    op2 = 
         A2 * inA +
         B2 * inB +
         C2 * inC +
@@ -131,7 +158,8 @@ namespace Main(%N);
         FREE2 * inFREE +
         CONST2;
 
-    pol op3 =
+    pol commit op3;
+    op3 = 
         A3 * inA +
         B3 * inB +
         C3 * inC +
@@ -142,7 +170,8 @@ namespace Main(%N);
         FREE3 * inFREE +
         CONST3;
 
-    pol op4 =
+    pol commit op4;
+    op4 =
         A4 * inA +
         B4 * inB +
         C4 * inC +
@@ -153,7 +182,8 @@ namespace Main(%N);
         FREE4 * inFREE +
         CONST4;
 
-    pol op5 =
+    pol commit op5;
+    op5 =
         A5 * inA +
         B5 * inB +
         C5 * inC +
@@ -164,7 +194,8 @@ namespace Main(%N);
         FREE5 * inFREE +
         CONST5;
 
-    pol op6 =
+    pol commit op6;
+    op6 =
         A6 * inA +
         B6 * inB +
         C6 * inC +
@@ -175,7 +206,8 @@ namespace Main(%N);
         FREE6 * inFREE +
         CONST6;
 
-    pol op7 =
+    pol commit op7;
+    op7 =
         A7 * inA +
         B7 * inB +
         C7 * inC +
@@ -250,41 +282,41 @@ namespace Main(%N);
     A6' = setA * (op6 - A6) + A6;
     A7' = setA * (op7 - A7) + A7;
 
-    B0' = setB * (op0 - B0) + B0;
-    B1' = setB * (op1 - B1) + B1;
-    B2' = setB * (op2 - B2) + B2;
-    B3' = setB * (op3 - B3) + B3;
-    B4' = setB * (op4 - B4) + B4;
-    B5' = setB * (op5 - B5) + B5;
-    B6' = setB * (op6 - B6) + B6;
-    B7' = setB * (op7 - B7) + B7;
+    B0' * (1 - restore) = setB * (op0 - B0) + B0 - restore * B0;
+    B1' * (1 - restore) = setB * (op1 - B1) + B1 - restore * B1;
+    B2' * (1 - restore) = setB * (op2 - B2) + B2 - restore * B2;
+    B3' * (1 - restore) = setB * (op3 - B3) + B3 - restore * B3;
+    B4' * (1 - restore) = setB * (op4 - B4) + B4 - restore * B4;
+    B5' * (1 - restore) = setB * (op5 - B5) + B5 - restore * B5;
+    B6' * (1 - restore) = setB * (op6 - B6) + B6 - restore * B6;
+    B7' * (1 - restore) = setB * (op7 - B7) + B7 - restore * B7;
 
-    C0' = setC * (op0 - C0) + C0;
-    C1' = setC * (op1 - C1) + C1;
-    C2' = setC * (op2 - C2) + C2;
-    C3' = setC * (op3 - C3) + C3;
-    C4' = setC * (op4 - C4) + C4;
-    C5' = setC * (op5 - C5) + C5;
-    C6' = setC * (op6 - C6) + C6;
-    C7' = setC * (op7 - C7) + C7;
+    C0' * (1 - restore) = setC * (op0 - C0) + C0 - restore * C0;
+    C1' * (1 - restore) = setC * (op1 - C1) + C1 - restore * C1;
+    C2' * (1 - restore) = setC * (op2 - C2) + C2 - restore * C2;
+    C3' * (1 - restore) = setC * (op3 - C3) + C3 - restore * C3;
+    C4' * (1 - restore) = setC * (op4 - C4) + C4 - restore * C4;
+    C5' * (1 - restore) = setC * (op5 - C5) + C5 - restore * C5;
+    C6' * (1 - restore) = setC * (op6 - C6) + C6 - restore * C6;
+    C7' * (1 - restore) = setC * (op7 - C7) + C7 - restore * C7;
 
-    D0' = setD * (op0 - D0) + D0;
-    D1' = setD * (op1 - D1) + D1;
-    D2' = setD * (op2 - D2) + D2;
-    D3' = setD * (op3 - D3) + D3;
-    D4' = setD * (op4 - D4) + D4;
-    D5' = setD * (op5 - D5) + D5;
-    D6' = setD * (op6 - D6) + D6;
-    D7' = setD * (op7 - D7) + D7;
+    D0' * (1 - restore) = setD * (op0 - D0) + D0 - restore * D0;
+    D1' * (1 - restore) = setD * (op1 - D1) + D1 - restore * D1;
+    D2' * (1 - restore) = setD * (op2 - D2) + D2 - restore * D2;
+    D3' * (1 - restore) = setD * (op3 - D3) + D3 - restore * D3;
+    D4' * (1 - restore) = setD * (op4 - D4) + D4 - restore * D4;
+    D5' * (1 - restore) = setD * (op5 - D5) + D5 - restore * D5;
+    D6' * (1 - restore) = setD * (op6 - D6) + D6 - restore * D6;
+    D7' * (1 - restore) = setD * (op7 - D7) + D7 - restore * D7;
 
-    E0' = setE * (op0 - E0) + E0;
-    E1' = setE * (op1 - E1) + E1;
-    E2' = setE * (op2 - E2) + E2;
-    E3' = setE * (op3 - E3) + E3;
-    E4' = setE * (op4 - E4) + E4;
-    E5' = setE * (op5 - E5) + E5;
-    E6' = setE * (op6 - E6) + E6;
-    E7' = setE * (op7 - E7) + E7;
+    E0' * (1 - restore) = setE * (op0 - E0) + E0 - restore * E0;
+    E1' * (1 - restore) = setE * (op1 - E1) + E1 - restore * E1;
+    E2' * (1 - restore) = setE * (op2 - E2) + E2 - restore * E2;
+    E3' * (1 - restore) = setE * (op3 - E3) + E3 - restore * E3;
+    E4' * (1 - restore) = setE * (op4 - E4) + E4 - restore * E4;
+    E5' * (1 - restore) = setE * (op5 - E5) + E5 - restore * E5;
+    E6' * (1 - restore) = setE * (op6 - E6) + E6 - restore * E6;
+    E7' * (1 - restore) = setE * (op7 - E7) + E7 - restore * E7;
 
     SR0' = setSR * (op0 - SR0) + SR0;
     SR1' = setSR * (op1 - SR1) + SR1;
@@ -300,11 +332,11 @@ namespace Main(%N);
     PC' = setPC * (op0 - PC) + PC;
 
     // ROM constraint: call * setRR = 0
-    RR' = setRR * (op0 - RR) + call * (zkPC + 1 - RR) + RR;
+    RR' * (1 - restore) = setRR * (op0 - RR) + call * (zkPC + 1 - RR) + RR - restore * RR;
     GAS' = setGAS * (op0 - GAS) + GAS;
 
     pol decRCX = repeat * (1-RCXIsZero);
-    RCX' = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX);
+    RCX' * (1 - restore)  = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX) - restore * (RCX - decRCX);
 
     HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP + hashS)*D0 + hashK1 + hashP1 + hashS1;
 
@@ -317,7 +349,7 @@ namespace Main(%N);
     pol commit useElseAddr;
 
     // ROM/Zkasm constraint: useJmpAddr * return = 0
-    pol finalJmpAddr = useJmpAddr * (jmpAddr - addr ) + return * (RR - addr) + addr;
+    pol finalJmpAddr = useJmpAddr * (jmpAddr - addr ) + return * (RR' - addr) + addr;
     pol nextNoJmpZkPC = zkPC + 1 - ((1-RCXIsZero)*repeat);
     pol finalElseAddr = useElseAddr * (elseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
@@ -432,8 +464,6 @@ namespace Main(%N);
     public newBatchNum = PC(%N-1);
     Global.LLAST * (PC - :newBatchNum) = 0;
 
-
-
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7,
@@ -452,7 +482,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1,save,restore,setRID" -b
     */
 
     pol operations =
@@ -469,7 +499,8 @@ namespace Main(%N);
             + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
             + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * arithEq3
             + 2**48 * arithEq4      + 2**49 * arithEq5      + 2**50 * hashS         + 2**51 * hashSDigest
-            + 2**52 * hashSLen      + 2**53 * hashS1;
+            + 2**52 * hashSLen      + 2**53 * hashS1        + 2**54 * save          + 2**55 * restore
+            + 2**56 * setRID;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -525,17 +556,20 @@ namespace Main(%N);
     (1 - hashSDigest) * hashSDigest = 0;
     (1 - hashSLen) * hashSLen = 0;
     (1 - hashS1) * hashS1 = 0;
+    (1 - save) * save = 0;
+    (1 - restore) * restore = 0;
+    (1 - setRID) * setRID = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0,
-        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
+        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0,
-        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
