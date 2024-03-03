@@ -14,8 +14,8 @@
     HASHPOS      :HASHKLEN(E)
     $            :HASHKDIGEST(E)
 
-    ; $ => E              :MLOAD(lastHashSId)
-    ; E + 1 => E          :MSTORE(lastHashSId)
+    $ => E              :MLOAD(lastHashSId)
+    E + 1 => E          :MSTORE(lastHashSId)
 
-    0            :HASHSLEN(0)
-    $            :HASHSDIGEST(0)
+    0            :HASHSLEN(E)
+    $            :HASHSDIGEST(E)
