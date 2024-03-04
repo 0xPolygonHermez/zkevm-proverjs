@@ -211,7 +211,6 @@
 
 OpBinLt4__CarryTestFail:
     ; force fail
-    $${dumphex(A,B)}
     0 => A
     STEP-RR :ASSERT
 
