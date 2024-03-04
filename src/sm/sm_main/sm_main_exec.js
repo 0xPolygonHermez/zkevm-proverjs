@@ -2279,7 +2279,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             if (calculateReservedCounters) {
                 const counterControl = counterControls[l.jmpAddrLabel] ?? false;
                 if (counterControl !== false && counterControl.limit !== false) {
-                    const reserv = counterControl.limit - (o < FrFirst32Negative ? o : o - (FrFirst32Negative + 0xFFFFFFFF));
+                    const reserv = counterControl.limit - (o < FrFirst32Negative ? o : o - (FrFirst32Negative + 0xFFFFFFFFn));
                     if (typeof counterControl.reserved === 'undefined' || counterControl.reserved < reserv) {
                         counterControl.reserved = reserv;
                         counterControl.sourceRef = sourceRef;
