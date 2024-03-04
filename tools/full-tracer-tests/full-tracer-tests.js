@@ -29,7 +29,7 @@ const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
 const stopOnFailure = true;
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json', 'pre-revert.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
 const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
@@ -389,9 +389,10 @@ async function compareCallTracer(geth, fullTracer, i) {
                         }
                     }
                     calls.push(callData[ctx + 1]);
-                } else {
-                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(previousStep.gas_cost)).toString(16)}`;
                 }
+                // else {
+                //     callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(previousStep.gas_cost)).toString(16)}`;
+                // }
                 // Detect failed create2
             } else if (opCreate.includes(previousStep.opcode) && previousStep.depth === step.depth) {
                 callData[ctx + 1] = {

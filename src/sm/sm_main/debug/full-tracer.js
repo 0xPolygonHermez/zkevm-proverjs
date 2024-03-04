@@ -54,8 +54,9 @@ class FullTracer {
      * @param {Bool} options.verbose verbose options
      * @param {Bool} options.skipFirstChangeL2Block Skips verification that first transaction must be a ChangeL2BlockTx
      * @param {Object} options.tracerOptions Set tracer flags: disableStorage, disableStack, enableMemory & enableReturnData
+     * @param {Object} reservedCounters ReservedCounters object obtained from executor
      */
-    constructor(logFileName, smt, options) {
+    constructor(logFileName, smt, options, reservedCounters = {}) {
         // Opcode step traces of all processed tx
         this.full_trace = [];
         // Track opcodes called
@@ -88,6 +89,7 @@ class FullTracer {
         this.setTracerOptions();
 
         this.verbose = new Verbose(options.verbose, smt, logFileName);
+        this.reservedCounters = reservedCounters;
     }
 
     /**
@@ -491,6 +493,9 @@ class FullTracer {
         // set refunded gas
         response.gas_refunded = Number(getVarFromCtx(ctx, false, 'gasRefund'));
 
+        // Set tx status
+        response.status = Number(getVarFromCtx(ctx, false, 'txStatus'));
+
         // if there is any processed opcode
         if (this.full_trace.length) {
             const lastOpcodeCall = this.full_trace[this.full_trace.length - 1];
@@ -627,6 +632,17 @@ class FullTracer {
 
         this.verbose.printBatch('finish');
         this.verbose.saveFinalStateRoot(this.finalTrace.new_state_root);
+
+        // Set reservedCounters
+        this.finalTrace.reserveCounters = {
+            cnt_reserve_steps: Number(this.reservedCounters.outOfCountersStep.reserved),
+            cnt_reserve_keccak_hashes: Number(this.reservedCounters.outOfCountersKeccak.reserved),
+            cnt_reserve_poseidon_hashes: Number(this.reservedCounters.outOfCountersPoseidon.reserved),
+            cnt_reserve_poseidon_paddings: Number(this.reservedCounters.outOfCountersPadding.reserved),
+            cnt_reserve_mem_aligns: Number(this.reservedCounters.outOfCountersMemalign.reserved),
+            cnt_reserve_arithmetics: Number(this.reservedCounters.outOfCountersArith.reserved),
+            cnt_reserve_binaries: Number(this.reservedCounters.outOfCountersBinary.reserved),
+        };
 
         // Create output files and dirs
         this.exportTrace();
