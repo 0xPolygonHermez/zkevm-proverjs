@@ -1461,7 +1461,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`Call HASHSDIGEST(${addr}) more than once: ${sourceRef}`);
             }
             ctx.hashS[addr].digestCalled = true;
-            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1) / 64)
+            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1 + 8) / 64)
         } else {
             pols.hashSDigest[i] = 0n;
         }
@@ -2279,7 +2279,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             // Calculate reserved counters
             const counterControl = counterControls[l.jmpAddrLabel] ?? false;
             if (counterControl !== false && counterControl.limit !== false) {
-                const reserv = counterControl.limit - (o < FrFirst32Negative ? o : o - (FrFirst32Negative + 0xFFFFFFFF));
+                const reserv = counterControl.limit - (o < FrFirst32Negative ? o : o - (FrFirst32Negative + 0xFFFFFFFFn));
                 if (typeof counterControl.reserved === 'undefined' || counterControl.reserved < reserv) {
                     counterControl.reserved = reserv;
                     counterControl.sourceRef = sourceRef;
@@ -3098,7 +3098,7 @@ function eval_logical_operation(ctx, tag)
         case 'gt':      return (a > b)  ? 1 : 0;
         case 'ge':      return (a >= b) ? 1 : 0;
         case 'lt':      return (a < b)  ? 1 : 0;
-        case 'le':      return (a > b)  ? 1 : 0;
+        case 'le':      return (a <= b)  ? 1 : 0;
     }
     throw new Error(`logical operation ${tag.op} not defined ${ctx.sourceRef}`);
 }
