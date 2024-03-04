@@ -3117,7 +3117,7 @@ function eval_logical_operation(ctx, tag)
         case 'gt':      return (a > b)  ? 1 : 0;
         case 'ge':      return (a >= b) ? 1 : 0;
         case 'lt':      return (a < b)  ? 1 : 0;
-        case 'le':      return (a > b)  ? 1 : 0;
+        case 'le':      return (a <= b)  ? 1 : 0;
     }
     throw new Error(`logical operation ${tag.op} not defined ${ctx.sourceRef}`);
 }
