@@ -2840,6 +2840,15 @@ const input = [
 			y2:75443968619978277048164790519483407622388894602899933916683569199411107643400n,
 		})
 	},
+        // Worst quotient case
+	{
+		...modArith({
+			x1:115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+			y1:115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+			x2:115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+			y2:2n,
+		})
+	},
 ];
 
 const inputWithAlias = [
@@ -3197,53 +3206,53 @@ describe("test plookup operations", async function () {
         }
     });
 
-    // it("It should create the pols of two programs and fail the pil verification", async () => {
-    //     const pil = await loadPil("pil/arith.pil");
-    //     constPols = newConstantPolsArray(pil);
-    //     cmPols = newCommitPolsArray(pil);
+    it("It should create the pols of two programs and fail the pil verification", async () => {
+        const pil = await loadPil("pil/arith.pil");
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
 
-    //     await global.buildConstants(constPols.Global);
-    //     await arith.buildConstants(constPols.Arith);
-    //     await arith.execute(cmPols.Arith, prepareInput32bits(inputWithAlias));
+        await global.buildConstants(constPols.Global);
+        await arith.buildConstants(constPols.Arith);
+        await arith.execute(cmPols.Arith, prepareInput32bits(inputWithAlias));
 
-    //     const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
+        const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
 
-    //     assert.isAtLeast(res.length, 1, "Pil should not pass");
+        assert.isAtLeast(res.length, 1, "Pil should not pass");
 
-    //     for (let i = 0; i < res.length; i++) {
-    //         console.log(res[i]);
-    //     }
-    // });
+        for (let i = 0; i < res.length; i++) {
+            console.log(res[i]);
+        }
+    });
 
-    // it("It checks the worst case in each equation throws the expected error", async () => {
-    //     const pil = await loadPil("pil/arith.pil");
-    //     constPols = newConstantPolsArray(pil);
-    //     cmPols = newCommitPolsArray(pil);
+    it("It checks the worst case in each equation throws the expected error", async () => {
+        const pil = await loadPil("pil/arith.pil");
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
 
-    //     await global.buildConstants(constPols.Global);
-    //     await arith.buildConstants(constPols.Arith);
+        await global.buildConstants(constPols.Global);
+        await arith.buildConstants(constPols.Arith);
 
-    //     try {
-    //         await arith.execute(cmPols.Arith, prepareInput32bits(inputWorstCase), true);
-    //     } catch (e) {
-    //         console.log(e.message);
-    //         assert.match(e.message, /There are \d+ divisions errors/)
-    //     }
-    // });
+        try {
+            await arith.execute(cmPols.Arith, prepareInput32bits(inputWorstCase), true);
+        } catch (e) {
+            console.log(e.message);
+            assert.match(e.message, /There are \d+ divisions errors/)
+        }
+    });
 
-    // it("It checks that a negative quotient in each equation throws the expected error", async () => {
-    //     const pil = await loadPil("pil/arith.pil");
-    //     constPols = newConstantPolsArray(pil);
-    //     cmPols = newCommitPolsArray(pil);
+    it("It checks that a negative quotient in each equation throws the expected error", async () => {
+        const pil = await loadPil("pil/arith.pil");
+        constPols = newConstantPolsArray(pil);
+        cmPols = newCommitPolsArray(pil);
 
-    //     await global.buildConstants(constPols.Global);
-    //     await arith.buildConstants(constPols.Arith);
+        await global.buildConstants(constPols.Global);
+        await arith.buildConstants(constPols.Arith);
 
-    //     try {
-    //         await arith.execute(cmPols.Arith, prepareInput32bits(inputLargeQuo), true);
-    //     } catch (e) {
-    //         console.log(e.message);
-    //         assert.match(e.message, /There are \d+ negative quotient errors/)
-    //     }
-    // });
+        try {
+            await arith.execute(cmPols.Arith, prepareInput32bits(inputLargeQuo), true);
+        } catch (e) {
+            console.log(e.message);
+            assert.match(e.message, /There are \d+ negative quotient errors/)
+        }
+    });
 });

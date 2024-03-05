@@ -498,7 +498,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 let carryIndex = eqIndexToCarryIndex[eqIndex];
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
-                console.log(eqIndex,step);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
                     throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
                 }
