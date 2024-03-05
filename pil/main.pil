@@ -241,7 +241,7 @@ namespace Main(%N);
     /////// isNeg
 
     pol commit lJmpnCondValue;
-    pol jmpnCondValue = JMPN*(isNeg*2**32 + op0) + FREE0;
+    pol jmpnCondValue = JMPN*(isNeg*2**32 + op0);
     isNeg * (1 - isNeg) = 0;
 
     lJmpnCondValue in Global.STEP;
