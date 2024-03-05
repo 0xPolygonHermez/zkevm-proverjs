@@ -117,11 +117,11 @@ else
 fi
 CP_SCRIPTS=$CP_DEFAULT
 CP_ZKEVM=$CP_DEFAULT
-CP_C12A=$CP_DEFAULT
-CP_RECURSIVE1=$CP_DEFAULT
-CP_RECURSIVE2=$CP_DEFAULT
-CP_RECURSIVEF=$CP_DEFAULT
-CP_FINAL=1
+CP_COMPRESSOR_BATCH=$CP_DEFAULT
+CP_RECURSIVE1_BATCH=$CP_DEFAULT
+CP_RECURSIVE2_BATCH=$CP_DEFAULT
+CP_RECURSIVEF_BATCH=$CP_DEFAULT
+CP_FINAL_BATCH=1
 CP_CIRCOM=$CP_DEFAULT
 CP_BUILDS=1
 GENERATE_HASH=1
@@ -164,71 +164,71 @@ if [ $CP_ZKEVM -eq 1 ]; then
     fi
 fi
 
-if [ $CP_C12A -eq 1 ]; then
-    # c12a
-    FULLDST=$DST/config/c12a
-    makedir $FULLDST
-    cpfile $BDIR/c12a.const                    $FULLDST
-    cpfile $BDIR/c12a.exec                     $FULLDST
-    cpfile $BDIR/c12a.consttree                $FULLDST
-    cpfile $BDIR/c12a.verkey.json              $FULLDST
-    cpfile $BDIR/c12a.starkinfo.json           $FULLDST
+if [ $CP_COMPRESSOR_BATCH -eq 1 ]; then
+    # compressor_batch
+    FULLDST=$DST/config/compressor_batch
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/compressor_batch.const                    $FULLDST
+    cpfile $BDIR/compressor_batch.exec                     $FULLDST
+    cpfile $BDIR/compressor_batch.consttree                $FULLDST
+    cpfile $BDIR/compressor_batch.verkey.json              $FULLDST
+    cpfile $BDIR/compressor_batch.starkinfo.json           $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/c12a.pil                  $DST/pil
-        cpdir $BDIR/c12a.chelpers              $DST/c_files
+        cpfile $BDIR/compressor_batch.pil                      $DST/pil
+        cpdir $BDIR/compressor_batch.chelpers              $DST/c_files
     fi
 fi
 
-if [ $CP_RECURSIVE1 -eq 1 ]; then
-    # recursive1
-    FULLDST=$DST/config/recursive1
-    makedir $FULLDST
-    cpfile $BDIR/recursive1.const              $FULLDST
-    cpfile $BDIR/recursive1_cpp/recursive1.dat $FULLDST/recursive1.verifier.dat
-    cpfile $BDIR/recursive1.consttree          $FULLDST
-    cpfile $BDIR/recursive1.exec               $FULLDST
-    cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive1.starkstruct.json
-    cpfile $BDIR/recursive1.starkinfo.json     $FULLDST
-    cpfile $BDIR/recursive1.verkey.json        $FULLDST
+if [ $CP_RECURSIVE1_BATCH -eq 1 ]; then
+    # recursive1_batch
+    FULLDST=$DST/config/recursive1_batch
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/recursive1_batch.const                    $FULLDST
+    cpfile $BDIR/recursive1_batch_cpp/recursive1_batch.dat $FULLDST/recursive1_batch.verifier.dat
+    cpfile $BDIR/recursive1_batch.consttree                $FULLDST
+    cpfile $BDIR/recursive1_batch.exec                     $FULLDST
+    cpfile $BDIR/recursive_batch.starkstruct.json          $FULLDST/recursive1_batch.starkstruct.json
+    cpfile $BDIR/recursive1_batch.starkinfo.json           $FULLDST
+    cpfile $BDIR/recursive1_batch.verkey.json              $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/recursive1.pil            $DST/pil
-        cpdir $BDIR/recursive1_cpp             $DST/c_files
-        cpdir $BDIR/recursive1.chelpers        $DST/c_files
+        cpfile $BDIR/recursive1_batch.pil                  $DST/pil
+        cpdir $BDIR/recursive1_batch_cpp                   $DST/c_files
+        cpdir $BDIR/recursive1_batch.chelpers              $DST/c_files
     fi
 fi
 
-if [ $CP_RECURSIVE2 -eq 1 ]; then
-    # recursive 2
-    FULLDST=$DST/config/recursive2
-    makedir $FULLDST
-    cpfile $BDIR/recursive2.starkinfo.json     $FULLDST
-    cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive2.starkstruct.json
-    cpfile $BDIR/recursive2.exec               $FULLDST
-    cpfile $BDIR/recursive2_cpp/recursive2.dat $FULLDST/recursive2.verifier.dat
-    cpfile $BDIR/recursive2.verkey.json        $FULLDST
-    cpfile $BDIR/recursive2.consttree          $FULLDST
-    cpfile $BDIR/recursive2.const              $FULLDST
+if [ $CP_RECURSIVE2_BATCH -eq 1 ]; then
+    # recursive2_batch
+    FULLDST=$DST/config/recursive2_batch
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/recursive2_batch.starkinfo.json           $FULLDST
+    cpfile $BDIR/recursive_batch.starkstruct.json          $FULLDST/recursive2_batch.starkstruct.json
+    cpfile $BDIR/recursive2_batch.exec                     $FULLDST
+    cpfile $BDIR/recursive2_batch_cpp/recursive2_batch.dat $FULLDST/recursive2_batch.verifier.dat
+    cpfile $BDIR/recursive2_batch.verkey.json              $FULLDST
+    cpfile $BDIR/recursive2_batch.consttree                $FULLDST
+    cpfile $BDIR/recursive2_batch.const                    $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/recursive2.pil            $DST/pil
-        cpdir $BDIR/recursive2_cpp             $DST/c_files
-        cpdir $BDIR/recursive2.chelpers        $DST/c_files
+        cpfile $BDIR/recursive2_batch.pil                  $DST/pil
+        cpdir $BDIR/recursive2_batch_cpp                   $DST/c_files
+        cpdir $BDIR/recursive2_batch.chelpers              $DST/c_files
     fi
 fi
 
-if [ $CP_RECURSIVEF -eq 1 ]; then
-    # recursive f
-    FULLDST=$DST/config/recursivef
-    makedir $FULLDST
-    cpfile $BDIR/recursivef.verkey.json        $FULLDST
-    cpfile $BDIR/recursivef.consttree          $FULLDST
-    cpfile $BDIR/recursivef.starkinfo.json     $FULLDST
-    cpfile $BDIR/recursivef.exec               $FULLDST
-    cpfile $BDIR/recursivef.const              $FULLDST
-    cpfile $BDIR/recursivef_cpp/recursivef.dat $FULLDST/recursivef.verifier.dat
+if [ $CP_RECURSIVEF_BATCH -eq 1 ]; then
+    # recursivef_batch
+    FULLDST=$DST/config/recursivef_batch
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/recursivef_batch.verkey.json              $FULLDST
+    cpfile $BDIR/recursivef_batch.consttree                $FULLDST
+    cpfile $BDIR/recursivef_batch.starkinfo.json           $FULLDST
+    cpfile $BDIR/recursivef_batch.exec                     $FULLDST
+    cpfile $BDIR/recursivef_batch.const                    $FULLDST
+    cpfile $BDIR/recursivef_batch_cpp/recursivef_batch.dat $FULLDST/recursivef_batch.verifier.dat
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/recursivef.pil            $DST/pil
-        cpdir $BDIR/recursivef_cpp             $DST/c_files
-        cpdir $BDIR/recursivef.chelpers        $DST/c_files
+        cpfile $BDIR/recursivef_batch.pil                  $DST/pil
+        cpdir $BDIR/recursivef_batch_cpp                   $DST/c_files
+        cpdir $BDIR/recursivef_batch.chelpers              $DST/c_files
     fi
 fi
 
@@ -301,7 +301,7 @@ if [ $ONLY_CONFIG -eq 0 ]; then
             cpfile $BDIR/final.fflonk.verifier.sol $FULLDST
         fi
         if [ $FINAL_PHASE_1 -eq 1 ]; then
-            BUILDS="c12a.starkstruct.json final.r1cs final.sym recursive.starkstruct.json recursive1.r1cs recursive1.sym recursive2.r1cs recursive2.sym recursivef.r1cs recursivef.starkstruct.json recursivef.sym zkevm.starkstruct.json zkevm.verifier.r1cs zkevm.verifier.sym"
+            BUILDS="compressor_batch.starkstruct.json final.r1cs final.sym recursive_batch.starkstruct.json recursive1_batch.r1cs recursive1_batch.sym recursive2_batch.r1cs recursive2_batch.sym recursivef_batch.r1cs recursivef_batch.starkstruct.json recursivef_batch.sym zkevm.starkstruct.json zkevm.verifier.r1cs zkevm.verifier.sym"
             for F in $BUILDS; do
                 cpfile $BDIR/$F $FULLDST
             done

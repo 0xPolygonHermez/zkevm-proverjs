@@ -1,14 +1,14 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "<%- verifierName %>.verifier.circom";
+include "<%- verifierNames[0] %>.verifier.circom";
 include "mux1.circom";
 include "iszero.circom";
 
-<% let isEip4844 = false; -%>
+<% let starkInfo = starkInfoVerifiers[0]; %>
 
 template Main() {
-    var rootCSingle[4] = [<%- constRoot.join(",") %>];
+    var rootCSingle[4] = [<%- vks[0].join(",") %>];
 
 <% if(isBatchRecursion) { -%>
 <%  let p = 0; -%>

@@ -4,9 +4,7 @@ pragma circom 2.1.0;
 include "sha256/sha256.circom";
 include "bitify.circom";
 include "lessthangl.circom";
-include "recursivef.verifier.circom";
-
-<% let isEip4844 = false; -%>
+include "<%- verifierName %>.verifier.circom";
 
 template Main() {
     signal output publicsHash;

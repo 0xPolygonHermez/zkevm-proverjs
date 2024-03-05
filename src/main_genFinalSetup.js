@@ -7,6 +7,7 @@ const argv = require("yargs")
     .usage("node main_genFinalSetup.js -v <basic_verification_keys.json> -s starkinfo.json")
     .alias("v", "verkey")
     .alias("s", "starkinfo")
+    .alias("e", "eip4844")
     .string("builddir")
     .string("filename")
     .string("verifiername")
@@ -30,7 +31,9 @@ async function run() {
     let fileName = argv.filename;
     if(!fileName) fileName = "final";
 
-    await genFinalSetup(constRoot, verifierName, fileName, starkInfo, buildDir);
+    let isEip4844 = argv.eip4844 ? true : false;
+
+    await genFinalSetup(fileName, constRoot, verifierName, starkInfo, { buildDir, isEip4844});
     
     console.log("file Generated Correctly");
 

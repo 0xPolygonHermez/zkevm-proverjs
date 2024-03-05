@@ -1,7 +1,9 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "<%- verifierName %>.verifier.circom";
+include "<%- verifierNames[0] %>.verifier.circom";
+
+<% let starkInfo = starkInfoVerifiers[0]; %>
 
 template Main() {
     signal input publics[<%- starkInfo.nPublics  %>];
