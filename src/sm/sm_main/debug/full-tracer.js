@@ -227,7 +227,10 @@ class FullTracer {
         if (isTopic) {
             this.logs[ctx.CTX][indexLog].topics.push(data.toString(16).padStart(64, '0'));
         } else {
-            this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(64, '0'));
+            // Data length is stored in C
+            const regC = getRegFromCtx(ctx, 'C');
+            const size = regC > 32 ? 32 : Number(regC);
+            this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(size * 2, '0'));
         }
         // Add log info
         this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
@@ -287,9 +290,9 @@ class FullTracer {
         this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         this.currentBlock.logs = [];
 
-        // Append logs correctly formatted to block response logs
-        this.logs = this.logs.filter((n) => n); // Remove null values
+        // Append logs correctly formatted to block and transactions response logs
         // Put all logs in an array
+        this.logs = this.logs.filter((n) => n);
         let auxLogs = [];
         for (let i = 0; i < this.logs.length; i++) {
             auxLogs = auxLogs.concat(Object.values(this.logs[i]));
@@ -297,14 +300,15 @@ class FullTracer {
         // Sort auxLogs by index
         auxLogs.sort((a, b) => a.index - b.index);
         // Update index to be sequential
-        // eslint-disable-next-line no-restricted-syntax
         for (let i = 0; i < auxLogs.length; i++) {
             const singleLog = auxLogs[i];
             // set logIndex
             singleLog.index = i;
             singleLog.block_hash = this.currentBlock.block_hash;
-            // store log
+            // store block log
             this.currentBlock.logs.push(singleLog);
+            // store transaction log
+            this.currentBlock.responses[singleLog.tx_index].logs.push(singleLog);
         }
         // Set block hash to all txs of block
         this.currentBlock.responses.forEach((tx) => {
@@ -382,7 +386,7 @@ class FullTracer {
         response.full_trace.context = context;
         response.full_trace.steps = [];
         response.effective_percentage = Number(getVarFromCtx(ctx, false, 'effectivePercentageRLP'));
-
+        response.logs = [];
         response.txCounters = {
             cnt_arith: Number(ctx.cntArith),
             cnt_binary: Number(ctx.cntBinary),
@@ -521,38 +525,6 @@ class FullTracer {
             response.has_balance_opcode = this.hasBalanceOpcode;
         }
 
-        // Append logs correctly formatted to response logs
-        this.logs = this.logs.filter((n) => n); // Remove null values
-        // Put all logs in an array
-        let auxLogs = [];
-        for (let i = 0; i < this.logs.length; i++) {
-            auxLogs = auxLogs.concat(Object.values(this.logs[i]));
-        }
-        // Sort auxLogs by index
-        auxLogs.sort((a, b) => a.index - b.index);
-
-        // filter txIndex logs
-        const finalLogs = auxLogs.filter((log) => log.tx_index === this.txIndex);
-
-        // Update index to be sequential
-        // eslint-disable-next-line no-restricted-syntax
-        response.logs = [];
-        for (let i = 0; i < finalLogs.length; i++) {
-            const singleLog = finalLogs[i];
-            // set logIndex
-            singleLog.index = i;
-            // store log
-            response.logs.push(singleLog);
-        }
-
-        // create directory if it does not exist
-        if (!fs.existsSync(this.folderLogs)) {
-            fs.mkdirSync(this.folderLogs);
-        }
-
-        // write single tx trace
-        fs.writeFileSync(`${this.pathLogFile}_${this.currentBlock.block_number}_${this.txIndex}.json`, JSON.stringify(response, null, 2));
-
         // verbose
         this.verbose.printTx(`${'finish'.padEnd(10)} ${this.txIndex}`);
 
@@ -676,6 +648,28 @@ class FullTracer {
         }
         const opcode = codes[codeId][0];
 
+        // In case there is a log0 with 0 data length (and 0 topics), we must add it manually to logs array because it
+        // wont be added detected by onStoreLog event
+        if (opcode === 'LOG0') {
+            const indexLog = getVarFromCtx(ctx, true, 'currentLogIndex');
+            if (!this.logs[ctx.CTX]) {
+                this.logs[ctx.CTX] = {};
+            }
+            if (!this.logs[ctx.CTX][indexLog]) {
+                this.logs[ctx.CTX][indexLog] = {
+                    data: [],
+                    topics: [],
+                };
+            }
+            this.logs[ctx.CTX][indexLog].data = [];
+            // Add log info
+            this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
+            this.logs[ctx.CTX][indexLog].block_number = Number(getVarFromCtx(ctx, true, 'blockNum'));
+            this.logs[ctx.CTX][indexLog].tx_hash = this.currentBlock.responses[this.txIndex].tx_hash;
+            this.logs[ctx.CTX][indexLog].tx_hash_l2 = this.currentBlock.responses[this.txIndex].tx_hash_l2;
+            this.logs[ctx.CTX][indexLog].tx_index = this.txIndex;
+            this.logs[ctx.CTX][indexLog].index = Number(indexLog);
+        }
         // set flag 'has_gasprice_opcode' if opcode is GASPRICE
         if (this.hasGaspriceOpcode === false && opcode === 'GASPRICE') {
             this.hasGaspriceOpcode = true;
@@ -752,7 +746,7 @@ class FullTracer {
                     const gasCall = getVarFromCtx(ctx, true, 'gasCall');
                     prevTraceCall.gas_cost = String(gasCost - Number(gasCall) + Number(ctx.GAS));
                 } else {
-                // If is a create opcode, set gas cost as currentGas - gasCall
+                    // If is a create opcode, set gas cost as currentGas - gasCall
                     const ctxTmp = {
                         rom: ctx.rom,
                         mem: ctx.mem,
@@ -979,7 +973,13 @@ class FullTracer {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }
-
+        for (let i = 0; i < this.finalTrace.block_responses.length; i++) {
+            for (let j = 0; j < this.finalTrace.block_responses[i].responses.length; j++) {
+                // print tx trace
+                fs.writeFileSync(`${this.pathLogFile}_${i + 1}_${j}.json`, JSON.stringify(this.finalTrace.block_responses[i].responses[j], null, 2));
+            }
+        }
+        // Print batch trace
         fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(this.finalTrace, null, 2));
     }
 
