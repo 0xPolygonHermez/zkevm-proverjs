@@ -1,14 +1,14 @@
 {
   "from": "0x4d5cf5032b2a844602278b01199ed191a86c93ff",
   "gas": "0x186a0",
-  "gasUsed": "0x131ca",
+  "gasUsed": "0x131b4",
   "to": "0x85e844b762a271022b692cf99ce5c59ba0650ac8",
   "input": "0x8aebc8120000000000000000000000001275fbb540c8efc58b812ba83b0d0b8b9917ae98",
   "calls": [
     {
       "from": "0x85e844b762a271022b692cf99ce5c59ba0650ac8",
       "gas": "0x12a00",
-      "gasUsed": "0x8204",
+      "gasUsed": "0x81ee",
       "to": "0x85e844b762a271022b692cf99ce5c59ba0650ac8",
       "input": "0xaea87a1d0000000000000000000000001275fbb540c8efc58b812ba83b0d0b8b9917ae98",
       "output": "0x0000000000000000000000000000000000000000000000000000000123456689",
@@ -16,14 +16,14 @@
         {
           "from": "0x85e844b762a271022b692cf99ce5c59ba0650ac8",
           "gas": "0x12165",
-          "gasUsed": "0x6831",
+          "gasUsed": "0x681b",
           "to": "0x85e844b762a271022b692cf99ce5c59ba0650ac8",
           "input": "0x56d5be740000000000000000000000001275fbb540c8efc58b812ba83b0d0b8b9917ae98",
           "output": "0x0000000000000000000000000000000000000000000000000000000123456689",
           "calls": [
             {
               "from": "0x85e844b762a271022b692cf99ce5c59ba0650ac8",
-              "gas": "0xba54",
+              "gas": "0xba6a",
               "gasUsed": "0x167",
               "to": "0x1275fbb540c8efc58b812ba83b0d0b8b9917ae98",
               "input": "0x6aecbc33",

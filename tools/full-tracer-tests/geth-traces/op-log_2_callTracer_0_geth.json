@@ -7,8 +7,8 @@
   "calls": [
     {
       "from": "0x1275fbb540c8efc58b812ba83b0d0b8b9917ae98",
-      "gas": "0x1283e",
-      "gasUsed": "0x7c9",
+      "gas": "0x12853",
+      "gasUsed": "0x7df",
       "to": "0x1275fbb540c8efc58b812ba83b0d0b8b9917ae98",
       "input": "0x84f232d3",
       "error": "execution reverted",
