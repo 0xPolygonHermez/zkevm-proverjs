@@ -74,7 +74,7 @@ async function checkBlockInfoRootsFromTrace(testName) {
         blockInfoRoot = await setBlockGasUsed(smt, blockInfoRoot, block.gas_used);
         // Compare block info root
         if (h4toString(blockInfoRoot) !== block.block_info_root) {
-            throw new Error(`Block info root mismatch at block ${i}`);
+            throw new Error(`Block info root mismatch at block ${i + 1}`);
         }
     }
 }
