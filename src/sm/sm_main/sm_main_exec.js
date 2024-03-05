@@ -2731,52 +2731,67 @@ function checkFinalState(Fr, pols, ctx) {
         if(fullTracer) fullTracer.exportTrace();
 
         if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n");
-        throw new Error("Program terminated with registers A, D, E, SR, PC, HASHPOS, RR, RCX, zkPC not set to zero");
+        throw new Error("Program ended with registers A, D, E, SR, PC, HASHPOS, RR, RCX, zkPC not set to zero");
     }
 
     const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
     if (
-        (!Fr.eq(pols.B0[0], feaOldStateRoot[0])) ||
-        (!Fr.eq(pols.B1[0], feaOldStateRoot[1])) ||
-        (!Fr.eq(pols.B2[0], feaOldStateRoot[2])) ||
-        (!Fr.eq(pols.B3[0], feaOldStateRoot[3])) ||
-        (!Fr.eq(pols.B4[0], feaOldStateRoot[4])) ||
-        (!Fr.eq(pols.B5[0], feaOldStateRoot[5])) ||
-        (!Fr.eq(pols.B6[0], feaOldStateRoot[6])) ||
-        (!Fr.eq(pols.B7[0], feaOldStateRoot[7]))
+        (!Fr.eq(pols.SR0[0], feaOldStateRoot[0])) ||
+        (!Fr.eq(pols.SR1[0], feaOldStateRoot[1])) ||
+        (!Fr.eq(pols.SR2[0], feaOldStateRoot[2])) ||
+        (!Fr.eq(pols.SR3[0], feaOldStateRoot[3])) ||
+        (!Fr.eq(pols.SR4[0], feaOldStateRoot[4])) ||
+        (!Fr.eq(pols.SR5[0], feaOldStateRoot[5])) ||
+        (!Fr.eq(pols.SR6[0], feaOldStateRoot[6])) ||
+        (!Fr.eq(pols.SR7[0], feaOldStateRoot[7]))
     ) {
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register B not terminetd equal as its initial value");
+        throw new Error("Register SR not ended equal as its initial value");
     }
 
-    const feaOldAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+    const feaOldBatchAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBatchAccInputHash));
     if (
-        (!Fr.eq(pols.C0[0], feaOldAccInputHash[0])) ||
-        (!Fr.eq(pols.C1[0], feaOldAccInputHash[1])) ||
-        (!Fr.eq(pols.C2[0], feaOldAccInputHash[2])) ||
-        (!Fr.eq(pols.C3[0], feaOldAccInputHash[3])) ||
-        (!Fr.eq(pols.C4[0], feaOldAccInputHash[4])) ||
-        (!Fr.eq(pols.C5[0], feaOldAccInputHash[5])) ||
-        (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
-        (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
+        (!Fr.eq(pols.C0[0], feaOldBatchAccInputHash[0])) ||
+        (!Fr.eq(pols.C1[0], feaOldBatchAccInputHash[1])) ||
+        (!Fr.eq(pols.C2[0], feaOldBatchAccInputHash[2])) ||
+        (!Fr.eq(pols.C3[0], feaOldBatchAccInputHash[3])) ||
+        (!Fr.eq(pols.C4[0], feaOldBatchAccInputHash[4])) ||
+        (!Fr.eq(pols.C5[0], feaOldBatchAccInputHash[5])) ||
+        (!Fr.eq(pols.C6[0], feaOldBatchAccInputHash[6])) ||
+        (!Fr.eq(pols.C7[0], feaOldBatchAccInputHash[7]))
     ) {
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register C not termined equal as its initial value");
+        throw new Error("Register C not ended equal as its initial value");
     }
 
-    if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
+    const feaPreviousL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.previousL1InfoTreeRoot));
+    if (
+        (!Fr.eq(pols.D0[0], feaPreviousL1InfoTreeRoot[0])) ||
+        (!Fr.eq(pols.D1[0], feaPreviousL1InfoTreeRoot[1])) ||
+        (!Fr.eq(pols.D2[0], feaPreviousL1InfoTreeRoot[2])) ||
+        (!Fr.eq(pols.D3[0], feaPreviousL1InfoTreeRoot[3])) ||
+        (!Fr.eq(pols.D4[0], feaPreviousL1InfoTreeRoot[4])) ||
+        (!Fr.eq(pols.D5[0], feaPreviousL1InfoTreeRoot[5])) ||
+        (!Fr.eq(pols.D6[0], feaPreviousL1InfoTreeRoot[6])) ||
+        (!Fr.eq(pols.D7[0], feaPreviousL1InfoTreeRoot[7]))
+    ) {
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register SP not termined equal as its initial value");
+        throw new Error("Register D not ended equal as its initial value");
+    }
+
+    if (!Fr.eq(pols.RCX[0], ctx.Fr.e(ctx.input.previousL1InfoTreeIndex))){
+        if(fullTracer) fullTracer.exportTrace();
+        throw new Error("Register RCX not ended equal as its initial value");
     }
 
     if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register GAS not termined equal as its initial value");
+        throw new Error("Register GAS not ended equal as its initial value");
     }
 
     if (!Fr.eq(pols.CTX[0], ctx.Fr.e(ctx.input.forkID))){
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error(`Register CTX not termined equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
+        throw new Error(`Register CTX not ended equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
     }
 }
 
@@ -2868,16 +2883,16 @@ function initCounterControls(counterControls, rom) {
  * @param {Object} ctx - context
  */
 function initState(Fr, pols, ctx) {
-    // Set oldStateRoot to register B
+    // Set oldStateRoot to register SR
     [
-        pols.B0[0],
-        pols.B1[0],
-        pols.B2[0],
-        pols.B3[0],
-        pols.B4[0],
-        pols.B5[0],
-        pols.B6[0],
-        pols.B7[0]
+        pols.SR0[0],
+        pols.SR1[0],
+        pols.SR2[0],
+        pols.SR3[0],
+        pols.SR4[0],
+        pols.SR5[0],
+        pols.SR6[0],
+        pols.SR7[0]
     ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
 
     // Set oldAccInputHash to register C
@@ -2890,10 +2905,21 @@ function initState(Fr, pols, ctx) {
         pols.C5[0],
         pols.C6[0],
         pols.C7[0]
-    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBatchAccInputHash));
+     // Set previousL1InfoTreeRoot to register D
+    [
+        pols.D0[0],
+        pols.D1[0],
+        pols.D2[0],
+        pols.D3[0],
+        pols.D4[0],
+        pols.D5[0],
+        pols.D6[0],
+        pols.D7[0]
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.previousL1InfoTreeRoot));
 
-    // Set oldNumBatch to SP register
-    pols.SP[0] = ctx.Fr.e(ctx.input.oldNumBatch)
+    // Set previousL1InfoTreeIndex to RCX register
+    pols.RCX[0] = ctx.Fr.e(ctx.input.previousL1InfoTreeIndex)
 
     // Set chainID to GAS register
     pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
@@ -2909,6 +2935,14 @@ function initState(Fr, pols, ctx) {
     pols.A5[0] = Fr.zero;
     pols.A6[0] = Fr.zero;
     pols.A7[0] = Fr.zero;
+    pols.B0[0] = Fr.zero;
+    pols.B1[0] = Fr.zero;
+    pols.B2[0] = Fr.zero;
+    pols.B3[0] = Fr.zero;
+    pols.B4[0] = Fr.zero;
+    pols.B5[0] = Fr.zero;
+    pols.B6[0] = Fr.zero;
+    pols.B7[0] = Fr.zero;
     pols.D0[0] = Fr.zero;
     pols.D1[0] = Fr.zero;
     pols.D2[0] = Fr.zero;
@@ -2925,14 +2959,6 @@ function initState(Fr, pols, ctx) {
     pols.E5[0] = Fr.zero;
     pols.E6[0] = Fr.zero;
     pols.E7[0] = Fr.zero;
-    pols.SR0[0] = Fr.zero;
-    pols.SR1[0] = Fr.zero;
-    pols.SR2[0] = Fr.zero;
-    pols.SR3[0] = Fr.zero;
-    pols.SR4[0] = Fr.zero;
-    pols.SR5[0] = Fr.zero;
-    pols.SR6[0] = Fr.zero;
-    pols.SR7[0] = Fr.zero;
     pols.PC[0] = 0n;
     pols.HASHPOS[0] = 0n;
     pols.RR[0] = 0n;
@@ -2944,7 +2970,7 @@ function initState(Fr, pols, ctx) {
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
-    pols.RCX[0] = 0n;
+    pols.SP[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
     pols.RID[0] = 0n;
