@@ -18,7 +18,7 @@
 	EQ9:   x1 - x2 - x3 + (q1 * p2)                              - selEq[6]
 	EQ10:  y1 - y2 - y3 + (q2 * p2)                              - selEq[6]
 
-    EQ11:  A(x1) * B(y1) + C(x2) - op(y3) + (q0 * D(y2))         - selEq[7]
+    EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - q1 * D(y2) * 2**256 - q0 * D(y2)         - selEq[7]
 
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
@@ -484,10 +484,10 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - D(y2) * (q0 - offset) = 0
+    * EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - q1 * D(y2) * 2**256 - q0 * D(y2)
     *
     *******/
-    <%- equation('pol eq11_## =', 'x1*y1+x2-y3-y2*q0+y2*offset', {offset: 0x8000000000000000000000000000000000000000000000000000000000000000n}) %>
+    <%- equation('pol eq11_## =', 'x1*y1+x2-y3-q1*y2*powOfTwo-q0*y2', {powOfTwo: 0x10000000000000000000000000000000000000000000000000000000000000000n}) %>
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;

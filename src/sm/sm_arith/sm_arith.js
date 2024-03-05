@@ -214,31 +214,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         }
         else {
             s = 0n;
-
-            if (input[i].selEq7) {
-                let eq = x1 * y1 + x2 - y3; // Worst values are {-(2^256-1),2^256*(2^256-1)}
-                                            // with 2^256*(2^256-1) > |-(2^256-1)|
-                if (y2 === 0n) {
-                    throw new Error(`For input ${i}, y2 is zero on modular arithmetic`);
-                }
-                q0 = eq / y2;
-                nDivErrors = errorHandler(
-                    eq - y2 * q0 != 0n,
-                    `For input ${i}, with the calculated q0 the residual is not zero (modular arith)`,
-                    continueOnError,
-                    nDivErrors
-                );
-                // offset
-                q0 += 2n ** 255n;
-                nNegErrors = errorHandler(
-                    q0 < 0n,
-                    `For input ${i}, the q0 with offset is negative (modular arith). Actual value: ${q0}, previous value: ${q0 - 2n ** 255n}`,
-                    continueOnError,
-                    nNegErrors
-                );
-            } else {
-                q0 = 0n;
-            }
+            q0 = 0n;
         }
 
         if (input[i].selEq3) {
@@ -391,11 +367,28 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 continueOnError,
                 nNegErrors
             );
-        }
-        else {
+        } else {
             q1 = 0n;
             q2 = 0n;
         }
+
+        if (input[i].selEq7) {
+            let eq = x1 * y1 + x2 - y3;
+            if (y2 === 0n) {
+                throw new Error(`For input ${i}, y2 is zero on modular arithmetic`);
+            }
+            let quotient = eq / y2;
+            q1 = quotient >> 256n;
+            q0 = quotient & (2n ** 256n - 1n);
+
+            nDivErrors = errorHandler(
+                eq - y2 * 2n ** 256n * q1 - y2 * q0 !== 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (modular arith)`,
+                continueOnError,
+                nDivErrors
+            );
+        }
+
         input[i]['_s'] = to16bitsRegisters(s);
         input[i]['_q0'] = to16bitsRegisters(q0);
         input[i]['_q1'] = to16bitsRegisters(q1);
@@ -505,6 +498,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 let carryIndex = eqIndexToCarryIndex[eqIndex];
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
+                console.log(eqIndex,step);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
                     throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
                 }
