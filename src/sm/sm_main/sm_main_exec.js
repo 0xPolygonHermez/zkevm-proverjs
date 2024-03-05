@@ -61,6 +61,18 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         MemAlign: [],
         Storage: []
     };
+
+    const counterControls = {
+        outOfCountersStep:      {limitConstant: 'MAX_CNT_STEPS',             counter: 'cntStep'     },
+        outOfCountersArith:     {limitConstant: 'MAX_CNT_ARITH',             counter: 'cntArith'    },
+        outOfCountersBinary:    {limitConstant: 'MAX_CNT_BINARY',            counter: 'cntBinary'   },
+        outOfCountersKeccak:    {limitConstant: 'MAX_CNT_KECCAK_F',          counter: 'cntKeccakF'  },
+        outOfCountersSha256:    {limitConstant: 'MAX_CNT_SHA256_F',          counter: 'cntSha256F'  },
+        outOfCountersMemalign:  {limitConstant: 'MAX_CNT_MEM_ALIGN',         counter: 'cntMemAlign' },
+        outOfCountersPoseidon:  {limitConstant: 'MAX_CNT_POSEIDON_G',        counter: 'cntPoseidonG'},
+        outOfCountersPadding:   {limitConstant: 'MAX_CNT_PADDING_PG_LIMIT',  counter: 'cntPaddingPG'},
+    }
+    initCounterControls(counterControls, rom);
     nameRomErrors = [];
 
     debug = config && config.debug;
@@ -127,6 +139,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         outLogs: {},
         N,
         stepsN,
+        final: false,
         helpers
     }
 
@@ -148,6 +161,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 skipFirstChangeL2Block: input.skipFirstChangeL2Block,
                 tracerOptions: config.tracerOptions,
             },
+            counterControls,
         );
     }
 
@@ -201,6 +215,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             // console.log(`  found helper ${method.substring(5)} => ${method}`);
         }
     }
+    
     ctx.helpers = helpers;
     try {
 
@@ -256,6 +271,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.cntMemAlign = pols.cntMemAlign[i];
         ctx.cntPoseidonG = pols.cntPoseidonG[i];
         ctx.cntPaddingPG = pols.cntPaddingPG[i];
+        if (!ctx.final) ctx.cntStep = step;
         ctx.RCX = pols.RCX[i];
 
         // evaluate commands "after" before start new line, but when new values of registers are ready.
@@ -285,6 +301,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         // Store SR before set it to 0 at finalizeExecution
         if(Number(ctx.zkPC) === rom.labels.finalizeExecution) {
+            ctx.final = true;
             auxNewStateRoot = fea2String(Fr, ctx.SR);
         }
         // breaks the loop in debug mode in order to test and debug faster
@@ -604,6 +621,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             if (l.indRR) {
                 addrRel += fe2n(Fr, ctx.RR, ctx);
+            }
+            if (typeof l.maxInd !== 'undefined' && addrRel > l.maxInd) {
+                throw new Error(`Address out of bounds accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
             }
             if (l.offset) addrRel += l.offset;
             if (l.isStack == 1) addrRel += Number(ctx.SP);
@@ -1441,7 +1461,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 throw new Error(`Call HASHSDIGEST(${addr}) more than once: ${sourceRef}`);
             }
             ctx.hashS[addr].digestCalled = true;
-            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1) / 64)
+            incCounter = Math.ceil((ctx.hashS[addr].data.length + 1 + 8) / 64)
         } else {
             pols.hashSDigest[i] = 0n;
         }
@@ -2162,7 +2182,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setCTX == 1) {
             pols.setCTX[i]=1n;
-            pols.CTX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.CTX[nexti] = op0;
         } else {
             pols.setCTX[i]=0n;
             pols.CTX[nexti] = pols.CTX[i];
@@ -2170,7 +2190,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setSP == 1) {
             pols.setSP[i]=1n;
-            pols.SP[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.SP[nexti] = op0;
         } else {
             pols.setSP[i]=0n;
             pols.SP[nexti] = pols.SP[i] + BigInt((l.incStack || 0));
@@ -2178,7 +2198,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setPC == 1) {
             pols.setPC[i]=1n;
-            pols.PC[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.PC[nexti] = op0;
         } else {
             pols.setPC[i]=0n;
             pols.PC[nexti] = pols.PC[i];
@@ -2186,7 +2206,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setRR == 1) {
             pols.setRR[i]=1n;
-            pols.RR[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.RR[nexti] = op0;
         } else {
             pols.setRR[i]=0n;
             pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
@@ -2212,7 +2232,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setRCX == 1) {
             pols.setRCX[i] = 1n;
-            pols.RCX[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.RCX[nexti] = op0;
         } else {
             pols.setRCX[i] = 0n;
             if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
@@ -2256,6 +2276,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.JMPN) {
             const o = Fr.toObject(op0);
+            // Calculate reserved counters
+            const counterControl = counterControls[l.jmpAddrLabel] ?? false;
+            if (counterControl !== false && counterControl.limit !== false) {
+                const reserv = counterControl.limit - (o < FrFirst32Negative ? o : o - (FrFirst32Negative + 0xFFFFFFFFn));
+                if (typeof counterControl.reserved === 'undefined' || counterControl.reserved < reserv) {
+                    counterControl.reserved = reserv;
+                    counterControl.sourceRef = sourceRef;
+                }
+            }
+
             let jmpnCondValue = o;
             if (o > 0 && o >= FrFirst32Negative) {
                 pols.isNeg[i]=1n;
@@ -2314,7 +2344,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setGAS == 1) {
             pols.setGAS[i]=1n;
-            pols.GAS[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.GAS[nexti] = op0;
         } else {
             pols.setGAS[i]=0n;
             pols.GAS[nexti] = pols.GAS[i];
@@ -2322,10 +2352,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setHASHPOS == 1) {
             pols.setHASHPOS[i]=1n;
-            pols.HASHPOS[nexti] = BigInt(fe2n(Fr, op0, ctx) + incHashPos);
+            pols.HASHPOS[nexti] = Fr.add(op0, Fr.e(incHashPos));
         } else {
             pols.setHASHPOS[i]=0n;
-            pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
+            pols.HASHPOS[nexti] = Fr.add(pols.HASHPOS[i], Fr.e(incHashPos));
         }
 
         if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
@@ -2521,6 +2551,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         cntPaddingPG: ctx.cntPaddingPG,
         cntSteps: ctx.step,
     }
+
+    required.reservedCounters = counterControls;
     required.output = {
         newStateRoot: auxNewStateRoot,
         newAccInputHash: fea2String(Fr, ctx.D),
@@ -2711,6 +2743,13 @@ function assertOutputs(ctx){
     }
 
     console.log("Assert outputs run succesfully");
+}
+
+function initCounterControls(counterControls, rom) {
+    Object.values(counterControls).forEach(cc => {
+        cc.limit = rom.constants[cc.limitConstant] ? BigInt(rom.constants[cc.limitConstant].value) : false;
+        cc.reserved = false;
+        cc.sourceRef = false});
 }
 
 
@@ -3059,7 +3098,7 @@ function eval_logical_operation(ctx, tag)
         case 'gt':      return (a > b)  ? 1 : 0;
         case 'ge':      return (a >= b) ? 1 : 0;
         case 'lt':      return (a < b)  ? 1 : 0;
-        case 'le':      return (a > b)  ? 1 : 0;
+        case 'le':      return (a <= b)  ? 1 : 0;
     }
     throw new Error(`logical operation ${tag.op} not defined ${ctx.sourceRef}`);
 }
@@ -3724,3 +3763,4 @@ function lt4(a, b) {
     }
     return 1n;
 }
+
