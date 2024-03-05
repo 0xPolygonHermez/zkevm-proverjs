@@ -142,13 +142,14 @@ module.exports.execute = async function (pols, input) {
 
             // Added lines for sha256
             const s = input[i].dataBytes.length - 1 - j;
-            pols.lengthSection[p] = (s < 8) ? 1n : 0n;
+            const lengthSection = (s < 8) ? 1n : 0n;
+            pols.lengthSection[p] = lengthSection;
             const mask = [0xFFFFFFFF, 0xFFFFFF00, 0xFFFF0000, 0xFF000000];
             pols.accLength[p] = (s < 4) ? F.e((input[i].realLen * 8) & mask[s]) : 0n;
             // End added lines for sha 256
 
             const lastBlockLatch = (p % BYTESPERBLOCK) === (BYTESPERBLOCK - 1);
-            const lastHashLatch = lastBlockLatch && (pols.spare[p] || !pols.rem[p]);
+            const lastHashLatch = lastBlockLatch && lengthSection;
 
             pols.lastHashLen[p] = lastHashLatch && input[i].lenCalled ? 1n : 0n;
             pols.lastHashDigest[p] = lastHashLatch && input[i].digestCalled ? 1n : 0n;
@@ -209,7 +210,7 @@ module.exports.execute = async function (pols, input) {
                     }
                 }
             }
-            p += 1;
+                        p += 1;
         }
         addr += 1n;
     }

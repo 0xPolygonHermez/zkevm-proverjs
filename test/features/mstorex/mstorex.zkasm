@@ -1,0 +1,317 @@
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        ; TEST-1 (simple test)
+
+        0 => E      :CALL(fillMemPattern)
+
+        3*32+5 => E
+        0xFFFFFFFFFFFF0000000000000000000000000000000000000000000000000000n :MSTORE(MSTOREX_bytesToStore)
+        6 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFn :MLOAD(MEM:E+2)
+        0xC0C1C2C3C4FFFFFFFFFFFFCBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-2 (between memory words)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32+29 => E
+        0xABCDEFFEDCBA0000000000000000000000000000000000000000000000000000n :MSTORE(MSTOREX_bytesToStore)
+        6 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCABCDEFn :MLOAD(MEM:E+2)
+        0xFEDCBAC3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-3 (relative offset 0)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32 => E
+        0xABCDEFFEDCBA0000000000000000000000000000000000000000000000000000n :MSTORE(MSTOREX_bytesToStore)
+        6 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xABCDEFFEDCBAA6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFn :MLOAD(MEM:E+2)
+        0xC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-4 (32 bytes, offset > 0)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32 + 18 => E
+        0x102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E20210n :MSTORE(MSTOREX_bytesToStore)
+        32 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1102030405060708090A0B0C0D0E0n :MLOAD(MEM:E+2)
+        0xF101112131415161718191A1B1C1D1E20210D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-5 (0 bytes)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32 + 18 => E
+        0x102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E20210n :MSTORE(MSTOREX_bytesToStore)
+        0 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFn :MLOAD(MEM:E+2)
+        0xC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-6 (32 bytes, offset 0)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32 => E
+        0x102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E20210n :MSTORE(MSTOREX_bytesToStore)
+        32 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0x102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E20210n :MLOAD(MEM:E+2)
+        0xC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-7 (high address)
+
+        2**17-6 => E    :CALL(fillMemPattern)
+
+        2**22-6*32+2*32+29 => E
+        0xABCDEFFEDCBA0000000000000000000000000000000000000000000000000000n :MSTORE(MSTOREX_bytesToStore)
+        6 => C
+        :CALL(MSTOREX)
+
+        2**17-6 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCABCDEFn :MLOAD(MEM:E+2)
+        0xFEDCBAC3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-8 (1 byte, offset = 31)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32+31 => E
+        0x882030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E20210n :MSTORE(MSTOREX_bytesToStore)
+        1 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBE88n :MLOAD(MEM:E+2)
+        0xC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        ; TEST-9 (31 bytes, offset = 31)
+
+        0 => E      :CALL(fillMemPattern)
+
+        2*32+31 => E
+        0x882030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E20210n :MSTORE(MSTOREX_bytesToStore)
+        31 => C
+        :CALL(MSTOREX)
+
+        0 => E
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MLOAD(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MLOAD(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBE88n :MLOAD(MEM:E+2)
+        0x2030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E202DEDFn :MLOAD(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MLOAD(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MLOAD(MEM:E+5)
+
+        :JMP(end)
+
+fillMemPattern:
+
+        0x0000000000000000000000000000000000000000000000000000000000000000n :MSTORE(MEM:E)
+        0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E2021n :MSTORE(MEM:E+1)
+        0xA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFn :MSTORE(MEM:E+2)
+        0xC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFn :MSTORE(MEM:E+3)
+        0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEn :MSTORE(MEM:E+4)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn :MSTORE(MEM:E+5), RETURN
+
+; ### MEM_ALIGN_RD
+;
+; M0=A, M1=B, V=op, Offset=C
+;
+; M0 = 256bit word read in position x of ZKEVM memory (32x EVM)
+; M1 = 256bit word read in position x+1 of ZKEVM memory (32x+1 EVM)
+; Offset = 0..31 bytes
+; V = value of 256 bits
+;
+; ### MEM_ALIGN_WR
+;
+; M0=A, M1=B, V=op Offset=C, W0=D W1=E
+; W0 = 256bit word to write position x of ZKEVM memory (32x EVM)
+; W1 = 256bit word to write in position x+1 of ZKEVM memory (32x+1 EVM)
+
+; @info save value to memory < 32 bytes with offset
+; @in bytesToStore => bytes to store in memory
+; @in E => offset
+; @in C => length
+; @out E => new offset
+
+
+VAR GLOBAL MSTOREX_length
+VAR GLOBAL MSTOREX_M0_addr
+VAR GLOBAL MSTOREX_oldvalue
+VAR GLOBAL MSTOREX_32BytesToStore
+VAR GLOBAL MSTOREX_offset
+VAR GLOBAL MSTOREX_bytesToStore
+
+ERROR:
+        A + 1 :ASSERT
+MSTOREX:
+        C       :MSTORE(MSTOREX_length),JMPZ(MSTOREX_END)
+        32 - C  :JMPN(ERROR)
+
+        ; no trust, but not was objective of this test
+        ; ${E % 32} => C  :MSTORE(MSTOREX_offset)   ;offset
+        ; ${E / 32} => E  :MSTORE(MSTOREX_M0_addr)  ;address
+
+
+        E => A
+        0x1F => B
+        $ => C          :AND,MSTORE(MSTOREX_offset)                        ; offset
+        ${E / 32} => E  :MSTORE(MSTOREX_M0_addr),JMPN(ERROR)               ; address (ASSERT E is 32-bit value) 4G x 32 bytes = 128GB
+        E * 32 + C      :ASSERT                                            ; 32 bits * 32 (5 bits) = 37 bits is secure for FF
+
+        ; if length is 32 then apply direct MEM_ALIGN_WR
+        $ => A          :MLOAD(MSTOREX_length)
+        32 - A          :JMPZ(MSTOREX32)
+
+        ;
+        ; STEP ONE: Obtain a copy (as a backup) of a 32-byte word that will be partially overwritten.
+        ;
+        ; =========================== A (M0_addr) ========================######################### B (M0_addr+1) ########################
+        ;                           :                                                              :
+        ; |<-------- offset ------->======================================##########################  => B,oldvalue
+        ;                           |<--------------------------- 32 bytes ----------------------->|
+        ;
+
+        $ => A  :MLOAD(MEM:E)           ; M0
+        C       :JMPZ(MSTOREX_OFFZERO)  ; if the offset is zero, then this copy is M0(A) and it's no longer necessary to use MEM_ALIGN
+
+        $ => B  :MLOAD(MEM:E+1)         ; M1
+        $ => B  :MEM_ALIGN_RD,MSTORE(MSTOREX_oldvalue),JMP(MSTOREX_OLDVALUE_READY) ; storing this copy in MSTOREX_oldvalue
+
+
+MSTOREX_OFFZERO:
+        ; if the offset is zero, then copy A on MSTOREX_oldvalue, and store this result in B.
+        A => B  :MSTORE(MSTOREX_oldvalue)
+
+MSTOREX_OLDVALUE_READY:
+        ;
+        ; STEP TWO: clear not used bytes of bytesToStore and oldvalue at same time.
+        ;
+        ; ******************* A (bytesToStore) ***************************======================================##########################
+        ;                                     :                                                              :
+        ; |<----------- length  ------------->0000000000000000000000000000000000000000000000000000000000000000
+        ;                                     |<--------------------------- 32 bytes ----------------------->|
+        ; ************************************0000000000000000000000000000                                   :                             => D
+        ;                                                                 000000000000000000000000000000000000==########################## => E
+        ;
+        ; D    ************************************0000000000000000000000000000
+        ; E    000000000000000000000000000000000000==##########################
+        ; D+E  ************************************==########################## => MSTOREX_32BytesToStore
+
+        $ => A  :MLOAD(MSTOREX_bytesToStore)
+        $ => C  :MLOAD(MSTOREX_length)
+        ${memAlignWR_W0(A,0,C)} => D ; no trust calculate W0
+        ${memAlignWR_W1(B,0,C)} => E ; no trust calculate W1
+        0       :MEM_ALIGN_WR
+        D + E   :MSTORE(MSTOREX_32BytesToStore)
+
+        ;
+        ; STEP THREE: store 32 bytes of this mix of bytes, first "length" bytes comes from bytesToStore, and others bytes comes from oldvalue,
+        ;             current value in memory.
+        ;
+        ; =========================== A (M0_addr) ========================######################### B (M0_addr+1) ########################
+        ;                           :                                                              :
+        ; |<-------- offset ------->************************************==##########################
+        ;                           |<--------------------------- 32 bytes ----------------------->|
+        ;
+        ; ==========================************************************==################################################################
+
+        $ => E  :MLOAD(MSTOREX_M0_addr)
+        $ => A  :MLOAD(MEM:E)       ;M0
+        $ => B  :MLOAD(MEM:E+1)     ;M1
+        $ => C  :MLOAD(MSTOREX_offset)
+
+        ${memAlignWR_W0(A,mem.MSTOREX_32BytesToStore,C)} => D ; no trust calculate W0
+        ${memAlignWR_W1(B,mem.MSTOREX_32BytesToStore,C)} => E ; no trust calculate W1
+        $       :MEM_ALIGN_WR,MLOAD(MSTOREX_32BytesToStore),JMP(MSTOREX_STORE)
+
+MSTOREX32:
+        C       :JMPZ(MSTOREX32_OFFSET0)
+        ; store 32 bytes, use MEM_ALIGN_WR directly
+        ; C = offset
+        $ => A  :MLOAD(MEM:E)       ;M0
+        $ => B  :MLOAD(MEM:E+1)     ;M1
+        ${memAlignWR_W0(A,mem.MSTOREX_bytesToStore,C)} => D ; no trust calculate W0
+        ${memAlignWR_W1(B,mem.MSTOREX_bytesToStore,C)} => E ; no trust calculate W1
+        $       :MEM_ALIGN_WR,MLOAD(MSTOREX_bytesToStore),JMP(MSTOREX_STORE)
+
+MSTOREX32_OFFSET0:
+        ; if offset is 0, and length 32, directly store value on memory
+        $ => D  :MLOAD(MSTOREX_bytesToStore),JMP(MSTOREX32_M0)
+
+
+MSTOREX_STORE:
+        ; store D,E on memory
+        E => A
+        $ => E  :MLOAD(MSTOREX_M0_addr)
+        A       :MSTORE(MEM:E+1)
+MSTOREX32_M0:
+        D       :MSTORE(MEM:E)
+
+MSTOREX_END:
+        :RETURN
+
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
