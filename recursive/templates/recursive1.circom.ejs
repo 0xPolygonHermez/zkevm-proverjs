@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "c12a.verifier.circom";
+include "<%- verifierName %>.verifier.circom";
 
 template Main() {
     signal input publics[<%- starkInfo.nPublics  %>];
@@ -59,6 +59,9 @@ template Main() {
     vA.s<%- s %>_siblings <== s<%- s %>_siblings;
 <% }                                                  -%>
     vA.finalPol <== finalPol;
+<%  if(isBatchRecursion) { -%>
+    vA.enable <== 1;
+<%  } -%>
 
 }
 

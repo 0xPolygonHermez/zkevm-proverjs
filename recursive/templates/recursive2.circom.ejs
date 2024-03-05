@@ -1,13 +1,70 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-include "recursive1.verifier.circom";
+include "<%- verifierName %>.verifier.circom";
 include "mux1.circom";
 include "iszero.circom";
 
+<% let isEip4844 = false; -%>
+
 template Main() {
-<%  let nPublics = starkInfo.nPublics - 4; -%>
     var rootCSingle[4] = [<%- constRoot.join(",") %>];
+
+<% if(isBatchRecursion) { -%>
+<%  let p = 0; -%>
+    var oldBatchStatePos = <%- p %>;
+<% p += 8; -%>
+    var oldBatchAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var oldBatchNumPos = <%- p++ %>;
+<%  if(isEip4844) { -%>
+    var oldL1InfoTreeRootPos = <%- p %>;
+<% p += 8; -%>
+    var oldL1InfoTreeIndexPos = <%- p++ %>;
+<%  } -%>
+    var chainIdPos = <%- p++ %>;
+    var forkIdPos = <%- p++ %>;
+    var newBatchStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBatchAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var newBatchNumPos = <%- p++ %>;
+<%  if(isEip4844) { -%>
+    var newL1InfoTreeRootPos = <%- p %>;
+<% p += 8; -%>
+    var newL1InfoTreeIndexPos = <%- p++ %>;
+<%  } -%>
+    var newLocalExitRootPos = <%- p %>;
+<% p += 8; -%>
+<%  if(isEip4844) { -%>
+    var newLastTimestampPos = <%- p++ %>;
+<%  } -%>
+<%  nPublics = p; -%>
+<% } else { -%>
+<%  let p = 0; -%>
+    var oldBlobOuterStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var oldBlobOuterBlobStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var oldBlobOuterAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var oldBlobOuterNumPos = <%- p %>;
+<% p += 8; -%>
+
+    var chainIdBlobOuterPos = <%- p++ %>;
+    var forkIdBlobOuterPos = <%- p++ %>;
+
+    var newBlobOuterStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBlobOuterBlobStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBlobOuterAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var newBlobOuterNumPos = <%- p++ %>;  
+    var newLocalExitRootBlobOuterPos = <%- p %>;
+<% p += 8; -%>
+<%  nPublics = p; -%>
+<% } -%>
 
     signal input publics[<%- nPublics %>];
     signal input rootC[4];
@@ -100,8 +157,16 @@ template Main() {
     vA.s<%- s %>_siblings <== a_s<%- s %>_siblings;
 <% }                                                  -%>
     vA.finalPol <== a_finalPol;
+<%  if(isBatchRecursion) { -%>
+    vA.enable <== 1;
+<%  } -%>
 
-    signal isOneBatchA <== IsZero()(a_publics[43] - a_publics[16] - 1);
+<%  if(isBatchRecursion) { -%>
+    signal isOneBatchA <== IsZero()(a_publics[newBatchNumPos] - a_publics[oldBatchNumPos] - 1);
+<%  } else { -%>
+    signal isOneBatchA <== IsZero()(a_publics[newBlobOuterNumPos] - a_publics[oldBlobOuterNumPos] - 1);
+<%  } -%>
+
     vA.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchA);
     
     for (var i=0; i<4; i++) {
@@ -138,98 +203,113 @@ template Main() {
     vB.s<%- s %>_siblings <== b_s<%- s %>_siblings;
 <% }                                                  -%>
     vB.finalPol <== b_finalPol;
+<%  if(isBatchRecursion) { -%>
+    vB.enable <== 1;
+<%  } -%>
 
+<%  if(isBatchRecursion) { -%>
+    signal isOneBatchB <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
+<%  } else { -%>
+    signal isOneBatchB <== IsZero()(b_publics[newBlobOuterNumPos] - b_publics[oldBlobOuterNumPos] - 1);
+<%  } -%>
 
-    signal isOneBatchB <== IsZero()(b_publics[43] - b_publics[16] - 1);
     vB.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchB);
 
     for (var i=0; i<4; i++) {
         vB.publics[<%- nPublics %> +i] <== rootC[i];
     }
 
-    // oldStateRoot
+<%  if(isBatchRecursion) { -%>
+
+    // Batch State Root
     for (var i=0; i<8; i++) {
-        a_publics[i] === publics[i];
+        a_publics[oldBatchStatePos + i] === publics[oldBatchStatePos + i]; // Old
+        a_publics[newBatchStateRootPos + i] === b_publics[oldBatchStatePos + i]; // Mid
+        publics[newBatchStateRootPos + i] === b_publics[newBatchStateRootPos + i]; // New
     }
 
-    // oldAccInputHash
-    for (var i=8; i<16; i++) {
-        a_publics[i] === publics[i];
+    // Batch Accumulated Input Hash
+    for (var i=0; i<8; i++) {
+        a_publics[oldBatchAccInputHashPos + i] === publics[oldBatchAccInputHashPos + i]; // Old
+        a_publics[newBatchAccInputHashPos + i] === b_publics[oldBatchAccInputHashPos + i]; // Mid
+        publics[newBatchAccInputHashPos + i] === b_publics[newBatchAccInputHashPos + i]; // New
     }
 
-    // oldBatchNum
-    a_publics[16] === publics[16];
+    // Batch Number
+    a_publics[oldBatchNumPos] === publics[oldBatchNumPos]; // Old
+    a_publics[newBatchNumPos] === b_publics[oldBatchNumPos]; // Mid
+    publics[newBatchNumPos] === b_publics[newBatchNumPos]; // New
 
     // chainId
-    a_publics[17] === publics[17];
+    a_publics[chainIdPos] === publics[chainIdPos];
+    a_publics[chainIdPos] === b_publics[chainIdPos];
 
     // forkId
-    a_publics[18] === publics[18];
-
-    // midStateRoot
-    for (var i=0; i<8; i++) {
-        b_publics[i] === a_publics[19+i];
-    }
-
-    // midAccInputHash
-    for (var i=8; i<16; i++) {
-        b_publics[i] === a_publics[19+i];
-    }
-
-    // midBatchNum
-    b_publics[16] === a_publics[19+24];
-
-    // chainId
-    b_publics[17] === publics[17];
-
-    // forkId
-    b_publics[18] === publics[18];
-
-
-    // newStateRoot
-    for (var i=0; i<8; i++) {
-        publics[19+i] === b_publics[19+i];
-    }
-
-    // newAccInputHash
-    for (var i=8; i<16; i++) {
-        publics[19+i] === b_publics[19+i];
-    }
+    a_publics[forkIdPos] === publics[forkIdPos];
+    a_publics[forkIdPos] === b_publics[forkIdPos];
 
     // localExitRoot
-    for (var i=16; i<24; i++) {
-        publics[19+i] === b_publics[19+i];
-    }
-
-    // newBatchNum
-    publics[19+24] === b_publics[19+24];
-
-<% if(isEip4844 && !isBlobRecursion) { -%>
-    // oldL1InfoTreeRoot
     for (var i=0; i<8; i++) {
-        a_publics[43+i] === publics[43+i];
+        publics[newLocalExitRootPos+i] === b_publics[newLocalExitRootPos+i];
     }
 
-    // oldL1InfoTreeIndex
-    a_publics[51] === publics[51];
-
-    // midL1InfoTreeRoot
+<%  if(isEip4844) { -%>
+    //  L1 Info Tree Root
     for (var i=0; i<8; i++) {
-        b_publics[43+i] === a_publics[53 + i];
+        a_publics[oldL1InfoTreeRootPos+i] === publics[oldL1InfoTreeRootPos+i]; // Old
+        a_publics[newL1InfoTreeRootPos+i] === b_publics[oldL1InfoTreeRootPos+i]; // Mid
+        publics[newL1InfoTreeRootPos+i] === b_publics[newL1InfoTreeRootPos+i]; // New
     }
 
-    // midL1InfoTreeIndex
-    b_publics[51] === a_publics[61];
+    // L1 Info Tree Index
+    a_publics[oldL1InfoTreeIndexPos] === publics[oldL1InfoTreeIndexPos]; // Old
+    a_publics[newL1InfoTreeIndexPos] === b_publics[oldL1InfoTreeIndexPos]; // Mid
+    publics[newL1InfoTreeIndexPos] === b_publics[newL1InfoTreeIndexPos]; // New
 
-    // newL1InfoTreeRoot
-    for(var i=0; i<8; i++) {
-        publics[53+i] === b_publics[53+i];
+    // Last timestamp
+    publics[newLastTimestampPos] === b_publics[newLastTimestampPos];
+<%  } -%>
+
+<%  } else { -%>
+    // State Root
+    for (var i=0; i<8; i++) {
+        a_publics[oldBlobOuterStateRootPos + i] === publics[oldBlobOuterStateRootPos + i]; // Old
+        a_publics[newBlobOuterStateRootPos + i] === b_publics[oldBlobOuterStateRootPos + i]; // Mid
+        publics[newBlobOuterStateRootPos + i] === b_publics[newBlobOuterStateRootPos + i]; // New
     }
 
-    // newL1InfoTreeIndex
-    publics[61] === b_publics[61];
-<% } -%>
+    // Blob State Root
+    for (var i=0; i<8; i++) {
+        a_publics[oldBlobOuterBlobStateRootPos + i] === publics[oldBlobOuterBlobStateRootPos + i]; // Old
+        a_publics[newBlobOuterBlobStateRootPos + i] === b_publics[oldBlobOuterBlobStateRootPos + i]; // Mid
+        publics[newBlobOuterBlobStateRootPos + i] === b_publics[newBlobOuterBlobStateRootPos + i]; // New
+    }
 
+    // Blob Accumulated Input Hash
+    for (var i=0; i<8; i++) {
+        a_publics[oldBlobOuterAccInputHashPos + i] === publics[oldBlobOuterAccInputHashPos + i]; // Old
+        a_publics[newBlobOuterAccInputHashPos + i] === b_publics[oldBlobOuterAccInputHashPos + i]; // Mid
+        publics[newBlobOuterAccInputHashPos + i] === b_publics[newBlobOuterAccInputHashPos + i]; // New
+    }
+
+    // Blob number
+    a_publics[oldBlobOuterNumPos] === publics[oldBlobOuterNumPos]; // Old
+    a_publics[newBlobOuterNumPos] === b_publics[oldBlobOuterNumPos]; // Mid
+    publics[newBlobOuterNumPos] === b_publics[newBlobOuterNumPos]; // New
+
+    // chainId
+    a_publics[chainIdBlobOuterPos] === publics[chainIdBlobOuterPos];
+    a_publics[chainIdBlobOuterPos] === b_publics[chainIdBlobOuterPos];
+
+    // forkId
+    a_publics[forkIdBlobOuterPos] === publics[forkIdBlobOuterPos];
+    a_publics[forkIdBlobOuterPos] === b_publics[forkIdBlobOuterPos];
+
+    // localExitRoot
+    for (var i=0; i<8; i++) {
+        publics[newLocalExitRootBlobOuterPos+i] === b_publics[newLocalExitRootBlobOuterPos+i];
+    }
+<%  } -%> 
 }
 
 component main {public [publics, rootC]}= Main();

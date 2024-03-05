@@ -9,8 +9,7 @@ const argv = require("yargs")
     .alias("k", "verkey2")
     .alias("t", "starkstruct")
     .alias("s", "starkinfo")
-    .alias("e", "eip4844")
-    .alias("b", "blobrecursion")
+    .alias("b", "batch")
     .string("cols")
     .string("template")
     .string("filename")
@@ -24,8 +23,9 @@ async function run() {
 
     const template = argv.template;
     if(!template) throw new Error("A template name must be provided!");
+    if(!["c12a", "recursive1", "recursive2", "recursivef"].includes(template)) throw new Error("Invalid template name provided!");
 
-    const fileName = argv.filename;
+    let fileName = argv.filename;
     if(!fileName) fileName = template;
 
     const starkInfoFile = typeof (argv.starkinfo) === "string" ? argv.starkinfo.trim() : "mycircuit.starkinfo.json";
@@ -33,8 +33,7 @@ async function run() {
     
     let cols = argv.cols ? Number(argv.cols) : 12;
 
-    let isEip4844 = argv.eip4844 ? true : false;
-    let isBlobRecursion = isEip4844 && argv.blobrecursion ? true : false;
+    let isBatchRecursion = argv.batch ? true : false;
 
     const starkInfo = JSON.parse(await fs.promises.readFile(starkInfoFile, "utf8"));
     const starkStruct = JSON.parse(await fs.promises.readFile(starkStructFile, "utf8"));
@@ -61,7 +60,7 @@ async function run() {
 
     let genCircomTemplate = ["recursive1", "recursive2", "recursivef"].includes(template) ? true : false;
 
-    await genSetup(template, verifierName, vks, fileName, starkInfo, starkStruct, buildDir, {compressorCols: cols, genCircomTemplate, skipConstTree, isEip4844, isBlobRecursion});
+    await genSetup(template, verifierName, vks, fileName, starkInfo, starkStruct, buildDir, {compressorCols: cols, genCircomTemplate, skipConstTree, isBatchRecursion});
     
     console.log("file Generated Correctly");
 

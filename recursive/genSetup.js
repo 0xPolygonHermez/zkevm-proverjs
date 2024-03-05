@@ -21,9 +21,9 @@ module.exports.genSetup = async function genSetup(template, verifierName, vks, f
     const compressorCols = options.compressorCols || 12;
     const genCircomTemplate = options.genCircomTemplate || false;
     
-    const isEip4844 = options.isEip4844 || false;
-    const isBlobRecursion = options.isBlobRecursion || false;
+    const isBatchRecursion = options.isBatchRecursion || false;
     
+    let enableInput = isBatchRecursion && ["recursive2", "recursivef"].includes(template) ? true : false;
     let verkeyInput = ["recursive2", "recursivef"].includes(template) ? true : false;
     
     let verifierFilename = `${buildDir}/${verifierName}.verifier.circom`;
@@ -32,7 +32,7 @@ module.exports.genSetup = async function genSetup(template, verifierName, vks, f
 
     //Generate circom
     const constRoot = vks[0] || undefined;
-    const verifierCircomTemplate = await pil2circom(constRoot, starkInfoJson, { skipMain, verkeyInput });
+    const verifierCircomTemplate = await pil2circom(constRoot, starkInfoJson, { skipMain, verkeyInput, enableInput });
     await fs.promises.writeFile(verifierFilename, verifierCircomTemplate, "utf8");
 
     const recursiveFilename = genCircomTemplate ? `${buildDir}/${fileName}.circom` : verifierFilename;
@@ -42,7 +42,7 @@ module.exports.genSetup = async function genSetup(template, verifierName, vks, f
     // Generate recursive circom
     if(genCircomTemplate) {
         const circomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", `${template}.circom.ejs`), "utf8");
-        const circomVerifier = ejs.render(circomTemplate, {nStages, starkInfo: starkInfoJson, constRoot: vks[0], constRoot2: vks[1], isEip4844, isBlobRecursion});
+        const circomVerifier = ejs.render(circomTemplate, {nStages, starkInfo: starkInfoJson, constRoot: vks[0], constRoot2: vks[1], isBatchRecursion, verifierName});
         await fs.promises.writeFile(recursiveFilename, circomVerifier, "utf8");
     }
    
