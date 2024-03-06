@@ -4,13 +4,12 @@ const { genSetup } = require("../recursive/genSetup");
 const JSONbig = require('json-bigint')({ useNativeBigInt: true, alwaysParseAsBig: true });
 const argv = require("yargs")
     .version(version)
-    .usage("node main_gensetup.js -v <basic_verification_keys.json> -k <agg_verification_keys.json> -s starkinfo.json -t starkstruct.json --cols=<12/18> --template=<compressor/recursive1/recursive2/recursivef>")
+    .usage("node main_gensetup.js -v <verification_keys.json> -s starkinfo.json -t starkstruct.json --cols=<12/18> --template=<compressor/recursive1/recursive2/recursivef>")
+    .array("v")
     .alias("v", "verkey")
-    .alias("k", "verkey2")
-    .alias("y", "verkey3")
     .alias("t", "starkstruct")
+    .array("s")
     .alias("s", "starkinfo")
-    .alias("i", "starkinfo2")
     .alias("b", "batch")
     .alias("e", "eip4844")
     .string("cols")
@@ -34,16 +33,13 @@ async function run() {
 
     const starkInfoVerifiers = [];
 
-    if(!argv.starkinfo || typeof (argv.starkinfo) !== "string") throw new Error("A stark info file must be provided!");
-    const starkInfoFile = argv.starkinfo.trim();
-    const starkInfoVerifier = JSON.parse(await fs.promises.readFile(starkInfoFile, "utf8"));
-    starkInfoVerifiers.push(starkInfoVerifier);
+    const starkInfos = argv.starkinfo;
+    if(typeof (starkInfos[0]) !== "string") throw new Error("A stark info file must be provided!");
+    starkInfoVerifiers.push(JSON.parse(await fs.promises.readFile(starkInfos[0].trim(), "utf8")));
 
     if(template === "batch_blob") {
-        if(!argv.starkinfo2 || typeof (argv.starkinfo2) !== "string") throw new Error("A second stark info file must be provided!");
-        const starkInfo2File = argv.starkinfo2.trim();
-        const starkInfo2Verifier = JSON.parse(await fs.promises.readFile(starkInfo2File, "utf8"));
-        starkInfoVerifiers.push(starkInfo2Verifier);
+        if(typeof (starkInfos[1]) !== "string") throw new Error("A second stark info file must be provided!");
+        starkInfoVerifiers.push(JSON.parse(await fs.promises.readFile(starkInfos[1].trim(), "utf8")));
     }
 
     if(!argv.starkstruct || typeof(argv.starkstruct) !== "string") throw new Error("A stark struct file must be provided!");
@@ -60,22 +56,23 @@ async function run() {
 
     let vks = [];
 
-    if(!argv.verkey || typeof(argv.verkey) !== "string") throw new Error("A second verification key file must be provided!");
-    const verKeyFile = argv.verkey.trim();
-    const verkey = JSONbig.parse(await fs.promises.readFile(verKeyFile, "utf8"));
+    if(!argv.verkey) throw new Error("A verification key file must be provided!");
+
+    let verkeyArray = argv.verkey;
+
+    if(typeof(verkeyArray[0]) !== "string") throw new Error("A second verification key file must be provided!");
+    const verkey = JSONbig.parse(await fs.promises.readFile(verkeyArray[0].trim(), "utf8"));
     vks.push(verkey.constRoot);
     
     if(template === "recursivef" || template === "batch_blob") {
-        if(!argv.verkey2 || typeof (argv.verkey2) !== "string") throw new Error("A second verification key file must be provided!");
-        const verKey2File = argv.verkey2.trim();
-        const verkey2 = JSONbig.parse(await fs.promises.readFile(verKey2File, "utf8"));
+        if(typeof(verkeyArray[1]) !== "string") throw new Error("A second verification key file must be provided!");
+        const verkey2 = JSONbig.parse(await fs.promises.readFile(verkeyArray[1].trim(), "utf8"));
         vks.push(verkey2.constRoot);
     }
 
     if(template === "batch_blob") {
-        if(!argv.verkey3 || typeof (argv.verkey3) !== "string") throw new Error("A third verification key file must be provided!");
-        const verKey3File = argv.verkey3.trim();
-        const verkey3 = JSONbig.parse(await fs.promises.readFile(verKey3File, "utf8"));
+        if(typeof(verkeyArray[2]) !== "string") throw new Error("A third verification key file must be provided!");
+        const verkey3 = JSONbig.parse(await fs.promises.readFile(verkeyArray[2].trim(), "utf8"));
         vks.push(verkey3.constRoot);
     }
     
