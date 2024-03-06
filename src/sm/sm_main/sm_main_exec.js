@@ -3265,6 +3265,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getL1InfoBlockHash(ctx, tag);
     } if (tag.funcName == 'getL1InfoTimestamp') {
         return eval_getL1InfoTimestamp(ctx, tag);
+    } else if (tag.funcName == "getTxs") {
+        return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
     } else if (tag.funcName == "getSmtProof") {scalar2fea
@@ -3332,6 +3334,16 @@ function eval_functionCall(ctx, tag) {
 function eval_getSequencerAddr(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
+}
+
+function eval_getTxs(ctx, tag) {
+    if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+    const txs = ctx.input.batchL2Data;
+    const offset = Number(evalCommand(ctx,tag.params[0]));
+    const len = Number(evalCommand(ctx,tag.params[1]));
+    let d = "0x" + txs.slice(2+offset*2, 2+offset*2 + len*2);
+    if (d.length == 2) d = d+'0';
+    return scalar2fea(ctx.Fr, Scalar.e(d));
 }
 
 function eval_getTxsLen(ctx, tag) {
