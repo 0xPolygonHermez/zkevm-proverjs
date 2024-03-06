@@ -11,6 +11,7 @@ const argv = require("yargs")
     .string("builddir")
     .string("filename")
     .string("verifiername")
+    .string("arity")
     .argv;
 
 async function run() {
@@ -33,7 +34,9 @@ async function run() {
 
     let isEip4844 = argv.eip4844 ? true : false;
 
-    await genFinalSetup(fileName, constRoot, verifierName, starkInfo, { buildDir, isEip4844});
+    let arity = argv.arity ? parseInt(argv.arity) : 16;
+
+    await genFinalSetup(fileName, constRoot, verifierName, starkInfo, { buildDir, isEip4844, arity});
     
     console.log("file Generated Correctly");
 

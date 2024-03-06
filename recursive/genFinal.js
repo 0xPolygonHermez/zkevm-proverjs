@@ -12,6 +12,8 @@ module.exports.genFinalSetup = async function genFinalSetup(fileName, constRoot,
 
     const buildDir = options.buildDir || "tmp";
     
+    const arity = options.arity || 16;
+    
     //Generate circom
     let verifierFilename = `${buildDir}/${verifierName}.verifier.circom`;
     const verifierCircomTemplate = await pil2circom(constRoot, starkInfoVerifier, { skipMain: true});

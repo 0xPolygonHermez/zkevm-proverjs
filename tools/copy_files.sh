@@ -52,7 +52,8 @@ FINAL_PHASE_1=1
 FINAL_PHASE_2=1
 ONLY_HASH=0
 ONLY_CONFIG=0
-REMOTE=0
+EIP4844=0
+
 while [ $# -gt 0 ]; do
     if [ ${1:0:1} = '-' ]; then
         case $1 in
@@ -116,12 +117,29 @@ else
     CP_DEFAULT=1
 fi
 CP_SCRIPTS=$CP_DEFAULT
+
+
 CP_ZKEVM=$CP_DEFAULT
 CP_COMPRESSOR_BATCH=$CP_DEFAULT
 CP_RECURSIVE1_BATCH=$CP_DEFAULT
 CP_RECURSIVE2_BATCH=$CP_DEFAULT
-CP_RECURSIVEF_BATCH=$CP_DEFAULT
-CP_FINAL_BATCH=1
+
+if [ $EIP4844 -eq 1 ]; then
+    CP_RECURSIVEF_BATCH=0
+    CP_BLOB=$CP_DEFAULT
+else
+    CP_RECURSIVEF_BATCH=$CP_DEFAULT
+    CP_BLOB=0
+fi
+
+CP_COMPRESSOR_BLOB=$CP_BLOB
+CP_RECURSIVE1_BLOB=$CP_BLOB
+CP_BATCH_BLOB=$CP_BLOB
+CP_RECURSIVE2_BLOB=$CP_BLOB
+CP_RECURSIVEF_BLOB=$CP_BLOB
+
+CP_FINAL=1
+
 CP_CIRCOM=$CP_DEFAULT
 CP_BUILDS=1
 GENERATE_HASH=1
@@ -229,6 +247,109 @@ if [ $CP_RECURSIVEF_BATCH -eq 1 ]; then
         cpfile $BDIR/recursivef_batch.pil                  $DST/pil
         cpdir $BDIR/recursivef_batch_cpp                   $DST/c_files
         cpdir $BDIR/recursivef_batch.chelpers              $DST/c_files
+    fi
+fi
+
+if [ $CP_BLOB -eq 1 ]; then
+    # blob_inner
+    FULLDST=$DST/config/blobInner
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/blob_inner.const                                   $FULLDST
+    cpfile $BDIR/blob_inner.verifier_cpp/blob_inner.verifier.dat    $FULLDST/blob_inner.verifier.dat
+    cpfile $BDIR/blob_inner.consttree                               $FULLDST
+    cpfile $BDIR/blob_inner.starkinfo.json                          $FULLDST
+    cpfile $BDIR/blob_inner.verkey.json        		                $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpdir $BDIR/blob_inner.verifier_cpp                         $DST/c_files
+        cpdir $BDIR/blob_inner.chelpers                             $DST/c_files
+        cpdir $BDIR/pil/blob_inner                                  $DST/pil/
+    fi
+fi
+
+if [ $CP_COMPRESSOR_BLOB -eq 1 ]; then
+    # compressor_blob
+    FULLDST=$DST/config/compressor_blob
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/compressor_blob.const                    $FULLDST
+    cpfile $BDIR/compressor_blob.exec                     $FULLDST
+    cpfile $BDIR/compressor_blob.consttree                $FULLDST
+    cpfile $BDIR/compressor_blob.verkey.json              $FULLDST
+    cpfile $BDIR/compressor_blob.starkinfo.json           $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/compressor_blob.pil                  $DST/pil
+        cpdir $BDIR/compressor_blob.chelpers              $DST/c_files
+    fi
+fi
+
+if [ $CP_RECURSIVE1_BLOB -eq 1 ]; then
+    # recursive1_blob
+    FULLDST=$DST/config/recursive1_blob
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/recursive1_blob.const                    $FULLDST
+    cpfile $BDIR/recursive1_blob_cpp/recursive1_blob.dat  $FULLDST/recursive1_blob.verifier.dat
+    cpfile $BDIR/recursive1_blob.consttree                $FULLDST
+    cpfile $BDIR/recursive1_blob.exec                     $FULLDST
+    cpfile $BDIR/recursive_blob_inner.starkstruct.json    $FULLDST/recursive_blob_inner.starkstruct.json
+    cpfile $BDIR/recursive1_blob.starkinfo.json           $FULLDST
+    cpfile $BDIR/recursive1_blob.verkey.json              $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/recursive1_blob.pil                  $DST/pil
+        cpdir $BDIR/recursive1_blob_cpp                   $DST/c_files
+        cpdir $BDIR/recursive1_blob.chelpers              $DST/c_files
+    fi
+fi
+
+if [ $CP_BATCH_BLOB -eq 1 ]; then
+    # batch_blob
+    FULLDST=$DST/config/batch_blob
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/batch_blob.const                         $FULLDST
+    cpfile $BDIR/batch_blob_cpp/batch_blob.dat            $FULLDST/batch_blob.verifier.dat
+    cpfile $BDIR/batch_blob.consttree                     $FULLDST
+    cpfile $BDIR/batch_blob.exec                          $FULLDST
+    cpfile $BDIR/recursive_blob_outer.starkstruct.json    $FULLDST/recursive_blob_outer.starkstruct.json
+    cpfile $BDIR/batch_blob.starkinfo.json                $FULLDST
+    cpfile $BDIR/batch_blob.verkey.json                   $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/batch_blob.pil                       $DST/pil
+        cpdir $BDIR/batch_blob_cpp                        $DST/c_files
+        cpdir $BDIR/batch_blob.chelpers                   $DST/c_files
+    fi
+fi
+
+
+if [ $CP_RECURSIVE2_BLOB -eq 1 ]; then
+    # recursive2_blob
+    FULLDST=$DST/config/recursive2_blob
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/recursive2_blob.starkinfo.json           $FULLDST
+    cpfile $BDIR/recursive_blob_outer.starkstruct.json    $FULLDST/recursive_blob_outer.starkstruct.json
+    cpfile $BDIR/recursive2_blob.exec                     $FULLDST
+    cpfile $BDIR/recursive2_blob_cpp/recursive2_blob.dat  $FULLDST/recursive2_blob.verifier.dat
+    cpfile $BDIR/recursive2_blob.verkey.json              $FULLDST
+    cpfile $BDIR/recursive2_blob.consttree                $FULLDST
+    cpfile $BDIR/recursive2_blob.const                    $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/recursive2_blob.pil                  $DST/pil
+        cpdir $BDIR/recursive2_blob_cpp                   $DST/c_files
+        cpdir $BDIR/recursive2_blob.chelpers              $DST/c_files
+    fi
+fi
+
+if [ $CP_RECURSIVEF_BLOB -eq 1 ]; then
+    # recursivef_blob
+    FULLDST=$DST/config/recursivef_blob
+    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    cpfile $BDIR/recursivef_blob.verkey.json              $FULLDST
+    cpfile $BDIR/recursivef_blob.consttree                $FULLDST
+    cpfile $BDIR/recursivef_blob.starkinfo.json           $FULLDST
+    cpfile $BDIR/recursivef_blob.exec                     $FULLDST
+    cpfile $BDIR/recursivef_blob.const                    $FULLDST
+    cpfile $BDIR/recursivef_blob_cpp/recursivef_blob.dat  $FULLDST/recursivef_blob.verifier.dat
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/recursivef_blob.pil                  $DST/pil
+        cpdir $BDIR/recursivef_blob_cpp                   $DST/c_files
+        cpdir $BDIR/recursivef_blob.chelpers              $DST/c_files
     fi
 fi
 
