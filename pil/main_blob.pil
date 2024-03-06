@@ -284,7 +284,8 @@ namespace Main(%N);
 
     lJmpnCondValue in Global.STEP;
 
-    pol commit hJmpnCondValueBit[10];
+    // TODO: compiler error when out-of-bounds !!!!
+    pol commit hJmpnCondValueBit[11];
 
     hJmpnCondValueBit[10] * (1-hJmpnCondValueBit[10]) = 0;
     hJmpnCondValueBit[9] * (1-hJmpnCondValueBit[9]) = 0;
@@ -633,7 +634,7 @@ namespace Main(%N);
 
     // We group arithmetic operations by the number of inputs they have
     // 1] 5 inputs (A * B + C = D * 2^256 + E)
-    arithEq0 + arithEq1 {  arithEq0, arithEq1,
+    arithEq0 + aritEq1 {  arithEq0, arithEq1,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
         C0, C1, C2, C3, C4, C5, C6, C7,
