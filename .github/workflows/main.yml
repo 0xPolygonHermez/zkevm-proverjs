@@ -8,7 +8,7 @@ on:
     branches:
       - main
       - develop
-      - develop-feijoa
+      - develop-eldelberry
   push:
     branches:
       - main
@@ -27,11 +27,11 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       - name: Clone repos
         run: |
           cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop
+          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch feature/update-eldelberry
           cd zkevm-testvectors/tools-inputs/tools-eth
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests

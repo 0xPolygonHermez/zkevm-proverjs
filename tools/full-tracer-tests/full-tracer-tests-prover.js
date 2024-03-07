@@ -440,8 +440,6 @@ function compareCallTracer(geth, fullTracer, i) {
                         }
                     }
                     calls.push(callData[ctx + 1]);
-                } else {
-                    callData[ctx].gasUsed = `0x${(Number(callData[ctx].gasUsed) + Number(previousStep.gas_cost)).toString(16)}`;
                 }
                 // Detect failed create2
             } else if (opCreate.includes(opcodes[previousStep.op][0]) && previousStep.depth === step.depth) {
