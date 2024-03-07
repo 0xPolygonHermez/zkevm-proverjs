@@ -1074,20 +1074,20 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.mOp) {
             pols.mOp[i] = 1n;
             pols.memUseAddrRel[i] = l.memUseAddrRel ? 1n: 0n;
+            const value = l.assumeFree ? [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]:
+                                         [op0, op1, op2, op3, op4, op5, op6, op7];
 
             if (l.mWR) {
                 pols.mWR[i] = 1n;
-                ctx.mem[memAddr] = [op0, op1, op2, op3, op4, op5, op6, op7];
+                ctx.mem[memAddr] = value;
                 required.Mem.push({
                     bIsWrite: true,
                     address: memAddr,
                     pc: step,
-                    fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
+                    fe0:value[0], fe1:value[1], fe2:value[2], fe3:value[3], fe4:value[4], fe5:value[5], fe6:value[6], fe7:value[7],
                 });
             } else {
                 pols.mWR[i] = 0n;
-                const value = l.assumeFree ? [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]:
-                                             [op0, op1, op2, op3, op4, op5, op6, op7];
                 required.Mem.push({
                     bIsWrite: false,
                     address: memAddr,
