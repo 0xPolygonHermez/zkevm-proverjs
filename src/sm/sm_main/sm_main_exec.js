@@ -140,7 +140,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         N,
         stepsN,
         final: false,
-        helpers
+        helpers,
+        saved:{}
     }
 
     if (config.stats) {
@@ -262,6 +263,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.PC = pols.PC[i];
         ctx.RR = pols.RR[i];
         ctx.HASHPOS = pols.HASHPOS[i];
+        ctx.RID = pols.RID[i];
         ctx.GAS = pols.GAS[i];
         ctx.zkPC = pols.zkPC[i];
         ctx.cntArith = pols.cntArith[i];
@@ -563,6 +565,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inRCX[i] = Fr.zero;
         }
 
+        if (l.inRID) {
+            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inRID), Fr.e(ctx.RID)));
+            pols.inRID[i] = Fr.e(l.inRID);
+        } else {
+            pols.inRID[i] = Fr.zero;
+        }
+
 
         if ((!isNaN(l.CONSTL))&&(l.CONSTL)) {
             [
@@ -613,9 +622,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         let addrRel = 0;
         let addr = 0;
         if (l.mOp || l.JMP || l.JMPN || l.JMPC || l.JMPZ || l.call ||
-            l.hashP || l.hashP1 || l.hashPLen || l.hashPDigest ||
-            l.hashK || l.hashK1 || l.hashKLen || l.hashKDigest ||
-            l.hashS || l.hashS1 || l.hashSLen || l.hashSDigest) {
+            l.hashP || l.hashPLen || l.hashPDigest ||
+            l.hashK || l.hashKLen || l.hashKDigest ||
+            l.hashS || l.hashSLen || l.hashSDigest) {
             if (l.ind) {
                 addrRel = fe2n(Fr, ctx.E[0], ctx);
             }
@@ -675,6 +684,27 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 //////
 // CALCULATE AND LOAD FREE INPUT
 //////
+        let dataToRestore = {};
+
+        if (l.restore) {
+            const rid = ctx.RID;
+            pols.restore[i] = 1n;
+            
+            // check if exists saved data with current RID value
+            if (!ctx.saved[rid]) {
+                throw new Error(`Not found saved data with RID ${rid} on ${sourceRef}`);
+            }                
+            dataToRestore = ctx.saved[rid];
+
+            // verify that saving wasn't restored previously
+            if (dataToRestore.restored) {
+                throw new Error(`On ${sourceRef} try to restore RID ${rid} previously restored on row ${dataToRestore.restored.row} at ${dataToRestore.restored.sourceRef}`);
+            }
+
+            ctx.saved[rid].restored = { sourceRef, row: i };
+        } else {
+            pols.restore[i] = 0n;
+        }
 
         if (l.inFREE || l.inFREE0) {
 
@@ -685,6 +715,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             let fi;
             if (l.freeInTag.op=="") {
                 let nHits = 0;
+
+                if (l.restore) {
+                    fi = dataToRestore.op;
+                    nHits++;
+                }
+
                 if (l.mOp == 1 && l.mWR == 0) {
                     if (typeof ctx.mem[addr] != "undefined") {
                         fi = ctx.mem[addr];
@@ -836,9 +872,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
 
-                if (l.hashK || l.hashK1) {
+                if (l.hashK) {
                     if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashK[addr].data.length) throw new Error(`Accessing hashK(${addr}) out of bounds (${pos+size} > ${ctx.hashK[addr].data.length}) ${sourceRef}`);
@@ -860,9 +896,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashK[addr].digest);
                     nHits++;
                 }
-                if (l.hashS || l.hashS1) {
+                if (l.hashS) {
                     if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                     if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS(${addr}) ${sourceRef}`);
                     if (pos+size > ctx.hashS[addr].data.length) throw new Error(`Accessing hashS(${addr}) out of bounds (${pos+size} > ${ctx.hashS[addr].data.length}) ${sourceRef}`);
@@ -884,9 +920,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashS[addr].digest);
                     nHits++;
                 }
-                if (l.hashP || l.hashP1) {
+                if (l.hashP) {
                     if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
@@ -1011,7 +1047,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inFREE[i] = Fr.e(l.inFREE);
             pols.inFREE0[i] = Fr.e(l.inFREE0);
         } else {
-            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], 
+             pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = l.restore ? dataToRestore.op : Fr8zero;
             pols.inFREE[i] = Fr.zero;
             pols.inFREE0[i] = Fr.zero;
         }
@@ -1306,12 +1343,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
+        pols.hashBytesInD[i] = l.hashBytesInD ? 1n : 0n;
+        pols.hashBytes[i] = l.hashBytes ? BigInt(l.hashBytes) : 0n;
 
-        if (l.hashK || l.hashK1) {
+        if (l.hashK) {
             if (typeof ctx.hashK[addr] === "undefined") ctx.hashK[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
             pols.hashK[i] = l.hashK ? 1n : 0n;
-            pols.hashK1[i] = l.hashK1 ? 1n : 0n;
-            const size = l.hashK1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1340,7 +1378,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashK[i] = 0n;
-            pols.hashK1[i] = 0n;
         }
 
         if (l.hashKLen) {
@@ -1387,11 +1424,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
 
-        if (l.hashS || l.hashS1) {
+        if (l.hashS) {
             if (typeof ctx.hashS[addr] === "undefined") ctx.hashS[addr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
             pols.hashS[i] = l.hashS ? 1n : 0n;
-            pols.hashS1[i] = l.hashS1 ? 1n : 0n;
-            const size = l.hashS1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1420,7 +1456,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashS[i] = 0n;
-            pols.hashS1[i] = 0n;
         }
 
         if (l.hashSLen) {
@@ -1466,11 +1501,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.hashSDigest[i] = 0n;
         }
 
-        if (l.hashP || l.hashP1) {
+        if (l.hashP) {
             if (typeof ctx.hashP[addr] === "undefined") ctx.hashP[addr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
             pols.hashP[i] = l.hashP ? 1n : 0n;
-            pols.hashP1[i] = l.hashP1 ? 1n : 0n;
-            const size = l.hashP1 ? 1 : fe2n(Fr, ctx.D[0], ctx);
+            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`HashP(${addr}) invalid size ${size} ${sourceRef}`);
             const a = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1499,7 +1533,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incHashPos = size;
         } else {
             pols.hashP[i] = 0n;
-            pols.hashP1[i] = 0n;
         }
 
         if (l.hashPLen) {
@@ -1938,55 +1971,88 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.repeat[i] = 0n;
         }
 
+        if (l.save) {
+            const nrid = step;
+            if (ctx.saved[nrid]) {
+                throw new Error(`Save using a RID ${nrid} already used on ${sourceRef}. This RID is previously used on row ${ctx.saved[nrid].row} at ${ctx.saved[nrid].sourceRef} [nrid: ${nrid} rid:${pols.RID[i]}])`);
+            }
+            const data = {
+                op: [op0, op1, op2, op3, op4,  op5, op6, op7],
+                B: ctx.B,
+                C: ctx.C,
+                D: ctx.D,
+                E: ctx.E,
+                RCX: ctx.RCX,
+                RR: ctx.RR,
+                RID: ctx.RID,
+                sourceRef,
+                row: i 
+            }
+            ctx.saved[nrid] = data;
+            pols.save[i] = 1n;            
+        } else {
+            pols.save[i] = 0n;
+        }
+
+
     //////////
     // SET NEXT REGISTERS
     //////////
-
         const nexti = (i+1) % N;
+
+            [pols.op0[i],
+             pols.op1[i],
+             pols.op2[i],
+             pols.op3[i],
+             pols.op4[i],
+             pols.op5[i],
+             pols.op6[i],
+             pols.op7[i]
+            ] = [op0, op1, op2, op3, op4, op5, op6, op7];
 
         if (l.setA == 1) {
             pols.setA[i]=1n;
             [pols.A0[nexti],
-             pols.A1[nexti],
-             pols.A2[nexti],
-             pols.A3[nexti],
-             pols.A4[nexti],
-             pols.A5[nexti],
-             pols.A6[nexti],
-             pols.A7[nexti]
+            pols.A1[nexti],
+            pols.A2[nexti],
+            pols.A3[nexti],
+            pols.A4[nexti],
+            pols.A5[nexti],
+            pols.A6[nexti],
+            pols.A7[nexti]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setA[i]=0n;
             [pols.A0[nexti],
-             pols.A1[nexti],
-             pols.A2[nexti],
-             pols.A3[nexti],
-             pols.A4[nexti],
-             pols.A5[nexti],
-             pols.A6[nexti],
-             pols.A7[nexti]
+            pols.A1[nexti],
+            pols.A2[nexti],
+            pols.A3[nexti],
+            pols.A4[nexti],
+            pols.A5[nexti],
+            pols.A6[nexti],
+            pols.A7[nexti]
             ] = [
-             pols.A0[i],
-             pols.A1[i],
-             pols.A2[i],
-             pols.A3[i],
-             pols.A4[i],
-             pols.A5[i],
-             pols.A6[i],
-             pols.A7[i]
+            pols.A0[i],
+            pols.A1[i],
+            pols.A2[i],
+            pols.A3[i],
+            pols.A4[i],
+            pols.A5[i],
+            pols.A6[i],
+            pols.A7[i]
             ];
 
             // Set A register with input.from to process unsigned transactions
             if ((Number(ctx.zkPC) === rom.labels.checkAndSaveFrom) && config.unsigned){
                 const feaFrom = scalar2fea(Fr, input.from);
                 [pols.A0[nexti],
-                 pols.A1[nexti],
-                 pols.A2[nexti],
-                 pols.A3[nexti],
-                 pols.A4[nexti],
-                 pols.A5[nexti],
-                 pols.A6[nexti],
-                 pols.A7[nexti]
+                pols.A1[nexti],
+                pols.A2[nexti],
+                pols.A3[nexti],
+                pols.A4[nexti],
+                pols.A5[nexti],
+                pols.A6[nexti],
+                pols.A7[nexti]
                 ] = [feaFrom[0], feaFrom[1], feaFrom[2], feaFrom[3], feaFrom[4], feaFrom[5], feaFrom[6], feaFrom[7]];
             }
         }
@@ -1994,158 +2060,177 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.setB == 1) {
             pols.setB[i]=1n;
             [pols.B0[nexti],
-             pols.B1[nexti],
-             pols.B2[nexti],
-             pols.B3[nexti],
-             pols.B4[nexti],
-             pols.B5[nexti],
-             pols.B6[nexti],
-             pols.B7[nexti]
+            pols.B1[nexti],
+            pols.B2[nexti],
+            pols.B3[nexti],
+            pols.B4[nexti],
+            pols.B5[nexti],
+            pols.B6[nexti],
+            pols.B7[nexti]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setB[i]=0n;
-            [pols.B0[nexti],
-             pols.B1[nexti],
-             pols.B2[nexti],
-             pols.B3[nexti],
-             pols.B4[nexti],
-             pols.B5[nexti],
-             pols.B6[nexti],
-             pols.B7[nexti]
-            ] = [
-             pols.B0[i],
-             pols.B1[i],
-             pols.B2[i],
-             pols.B3[i],
-             pols.B4[i],
-             pols.B5[i],
-             pols.B6[i],
-             pols.B7[i]
-            ];
+            if (l.restore) {
+                [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], 
+                 pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = dataToRestore.B
+            } else {
+                [pols.B0[nexti],
+                pols.B1[nexti],
+                pols.B2[nexti],
+                pols.B3[nexti],
+                pols.B4[nexti],
+                pols.B5[nexti],
+                pols.B6[nexti],
+                pols.B7[nexti]
+                ] = [
+                pols.B0[i],
+                pols.B1[i],
+                pols.B2[i],
+                pols.B3[i],
+                pols.B4[i],
+                pols.B5[i],
+                pols.B6[i],
+                pols.B7[i]
+                ];
+            }
         }
 
         if (l.setC == 1) {
             pols.setC[i]=1n;
             [pols.C0[nexti],
-             pols.C1[nexti],
-             pols.C2[nexti],
-             pols.C3[nexti],
-             pols.C4[nexti],
-             pols.C5[nexti],
-             pols.C6[nexti],
-             pols.C7[nexti]
+            pols.C1[nexti],
+            pols.C2[nexti],
+            pols.C3[nexti],
+            pols.C4[nexti],
+            pols.C5[nexti],
+            pols.C6[nexti],
+            pols.C7[nexti]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setC[i]=0n;
-            [pols.C0[nexti],
-             pols.C1[nexti],
-             pols.C2[nexti],
-             pols.C3[nexti],
-             pols.C4[nexti],
-             pols.C5[nexti],
-             pols.C6[nexti],
-             pols.C7[nexti]
-            ] = [
-             pols.C0[i],
-             pols.C1[i],
-             pols.C2[i],
-             pols.C3[i],
-             pols.C4[i],
-             pols.C5[i],
-             pols.C6[i],
-             pols.C7[i]
-            ];
-
-            // Set C register with input.l1InfoRoot to process unsigned transactions
-            if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
-                const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
+            if (l.restore) {
+                [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], 
+                 pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = dataToRestore.C;
+            } else {
                 [pols.C0[nexti],
-                    pols.C1[nexti],
-                    pols.C2[nexti],
-                    pols.C3[nexti],
-                    pols.C4[nexti],
-                    pols.C5[nexti],
-                    pols.C6[nexti],
-                    pols.C7[nexti],
+                pols.C1[nexti],
+                pols.C2[nexti],
+                pols.C3[nexti],
+                pols.C4[nexti],
+                pols.C5[nexti],
+                pols.C6[nexti],
+                pols.C7[nexti]
                 ] = [
-                    feaL1InfoRoot[0],
-                    feaL1InfoRoot[1],
-                    feaL1InfoRoot[2],
-                    feaL1InfoRoot[3],
-                    feaL1InfoRoot[4],
-                    feaL1InfoRoot[5],
-                    feaL1InfoRoot[6],
-                    feaL1InfoRoot[7],
+                pols.C0[i],
+                pols.C1[i],
+                pols.C2[i],
+                pols.C3[i],
+                pols.C4[i],
+                pols.C5[i],
+                pols.C6[i],
+                pols.C7[i]
                 ];
+
+                // Set C register with input.l1InfoRoot to process unsigned transactions
+                if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
+                    const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
+                    [pols.C0[nexti],
+                        pols.C1[nexti],
+                        pols.C2[nexti],
+                        pols.C3[nexti],
+                        pols.C4[nexti],
+                        pols.C5[nexti],
+                        pols.C6[nexti],
+                        pols.C7[nexti],
+                    ] = [
+                        feaL1InfoRoot[0],
+                        feaL1InfoRoot[1],
+                        feaL1InfoRoot[2],
+                        feaL1InfoRoot[3],
+                        feaL1InfoRoot[4],
+                        feaL1InfoRoot[5],
+                        feaL1InfoRoot[6],
+                        feaL1InfoRoot[7],
+                    ];
+                }
             }
         }
-
+    
         if (l.setD == 1) {
             pols.setD[i]=1n;
             [pols.D0[nexti],
-             pols.D1[nexti],
-             pols.D2[nexti],
-             pols.D3[nexti],
-             pols.D4[nexti],
-             pols.D5[nexti],
-             pols.D6[nexti],
-             pols.D7[nexti]
+            pols.D1[nexti],
+            pols.D2[nexti],
+            pols.D3[nexti],
+            pols.D4[nexti],
+            pols.D5[nexti],
+            pols.D6[nexti],
+            pols.D7[nexti]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setD[i]=0n;
-            [pols.D0[nexti],
-             pols.D1[nexti],
-             pols.D2[nexti],
-             pols.D3[nexti],
-             pols.D4[nexti],
-             pols.D5[nexti],
-             pols.D6[nexti],
-             pols.D7[nexti]
-            ] = [
-             pols.D0[i],
-             pols.D1[i],
-             pols.D2[i],
-             pols.D3[i],
-             pols.D4[i],
-             pols.D5[i],
-             pols.D6[i],
-             pols.D7[i]
-            ];
+            if (l.restore) {
+                [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], 
+                 pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = dataToRestore.D;
+            } else {
+                [pols.D0[nexti],
+                pols.D1[nexti],
+                pols.D2[nexti],
+                pols.D3[nexti],
+                pols.D4[nexti],
+                pols.D5[nexti],
+                pols.D6[nexti],
+                pols.D7[nexti]
+                ] = [
+                pols.D0[i],
+                pols.D1[i],
+                pols.D2[i],
+                pols.D3[i],
+                pols.D4[i],
+                pols.D5[i],
+                pols.D6[i],
+                pols.D7[i]
+                ];
+            }
         }
 
         if (l.setE == 1) {
             pols.setE[i]=1n;
             [pols.E0[nexti],
-             pols.E1[nexti],
-             pols.E2[nexti],
-             pols.E3[nexti],
-             pols.E4[nexti],
-             pols.E5[nexti],
-             pols.E6[nexti],
-             pols.E7[nexti]
+            pols.E1[nexti],
+            pols.E2[nexti],
+            pols.E3[nexti],
+            pols.E4[nexti],
+            pols.E5[nexti],
+            pols.E6[nexti],
+            pols.E7[nexti]
             ] = [op0, op1, op2, op3, op4, op5, op6, op7];
         } else {
             pols.setE[i]=0n;
-            [pols.E0[nexti],
-             pols.E1[nexti],
-             pols.E2[nexti],
-             pols.E3[nexti],
-             pols.E4[nexti],
-             pols.E5[nexti],
-             pols.E6[nexti],
-             pols.E7[nexti]
-            ] = [
-             pols.E0[i],
-             pols.E1[i],
-             pols.E2[i],
-             pols.E3[i],
-             pols.E4[i],
-             pols.E5[i],
-             pols.E6[i],
-             pols.E7[i]
-            ];
+            if (l.restore) {
+                [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], 
+                 pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = dataToRestore.E;
+            } else {
+                [pols.E0[nexti],
+                pols.E1[nexti],
+                pols.E2[nexti],
+                pols.E3[nexti],
+                pols.E4[nexti],
+                pols.E5[nexti],
+                pols.E6[nexti],
+                pols.E7[nexti]
+                ] = [
+                pols.E0[i],
+                pols.E1[i],
+                pols.E2[i],
+                pols.E3[i],
+                pols.E4[i],
+                pols.E5[i],
+                pols.E6[i],
+                pols.E7[i]
+                ];
+            }
         }
-
 
         if (l.setSR == 1) {
             pols.setSR[i]=1n;
@@ -2161,22 +2246,22 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setSR[i]=0n;
             [pols.SR0[nexti],
-             pols.SR1[nexti],
-             pols.SR2[nexti],
-             pols.SR3[nexti],
-             pols.SR4[nexti],
-             pols.SR5[nexti],
-             pols.SR6[nexti],
-             pols.SR7[nexti]
+            pols.SR1[nexti],
+            pols.SR2[nexti],
+            pols.SR3[nexti],
+            pols.SR4[nexti],
+            pols.SR5[nexti],
+            pols.SR6[nexti],
+            pols.SR7[nexti]
             ] = [
-             pols.SR0[i],
-             pols.SR1[i],
-             pols.SR2[i],
-             pols.SR3[i],
-             pols.SR4[i],
-             pols.SR5[i],
-             pols.SR6[i],
-             pols.SR7[i]
+            pols.SR0[i],
+            pols.SR1[i],
+            pols.SR2[i],
+            pols.SR3[i],
+            pols.SR4[i],
+            pols.SR5[i],
+            pols.SR6[i],
+            pols.SR7[i]
             ];
         }
 
@@ -2209,7 +2294,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RR[nexti] = op0;
         } else {
             pols.setRR[i]=0n;
-            pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
+            if (l.restore) {
+                pols.RR[nexti] = dataToRestore.RR;
+            } else {
+                pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
+            }
         }
 
         if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5)) {
@@ -2237,6 +2326,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.setRCX[i] = 0n;
             if (!Fr.isZero(pols.RCX[i]) && l.repeat == 1) {
                 pols.RCX[nexti] = Fr.add(pols.RCX[i], Fr.negone);
+            } else if (l.restore) {
+                pols.RCX[nexti] = dataToRestore.RCX;
             } else {
                 pols.RCX[nexti] = pols.RCX[i];
             }
@@ -2335,7 +2426,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 pols.call[i] = 1n;
             } else if (l.return) {
-                pols.zkPC[nexti] = ctx.RR;
+                pols.zkPC[nexti] = pols.RR[nexti];
                 pols.return[i] = 1n;
             } else {
                 pols.zkPC[nexti] = nextNoJmpZkPC;
@@ -2355,7 +2446,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.HASHPOS[nexti] = Fr.add(op0, Fr.e(incHashPos));
         } else {
             pols.setHASHPOS[i]=0n;
-            pols.HASHPOS[nexti] = Fr.add(pols.HASHPOS[i], Fr.e(incHashPos));
+            pols.HASHPOS[nexti] = pols.HASHPOS[i] + BigInt( incHashPos);
+        }
+
+        if (l.setRID == 1) {
+            pols.setRID[i]=1n;
+            pols.RID[nexti] = BigInt(fe2n(Fr, op0, ctx));
+        } else {
+            pols.setRID[i] = 0n;
+            if (l.restore) {
+                pols.RID[nexti] = dataToRestore.RID;
+            } else if (l.save) {
+                pols.RID[nexti] = BigInt(step);
+            } else {
+                pols.RID[nexti] = pols.RID[i];
+            }
         }
 
         if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
@@ -2839,6 +2944,7 @@ function initState(Fr, pols, ctx) {
     pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
+    pols.RID[0] = 0n;
 }
 
 async function eventsAsyncTracer(ctx, cmds) {
@@ -3020,6 +3126,8 @@ function eval_getReg(ctx, tag) {
         return Scalar.e(ctx.HASHPOS);
     } else if (tag.regName == "RCX") {
         return Scalar.e(ctx.RCX);
+    } else if (tag.regName == "RID") {
+        return Scalar.e(ctx.RID);
     } else {
         throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
     }
@@ -3763,4 +3871,3 @@ function lt4(a, b) {
     }
     return 1n;
 }
-

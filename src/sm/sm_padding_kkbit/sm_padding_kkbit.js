@@ -147,6 +147,7 @@ module.exports.buildConstants = async function (pols) {
         pols.FSOut7[p] = F.zero;
         p += 1;
     }
+    console.log('padding kkbit n:'+p);
 
     while (p<N) {
 
@@ -305,6 +306,7 @@ module.exports.execute = async function (pols, input) {
         pp += 1;
     }
 
+    console.log('padding kkbit n:'+p);
     while (p<N) {
         pols.rBit[p] = 0n;
         pols.r8[p] = 0n;
