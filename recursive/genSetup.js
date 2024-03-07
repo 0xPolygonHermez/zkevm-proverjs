@@ -92,7 +92,9 @@ module.exports.genSetup = async function genSetup(template, starkStruct, fileNam
     await fs.promises.writeFile(`${buildDir}/${fileName}.starkstruct.json`, JSON.stringify(starkStruct, null, 1), "utf8");
 
     // Build chelpers 
-    const className = fileName.charAt(0).toUpperCase() + fileName.slice(1) + "Steps";
+    
+    const fileNameModified = fileName.split("_").map(f => f.charAt(0).toUpperCase() + f.slice(1)).join("");
+    const className = fileNameModified;
     const binFile = `${buildDir}/${fileName}.chelpers.bin`;
     const cHelpersFile = `${buildDir}/${fileName}.chelpers`;
     await buildCHelpers(starkInfoRecursive, cHelpersFile, binFile, className);
