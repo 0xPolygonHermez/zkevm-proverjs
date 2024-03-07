@@ -93,16 +93,9 @@ module.exports.genSetup = async function genSetup(template, starkStruct, fileNam
 
     // Build chelpers 
     const className = fileName.charAt(0).toUpperCase() + fileName.slice(1) + "Steps";
-
-    // Current version
-    const cHelpersFile = `${buildDir}/${fileName}.chelpers/${fileName}.chelpers.cpp`;
-    await buildCHelpers(starkInfoRecursive, cHelpersFile, {multiple: true, optcodes: false, className})
-
-    /*
     const binFile = `${buildDir}/${fileName}.chelpers.bin`;
     const cHelpersFile = `${buildDir}/${fileName}.chelpers`;
-    await buildCHelpers(starkInfo, cHelpersFile, binFile, className);
-    */
+    await buildCHelpers(starkInfoRecursive, cHelpersFile, binFile, className);
    
     if(skipConstTree) return { starkInfo: starkInfoRecursive };
 

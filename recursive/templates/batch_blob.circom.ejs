@@ -259,21 +259,19 @@ template Main() {
         isValidBlob * (blob_inner_publics[finalAccBatchHashDataPos + i] - batch_publics[newBatchAccInputHashPos + i]) === 0;
     }
 
-    // Check that the L1 info tree root is correct
-    signal checkL1InfoTreeRoot[8];
-    checkL1InfoTreeRoot[0] <== IsZero()(batch_publics[newL1InfoTreeRootPos + i] - blob_inner_publics[lastL1InfoTreeRootPos + i]);
-    for(var i=1; i<8; i++) {
-        checkL1InfoTreeRoot[i] <== IsZero()(batch_publics[newL1InfoTreeRootPos + i] - blob_inner_publics[lastL1InfoTreeRootPos + i]) + checkL1InfoTreeRoot[i - 1];
-    }
-    signal isValidL1InfoTreeRoot <== IsZero()(checkL1InfoTreeRoot[7] - 8);
-
     // Check that the L1 info tree index is correct
     signal isValidL1InfoTreeIndex <== IsZero()(batch_publics[newL1InfoTreeIndexPos] - blob_inner_publics[lastL1InfoTreeIndexPos]);
+
+    // Check that the L1 info tree root is correct
+    signal checkL1InfoTreeRoot <== isValidBlob * isValidL1InfoTreeIndex;
+    for(var i=1; i<8; i++) {
+        checkL1InfoTreeRoot * (batch_publics[newL1InfoTreeRootPos + i] - blob_inner_publics[lastL1InfoTreeRootPos + i]) === 0;
+    }
 
     // Check that batch new last timestamp is less than or equal than the blob timestamp limit
     signal isValidTimestamp <== LessEqThan(62)(batch_publics[newLastTimestampPos], blob_inner_publics[timestampLimitPos]);
 
-    signal isValid <== IsZero()(isValidBlob + isValidL1InfoTreeRoot + isValidL1InfoTreeIndex + isValidTimestamp - 4);
+    signal isValid <== IsZero()(isValidBlob + isValidL1InfoTreeIndex + isValidTimestamp - 4);
 
     // Check publics
 
