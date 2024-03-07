@@ -258,7 +258,7 @@ class FullTracer {
         this.currentBlock = {
             block_number: blockNumber,
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
-            gas_limit: `0x${Constants.BLOCK_GAS_LIMIT.toString(16)}`,
+            gas_limit: `0x${Scalar.e(getConstantFromCtx(ctx, 'BLOCK_GAS_LIMIT')).toString(16)}`,
             responses: [],
             error: '',
             ctx: Number(ctx.CTX),
@@ -499,10 +499,7 @@ class FullTracer {
 
         // Set tx status
         response.status = Number(getVarFromCtx(ctx, false, 'txStatus'));
-        // Check tx status
-        if ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1)) {
-            throw new Error(`Invalid tx status error is "${response.error}" and status is "${response.status}"`);
-        }
+
         // if there is any processed opcode
         if (this.full_trace.length) {
             const lastOpcodeCall = this.full_trace[this.full_trace.length - 1];
@@ -528,6 +525,10 @@ class FullTracer {
             response.has_balance_opcode = this.hasBalanceOpcode;
         }
 
+        // Check tx status
+        if ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1)) {
+            throw new Error(`Invalid tx status error is "${response.error}" and status is "${response.status}"`);
+        }
         // verbose
         this.verbose.printTx(`${'finish'.padEnd(10)} ${this.txIndex}`);
 
