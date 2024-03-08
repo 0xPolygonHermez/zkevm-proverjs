@@ -24,6 +24,7 @@ const argv = require("yargs")
     .alias("d", "debug")
     .alias("s", "stats")
     .alias("H", "helper")
+    .alias("E", "reserved")
     .argv;
 
 async function main(){
@@ -113,6 +114,9 @@ async function main(){
     const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : (__dirname + "/../pil/main.pil");
     let pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : defaultPilConfig;
     let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultConfig;
+    if (argv.reserved === true) {
+        config = {...config, reserved: true}
+    }
 
     if (externalPilVerification && !outputPath) {
         outputPath = '.';
@@ -155,7 +159,7 @@ async function main(){
         console.log("Debug and constants options are incompatible");
         process.exit(1);
     }
-
+    
     await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
     console.log('Done!');
 }

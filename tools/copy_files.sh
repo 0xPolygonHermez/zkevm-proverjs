@@ -1,11 +1,21 @@
 #!/bin/bash
-
 usage()
 {
     echo "copy_files <build-dir> <destination>"
     exit 1
 }
 
+makedir()
+{
+    if [ $REMOTE -eq 1 ]; then
+	HOST=`echo $1|sed 's/\([^:]*\):.*/\1/'`
+	DIR=`echo $1|sed 's/[^:]*://'`
+	echo "creating directory $DIR => ssh $HOST mkdir -p $DIR"
+	ssh $HOST mkdir -p $DIR     
+    else
+	[ ! -d $1 ] && mkdir -p $1
+    fi
+}
 cpfile()
 {
     if [ $WAIT -eq 1 ]; then
@@ -16,7 +26,11 @@ cpfile()
             echo " (ready)"
         fi
     fi
-    cp -$CP_FLAGS $1 $2
+    if [ ! -z $CP_FLAGS ]; then
+    	$CP_CMD -$CP_FLAGS $1 $2
+    else
+    	$CP_CMD $1 $2
+    fi
 }
 
 cpdir()
@@ -29,16 +43,16 @@ cpdir()
             echo " (ready)"
         fi
     fi
-    cp -r$CP_FLAGS $1 $2
+    $CP_CMD -r$CP_FLAGS $1 $2
 }
-
+CP_CMD=cp
 CP_FLAGS=v
 WAIT=0
 FINAL_PHASE_1=1
 FINAL_PHASE_2=1
 ONLY_HASH=0
 ONLY_CONFIG=0
-
+REMOTE=0
 while [ $# -gt 0 ]; do
     if [ ${1:0:1} = '-' ]; then
         case $1 in
@@ -57,8 +71,11 @@ while [ $# -gt 0 ]; do
                 ONLY_HASH=1
                 ;;
             --config)
-                ONLY_CONFIG=1
+                /ONLY_CONFIG=1
                 ;;
+	    --scp)
+		REMOTE=1
+		;;
             -w)
                 WAIT=1
                 ;;
@@ -83,13 +100,16 @@ done
 [ -z $BDIR ] && usage
 
 BASEDIR=.
+if [ $REMOTE -eq 1 ]; then
+    CP_CMD=scp
+    CP_FLAGS=
+fi
 if [ $ONLY_HASH -eq 0 ]; then
     [ -z $DST ] && usage
-    [ ! -d $DST/c_files ] && mkdir -p $DST/c_files
-    [ ! -d $DST/pil ] && mkdir -p $DST/pil
+    makedir $DST/c_files
+    makedir $DST/pil
     echo "`date +'%Y%m%d_%H%M%S'` DST=$DST FINAL_PHASE_1=$FINAL_PHASE_1 FINAL_PHASE_2=$FINAL_PHASE_2" >> $BDIR/copy.log
 fi
-
 if [ $FINAL_PHASE_1 -eq 0 -o $ONLY_HASH -eq 1 ]; then
     CP_DEFAULT=0
 else
@@ -118,7 +138,7 @@ fi
 if [ $CP_SCRIPTS -eq 1 ]; then
     # scripts
     FULLDST=$DST/config/scripts
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    makedir $FULLDST
     cpfile $BDIR/rom.json                                      $FULLDST
     cpfile $BDIR/metadata-rom.txt                              $FULLDST
     cpfile $BDIR/storage_sm_rom.json                           $FULLDST
@@ -131,7 +151,7 @@ fi
 if [ $CP_ZKEVM -eq 1 ]; then
     # zkevm
     FULLDST=$DST/config/zkevm
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    makedir $FULLDST
     cpfile $BDIR/zkevm.const                                   $FULLDST
     cpfile $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.dat
     cpfile $BDIR/zkevm.consttree                               $FULLDST
@@ -147,14 +167,14 @@ fi
 if [ $CP_C12A -eq 1 ]; then
     # c12a
     FULLDST=$DST/config/c12a
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    makedir $FULLDST
     cpfile $BDIR/c12a.const                    $FULLDST
     cpfile $BDIR/c12a.exec                     $FULLDST
     cpfile $BDIR/c12a.consttree                $FULLDST
     cpfile $BDIR/c12a.verkey.json              $FULLDST
     cpfile $BDIR/c12a.starkinfo.json           $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/c12a.pil                      $DST/pil
+        cpfile $BDIR/c12a.pil                  $DST/pil
         cpdir $BDIR/c12a.chelpers              $DST/c_files
     fi
 fi
@@ -162,7 +182,7 @@ fi
 if [ $CP_RECURSIVE1 -eq 1 ]; then
     # recursive1
     FULLDST=$DST/config/recursive1
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    makedir $FULLDST
     cpfile $BDIR/recursive1.const              $FULLDST
     cpfile $BDIR/recursive1_cpp/recursive1.dat $FULLDST/recursive1.verifier.dat
     cpfile $BDIR/recursive1.consttree          $FULLDST
@@ -180,7 +200,7 @@ fi
 if [ $CP_RECURSIVE2 -eq 1 ]; then
     # recursive 2
     FULLDST=$DST/config/recursive2
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    makedir $FULLDST
     cpfile $BDIR/recursive2.starkinfo.json     $FULLDST
     cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive2.starkstruct.json
     cpfile $BDIR/recursive2.exec               $FULLDST
@@ -198,7 +218,7 @@ fi
 if [ $CP_RECURSIVEF -eq 1 ]; then
     # recursive f
     FULLDST=$DST/config/recursivef
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
+    makedir $FULLDST
     cpfile $BDIR/recursivef.verkey.json        $FULLDST
     cpfile $BDIR/recursivef.consttree          $FULLDST
     cpfile $BDIR/recursivef.starkinfo.json     $FULLDST
@@ -215,7 +235,7 @@ fi
 if [ $CP_FINAL -eq 1 ]; then
     # final
     FULLDST=$DST/config/final
-    [ ! -d $FULLDST ] && mkdir -p          $FULLDST
+    makedir $FULLDST
     if [ $FINAL_PHASE_2 -eq 1 ]; then
         cpfile $BDIR/final.fflonk.zkey         $FULLDST
         cpfile $BDIR/final.fflonk.verkey.json  $FULLDST
@@ -232,7 +252,7 @@ if [ $ONLY_CONFIG -eq 0 ]; then
     if [ $CP_CIRCOM -eq 1 ]; then
         # circom
         FULLDST=$DST/circom
-        [ ! -d $FULLDST ] && mkdir -p $FULLDST
+        makedir $FULLDST
         for F in $BDIR/*.circom; do
             cpfile $F $FULLDST
         done
@@ -263,7 +283,7 @@ if [ $ONLY_CONFIG -eq 0 ]; then
     if [ $CP_BUILDS -eq 1 ]; then
         # builds
         FULLDST=$DST/build
-        [ ! -d $FULLDST ] && mkdir -p $FULLDST
+        makedir $FULLDST
 
         cpfile package.json $FULLDST
         cpfile package-lock.json $FULLDST
