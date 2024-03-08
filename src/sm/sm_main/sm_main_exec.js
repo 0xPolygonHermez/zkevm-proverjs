@@ -632,8 +632,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             if (l.offset) addr += l.offset;
             if (l.isStack == 1) addr += Number(ctx.SP);
             if (!skipAddrRelControl) {
-                if (addr >= 0x20000 || (!l.isMem && addr >= 0x10000)) throw new Error(`Address too big ${sourceRef}`);
-                if (addr <0 ) throw new Error(`Address can not be negative ${sourceRef}`);
+                const memAddr = addr + (l.memUseAddrRel ? addrRel : 0);
+                if (memAddr >= 0x20000 || (!l.isMem && memAddr >= 0x10000)) throw new Error(`Address too big ${sourceRef}`);
+                if (memAddr <0 ) throw new Error(`Address can not be negative ${sourceRef}`);
             }
         }
         if (l.useCTX==1) {
@@ -1091,19 +1092,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.mOp) {
             pols.mOp[i] = 1n;
             pols.memUseAddrRel[i] = l.memUseAddrRel ? 1n: 0n;
-            const value = l.assumeFree ? [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]:
-                                         [op0, op1, op2, op3, op4, op5, op6, op7];
 
             if (l.mWR) {
                 pols.mWR[i] = 1n;
-                ctx.mem[memAddr] = value;
+                ctx.mem[memAddr] = [op0, op1, op2, op3, op4, op5, op6, op7];
                 required.Mem.push({
                     bIsWrite: true,
                     address: memAddr,
                     pc: step,
-                    fe0:value[0], fe1:value[1], fe2:value[2], fe3:value[3], fe4:value[4], fe5:value[5], fe6:value[6], fe7:value[7],
+                    fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7,
                 });
             } else {
+                const value = l.assumeFree ? [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]:
+                                             [op0, op1, op2, op3, op4, op5, op6, op7];
                 pols.mWR[i] = 0n;
                 required.Mem.push({
                     bIsWrite: false,
