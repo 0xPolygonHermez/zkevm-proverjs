@@ -130,9 +130,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         pols.x3clock[i] = 0xFFFFn;
         pols.y3clock[i] = 0n;
 
-        pols.resultEq0[i] = 0n;
-        pols.resultEq1[i] = 0n;
-        pols.resultEq2[i] = 0n;
+        pols.resultEq[i] = 0n;
         pols.xDeltaChunkInverse[i] = 0n;
         pols.xAreDifferent[i] = 0n;
 
@@ -217,7 +215,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             q0 = 0n;
         }
 
-        if (input[i].selEq3) {
+        if (input[i].selEq1 || input[i].selEq2) {
             let eqa = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
                                             // with (2^256-1)**2 > |-3*(2^256-1)|
             q1 = eqa/pFec;
@@ -257,7 +255,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq4) {
+        else if (input[i].selEq3) {
             let eqa = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
                                               // with |-2^256*(2^256-1)| > (2^256-1)**2
             q1 = -(eqa/pBN254);
@@ -294,7 +292,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq5) {
+        else if (input[i].selEq4) {
             let eqa = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
                                     // with 2*(2^256-1) > |-(2^256-1)|
             q1 = eqa/pBN254;
@@ -331,7 +329,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq6) {
+        else if (input[i].selEq5) {
             let eqa = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
             q1 = -(eqa/pBN254);
@@ -372,7 +370,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             q2 = 0n;
         }
 
-        if (input[i].selEq7) {
+        if (input[i].selEq6) {
             let eq = x1 * y1 + x2 - y3;
             if (y2 === 0n) {
                 throw new Error(`For input ${i}, y2 is zero on modular arithmetic`);
@@ -437,7 +435,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             pols.selEq[4][index] = BigInt(input[i].selEq4);
             pols.selEq[5][index] = BigInt(input[i].selEq5);
             pols.selEq[6][index] = BigInt(input[i].selEq6);
-            pols.selEq[7][index] = BigInt(input[i].selEq7);
 
             // selEq1 (addition different points) is select need to check that points are diferent
             if (pols.selEq[1][index] && step < 16) {
@@ -449,17 +446,17 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
             }
 
-            // If either selEq3,selEq4,selEq5,selEq6,selEq7 is selected, we need to ensure that x3, y3 is alias free.
-            // Recall that selEq3 works over the base field of the Secp256k1 curve, selEq4,selEq5,selEq6 works over the
-            // base field of the BN254 curve and selEq7 works modulo y2.
-            if (pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index] || pols.selEq[7][index]) {
+            // If either selEq1,selEq2,selEq3,selEq4,selEq5,selEq6 is selected, we need to ensure that x3, y3 is alias free.
+            // Recall that selEq1,selEq2 work over the base field of the Secp256k1 curve, selEq3,selEq4,selEq5 works over the
+            // base field of the BN254 curve and selEq6 works modulo y2.
+            if (pols.selEq[1][index] || pols.selEq[2][index] || pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index]) {
                 const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
                 let chunkPrime;
-                if (pols.selEq[3][index]) {
+                if (pols.selEq[1][index] || pols.selEq[2][index]) {
                     chunkPrime = chunksPrimeSecp256k1[step16];
-                } else if (pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index]) {
+                } else if (pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index]) {
                     chunkPrime = chunksPrimeBN254[step16];
-                } else if (pols.selEq[7][index]) {
+                } else if (pols.selEq[6][index]) {
                     chunkPrime = pols.y2[15 - step16][offset]
                 }
                 const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
@@ -477,7 +474,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             pols.selEq[4][offset + step] = BigInt(input[i].selEq4);
             pols.selEq[5][offset + step] = BigInt(input[i].selEq5);
             pols.selEq[6][offset + step] = BigInt(input[i].selEq6);
-            pols.selEq[7][offset + step] = BigInt(input[i].selEq7);
         }
         let carry = [0n, 0n, 0n];
         const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0];
@@ -487,11 +483,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         if (pols.selEq[0][offset]) eqIndexes.push(0);
         if (pols.selEq[1][offset]) eqIndexes.push(1);
         if (pols.selEq[2][offset]) eqIndexes.push(2);
-        if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([3, 4]);
-        if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([5, 6]);
-        if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([7, 8]);
-        if (pols.selEq[6][offset]) eqIndexes = eqIndexes.concat([9, 10]);
-        if (pols.selEq[7][offset]) eqIndexes.push(11);
+        if (pols.selEq[1][offset] || pols.selEq[2][offset]) eqIndexes = eqIndexes.concat([3, 4]);
+        if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([5, 6]);
+        if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([7, 8]);
+        if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([9, 10]);
+        if (pols.selEq[6][offset]) eqIndexes.push(11);
 
         for (let step = 0; step < 32; ++step) {
             eqIndexes.forEach((eqIndex) => {
@@ -504,9 +500,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
         }
-        pols.resultEq0[offset + 31] = (pols.selEq[0][offset] || pols.selEq[7][offset]) ? 1n : 0n;
-        pols.resultEq1[offset + 31] = ((pols.selEq[1][offset] && pols.selEq[3][offset]) || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]) ? 1n : 0n;
-        pols.resultEq2[offset + 31] = (pols.selEq[2][offset] && pols.selEq[3][offset]) ? 1n : 0n;
+        pols.resultEq[offset + 31] =
+            pols.selEq[0][offset] || pols.selEq[1][offset] || pols.selEq[2][offset] ||
+            pols.selEq[3][offset] || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]
+                ? 1n
+                : 0n;
     }
 }
 
