@@ -52,9 +52,7 @@ FINAL_PHASE_1=1
 FINAL_PHASE_2=1
 ONLY_HASH=0
 ONLY_CONFIG=0
-EIP4844=0
 REMOTE=0
-
 while [ $# -gt 0 ]; do
     if [ ${1:0:1} = '-' ]; then
         case $1 in
@@ -118,9 +116,12 @@ else
     CP_DEFAULT=1
 fi
 CP_SCRIPTS=$CP_DEFAULT
-
+CP_ZKEVM=$CP_DEFAULT
+CP_C12A=$CP_DEFAULT
+CP_RECURSIVE1=$CP_DEFAULT
+CP_RECURSIVE2=$CP_DEFAULT
+CP_RECURSIVEF=$CP_DEFAULT
 CP_FINAL=1
-
 CP_CIRCOM=$CP_DEFAULT
 CP_BUILDS=1
 GENERATE_HASH=1
@@ -147,93 +148,94 @@ if [ $CP_SCRIPTS -eq 1 ]; then
     cpfile $BASEDIR/src/sm/sm_sha256f/sha256_gates.json        $FULLDST/sha256_gates.json
 fi
 
-srcs_batch=("zkevm" "compressor_batch" "recursive1_batch" "recursive2_batch" "recursivef_batch")
-dsts_batch=("zkevm" "c12a" "recursive1" "recursive2" "recursivef")
-
-srcs_eip4844=("zkevm" "compressor_batch" "recursive1_batch" "recursive2_batch" "recursivef_batch" "blob_inner" "compressor_blob" "recursive1_blob" "batch_blob" "recursive2_blob" "recursivef_blob")
-dsts_eip4844=("zkevm" "c12a" "recursive1" "recursive2" "recursivef" "blob" "compressorBlob" "recursive1Blob" "batchBlob" "recursive2Blob" "recursivefBlob")
-
-if [ "$EIP4844" -eq 1 ]; then
-    srcs=("${srcs_eip4844[@]}")
-    dsts=("${dsts_eip4844[@]}")
-else
-    srcs=("${srcs_batch[@]}")
-    dsts=("${dsts_batch[@]}")
-fi
-
-if [ ${#srcs[@]} -ne ${#dsts[@]} ]; then
-    echo "Assertion failed: Arrays 'srcs' and 'dsts' have different lengths."
-    exit 1
-fi
-
-BUILDDST=$DST/build
-if [ $CP_BUILDS -eq 1 ]; then
-    # builds
-    makedir $BUILDDST
-
-    cpfile package.json $BUILDDST
-    cpfile package-lock.json $BUILDDST
-
-    DEPENDENCIES=$BDIR/dependencies.txt
-    cpfile $DEPENDENCIES $BUILDDST
-    cpdir  $BDIR/steps $BUILDDST
-    cpfile $BDIR/steps.log $FULLDST
-fi
-
-for ((i = 0; i < ${#srcs[@]}; i++)); do
-    if [ "$CP_DEFAULT" -eq 0 ]; then
-        continue  # Skip the rest of the loop iteration
-    fi
-    src="${srcs[i]}"
-    dst="${dsts[i]}"
-    FULLDST=$DST/config/$dst
-    [ ! -d $FULLDST ] && mkdir -p $FULLDST
-    cpfile $BDIR/$src.const                                                  $FULLDST/$dst.const
-    cpfile $BDIR/$src.consttree                                              $FULLDST/$dst.consttree
-    cpfile $BDIR/$src.starkinfo.json                                         $FULLDST/$dst.starkinfo.json
-    cpfile $BDIR/$src.verkey.json        		                             $FULLDST/$dst.verkey.json
-    cpfile $BDIR/$src.chelpers.bin                                           $FULLDST/$dst.chelpers.bin
-    if [[ "$dst" != "zkevm" && "$dst" != "blob" ]]; then
-        cpfile $BDIR/$src.exec        		                                 $FULLDST/$dst.exec
-    fi
-
-    if [[ "$dst" != "c12a" && "$dst" != "compressorBlob" ]]; then
-        if [[ "$dst" == "zkevm" || "$dst" == "blob" ]]; then
-            cpfile $BDIR/$src.verifier_cpp/$src.verifier.dat                 $FULLDST/$dst.verifier.dat
-        else
-            cpfile $BDIR/${src}_cpp/$src.dat                                 $FULLDST/$dst.verifier.dat
-        fi
-    fi
-
+if [ $CP_ZKEVM -eq 1 ]; then
+    # zkevm
+    FULLDST=$DST/config/zkevm
+    makedir $FULLDST
+    cpfile $BDIR/zkevm.const                                   $FULLDST
+    cpfile $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.dat
+    cpfile $BDIR/zkevm.consttree                               $FULLDST
+    cpfile $BDIR/zkevm.starkinfo.json                          $FULLDST
+    cpfile $BDIR/zkevm.verkey.json        		               $FULLDST
+    cpfile $BDIR/zkevm.chelpers.bin                            $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        [ ! -d $DST/c_files/$dst ] && mkdir -p $DST/c_files/$dst
-        if [[ "$dst" == "zkevm" || "$dst" == "blob" ]]; then
-            cpdir $BDIR/pil/$src                                             $DST/pil/$dst
-            cpfile $BDIR/$src.verifier_cpp/$src.verifier.cpp                 $DST/c_files/$dst/$dst.verifier.cpp
-        else
-            cpfile $BDIR/$src.pil                                            $DST/pil
-            if [[ "$dst" != "c12a" && "$dst" != "compressorBlob" ]]; then
-                cpfile $BDIR/${src}_cpp/$src.cpp                             $DST/c_files/$dst/$dst.cpp
-            fi
-        fi
-          
-        chelpersFileSrc=$(echo "$src" | sed 's/_\([a-z]\)/\U\1/g; s/^./\U&/')"Steps"
-        chelpersFileDst=$(echo "$dst" | sed 's/_\([a-z]\)/\U\1/g; s/^./\U&/')"Steps"
-        cpfile $BDIR/$src.chelpers/$chelpersFileSrc.hpp                      $DST/c_files/$dst/$chelpersFileDst.hpp
+        cpdir $BDIR/zkevm.verifier_cpp                         $DST/c_files
+        cpdir $BDIR/zkevm.chelpers                             $DST/c_files
+        cpdir $BDIR/pil/zkevm                                  $DST/pil/
     fi
+fi
 
-    if [ $CP_BUILDS -eq 1 ]; then
-        if [[ "$src" == "zkevm" || "$src" == "blob" ]]; then
-            cpfile $BDIR/$src.verifier.r1cs                                  $BUILDDST/$dst.verifier.r1cs
-            cpfile $BDIR/$src.verifier.sym                                   $BUILDDST/$dst.verifier.sym
-        else 
-            if [[ "$src" != "compressor_batch" && "$src" != "compressor_blob" ]]; then
-                cpfile $BDIR/$src.r1cs                                           $BUILDDST/$dst.r1cs
-                cpfile $BDIR/$src.sym                                            $BUILDDST/$dst.sym
-            fi
-        fi
+if [ $CP_C12A -eq 1 ]; then
+    # c12a
+    FULLDST=$DST/config/c12a
+    makedir $FULLDST
+    cpfile $BDIR/c12a.const                    $FULLDST
+    cpfile $BDIR/c12a.exec                     $FULLDST
+    cpfile $BDIR/c12a.consttree                $FULLDST
+    cpfile $BDIR/c12a.verkey.json              $FULLDST
+    cpfile $BDIR/c12a.starkinfo.json           $FULLDST
+    cpfile $BDIR/c12a.chelpers.bin             $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/c12a.pil                  $DST/pil
+        cpdir $BDIR/c12a.chelpers              $DST/c_files
     fi
-done
+fi
+
+if [ $CP_RECURSIVE1 -eq 1 ]; then
+    # recursive1
+    FULLDST=$DST/config/recursive1
+    makedir $FULLDST
+    cpfile $BDIR/recursive1.const              $FULLDST
+    cpfile $BDIR/recursive1_cpp/recursive1.dat $FULLDST/recursive1.verifier.dat
+    cpfile $BDIR/recursive1.consttree          $FULLDST
+    cpfile $BDIR/recursive1.exec               $FULLDST
+    cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive1.starkstruct.json
+    cpfile $BDIR/recursive1.starkinfo.json     $FULLDST
+    cpfile $BDIR/recursive1.verkey.json        $FULLDST
+    cpfile $BDIR/recursive1.chelpers.bin       $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/recursive1.pil            $DST/pil
+        cpdir $BDIR/recursive1_cpp             $DST/c_files
+        cpdir $BDIR/recursive1.chelpers        $DST/c_files
+    fi
+fi
+
+if [ $CP_RECURSIVE2 -eq 1 ]; then
+    # recursive 2
+    FULLDST=$DST/config/recursive2
+    makedir $FULLDST
+    cpfile $BDIR/recursive2.starkinfo.json     $FULLDST
+    cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive2.starkstruct.json
+    cpfile $BDIR/recursive2.exec               $FULLDST
+    cpfile $BDIR/recursive2_cpp/recursive2.dat $FULLDST/recursive2.verifier.dat
+    cpfile $BDIR/recursive2.verkey.json        $FULLDST
+    cpfile $BDIR/recursive2.consttree          $FULLDST
+    cpfile $BDIR/recursive2.const              $FULLDST
+    cpfile $BDIR/recursive2.chelpers.bin       $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/recursive2.pil            $DST/pil
+        cpdir $BDIR/recursive2_cpp             $DST/c_files
+        cpdir $BDIR/recursive2.chelpers        $DST/c_files
+    fi
+fi
+
+if [ $CP_RECURSIVEF -eq 1 ]; then
+    # recursive f
+    FULLDST=$DST/config/recursivef
+    makedir $FULLDST
+    cpfile $BDIR/recursivef.verkey.json        $FULLDST
+    cpfile $BDIR/recursivef.consttree          $FULLDST
+    cpfile $BDIR/recursivef.starkinfo.json     $FULLDST
+    cpfile $BDIR/recursivef.exec               $FULLDST
+    cpfile $BDIR/recursivef.const              $FULLDST
+    cpfile $BDIR/recursivef_cpp/recursivef.dat $FULLDST/recursivef.verifier.dat
+    cpfile $BDIR/recursivef.chelpers.bin       $FULLDST
+    if [ $ONLY_CONFIG -eq 0 ]; then
+        cpfile $BDIR/recursivef.pil            $DST/pil
+        cpdir $BDIR/recursivef_cpp             $DST/c_files
+        cpdir $BDIR/recursivef.chelpers        $DST/c_files
+    fi
+fi
 
 if [ $CP_FINAL -eq 1 ]; then
     # final
@@ -242,21 +244,12 @@ if [ $CP_FINAL -eq 1 ]; then
     if [ $FINAL_PHASE_2 -eq 1 ]; then
         cpfile $BDIR/final.fflonk.zkey         $FULLDST
         cpfile $BDIR/final.fflonk.verkey.json  $FULLDST
-        if [ $CP_BUILDS -eq 1 ]; then
-            cpfile $BDIR/final.fflonk.verifier.sol $BUILDDST
-        fi
     fi
     if [ $FINAL_PHASE_1 -eq 1 ]; then
         cpfile $BDIR/final_cpp/final.dat       $FULLDST/final.verifier.dat
         if [ $ONLY_CONFIG -eq 0 ]; then
-            [ ! -d $DST/c_files/final ] && mkdir -p $DST/c_files/final
-            cpfile $BDIR/final_cpp/final.cpp   $DST/c_files/final/final.cpp
+            cpdir $BDIR/final_cpp                  $DST/c_files
         fi
-    fi
-
-    if [ $CP_BUILDS -eq 1 ]; then
-        cpfile $BDIR/final.r1cs $BUILDDST
-        cpfile $BDIR/final.sym $BUILDDST
     fi
 fi
 
@@ -290,9 +283,33 @@ if [ $ONLY_CONFIG -eq 0 ]; then
             done
             mv $TMPHASHFILE $HASHFILE
         fi
+    fi
 
-        if [ $CP_BUILDS -eq 1 ]; then
-            cpfile $HASHFILE $BUILDDST
+    if [ $CP_BUILDS -eq 1 ]; then
+        # builds
+        FULLDST=$DST/build
+        makedir $FULLDST
+
+        cpfile package.json $FULLDST
+        cpfile package-lock.json $FULLDST
+
+        DEPENDENCIES=$BDIR/dependencies.txt
+        cpfile $DEPENDENCIES $FULLDST
+        cpdir  $BDIR/steps $FULLDST
+
+        BUILDS=""
+        if [ -f $HASHFILE ]; then
+            BUILDS=`basename $HASHFILE`" "
+        fi
+        cpfile $BDIR/steps.log $FULLDST
+        if [ $FINAL_PHASE_2 -eq 1 ]; then
+            cpfile $BDIR/final.fflonk.verifier.sol $FULLDST
+        fi
+        if [ $FINAL_PHASE_1 -eq 1 ]; then
+            BUILDS="c12a.starkstruct.json final.r1cs final.sym recursive.starkstruct.json recursive1.r1cs recursive1.sym recursive2.r1cs recursive2.sym recursivef.r1cs recursivef.starkstruct.json recursivef.sym zkevm.starkstruct.json zkevm.verifier.r1cs zkevm.verifier.sym"
+            for F in $BUILDS; do
+                cpfile $BDIR/$F $FULLDST
+            done
         fi
     fi
 fi

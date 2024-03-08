@@ -15,7 +15,7 @@ const {compressorSetup} = require('pil-stark/src/compressor/compressor_setup');
 module.exports.genSetup = async function genSetup(template, starkStruct, fileName, vks, verifierNames, starkInfoVerifiers, options) {
     const F = new F3g();
 
-    if(template === "batch_blob") {
+    if(template === "blob_outer") {
         if(verifierNames.length !== 2) throw new Error("Invalid number of verifier names provided!");
         if(starkInfoVerifiers.length !== 2) throw new Error("Invalid number of stark infos provided!");
     } else {
@@ -34,8 +34,8 @@ module.exports.genSetup = async function genSetup(template, starkStruct, fileNam
 
     const buildDir = options.buildDir || "tmp";
 
-    let enableInput = isBatchRecursion && ["batch_blob", "recursive2", "recursivef"].includes(template) ? true : false;
-    let verkeyInput = ["batch_blob", "recursive2", "recursivef"].includes(template) ? true : false;
+    let enableInput = isBatchRecursion && ["blob_outer", "recursive2", "recursivef"].includes(template) ? true : false;
+    let verkeyInput = ["blob_outer", "recursive2", "recursivef"].includes(template) ? true : false;
     
     let verifierFilename = `${buildDir}/${verifierNames[0]}.verifier.circom`;
 
@@ -46,7 +46,7 @@ module.exports.genSetup = async function genSetup(template, starkStruct, fileNam
     const verifierCircomTemplate = await pil2circom(constRoot, starkInfoVerifiers[0], { skipMain, verkeyInput, enableInput });
     await fs.promises.writeFile(verifierFilename, verifierCircomTemplate, "utf8");
 
-    if(template === "batch_blob") {
+    if(template === "blob_outer") {
         let verifier2Filename = `${buildDir}/${verifierNames[1]}.verifier.circom`;
 
         const constRoot2 = vks[2] || undefined;

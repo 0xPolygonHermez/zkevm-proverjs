@@ -26,7 +26,7 @@ async function run() {
 
     const template = argv.template;
     if(!template) throw new Error("A template name must be provided!");
-    if(!["batch_blob", "compressor", "recursive1", "recursive2", "recursivef"].includes(template)) throw new Error("Invalid template name provided!");
+    if(!["blob_outer", "compressor", "recursive1", "recursive2", "recursivef"].includes(template)) throw new Error("Invalid template name provided!");
 
     let fileName = argv.filename;
     if(!fileName) fileName = template;
@@ -37,7 +37,7 @@ async function run() {
     if(typeof (starkInfos[0]) !== "string") throw new Error("A stark info file must be provided!");
     starkInfoVerifiers.push(JSON.parse(await fs.promises.readFile(starkInfos[0].trim(), "utf8")));
 
-    if(template === "batch_blob") {
+    if(template === "blob_outer") {
         if(typeof (starkInfos[1]) !== "string") throw new Error("A second stark info file must be provided!");
         starkInfoVerifiers.push(JSON.parse(await fs.promises.readFile(starkInfos[1].trim(), "utf8")));
     }
@@ -64,13 +64,13 @@ async function run() {
     const verkey = JSONbig.parse(await fs.promises.readFile(verkeyArray[0].trim(), "utf8"));
     vks.push(verkey.constRoot);
     
-    if(template === "recursivef" || template === "batch_blob") {
+    if(template === "recursivef" || template === "blob_outer") {
         if(typeof(verkeyArray[1]) !== "string") throw new Error("A second verification key file must be provided!");
         const verkey2 = JSONbig.parse(await fs.promises.readFile(verkeyArray[1].trim(), "utf8"));
         vks.push(verkey2.constRoot);
     }
 
-    if(template === "batch_blob") {
+    if(template === "blob_outer") {
         if(typeof(verkeyArray[2]) !== "string") throw new Error("A third verification key file must be provided!");
         const verkey3 = JSONbig.parse(await fs.promises.readFile(verkeyArray[2].trim(), "utf8"));
         vks.push(verkey3.constRoot);
@@ -82,13 +82,13 @@ async function run() {
     if(!verifierName) throw new Error("A verifier name must be provided!")
     verifierNames.push(verifierName);
 
-    if(template === "batch_blob") {
+    if(template === "blob_outer") {
         let verifierName2 = argv.verifiername2;
         if(!verifierName2) throw new Error("A verifier name for blob inner must be provided!")
         verifierNames.push(verifierName2);
     }
 
-    let genCircomTemplate = ["batch_blob", "recursive1", "recursive2", "recursivef"].includes(template) ? true : false;
+    let genCircomTemplate = ["blob_outer", "recursive1", "recursive2", "recursivef"].includes(template) ? true : false;
 
     const options = {compressorCols: cols, genCircomTemplate, skipConstTree, isBatchRecursion, isEip4844, buildDir};
 
