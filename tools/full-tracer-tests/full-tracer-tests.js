@@ -35,6 +35,7 @@ const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'cont
 const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
 const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
+let forceRegen = false;
 const regen = false;
 const errorsMap = {
     OOG: 'out of gas',
@@ -95,7 +96,7 @@ async function main() {
                 });
                 // Get num of non changeL2Block txs
                 const ethTxs = isEthereumTest ? test.blocks[0].transactions.length : test.txs.filter((tx) => typeof tx.type === 'undefined').length;
-                if (regen || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
+                if (regen || forceRegen || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
                     // Configure genesis for test
                     const isGethSupported = await configureGenesis(test, isEthereumTest);
                     if (!isGethSupported) {
@@ -129,10 +130,16 @@ async function main() {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
+                        if (!forceRegen) {
+                            forceRegen = true;
+                            j--;
+                            break;
+                        }
                         if (stopOnFailure) {
                             process.exit(1);
                         }
                     } else {
+                        forceRegen = false;
                         console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i} -- ${traceMethod}`));
                     }
                 }
@@ -925,7 +932,7 @@ async function startGeth() {
     await buildAll({ cwd: path.join(__dirname), log: false });
     // start docker compose
     await upAll({ cwd: path.join(__dirname), log: false });
-    await sleep(2000);
+    await sleep(6000);
 }
 
 function sleep(ms) {

@@ -6,6 +6,7 @@ const {
 } = require('@0xpolygonhermez/zkevm-commonjs');
 const buildPoseidon = require('@0xpolygonhermez/zkevm-commonjs').getPoseidon;
 const ethers = require('ethers');
+const { Scalar } = require("ffjavascript");
 
 const { h4toString } = smtUtils;
 const { initBlockHeader, fillReceiptTree, setBlockGasUsed } = blockUtils;
@@ -74,7 +75,7 @@ async function checkBlockInfoRootsFromTrace(testName) {
         blockInfoRoot = await setBlockGasUsed(smt, blockInfoRoot, block.gas_used);
         // Compare block info root
         if (h4toString(blockInfoRoot) !== block.block_info_root) {
-            throw new Error(`Block info root mismatch at block ${i}`);
+            throw new Error(`Block info root mismatch at block ${i + 1}`);
         }
     }
 }
@@ -96,9 +97,9 @@ async function checkBlockInfoRootsFromProverTrace(joinedTraces) {
             blockInfoRoot,
             `0x${block.parent_hash.toString('hex')}`,
             block.coinbase,
-            block.block_number,
-            block.gas_limit,
-            block.timestamp,
+            Number(block.block_number),
+            `0x${Scalar.e(block.gas_limit).toString(16)}`,
+            Number(block.timestamp),
             `0x${block.ger.toString('hex')}`,
             `0x${block.block_hash_l1.toString('hex')}`,
         );
@@ -114,9 +115,9 @@ async function checkBlockInfoRootsFromProverTrace(joinedTraces) {
                 nonce: decodedTx[0] === '0x' ? '0' : decodedTx[0],
                 gasLimit: Number(context.gas).toString(16),
                 gasPrice: Number(context.gas_price).toString(16),
-                data: context.data.toString('hex'),
+                data: `0x${context.data.toString('hex')}`,
                 from: context.from,
-                chainID: context.chain_id === 0 ? undefined : context.chain_id,
+                chainID: context.chain_id === '0' ? undefined : Number(context.chain_id),
             });
             if (l2TxHash !== `0x${response.tx_hash_l2.toString('hex')}`) {
                 throw new Error(`L2 tx hash mismatch at block ${i} tx ${j}`);
