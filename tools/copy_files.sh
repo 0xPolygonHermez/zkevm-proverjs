@@ -53,6 +53,7 @@ FINAL_PHASE_2=1
 ONLY_HASH=0
 ONLY_CONFIG=0
 EIP4844=0
+REMOTE=0
 
 while [ $# -gt 0 ]; do
     if [ ${1:0:1} = '-' ]; then
@@ -207,10 +208,10 @@ for ((i = 0; i < ${#srcs[@]}; i++)); do
     if [ $ONLY_CONFIG -eq 0 ]; then
         [ ! -d $DST/c_files/$dst ] && mkdir -p $DST/c_files/$dst
         if [[ "$dst" == "zkevm" || "$dst" == "blob" ]]; then
-            cpdir $BDIR/$src/pil                                             $DST/pil/$dst
+            cpdir $BDIR/pil/$src                                             $DST/pil/$dst
             cpfile $BDIR/$src.verifier_cpp/$src.verifier.cpp                 $DST/c_files/$dst/$dst.verifier.cpp
         else
-            cpfile $BDIR/pil/$src                                            $DST/pil
+            cpfile $BDIR/$src.pil                                            $DST/pil
             if [[ "$dst" != "c12a" && "$dst" != "compressorBlob" ]]; then
                 cpfile $BDIR/${src}_cpp/$src.cpp                             $DST/c_files/$dst/$dst.cpp
             fi
@@ -222,12 +223,14 @@ for ((i = 0; i < ${#srcs[@]}; i++)); do
     fi
 
     if [ $CP_BUILDS -eq 1 ]; then
-        if [[ "$dst" == "zkevm" || "$dst" == "blob" ]]; then
+        if [[ "$src" == "zkevm" || "$src" == "blob" ]]; then
             cpfile $BDIR/$src.verifier.r1cs                                  $BUILDDST/$dst.verifier.r1cs
             cpfile $BDIR/$src.verifier.sym                                   $BUILDDST/$dst.verifier.sym
-        else
-            cpfile $BDIR/$src.r1cs                                           $BUILDDST/$dst.r1cs
-            cpfile $BDIR/$src.sym                                            $BUILDDST/$dst.sym
+        else 
+            if [[ "$src" != "compressor_batch" && "$src" != "compressor_blob" ]]; then
+                cpfile $BDIR/$src.r1cs                                           $BUILDDST/$dst.r1cs
+                cpfile $BDIR/$src.sym                                            $BUILDDST/$dst.sym
+            fi
         fi
     fi
 done

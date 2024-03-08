@@ -139,6 +139,7 @@ template Main() {
 <%  totalBits += 256; -%>
 <%  p += 8; -%>
 
+<%  if (isEip4844) { -%>
     signal newBlobNum;
     signal n2bNewBlobNum[63];
     var newBlobNumPos = <%- p %>;
@@ -152,6 +153,21 @@ template Main() {
     var newLocalExitRootBitsOffset = <%- totalBits %>;
 <%  totalBits += 256; -%>
 <%  p += 8; -%>
+<%  } else { -%>
+    signal newLocalExitRoot[8];
+    signal n2bNewLocalExitRoot[8][32];
+    var newLocalExitRootPos = <%- p %>;
+    var newLocalExitRootBitsOffset = <%- totalBits %>;
+<%  totalBits += 256; -%>
+<%  p += 8; -%>
+
+    signal newBlobNum;
+    signal n2bNewBlobNum[63];
+    var newBlobNumPos = <%- p %>;
+    var newBlobNumBitsOffset = <%- totalBits %>;
+<%  totalBits += 64; -%>
+<%  p++; -%>
+<%  } -%>
 
     var aggregatorAddrBitsOffset = <%- totalBits %>;
 <%  totalBits += 160; -%>

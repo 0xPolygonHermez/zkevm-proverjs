@@ -28,16 +28,18 @@ template Main() {
 <% p += 8; -%>
     var newBatchAccInputHashPos = <%- p %>;
 <% p += 8; -%>
-    var newBatchNumPos = <%- p++ %>;
 <%  if(isEip4844) { -%>
+    var newBatchNumPos = <%- p++ %>;
     var newL1InfoTreeRootPos = <%- p %>;
 <% p += 8; -%>
     var newL1InfoTreeIndexPos = <%- p++ %>;
-<%  } -%>
     var newLocalExitRootPos = <%- p %>;
 <% p += 8; -%>
-<%  if(isEip4844) { -%>
     var newLastTimestampPos = <%- p++ %>;
+<%  } else { -%> 
+    var newLocalExitRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBatchNumPos = <%- p++ %>;
 <%  } -%>
 <%  nPublics = p; -%>
 <% } else { -%>
