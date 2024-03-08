@@ -55,7 +55,7 @@ namespace Main(%N);
     pol commit ind, indRR;
     pol commit useCTX;
     pol commit carry;
-    pol commit assumeFree;
+    pol commit assumeFree, free0IsByte;
 
     // operations
     pol commit mOp, mWR;
@@ -261,6 +261,10 @@ namespace Main(%N);
     jmpnCondValue = 2**31*hJmpnCondValueBit[8] + 2**30*hJmpnCondValueBit[7] + 2**29*hJmpnCondValueBit[6] + 2**28*hJmpnCondValueBit[5] +
                     2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
                     2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
+
+    free0IsByte * (2**7 * hJmpnCondValueBit[7] + 2**6 * hJmpnCondValueBit[6] + 2**5 * hJmpnCondValueBit[5] + 
+                   2**4 * hJmpnCondValueBit[4] + 2**3 * hJmpnCondValueBit[3] + 2**2 * hJmpnCondValueBit[2] + 
+                   2**1 * hJmpnCondValueBit[1] + 2**0 * hJmpnCondValueBit[0] - FREE0) = 0;
 
 
     /// RCX check zero
@@ -492,7 +496,7 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" -b
     */
 
     pol operations =
@@ -509,7 +513,7 @@ namespace Main(%N);
             + 2**40 * return           + 2**41 * arithEq3         + 2**42 * arithEq4         + 2**43 * arithEq5
             + 2**44 * hashS            + 2**45 * hashSDigest      + 2**46 * hashSLen         + 2**47 * save
             + 2**48 * restore          + 2**49 * setRID           + 2**50 * hashBytesInD     + 2**51 * assumeFree
-            + 2**52 * memUseAddrRel    + 2**53 * jmpUseAddrRel    + 2**54 * elseUseAddrRel;
+            + 2**52 * memUseAddrRel    + 2**53 * jmpUseAddrRel    + 2**54 * elseUseAddrRel   + 2**55 * free0IsByte;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -565,7 +569,8 @@ namespace Main(%N);
     (1 - assumeFree) * assumeFree = 0;
     (1 - memUseAddrRel) * memUseAddrRel = 0;
     (1 - jmpUseAddrRel) * jmpUseAddrRel = 0;
-    (1 - elseUseAddrRel) * elseUseAddrRel = 0;    
+    (1 - elseUseAddrRel) * elseUseAddrRel = 0;
+    (1 - free0IsByte) * free0IsByte = 0;   
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,

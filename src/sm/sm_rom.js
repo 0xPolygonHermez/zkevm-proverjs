@@ -82,7 +82,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel" -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =
@@ -140,7 +140,8 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
             + (rom.program[pIndex].assumeFree ? (2n**51n * BigInt(rom.program[pIndex].assumeFree)) : 0n)
             + (rom.program[pIndex].memUseAddrRel ? (2n**52n * BigInt(rom.program[pIndex].memUseAddrRel)) : 0n)
             + (rom.program[pIndex].jmpUseAddrRel ? (2n**53n * BigInt(rom.program[pIndex].jmpUseAddrRel)) : 0n)
-            + (rom.program[pIndex].elseUseAddrRel ? (2n**54n * BigInt(rom.program[pIndex].elseUseAddrRel)) : 0n);
+            + (rom.program[pIndex].elseUseAddrRel ? (2n**54n * BigInt(rom.program[pIndex].elseUseAddrRel)) : 0n)
+            + (rom.program[pIndex].free0IsByte ? (2n**55n * BigInt(rom.program[pIndex].free0IsByte)) : 0n);
 
         pols.ind[i] = rom.program[pIndex].ind ? BigInt(rom.program[pIndex].ind) : 0n;
         pols.indRR[i] = rom.program[pIndex].indRR ? BigInt(rom.program[pIndex].indRR) : 0n;

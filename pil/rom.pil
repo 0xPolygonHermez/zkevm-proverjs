@@ -23,7 +23,7 @@ namespace Rom(%N);
 
     /*
       comment genereated with:
-      node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel"
+      node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte"
 
       operations =
               2**0  * arithEq0         + 2**1  * arithEq1         + 2**2  * arithEq2         + 2**3  * assert
@@ -39,5 +39,5 @@ namespace Rom(%N);
             + 2**40 * return           + 2**41 * arithEq3         + 2**42 * arithEq4         + 2**43 * arithEq5
             + 2**44 * hashS            + 2**45 * hashSDigest      + 2**46 * hashSLen         + 2**47 * save
             + 2**48 * restore          + 2**49 * setRID           + 2**50 * hashBytesInD     + 2**51 * assumeFree
-            + 2**52 * memUseAddrRel    + 2**53 * jmpUseAddrRel    + 2**54 * elseUseAddrRel;
+            + 2**52 * memUseAddrRel    + 2**53 * jmpUseAddrRel    + 2**54 * elseUseAddrRel   + 2**55 * free0IsByte;
     */

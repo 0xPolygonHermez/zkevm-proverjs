@@ -2376,8 +2376,27 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             elseAddr = BigInt(finalJmpAddr);
         }
 
+        if (l.free0IsByte) {
+            if (ctx.FREE0 < 0n || ctx.FREE0 > 255n) {
+                throw new Error(`FREE0 must be a byte, but has value ${ctx.FREE0} at ${sourceRef}`);
+            }
+            let value = ctx.FREE0;
+            for (let index = 0; index < 8; ++index) {
+                pols.hJmpnCondValueBit[index][i] = value & 0x01n;
+                value = value >> 1n;
+            }
+            pols.isNeg[i] = 0n;
+            pols.lJmpnCondValueBit[9][i] = 0n;
+            pols.hJmpnCondValueBit[i] = 0n;
+            pols.free0IsByte[i] = 1n;
+        } else {
+            pols.free0IsByte[i] = 0n;
+        }
 
         if (l.JMPN) {
+            if (l.free0IsByte) {
+                throw new Error(`JMPN and F_BYTE must not be used in same row ${sourceRef}`);
+            }
             const o = Fr.toObject(op0);
             // Calculate reserved counters
             const counterControl = counterControls[l.jmpAddrLabel] ?? false;
@@ -2408,10 +2427,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
             pols.JMPN[i] = 1n;
         } else {
-            pols.isNeg[i] = 0n;
-            pols.lJmpnCondValue[i] = 0n;
-            for (let index = 0; index < 9; ++index) {
-                pols.hJmpnCondValueBit[index][i] = 0n;
+            if (!l.free0IsByte) {
+                pols.isNeg[i] = 0n;
+                pols.lJmpnCondValue[i] = 0n;
+                for (let index = 0; index < 9; ++index) {
+                    pols.hJmpnCondValueBit[index][i] = 0n;
+                }
             }
             if (l.JMPC) {
                 if (pols.carry[i]) {
