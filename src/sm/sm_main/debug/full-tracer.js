@@ -526,7 +526,7 @@ class FullTracer {
         }
 
         // Check tx status
-        if ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1)) {
+        if (!responseErrors.includes(response.error) && ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1))) {
             throw new Error(`Invalid tx status error is "${response.error}" and status is "${response.status}"`);
         }
         // verbose
