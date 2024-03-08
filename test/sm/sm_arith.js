@@ -3013,17 +3013,191 @@ async function loadPil(pilFile) {
     return pil;
 }
 
-describe("test plookup operations", async function () {
+describe("Arithmetic state machines tests", async function () {
     this.timeout(10000000);
 
-    it("It should create the pols of two programs and verify the pil", async () => {
-        const pil = await loadPil("pil/arith.pil");
-        constPols = newConstantPolsArray(pil);
-        cmPols = newCommitPolsArray(pil);
+    function executeMain(pols, input) {
+        const N = pols.arith.length;
+
+        for (let i = 0; i < N; ++i) {
+            for (let j = 0; j < 8; ++j) {
+                pols.A[j][i] = 0n;
+                pols.B[j][i] = 0n;
+                pols.C[j][i] = 0n;
+                pols.D[j][i] = 0n;
+                pols.E[j][i] = 0n;
+                pols.op[j][i] = 0n;
+            }
+            pols.arith[i] = 0n;
+            pols.arithEquation[i] = 0n;
+            pols.arithSame12[i] = 0n;
+            pols.arithUseE[i] = 0n;
+        }
+        for (let i = 0; i < input.length; ++i) {
+            for (let j = 0; j < 8; j++) {
+                pols.A[j][i] = BigInt(input[i]["x1"][j]);
+                pols.B[j][i] = BigInt(input[i]["y1"][j]);
+                pols.C[j][i] = BigInt(input[i]["x2"][j]);
+                pols.D[j][i] = BigInt(input[i]["y2"][j]);
+                pols.E[j][i] = BigInt(input[i]["x3"][j]);
+                pols.op[j][i] = BigInt(input[i]["y3"][j]);
+            }
+
+            if (input[i].selEq0) {
+                pols.arithEquation[i] = 1n;
+            } else if (input[i].selEq1) {
+                pols.arithEquation[i] = 2n;
+            } else if (input[i].selEq2) {
+                pols.arithEquation[i] = 3n;
+            } else if (input[i].selEq3) {
+                pols.arithEquation[i] = 4n;
+            } else if (input[i].selEq4) {
+                pols.arithEquation[i] = 5n;
+            } else if (input[i].selEq5) {
+                pols.arithEquation[i] = 6n;
+            } else if (input[i].selEq6) {
+                pols.arithEquation[i] = 7n;
+            }
+
+            pols.arith[i] = 1n;
+            pols.arithUseE[i] = (pols.arithEquation[i] === 1n || pols.arithEquation[i] === 7n) ? 0n : 1n;
+            pols.arithSame12[i] = (pols.arithEquation[i] === 3n) ? 1n : 0n;
+        }
+    }
+
+    async function generatePols(F, input) {
+        const pilCode = `
+        include "pil/global.pil";
+        include "pil/arith.pil";
+
+        namespace Main(%N);
+
+        pol commit A[8];
+        pol commit B[8];
+        pol commit C[8];
+        pol commit D[8];
+        pol commit E[8];
+        pol commit op[8];
+
+        pol commit arith, arithEquation, arithSame12, arithUseE;
+
+        pol ax1_0 = Arith.x1[0] + Arith.x1[1]*2**16;
+        pol ax1_1 = Arith.x1[2] + Arith.x1[3]*2**16;
+        pol ax1_2 = Arith.x1[4] + Arith.x1[5]*2**16;
+        pol ax1_3 = Arith.x1[6] + Arith.x1[7]*2**16;
+        pol ax1_4 = Arith.x1[8] + Arith.x1[9]*2**16;
+        pol ax1_5 = Arith.x1[10] + Arith.x1[11]*2**16;
+        pol ax1_6 = Arith.x1[12] + Arith.x1[13]*2**16;
+        pol ax1_7 = Arith.x1[14] + Arith.x1[15]*2**16;
+
+        pol ay1_0 = Arith.y1[0] + Arith.y1[1]*2**16;
+        pol ay1_1 = Arith.y1[2] + Arith.y1[3]*2**16;
+        pol ay1_2 = Arith.y1[4] + Arith.y1[5]*2**16;
+        pol ay1_3 = Arith.y1[6] + Arith.y1[7]*2**16;
+        pol ay1_4 = Arith.y1[8] + Arith.y1[9]*2**16;
+        pol ay1_5 = Arith.y1[10] + Arith.y1[11]*2**16;
+        pol ay1_6 = Arith.y1[12] + Arith.y1[13]*2**16;
+        pol ay1_7 = Arith.y1[14] + Arith.y1[15]*2**16;
+
+        pol ax2_0 = Arith.x2[0] + Arith.x2[1]*2**16;
+        pol ax2_1 = Arith.x2[2] + Arith.x2[3]*2**16;
+        pol ax2_2 = Arith.x2[4] + Arith.x2[5]*2**16;
+        pol ax2_3 = Arith.x2[6] + Arith.x2[7]*2**16;
+        pol ax2_4 = Arith.x2[8] + Arith.x2[9]*2**16;
+        pol ax2_5 = Arith.x2[10] + Arith.x2[11]*2**16;
+        pol ax2_6 = Arith.x2[12] + Arith.x2[13]*2**16;
+        pol ax2_7 = Arith.x2[14] + Arith.x2[15]*2**16;
+
+        pol ay2_0 = Arith.y2[0] + Arith.y2[1]*2**16;
+        pol ay2_1 = Arith.y2[2] + Arith.y2[3]*2**16;
+        pol ay2_2 = Arith.y2[4] + Arith.y2[5]*2**16;
+        pol ay2_3 = Arith.y2[6] + Arith.y2[7]*2**16;
+        pol ay2_4 = Arith.y2[8] + Arith.y2[9]*2**16;
+        pol ay2_5 = Arith.y2[10] + Arith.y2[11]*2**16;
+        pol ay2_6 = Arith.y2[12] + Arith.y2[13]*2**16;
+        pol ay2_7 = Arith.y2[14] + Arith.y2[15]*2**16;
+
+        pol ax3_0 = Arith.x3[0] + Arith.x3[1]*2**16;
+        pol ax3_1 = Arith.x3[2] + Arith.x3[3]*2**16;
+        pol ax3_2 = Arith.x3[4] + Arith.x3[5]*2**16;
+        pol ax3_3 = Arith.x3[6] + Arith.x3[7]*2**16;
+        pol ax3_4 = Arith.x3[8] + Arith.x3[9]*2**16;
+        pol ax3_5 = Arith.x3[10] + Arith.x3[11]*2**16;
+        pol ax3_6 = Arith.x3[12] + Arith.x3[13]*2**16;
+        pol ax3_7 = Arith.x3[14] + Arith.x3[15]*2**16;
+
+        pol ay3_0 = Arith.y3[0] + Arith.y3[1]*2**16;
+        pol ay3_1 = Arith.y3[2] + Arith.y3[3]*2**16;
+        pol ay3_2 = Arith.y3[4] + Arith.y3[5]*2**16;
+        pol ay3_3 = Arith.y3[6] + Arith.y3[7]*2**16;
+        pol ay3_4 = Arith.y3[8] + Arith.y3[9]*2**16;
+        pol ay3_5 = Arith.y3[10] + Arith.y3[11]*2**16;
+        pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
+        pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
+
+        arith {
+            arithEquation,
+            A[0], A[1], A[2], A[3], A[4], A[5], A[6], A[7],
+            B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7],
+            arithSame12 * (A[0] - C[0]) + C[0], // This should be A iff EQ2 (point doubling)
+            arithSame12 * (A[1] - C[1]) + C[1],
+            arithSame12 * (A[2] - C[2]) + C[2],
+            arithSame12 * (A[3] - C[3]) + C[3],
+            arithSame12 * (A[4] - C[4]) + C[4],
+            arithSame12 * (A[5] - C[5]) + C[5],
+            arithSame12 * (A[6] - C[6]) + C[6],
+            arithSame12 * (A[7] - C[7]) + C[7],
+            arithSame12 * (B[0] - D[0]) + D[0], // This should be B iff EQ2 (point doubling)
+            arithSame12 * (B[1] - D[1]) + D[1],
+            arithSame12 * (B[2] - D[2]) + D[2],
+            arithSame12 * (B[3] - D[3]) + D[3],
+            arithSame12 * (B[4] - D[4]) + D[4],
+            arithSame12 * (B[5] - D[5]) + D[5],
+            arithSame12 * (B[6] - D[6]) + D[6],
+            arithSame12 * (B[7] - D[7]) + D[7],
+            arithUseE * E[0], // This must be deactivated in EQ0 and EQ11 (standard and modular arith)
+            arithUseE * E[1],
+            arithUseE * E[2],
+            arithUseE * E[3],
+            arithUseE * E[4],
+            arithUseE * E[5],
+            arithUseE * E[6],
+            arithUseE * E[7],
+            op[0], op[1], op[2], op[3], op[4], op[5], op[6], op[7] } is
+        Arith.resultEq {
+            Arith.selEq[0] + 2 * Arith.selEq[1] + 3 * Arith.selEq[2] + 4 * Arith.selEq[3] + 5 * Arith.selEq[4] + 6 * Arith.selEq[5] + 7 * Arith.selEq[6],
+            ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
+            ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
+            ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
+            ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_0,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_1,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_2,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_3,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_4,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_5,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_6,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_7,
+            ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
+        };`;
+
+        const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 23}});
+        const constPols = newConstantPolsArray(pil);
+        const cmPols = newCommitPolsArray(pil);
 
         await global.buildConstants(constPols.Global);
         await arith.buildConstants(constPols.Arith);
-        await arith.execute(cmPols.Arith, prepareInput32bits(input));
+
+        const splitInput = prepareInput32bits(input)
+
+        executeMain(cmPols.Main, splitInput);
+
+        await arith.execute(cmPols.Arith, splitInput);
+        return [pil, cmPols, constPols];
+    }
+
+    it("It should check the main-arith permutation and the arith constraints", async () => {
+        const [pil, cmPols, constPols] = await generatePols(Fr, input);
 
         const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
 
@@ -3036,7 +3210,7 @@ describe("test plookup operations", async function () {
         }
     });
 
-    it("It should create the pols of two programs and fail the pil verification", async () => {
+    it("It should fail since some of the inputs are not lower than the expecti field order", async () => {
         const pil = await loadPil("pil/arith.pil");
         constPols = newConstantPolsArray(pil);
         cmPols = newCommitPolsArray(pil);

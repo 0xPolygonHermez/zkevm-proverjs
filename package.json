@@ -101,7 +101,7 @@
     "buildproof:basic": "npm run buildproof --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "help": "npm_config_help=true && . ./pre.sh",
     "test": "mocha",
-    "test:arith": "mocha --max-old-space-size=35000 test/sm/sm_arith.js",
+    "test:arith": "mocha --max-old-space-size=45000 test/sm/sm_arith.js",
     "test:storage": "mocha test/sm/sm_storage/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
     "test:counters:arith": "mocha test/counters/arith.js",
