@@ -222,35 +222,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     ctx.helpers = helpers;
     try {
-
-        // This code is only used when 'skipFirstChangeL2Block = true'
-        // This only is triggered when executong transaction by transaction across batches
-        // This cannot be executed in prover mode
-        // This code aims to set the timestamp of the batch to the one read from the state
-        // Issue fixed: timestamp is set when processed a 'changeL2Block', stored on state and hold on memory.
-        // Later on, 'opTIMESTAMP' loads the value hold on memory.
-        // Hence, execution transaction by transaction lost track of the timestamp
-        // This function aims to solve the abive issue by loading the timestamp from the state
-        if (input.skipFirstChangeL2Block === true) {
-            // this smt key is built with the following registers:
-            // A: `0x000000000000000000000000000000005ca1ab1e` (%ADDRESS_SYSTEM)
-            // B: `3` (%SMT_KEY_SC_STORAGE)
-            // C: `2` (%TIMESTAMP_STORAGE_POS)
-            const keyToRead = [
-                13748230500842749409n,
-                4428676446262882967n,
-                12167292013585018040n,
-                12161933621946006603n,
-            ];
-
-            const feaInitSR = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-            const res = await smt.get(sr8to4(ctx.Fr, feaInitSR), keyToRead);
-
-            // write in memory
-            const addressMem = fullTracerUtils.findOffsetLabel(ctx.rom.program, 'timestamp');
-            ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
-        }
-
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
@@ -303,22 +274,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (verboseOptions.zkPC) {
             console.log(sourceRef);
         }
-        const A1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.A));
-        const B1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.B));
-        const C1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.C));
-        const D1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.D));
-        const E1 = ethers.utils.hexlify(fea2scalar(Fr, ctx.E));
-        const SR = ethers.utils.hexlify(fea2scalar(Fr, ctx.SR));
-        console.log(`step: ${step} -> ${l.fileName}:${l.line} :: ${l.lineStr} ::: -- A: ${A1}, B: ${B1}, C: ${C1}, D: ${D1}, E: ${E1}`)
-        if (l.line === 29 && l.fileName.includes("block-inf")) { //checkpoint blockinfo tree
-            console.log(`step: ${step}     -> ${l.fileName}:${l.line} :: ${l.lineStr} ::: -- A: ${A1}, B: ${B1}, C: ${C1}, D: ${D1}, E: ${E1}`)
-           }
-           if (l.line === 66 && l.fileName.includes("process-chang")) { //checkpoint blockinfo tree
-            console.log(`step: ${step}     -> ${l.fileName}:${l.line} :: ${l.lineStr} ::: -- A: ${A1}, B: ${B1}, C: ${C1}, D: ${D1}, E: ${E1}`)
-           }
-           if (l.line === 61 && l.fileName.includes("process-chang")) { //checkpoint blockinfo tree
-            console.log(`step: ${step}     -> ${l.fileName}:${l.line} :: ${l.lineStr} ::: -- A: ${A1}, B: ${B1}, C: ${C1}, D: ${D1}, E: ${E1}`)
-           }
+
         // Store SR before set it to 0 at finalizeExecution
         if(Number(ctx.zkPC) === rom.labels.finalizeExecution) {
             ctx.final = true;
@@ -2160,28 +2116,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.C7[i]
                 ];
 
-                // Set C register with input.l1InfoRoot to process unsigned transactions
-                if ((Number(ctx.zkPC) === rom.labels.verifyMerkleProofEnd) && input.l1InfoTree.skipVerifyL1InfoRoot === true) {
-                    const feaL1InfoRoot = scalar2fea(Fr, input.l1InfoRoot);
-                    [pols.C0[nexti],
-                        pols.C1[nexti],
-                        pols.C2[nexti],
-                        pols.C3[nexti],
-                        pols.C4[nexti],
-                        pols.C5[nexti],
-                        pols.C6[nexti],
-                        pols.C7[nexti],
-                    ] = [
-                        feaL1InfoRoot[0],
-                        feaL1InfoRoot[1],
-                        feaL1InfoRoot[2],
-                        feaL1InfoRoot[3],
-                        feaL1InfoRoot[4],
-                        feaL1InfoRoot[5],
-                        feaL1InfoRoot[6],
-                        feaL1InfoRoot[7],
-                    ];
-                }
             }
         }
 
@@ -2816,6 +2750,7 @@ function checkFinalState(Fr, pols, ctx) {
  * @param {Object} ctx - context
  */
 function assertOutputs(ctx){
+    // Check newStateRoot
     const feaNewStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newStateRoot));
 
     if (
@@ -2835,6 +2770,49 @@ function assertOutputs(ctx){
         throw new Error(errorMsg);
     }
 
+    // Check timestamp
+    const scalarNewTimestamp = Scalar.e(ctx.input.newTimestamp);
+
+    if (!Scalar.eq(ctx.RR, scalarNewTimestamp)) {
+        let errorMsg = "Assert Error: newTimestamp does not match\n";
+        errorMsg += `   newTimestamp computed: ${Scalar.e(ctx.RR)}\n`;
+        errorMsg += `   newTimestamp expected: ${scalarNewTimestamp}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    // Check newL1InfoTreeIndex
+    const scalarNewL1InfoTreeIndex = Scalar.e(ctx.input.newL1InfoTreeIndex);
+
+    if (!Scalar.eq(ctx.RCX, scalarNewL1InfoTreeIndex)) {
+        let errorMsg = "Assert Error: newL1InfoTreeIndex does not match\n";
+        errorMsg += `   newL1InfoTreeIndex computed: ${Scalar.e(ctx.RCX)}\n`;
+        errorMsg += `   newL1InfoTreeIndex expected: ${scalarNewL1InfoTreeIndex}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    // Check newL1InfoTreeRoot
+    const feaNewL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newL1InfoTreeRoot));
+
+    if (
+        (!ctx.Fr.eq(ctx.D[0], feaNewL1InfoTreeRoot[0])) ||
+        (!ctx.Fr.eq(ctx.D[1], feaNewL1InfoTreeRoot[1])) ||
+        (!ctx.Fr.eq(ctx.D[2], feaNewL1InfoTreeRoot[2])) ||
+        (!ctx.Fr.eq(ctx.D[3], feaNewL1InfoTreeRoot[3])) ||
+        (!ctx.Fr.eq(ctx.D[4], feaNewL1InfoTreeRoot[4])) ||
+        (!ctx.Fr.eq(ctx.D[5], feaNewL1InfoTreeRoot[5])) ||
+        (!ctx.Fr.eq(ctx.D[6], feaNewL1InfoTreeRoot[6])) ||
+        (!ctx.Fr.eq(ctx.D[7], feaNewL1InfoTreeRoot[7]))
+    ) {
+        let errorMsg = "Assert Error: newL1InfoTreeRoot does not match\n";
+        errorMsg += `   newL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
+        errorMsg += `   newL1InfoTreeRoot expected: ${ctx.input.newL1InfoTreeRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    // Check newBatchAccInputHash
     const feaNewBatchAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newBatchAccInputHash));
 
     if (
@@ -2847,13 +2825,14 @@ function assertOutputs(ctx){
         (!ctx.Fr.eq(ctx.C[6], feaNewBatchAccInputHash[6])) ||
         (!ctx.Fr.eq(ctx.C[7], feaNewBatchAccInputHash[7]))
     ) {
-        let errorMsg = "Assert Error: AccInputHash does not match\n";
-        errorMsg += `   AccInputHash computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
-        errorMsg += `   AccInputHash expected: ${ctx.input.newBatchAccInputHash}\n`;
+        let errorMsg = "Assert Error: newBatchAccInputHash does not match\n";
+        errorMsg += `   newBatchAccInputHash computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
+        errorMsg += `   newBatchAccInputHash expected: ${ctx.input.newBatchAccInputHash}\n`;
         errorMsg += `Errors: ${nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
+    // Check newLocalExitRoot
     const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
 
     if (
@@ -2936,6 +2915,7 @@ function initState(Fr, pols, ctx) {
     // Set forkID to CTX register
     pols.CTX[0] = ctx.Fr.e(ctx.input.forkID)
 
+    // Set other registers to zero
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;
     pols.A2[0] = Fr.zero;
@@ -2972,7 +2952,6 @@ function initState(Fr, pols, ctx) {
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
-    pols.RCX[0] = 0n;
     pols.SP[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
@@ -3281,14 +3260,14 @@ function eval_functionCall(ctx, tag) {
         return eval_getForcedGER(ctx, tag);
     } if (tag.funcName == 'getForcedBlockHashL1') {
         return eval_getForcedBlockHashL1(ctx, tag);
-    } if (tag.funcName == 'getL1InfoRoot') {
-        return eval_getL1InfoRoot(ctx, tag);
     } if (tag.funcName == 'getL1InfoGER') {
         return eval_getL1InfoGER(ctx, tag);
     } if (tag.funcName == 'getL1InfoBlockHash') {
         return eval_getL1InfoBlockHash(ctx, tag);
     } if (tag.funcName == 'getL1InfoTimestamp') {
         return eval_getL1InfoTimestamp(ctx, tag);
+    } if (tag.funcName == 'getL1HistoricRoot') {
+        return eval_getL1HistoricRoot(ctx, tag);
     } else if (tag.funcName == "getTxs") {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
@@ -3381,17 +3360,9 @@ function eval_getSmtProof(ctx, tag) {
     const index = Number(evalCommand(ctx, tag.params[0]));
     const level = Number(evalCommand(ctx, tag.params[1]));
 
-    const leafValue = (ctx.input.l1InfoTree.skipVerifyL1InfoRoot === true)
-        ? Constants.MOCK_VALUE_SMT_PROOF
-        : ctx.input.l1InfoTree[index].smtProof[level];
+    const leafValue = ctx.input.l1InfoTree[index].smtProof[level];
 
     return scalar2fea(ctx.Fr, Scalar.e(leafValue));
-}
-
-function eval_getL1InfoRoot(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-
-    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.l1InfoRoot));
 }
 
 function eval_getL1InfoGER(ctx, tag) {
@@ -3420,11 +3391,18 @@ function eval_getL1InfoTimestamp(ctx, tag) {
 
     return scalar2fea(ctx.Fr, Scalar.e(timestampL1InfoTree));
 }
+function eval_getL1HistoricRoot(ctx, tag) {
+    if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
+    const indexL1InfoTree = evalCommand(ctx, tag.params[0]);
+    const historicRootL1InfoTree = ctx.input.l1InfoTree[indexL1InfoTree].historicRoot;
+
+    return scalar2fea(ctx.Fr, Scalar.e(historicRootL1InfoTree));
+}
 function eval_getForcedTimestamp(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
-    return [ctx.Fr.e(ctx.input.forcedData.timestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [ctx.Fr.e(ctx.input.forcedData.minTimestamp), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_getBatchHashData(ctx, tag) {
