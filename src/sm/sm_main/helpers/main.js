@@ -1,13 +1,8 @@
+const Helper = require('./helper.js');
 const { fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
-module.exports = class myHelper {
+module.exports = class myHelper extends Helper {
     base = 1n << 256n;
-
-    setup(props) {
-        for (const name in props) {
-            this[name] = props[name];
-        }
-    }
 
     ///////////// MODEXP
 
@@ -429,14 +424,5 @@ module.exports = class myHelper {
         const den = ctx.FpBN254.add(ctx.FpBN254.mul(a, a), ctx.FpBN254.mul(b, b));
 
         return ctx.FpBN254.div(ctx.FpBN254.neg(b), den);
-    }
-    eval_getPendingRID(ctx, tag) {
-        const rid = Number(this.evalCommand(ctx, tag.params[0]));
-        const _rid = Object.keys(ctx.saved).find(id => id != rid && !ctx.saved[id].restored);
-
-        if (typeof _rid === 'undefined') {
-            return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-        }        
-        return [ctx.Fr.e(_rid), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 };
