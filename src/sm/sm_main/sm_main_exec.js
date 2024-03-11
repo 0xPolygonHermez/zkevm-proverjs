@@ -3,7 +3,7 @@ const blobExecutor = require('./sm_main_exec_blob.js');
 
 module.exports = async function execute(pols, input, rom, config = {}, metadata = {}) {
     if (config.blob) {
-        return blobExecutor(pols, input, rom, config, metadata);
+        return await blobExecutor(pols, input, rom, config, metadata);
     }
-    return batchExecutor(pols, input, rom, config, metadata);
+    return await batchExecutor(pols, input, rom, config, metadata);
 }
