@@ -29,10 +29,8 @@ const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
-const { lstat } = require("fs");
 const MyHelperClass = require("./helpers/helpers");
 const Constants = require('./const-sm-main-exec');
-const { get } = require("lodash");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -107,13 +105,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     // load database
     const db = new Database(Fr, input.db);
     await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
-
-    // load programs into DB
-    // for (const [key, value] of Object.entries(input.contractsBytecode)){
-    //     // filter smt smart contract hashes
-    //     if (key.length === 66) // "0x" + 32 bytes
-    //         await db.setProgram(stringToH4(key), hexString2byteArray(value));
-    // }
 
     // load smt
     const smt = new SMT(db, poseidon, Fr);
@@ -2582,68 +2573,70 @@ function checkFinalState(Fr, pols, ctx) {
         (!Fr.isZero(pols.E5[0])) ||
         (!Fr.isZero(pols.E6[0])) ||
         (!Fr.isZero(pols.E7[0])) ||
-        (!Fr.isZero(pols.SR0[0])) ||
-        (!Fr.isZero(pols.SR1[0])) ||
-        (!Fr.isZero(pols.SR2[0])) ||
-        (!Fr.isZero(pols.SR3[0])) ||
-        (!Fr.isZero(pols.SR4[0])) ||
-        (!Fr.isZero(pols.SR5[0])) ||
-        (!Fr.isZero(pols.SR6[0])) ||
-        (!Fr.isZero(pols.SR7[0])) ||
         (pols.PC[0]) ||
-        (pols.HASHPOS[0]) ||
-        (pols.RR[0]) ||
-        (pols.RCX[0])
+        (pols.SP[0]) ||
+        (pols.GAS[0]) ||
+        (pols.HASHPOS[0])
     ) {
         if(fullTracer) fullTracer.exportTrace();
 
         if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n");
-        throw new Error("Program terminated with registers A, D, E, SR, PC, HASHPOS, RR, RCX, zkPC not set to zero");
+        throw new Error("Program terminated with registers A, D, E, SP, PC, GAS, HASHPOS, zkPC not set to zero");
     }
 
-    const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+    const feaOldBlobStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobStateRoot));
     if (
-        (!Fr.eq(pols.B0[0], feaOldStateRoot[0])) ||
-        (!Fr.eq(pols.B1[0], feaOldStateRoot[1])) ||
-        (!Fr.eq(pols.B2[0], feaOldStateRoot[2])) ||
-        (!Fr.eq(pols.B3[0], feaOldStateRoot[3])) ||
-        (!Fr.eq(pols.B4[0], feaOldStateRoot[4])) ||
-        (!Fr.eq(pols.B5[0], feaOldStateRoot[5])) ||
-        (!Fr.eq(pols.B6[0], feaOldStateRoot[6])) ||
-        (!Fr.eq(pols.B7[0], feaOldStateRoot[7]))
+        (!Fr.eq(pols.B0[0], feaOldBlobStateRoot[0])) ||
+        (!Fr.eq(pols.B1[0], feaOldBlobStateRoot[1])) ||
+        (!Fr.eq(pols.B2[0], feaOldBlobStateRoot[2])) ||
+        (!Fr.eq(pols.B3[0], feaOldBlobStateRoot[3])) ||
+        (!Fr.eq(pols.B4[0], feaOldBlobStateRoot[4])) ||
+        (!Fr.eq(pols.B5[0], feaOldBlobStateRoot[5])) ||
+        (!Fr.eq(pols.B6[0], feaOldBlobStateRoot[6])) ||
+        (!Fr.eq(pols.B7[0], feaOldBlobStateRoot[7]))
     ) {
         if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register B not terminetd equal as its initial value");
     }
 
-    const feaOldAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+    const feaOldBlobAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobAccInputHash));
     if (
-        (!Fr.eq(pols.C0[0], feaOldAccInputHash[0])) ||
-        (!Fr.eq(pols.C1[0], feaOldAccInputHash[1])) ||
-        (!Fr.eq(pols.C2[0], feaOldAccInputHash[2])) ||
-        (!Fr.eq(pols.C3[0], feaOldAccInputHash[3])) ||
-        (!Fr.eq(pols.C4[0], feaOldAccInputHash[4])) ||
-        (!Fr.eq(pols.C5[0], feaOldAccInputHash[5])) ||
-        (!Fr.eq(pols.C6[0], feaOldAccInputHash[6])) ||
-        (!Fr.eq(pols.C7[0], feaOldAccInputHash[7]))
+        (!Fr.eq(pols.C0[0], feaOldBlobAccInputHash[0])) ||
+        (!Fr.eq(pols.C1[0], feaOldBlobAccInputHash[1])) ||
+        (!Fr.eq(pols.C2[0], feaOldBlobAccInputHash[2])) ||
+        (!Fr.eq(pols.C3[0], feaOldBlobAccInputHash[3])) ||
+        (!Fr.eq(pols.C4[0], feaOldBlobAccInputHash[4])) ||
+        (!Fr.eq(pols.C5[0], feaOldBlobAccInputHash[5])) ||
+        (!Fr.eq(pols.C6[0], feaOldBlobAccInputHash[6])) ||
+        (!Fr.eq(pols.C7[0], feaOldBlobAccInputHash[7]))
     ) {
         if(fullTracer) fullTracer.exportTrace();
         throw new Error("Register C not termined equal as its initial value");
     }
 
-    if (!Fr.eq(pols.SP[0], ctx.Fr.e(ctx.input.oldNumBatch))){
+    if (!Fr.eq(pols.RR[0], ctx.Fr.e(ctx.input.oldNumBatch))){
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register SP not termined equal as its initial value");
+        throw new Error("Register RR not termined equal as its initial value");
     }
 
-    if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
+    const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+    if (
+        (!Fr.eq(pols.SR0[0], feaOldStateRoot[0])) ||
+        (!Fr.eq(pols.SR1[0], feaOldStateRoot[1])) ||
+        (!Fr.eq(pols.SR2[0], feaOldStateRoot[2])) ||
+        (!Fr.eq(pols.SR3[0], feaOldStateRoot[3])) ||
+        (!Fr.eq(pols.SR4[0], feaOldStateRoot[4])) ||
+        (!Fr.eq(pols.SR5[0], feaOldStateRoot[5])) ||
+        (!Fr.eq(pols.SR6[0], feaOldStateRoot[6])) ||
+        (!Fr.eq(pols.SR7[0], feaOldStateRoot[7]))
+    ) {
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error("Register GAS not termined equal as its initial value");
+        throw new Error("Register SR not termined equal as its initial value");
     }
 
-    if (!Fr.eq(pols.CTX[0], ctx.Fr.e(ctx.input.forkID))){
+    if (!Fr.eq(pols.RCX[0], ctx.Fr.e(ctx.input.forkID))){
         if(fullTracer) fullTracer.exportTrace();
-        throw new Error(`Register CTX not termined equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
+        throw new Error(`Register RCX not termined equal as its initial value RCX[0]:${pols.RCX[0]} forkID:${ctx.input.forkID}`);
     }
 }
 
@@ -2652,67 +2645,130 @@ function checkFinalState(Fr, pols, ctx) {
  * @param {Object} ctx - context
  */
 function assertOutputs(ctx){
-    const feaNewStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newStateRoot));
+    const feaNewBlobStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newBlobStateRoot));
 
     if (
-        (!ctx.Fr.eq(ctx.SR[0], feaNewStateRoot[0])) ||
-        (!ctx.Fr.eq(ctx.SR[1], feaNewStateRoot[1])) ||
-        (!ctx.Fr.eq(ctx.SR[2], feaNewStateRoot[2])) ||
-        (!ctx.Fr.eq(ctx.SR[3], feaNewStateRoot[3])) ||
-        (!ctx.Fr.eq(ctx.SR[4], feaNewStateRoot[4])) ||
-        (!ctx.Fr.eq(ctx.SR[5], feaNewStateRoot[5])) ||
-        (!ctx.Fr.eq(ctx.SR[6], feaNewStateRoot[6])) ||
-        (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
+        (!ctx.Fr.eq(ctx.B[0], feaNewBlobStateRoot[0])) ||
+        (!ctx.Fr.eq(ctx.B[1], feaNewBlobStateRoot[1])) ||
+        (!ctx.Fr.eq(ctx.B[2], feaNewBlobStateRoot[2])) ||
+        (!ctx.Fr.eq(ctx.B[3], feaNewBlobStateRoot[3])) ||
+        (!ctx.Fr.eq(ctx.B[4], feaNewBlobStateRoot[4])) ||
+        (!ctx.Fr.eq(ctx.B[5], feaNewBlobStateRoot[5])) ||
+        (!ctx.Fr.eq(ctx.B[6], feaNewBlobStateRoot[6])) ||
+        (!ctx.Fr.eq(ctx.B[7], feaNewBlobStateRoot[7]))
     ) {
         let errorMsg = "Assert Error: newStateRoot does not match\n";
-        errorMsg += `   State root computed: ${fea2String(ctx.Fr, ctx.SR)}\n`;
-        errorMsg += `   State root expected: ${ctx.input.newStateRoot}\n`;
+        errorMsg += `   newBlobStateRoot computed: ${fea2String(ctx.Fr, ctx.B)}\n`;
+        errorMsg += `   newBlobStateRoot expected: ${ctx.input.newBlobStateRoot}\n`;
         errorMsg += `Errors: ${nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
-    const feaNewAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newAccInputHash));
+    const feaNewBlobAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newBlobAccInputHash));
 
     if (
-        (!ctx.Fr.eq(ctx.D[0], feaNewAccInputHash[0])) ||
-        (!ctx.Fr.eq(ctx.D[1], feaNewAccInputHash[1])) ||
-        (!ctx.Fr.eq(ctx.D[2], feaNewAccInputHash[2])) ||
-        (!ctx.Fr.eq(ctx.D[3], feaNewAccInputHash[3])) ||
-        (!ctx.Fr.eq(ctx.D[4], feaNewAccInputHash[4])) ||
-        (!ctx.Fr.eq(ctx.D[5], feaNewAccInputHash[5])) ||
-        (!ctx.Fr.eq(ctx.D[6], feaNewAccInputHash[6])) ||
-        (!ctx.Fr.eq(ctx.D[7], feaNewAccInputHash[7]))
+        (!ctx.Fr.eq(ctx.C[0], feaNewBlobAccInputHash[0])) ||
+        (!ctx.Fr.eq(ctx.C[1], feaNewBlobAccInputHash[1])) ||
+        (!ctx.Fr.eq(ctx.C[2], feaNewBlobAccInputHash[2])) ||
+        (!ctx.Fr.eq(ctx.C[3], feaNewBlobAccInputHash[3])) ||
+        (!ctx.Fr.eq(ctx.C[4], feaNewBlobAccInputHash[4])) ||
+        (!ctx.Fr.eq(ctx.C[5], feaNewBlobAccInputHash[5])) ||
+        (!ctx.Fr.eq(ctx.C[6], feaNewBlobAccInputHash[6])) ||
+        (!ctx.Fr.eq(ctx.C[7], feaNewBlobAccInputHash[7]))
     ) {
-        let errorMsg = "Assert Error: AccInputHash does not match\n";
-        errorMsg += `   AccInputHash computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
-        errorMsg += `   AccInputHash expected: ${ctx.input.newAccInputHash}\n`;
+        let errorMsg = "Assert Error: newBlobAccInputHash does not match\n";
+        errorMsg += `   newBlobAccInputHash computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
+        errorMsg += `   newBlobAccInputHash expected: ${ctx.input.newBlobAccInputHash}\n`;
         errorMsg += `Errors: ${nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
-    const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
+    if (!ctx.Fr.eq(ctx.GAS, ctx.Fr.e(ctx.input.newNumBlob))){
+        let errorMsg = "Assert Error: newNumBlob does not match\n";
+        errorMsg += `   newNumBlob computed: ${Number(ctx.GAS)}\n`;
+        errorMsg += `   newNumBlob expected: ${ctx.input.newNumBlob}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    const feaFinalAccBatchHashData = scalar2fea(ctx.Fr, Scalar.e(ctx.input.finalAccBatchHashData));
 
     if (
-        (!ctx.Fr.eq(ctx.E[0], feaNewLocalExitRoot[0])) ||
-        (!ctx.Fr.eq(ctx.E[1], feaNewLocalExitRoot[1])) ||
-        (!ctx.Fr.eq(ctx.E[2], feaNewLocalExitRoot[2])) ||
-        (!ctx.Fr.eq(ctx.E[3], feaNewLocalExitRoot[3])) ||
-        (!ctx.Fr.eq(ctx.E[4], feaNewLocalExitRoot[4])) ||
-        (!ctx.Fr.eq(ctx.E[5], feaNewLocalExitRoot[5])) ||
-        (!ctx.Fr.eq(ctx.E[6], feaNewLocalExitRoot[6])) ||
-        (!ctx.Fr.eq(ctx.E[7], feaNewLocalExitRoot[7]))
+        (!ctx.Fr.eq(ctx.A[0], feaFinalAccBatchHashData[0])) ||
+        (!ctx.Fr.eq(ctx.A[1], feaFinalAccBatchHashData[1])) ||
+        (!ctx.Fr.eq(ctx.A[2], feaFinalAccBatchHashData[2])) ||
+        (!ctx.Fr.eq(ctx.A[3], feaFinalAccBatchHashData[3])) ||
+        (!ctx.Fr.eq(ctx.A[4], feaFinalAccBatchHashData[4])) ||
+        (!ctx.Fr.eq(ctx.A[5], feaFinalAccBatchHashData[5])) ||
+        (!ctx.Fr.eq(ctx.A[6], feaFinalAccBatchHashData[6])) ||
+        (!ctx.Fr.eq(ctx.A[7], feaFinalAccBatchHashData[7]))
     ) {
-        let errorMsg = "Assert Error: NewLocalExitRoot does not match\n";
-        errorMsg += `   NewLocalExitRoot computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
-        errorMsg += `   NewLocalExitRoot expected: ${ctx.input.newLocalExitRoot}\n`;
+        let errorMsg = "Assert Error: finalAccBatchHashData does not match\n";
+        errorMsg += `   finalAccBatchHashData computed: ${fea2String(ctx.Fr, ctx.A)}\n`;
+        errorMsg += `   finalAccBatchHashData expected: ${ctx.input.finalAccBatchHashData}\n`;
         errorMsg += `Errors: ${nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
-    if (!ctx.Fr.eq(ctx.PC, ctx.Fr.e(ctx.input.newNumBatch))){
-        let errorMsg = "Assert Error: NewNumBatch does not match\n";
-        errorMsg += `   NewNumBatch computed: ${Number(ctx.PC)}\n`;
-        errorMsg += `   NewNumBatch expected: ${ctx.input.newNumBatch}\n`;
+    const feaLocalExitRootFromBlob = scalar2fea(ctx.Fr, Scalar.e(ctx.input.localExitRootFromBlob));
+
+    if (
+        (!ctx.Fr.eq(ctx.E[0], feaLocalExitRootFromBlob[0])) ||
+        (!ctx.Fr.eq(ctx.E[1], feaLocalExitRootFromBlob[1])) ||
+        (!ctx.Fr.eq(ctx.E[2], feaLocalExitRootFromBlob[2])) ||
+        (!ctx.Fr.eq(ctx.E[3], feaLocalExitRootFromBlob[3])) ||
+        (!ctx.Fr.eq(ctx.E[4], feaLocalExitRootFromBlob[4])) ||
+        (!ctx.Fr.eq(ctx.E[5], feaLocalExitRootFromBlob[5])) ||
+        (!ctx.Fr.eq(ctx.E[6], feaLocalExitRootFromBlob[6])) ||
+        (!ctx.Fr.eq(ctx.E[7], feaLocalExitRootFromBlob[7]))
+    ) {
+        let errorMsg = "Assert Error: localExitRootFromBlob does not match\n";
+        errorMsg += `   localExitRootFromBlob computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
+        errorMsg += `   localExitRootFromBlob expected: ${ctx.input.localExitRootFromBlob}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    if (!ctx.Fr.eq(ctx.CTX, ctx.Fr.e(ctx.input.isInvalid))){
+        let errorMsg = "Assert Error: isInvalid does not match\n";
+        errorMsg += `   isInvalid computed: ${Number(ctx.CTX)}\n`;
+        errorMsg += `   isInvalid expected: ${ctx.input.isInvalid}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    if (!ctx.Fr.eq(ctx.RR, ctx.Fr.e(ctx.input.timestampLimit))){
+        let errorMsg = "Assert Error: timestampLimit does not match\n";
+        errorMsg += `   timestampLimit computed: ${Number(ctx.RR)}\n`;
+        errorMsg += `   timestampLimit expected: ${ctx.input.timestampLimit}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    const feaLastL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.lastL1InfoTreeRoot));
+
+    if (
+        (!ctx.Fr.eq(ctx.D[0], feaLastL1InfoTreeRoot[0])) ||
+        (!ctx.Fr.eq(ctx.D[1], feaLastL1InfoTreeRoot[1])) ||
+        (!ctx.Fr.eq(ctx.D[2], feaLastL1InfoTreeRoot[2])) ||
+        (!ctx.Fr.eq(ctx.D[3], feaLastL1InfoTreeRoot[3])) ||
+        (!ctx.Fr.eq(ctx.D[4], feaLastL1InfoTreeRoot[4])) ||
+        (!ctx.Fr.eq(ctx.D[5], feaLastL1InfoTreeRoot[5])) ||
+        (!ctx.Fr.eq(ctx.D[6], feaLastL1InfoTreeRoot[6])) ||
+        (!ctx.Fr.eq(ctx.D[7], feaLastL1InfoTreeRoot[7]))
+    ) {
+        let errorMsg = "Assert Error: lastL1InfoTreeRoot does not match\n";
+        errorMsg += `   lastL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
+        errorMsg += `   lastL1InfoTreeRoot expected: ${ctx.input.lastL1InfoTreeRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+
+    if (!ctx.Fr.eq(ctx.RCX, ctx.Fr.e(ctx.input.lastL1InfoTreeIdx))){
+        let errorMsg = "Assert Error: lastL1InfoTreeIdx does not match\n";
+        errorMsg += `   lastL1InfoTreeIdx computed: ${Number(ctx.RCX)}\n`;
+        errorMsg += `   lastL1InfoTreeIdx expected: ${ctx.input.lastL1InfoTreeIdx}\n`;
         errorMsg += `Errors: ${nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
@@ -2760,11 +2816,7 @@ function initState(Fr, pols, ctx) {
     ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobAccInputHash));
 
     // Set oldNumBlob to RR register
-    pols.RR[0] = ctx.Fr.e(ctx.input.oldNumBlob)
-
-    //  
-    // const _oldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-    // console.log(Scalar.e(ctx.input.oldStateRoot));
+    pols.RR[0] = ctx.Fr.e(ctx.input.oldNumBlob);
 
     // Set oldStateRoot to register SR
     [
@@ -2777,21 +2829,9 @@ function initState(Fr, pols, ctx) {
         pols.SR6[0],
         pols.SR7[0]
     ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-  //  ] = _oldStateRoot;*/
 
-    console.log( [
-        pols.SR0[0],
-        pols.SR1[0],
-        pols.SR2[0],
-        pols.SR3[0],
-        pols.SR4[0],
-        pols.SR5[0],
-        pols.SR6[0],
-        pols.SR7[0]
-    ]);
-    /// EXIT_HERE;
     // Set forkID to RCX register
-    pols.RCX[0] = ctx.Fr.e(ctx.input.forkID)
+    pols.RCX[0] = ctx.Fr.e(ctx.input.forkID);
 
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;
@@ -2817,20 +2857,11 @@ function initState(Fr, pols, ctx) {
     pols.E5[0] = Fr.zero;
     pols.E6[0] = Fr.zero;
     pols.E7[0] = Fr.zero;
-    // pols.SR0[0] = Fr.zero;
-    // pols.SR1[0] = Fr.zero;
-    // pols.SR2[0] = Fr.zero;
-    // pols.SR3[0] = Fr.zero;
-    // pols.SR4[0] = Fr.zero;
-    // pols.SR5[0] = Fr.zero;
-    // pols.SR6[0] = Fr.zero;
-    // pols.SR7[0] = Fr.zero;
     pols.CTX[0] = 0n;
     pols.SP[0] = 0n;
     pols.PC[0] = 0n;
     pols.GAS[0] = 0n;
     pols.HASHPOS[0] = 0n;
-    pols.RR[0] = 0n;
     pols.zkPC[0] = 0n;
     pols.cntArith[0] = 0n;
     pols.cntBinary[0] = 0n;
@@ -2838,7 +2869,6 @@ function initState(Fr, pols, ctx) {
     pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
-    pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
     pols.RID[0] = 0n;

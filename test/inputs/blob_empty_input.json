@@ -15,5 +15,6 @@
 
     "timestampLimit": 0,
     "lastL1InfoTreeRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "lastL1InfoTreeIdx": 1
+    "lastL1InfoTreeIdx": 1,
+    "db": { }
 }

@@ -1,6 +1,6 @@
 include "config.pil";
 include "global.pil";
-include "rom.pil";
+include "blob/rom.pil";
 include "mem_align.pil";
 include "arith.pil";
 include "binary.pil";
@@ -9,7 +9,6 @@ include "padding_pg.pil";
 include "storage.pil";
 include "padding_kk.pil";
 include "mem.pil";
-include "padding_sha256.pil";
 
 namespace Main(%N);
 
@@ -18,6 +17,8 @@ namespace Main(%N);
 ///////////
 
     /////// State Polynomials
+    pol commit SR7, SR6, SR5, SR4, SR3, SR2, SR1, SR0;          // State Root
+
     pol commit A7, A6, A5, A4, A3, A2, A1;
     pol commit A0;
 
@@ -33,7 +34,6 @@ namespace Main(%N);
     pol commit E7, E6, E5, E4, E3, E2, E1;
     pol commit E0;
 
-    pol commit SR7, SR6, SR5, SR4, SR3, SR2, SR1, SR0;          // State Root
     pol commit CTX;                    // Call Cntext
     pol commit SP;                     // Stack Pointer
     pol commit PC;                     // EVM Program counter
@@ -498,7 +498,7 @@ namespace Main(%N);
     */
 
     pol operations =
-        2**0  * arithEq0         + 2**1  * arithEq1         + 2**2  * arithEq2         + 2**3  * assert
+          2**0  * arithEq0         + 2**1  * arithEq1         + 2**2  * arithEq2         + 2**3  * assert
         + 2**4  * bin              + 2**5  * hashK            + 2**6  * hashKDigest      + 2**7  * hashKLen
         + 2**8  * hashP            + 2**9  * hashPDigest      + 2**10 * hashPLen         + 2**11 * isMem
         + 2**12 * isStack          + 2**13 * JMP              + 2**14 * JMPC             + 2**15 * JMPN

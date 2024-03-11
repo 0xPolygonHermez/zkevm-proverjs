@@ -494,9 +494,10 @@ namespace Main(%N);
 // ROM Plookpups
 /////////
 
+
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" -b
     */
 
     pol operations =
@@ -511,9 +512,9 @@ namespace Main(%N);
             + 2**32 * setRR            + 2**33 * setSP            + 2**34 * setSR            + 2**35 * sRD
             + 2**36 * sWR              + 2**37 * useCTX           + 2**38 * JMPZ             + 2**39 * call
             + 2**40 * return           + 2**41 * arithEq3         + 2**42 * arithEq4         + 2**43 * arithEq5
-            + 2**44 * hashS            + 2**45 * hashSDigest      + 2**46 * hashSLen         + 2**47 * save
-            + 2**48 * restore          + 2**49 * setRID           + 2**50 * hashBytesInD     + 2**51 * assumeFree
-            + 2**52 * memUseAddrRel    + 2**53 * jmpUseAddrRel    + 2**54 * elseUseAddrRel   + 2**55 * free0IsByte;
+            + 2**44 * save             + 2**45 * restore          + 2**46 * setRID           + 2**47 * hashBytesInD
+            + 2**48 * assumeFree       + 2**49 * memUseAddrRel    + 2**50 * jmpUseAddrRel    + 2**51 * elseUseAddrRel
+            + 2**52 * free0IsByte      + 2**53 * hashS            + 2**54 * hashSDigest      + 2**55 * hashSLen;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -559,9 +560,6 @@ namespace Main(%N);
     (1 - arithEq3) * arithEq3 = 0;
     (1 - arithEq4) * arithEq4 = 0;
     (1 - arithEq5) * arithEq5 = 0;
-    (1 - hashS) * hashS = 0;
-    (1 - hashSDigest) * hashSDigest = 0;
-    (1 - hashSLen) * hashSLen = 0;
     (1 - save) * save = 0;
     (1 - restore) * restore = 0;
     (1 - setRID) * setRID = 0;
@@ -570,7 +568,10 @@ namespace Main(%N);
     (1 - memUseAddrRel) * memUseAddrRel = 0;
     (1 - jmpUseAddrRel) * jmpUseAddrRel = 0;
     (1 - elseUseAddrRel) * elseUseAddrRel = 0;
-    (1 - free0IsByte) * free0IsByte = 0;   
+    (1 - free0IsByte) * free0IsByte = 0;
+    (1 - hashS) * hashS = 0;
+    (1 - hashSDigest) * hashSDigest = 0;
+    (1 - hashSLen) * hashSLen = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
