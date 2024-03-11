@@ -1,43 +1,115 @@
+VAR GLOBAL saveRestoreFirstPendingStep
 
-        1 => A
-        2 => B
-        3 => C
+        ; BASIC TEST with all registers
+
+        %LVALUE_001 => A
+        %LVALUE_002 => B
+        %LVALUE_003 => C
+        %LVALUE_004 => D
+        %LVALUE_005 => E
+
+        %SVALUE_001 => RR
+        %SVALUE_002 => RCX
+        %SVALUE_003 => RID        
 
         :SAVE(B,C,D,E,RR,RCX)
-        10 => A
-        20 => B
-        30 => C
-        :RESTORE
+
+        STEP - 1 => A
+        RID     :ASSERT
+
+        %LVALUE_011 => A
+        %LVALUE_012 => B
+        %LVALUE_013 => C
+        %LVALUE_014 => D
+        %LVALUE_015 => E
+
+        %SVALUE_011 => RR
+        %SVALUE_012 => RCX
+        %SVALUE_043 => HASHPOS
+        %SVALUE_044 => PC
+        %SVALUE_045 => SP
+        %SVALUE_046 => CTX
+        %SVALUE_047 => GAS
+
+        A  :SAVE(B,C,D,E,RR,RCX)
+
+        STEP - 1 => A
+        RID     :ASSERT
+
+        %LVALUE_021 => A
+        %LVALUE_022 => B
+        %LVALUE_023 => C
+        %LVALUE_024 => D
+        %LVALUE_025 => E
+
+        %SVALUE_021 => RR
+        %SVALUE_022 => RCX
+
+        $ => A :RESTORE
+
+        %LVALUE_011  :ASSERT
+        B => A
+        %LVALUE_012  :ASSERT
+        C => A
+        %LVALUE_013  :ASSERT
+        D => A
+        %LVALUE_014  :ASSERT
+        E => A
+        %LVALUE_015  :ASSERT
+        RR => A
+        %SVALUE_011  :ASSERT
+        RCX => A
+        %SVALUE_012  :ASSERT
             
-        10  :ASSERT
-        B => A
-        2   :ASSERT
-        C => A
-        3   :ASSERT
+        :RESTORE
 
-        1 => A
-        A       :SAVE(B,C,D,E,RR,RCX)
-        10 => A
-        20 => B
-        30 => C
-        $ => A  :RESTORE
-
-        1  :ASSERT
+        %SVALUE_012  :ASSERT
         B => A
-        2   :ASSERT
+        %LVALUE_002  :ASSERT
         C => A
-        3   :ASSERT
+        %LVALUE_003  :ASSERT
+        D => A
+        %LVALUE_004  :ASSERT
+        E => A
+        %LVALUE_005  :ASSERT
+        RR => A
+        %SVALUE_001  :ASSERT
+        RCX => A
+        %SVALUE_002  :ASSERT
+        RID => A
+        %SVALUE_003  :ASSERT
+
+
+        HASHPOS => A 
+        %SVALUE_043     :ASSERT 
+
+        PC => A 
+        %SVALUE_044     :ASSERT 
+
+        SP => A 
+        %SVALUE_045     :ASSERT 
+
+        CTX => A 
+        %SVALUE_046     :ASSERT 
+
+        GAS => A 
+        %SVALUE_047     :ASSERT 
+
+
+        ; Function CALL test
 
         32 => A :CALL(f1)
         128 :ASSERT
+
+        ; Recursive factorial function test
 
         32 => A  :CALL(fact)
         263130836933693530167218012160000000n :ASSERT
 
         B => A
-        2   :ASSERT
+        %LVALUE_002   :ASSERT
         C => A
-        3   :ASSERT
+        %LVALUE_003   :ASSERT
         :JMP(continueSaveRestoreTest)
 f1:
         :SAVE(B,C,D,E,RR,RCX)
@@ -72,9 +144,44 @@ fact_finish:
 
 continueSaveRestoreTest:
 
+        ; pending restores test (part-1)
+    
+        STEP +  1   :MSTORE(saveRestoreFirstPendingStep)
+
         A        :SAVE(B,C,D,E,RR,RCX)
         HASHPOS  :SAVE(B,C,D,E,RR,RCX)
-        ; pending restores     
+
+        ; test RESTORE step after SAVE
+
+        %LVALUE_031 => A
+        %LVALUE_032 => B
+        %LVALUE_033 => C
+        %LVALUE_034 => D
+        %LVALUE_035 => E
+
+        %SVALUE_021 => RR
+        %SVALUE_022 => RCX
+        %SVALUE_023 => RID        
+
+        %LVALUE_036 :SAVE(B,C,D,E,RR,RCX)
+        $ => A      :RESTORE
+
+        %LVALUE_036 :ASSERT
+        B => A
+        %LVALUE_032 :ASSERT
+        C => A
+        %LVALUE_033 :ASSERT
+        D => A
+        %LVALUE_034 :ASSERT
+        E => A
+        %LVALUE_035 :ASSERT
+        RR => A
+        %SVALUE_021 :ASSERT
+        RCX => A
+        %SVALUE_022 :ASSERT
+        RID => A
+        %SVALUE_023 :ASSERT
+        
 
 VAR GLOBAL tmpSaveRestoreB
         400 => B
@@ -150,12 +257,30 @@ clearPedingRestores:
         A        :SAVE(B,C,D,E,RR,RCX)
         RID      :MSTORE(lastRID)
 
+VAR GLOBAL restoredRID[4];
 clearPedingRestores_loop:
-        ${getPendingRID(mem.lastRID)} => RID    :JMPN(clearPedingRestores_end)
-                                                :RESTORE, JMP(clearPedingRestores_loop)
+
+        0 => PC,SP,HASHPOS,CTX
+
+        ${getPendingRID(mem.lastRID)} => RID,PC         :JMPN(failPedingRestoreTest),MSTORE(restoredRID[0])
+        ; test no clearing RID
+        ${getPendingRID(mem.lastRID)} => RID,SP         :JMPN(failPedingRestoreTest),MSTORE(restoredRID[1])
+                                                        :RESTORE
+        ${getPendingRID(mem.lastRID)} => RID,HASHPOS    :JMPN(failPedingRestoreTest),MSTORE(restoredRID[2])
+                                                        :RESTORE
+
+        ${getPendingRID(mem.lastRID)} => RID,CTX        :JMPN(clearPedingRestores_end)
+
+failPedingRestoreTest:
+        ${dump(PC,SP,HASHPOS, CTX)}
+        A + 1 :ASSERT
 
 clearPedingRestores_end:
+        ${dump(PC,SP,HASHPOS, CTX)}
+        
         $ => RID         :MLOAD(lastRID)
                          :RESTORE
 
         0 => RID
+
+        ${dump(STEP)}

@@ -2482,7 +2482,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.setRID == 1) {
             pols.setRID[i]=1n;
-            pols.RID[nexti] = BigInt(fe2n(Fr, op0, ctx));
+            pols.RID[nexti] = op0;
         } else {
             pols.setRID[i] = 0n;
             if (l.restore) {

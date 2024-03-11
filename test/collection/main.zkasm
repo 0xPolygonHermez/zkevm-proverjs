@@ -52,6 +52,7 @@ start:
         -1          :MSTORE(lastHashSId)
 
 INCLUDE "lvalues.zkasm"
+INCLUDE "svalues.zkasm"
 INCLUDE "counters.zkasm"
 INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
