@@ -40,9 +40,14 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
           namespaces: ['Main','Global'] }
     */
 
+    const blob = mainConfig.blob ?? false;
+    const target = blob ? 'blob' : 'batch';
+    const targetPrefix = blob ? 'blob_':'';
+    const targetSuffix = blob ? '_blob':'';
+
     const verifyPilFlag = pilVerification ? true: false;
     let verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
-    const pilFile = verifyPilConfig.pilFile || "pil/main.pil"
+    const pilFile = verifyPilConfig.pilFile || `pil/main${targetSuffix}.pil`;
 
     const pil = await compile(Fr, pilFile, null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
@@ -55,7 +60,8 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     const N = polDeg;
     console.log('Pil N = 2 ** '+Math.log2(polDeg));
 
-    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
+    const inputContent = await fs.promises.readFile(path.join(__dirname, "inputs", `${targetPrefix}empty_input.json`));
+    const input = JSON.parse(inputContent, "utf8");
     const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
     console.log(zkasmFinalFilename);
     const rom = await zkasm.compile(zkasmFinalFilename);
@@ -280,7 +286,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     } else if (constPols !== false) {
         if (verifyPilConfig.publics) {
             if (!(verifyPilConfig.publics instanceof Object)) {
-                const publicsFilename = (typeof verifyPilConfig.public === 'string') ? verifyPilConfig.public : path.join(__dirname, "..", "tools", "build-genesis", "public.json");
+                const publicsFilename = (typeof verifyPilConfig.public === 'string') ? verifyPilConfig.public : path.join(__dirname, "..", "tools", "build-genesis", `${targetPrefix}public.json`);
                 verifyPilConfig.publics = JSON.parse(await fs.promises.readFile(publicsFilename, "utf8"));
             }
         }
