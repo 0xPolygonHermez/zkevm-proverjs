@@ -2,6 +2,7 @@
 
     $ => E                  :MLOAD(lastHashPId)
     E + 1 => E              :MSTORE(lastHashPId)
+    ${dump(E)}
 
     ; TEST 55 bytes => counter increase 1 => total = 1
 
@@ -23,6 +24,7 @@
     ; TEST 56 bytes => counter increase 2 => total = 3
 
     E + 1 => E              :MSTORE(lastHashPId)
+    ${dump(E)}
 
     0 => HASHPOS
     32 => D
@@ -174,6 +176,8 @@
 
     113                     :HASHPLEN(E)
     $ => A                  :HASHPDIGEST(E)
+
+    ${dump(E)}
 
     CNT_POSEIDON_G - 47     :MLOAD(v_cnt_poseidon_g)
     CNT_PADDING_PG - 13     :MLOAD(v_cnt_padding_pg)
