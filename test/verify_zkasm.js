@@ -60,7 +60,8 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     const N = polDeg;
     console.log('Pil N = 2 ** '+Math.log2(polDeg));
 
-    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", `${targetPrefix}empty_input.json`), "utf8"));
+    const inputContent = await fs.promises.readFile(path.join(__dirname, "inputs", `${targetPrefix}empty_input.json`));
+    const input = JSON.parse(inputContent, "utf8");
     const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
     console.log(zkasmFinalFilename);
     const rom = await zkasm.compile(zkasmFinalFilename);

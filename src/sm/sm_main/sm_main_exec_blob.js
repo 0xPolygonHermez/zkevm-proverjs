@@ -92,16 +92,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
 
+    
     // load database
     const db = new Database(Fr, input.db);
     await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
-
-    // load programs into DB
-    for (const [key, value] of Object.entries(input.contractsBytecode)){
-        // filter smt smart contract hashes
-        if (key.length === 66) // "0x" + 32 bytes
-            await db.setProgram(stringToH4(key), hexString2byteArray(value));
-    }
 
     // load smt
     const smt = new SMT(db, poseidon, Fr);
@@ -112,7 +106,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         mem: [],
         hashK: [],
         hashP: [],
-        hashS: [],
         pols: pols,
         input: input,
         vars:[],
@@ -218,6 +211,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.D = [pols.D0[i], pols.D1[i], pols.D2[i], pols.D3[i], pols.D4[i], pols.D5[i], pols.D6[i], pols.D7[i]];
         ctx.E = [pols.E0[i], pols.E1[i], pols.E2[i], pols.E3[i], pols.E4[i], pols.E5[i], pols.E6[i], pols.E7[i]];
         ctx.SR = [ pols.SR0[i], pols.SR1[i], pols.SR2[i], pols.SR3[i], pols.SR4[i], pols.SR5[i], pols.SR6[i], pols.SR7[i]];
+        console.log([i, [ pols.SR0[i], pols.SR1[i], pols.SR2[i], pols.SR3[i], pols.SR4[i], pols.SR5[i], pols.SR6[i], pols.SR7[i]]]);
         ctx.CTX = pols.CTX[i];
         ctx.SP = pols.SP[i];
         ctx.PC = pols.PC[i];
@@ -229,8 +223,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.cntArith = pols.cntArith[i];
         ctx.cntBinary = pols.cntBinary[i];
         ctx.cntKeccakF = pols.cntKeccakF[i];
-        ctx.cntSha256F = pols.cntSha256F[i];
-        ctx.cntMemAlign = pols.cntMemAlign[i];
+        // ctx.cntSha256F = pols.cntSha256F[i];
+        // ctx.cntMemAlign = pols.cntMemAlign[i];
         ctx.cntPoseidonG = pols.cntPoseidonG[i];
         ctx.cntPaddingPG = pols.cntPaddingPG[i];
         if (!ctx.final) ctx.cntStep = step;
@@ -383,6 +377,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.inSR) {
+            // const SR = [ctx.SR[0], ctx.SR[1], ctx.SR[2], ctx.SR[3], ctx.SR[4], ctx.SR[5], ctx.SR[6], ctx.SR[7]];
+            // const inSR = l.inSR;
+            // const _op = [op0, op1, op2, op3, op4, op5, op6, op7];
+            console.log(['KK', i, l.inSR, ctx.SR, [op0, op1, op2, op3, op4, op5, op6, op7]])
             [op0, op1, op2, op3, op4, op5, op6, op7] =
                 [Fr.add(op0 , Fr.mul( Fr.e(l.inSR), ctx.SR[0])),
                  Fr.add(op1 , Fr.mul( Fr.e(l.inSR), ctx.SR[1])),
@@ -393,12 +391,23 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                  Fr.add(op6 , Fr.mul( Fr.e(l.inSR), ctx.SR[6])),
                  Fr.add(op7 , Fr.mul( Fr.e(l.inSR), ctx.SR[7]))
                 ];
+            // [op0, op1, op2, op3, op4, op5, op6, op7] 
+            //     [Fr.add(_op[0] , Fr.mul( Fr.e(inSR), SR[0])),
+            //      Fr.add(_op[1] , Fr.mul( Fr.e(inSR), SR[1])),
+            //      Fr.add(_op[2] , Fr.mul( Fr.e(inSR), SR[2])),
+            //      Fr.add(_op[3] , Fr.mul( Fr.e(inSR), SR[3])),
+            //      Fr.add(_op[4] , Fr.mul( Fr.e(inSR), SR[4])),
+            //      Fr.add(_op[5] , Fr.mul( Fr.e(inSR), SR[5])),
+            //      Fr.add(_op[6] , Fr.mul( Fr.e(inSR), SR[6])),
+            //      Fr.add(_op[7] , Fr.mul( Fr.e(inSR), SR[7]))
+            //     ];
             pols.inSR[i] = Fr.e(l.inSR);
         } else {
             pols.inSR[i] = Fr.zero;
         }
 
         if (l.inCTX) {
+            console.log([op0, l.inCTX, ctx.CTX]);
             op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCTX), Fr.e(ctx.CTX)));
             pols.inCTX[i] = Fr.e(l.inCTX);
         } else {
@@ -467,12 +476,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inCntBinary[i] = Fr.zero;
         }
 
-        if (l.inCntMemAlign) {
-            op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntMemAlign), Fr.e(ctx.cntMemAlign)));
-            pols.inCntMemAlign[i] = Fr.e(l.inCntMemAlign);
-        } else {
-            pols.inCntMemAlign[i] = Fr.zero;
-        }
+
+        // if (l.inCntMemAlign) {
+        //     op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntMemAlign), Fr.e(ctx.cntMemAlign)));
+        //     pols.inCntMemAlign[i] = Fr.e(l.inCntMemAlign);
+        // } else {
+        //     pols.inCntMemAlign[i] = Fr.zero;
+        // }
 
         if (l.inCntKeccakF) {
             op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntKeccakF), Fr.e(ctx.cntKeccakF)));
@@ -481,12 +491,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inCntKeccakF[i] = Fr.zero;
         }
 
-        if (l.inCntSha256F) {
-            op0 = Fr.add(op0, Fr.mul(Fr.e(l.inCntSha256F), Fr.e(ctx.cntSha256F)));
-            pols.inCntSha256F[i] = Fr.e(l.inCntSha256F);
-        } else {
-            pols.inCntSha256F[i] = Fr.zero;
-        }
+        // if (l.inCntSha256F) {
+        //     op0 = Fr.add(op0, Fr.mul(Fr.e(l.inCntSha256F), Fr.e(ctx.cntSha256F)));
+        //     pols.inCntSha256F[i] = Fr.e(l.inCntSha256F);
+        // } else {
+        //     pols.inCntSha256F[i] = Fr.zero;
+        // }
 
         if (l.inCntPoseidonG) {
             op0 = Fr.add(op0, Fr.mul( Fr.e(l.inCntPoseidonG), Fr.e(ctx.cntPoseidonG)));
@@ -636,7 +646,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.offset[i] = 0n;
         }
 
-        const anyHash = l.hashP || l.hashK || l.hashS || l.hashPDigest || l.hashKDigest || l.hashSDigest || l.hashPLen || l.hashKLen || l.hashSLen; 
+        const anyHash = l.hashP || l.hashK || l.hashPDigest || l.hashKDigest || l.hashPLen || l.hashKLen; 
         const memAddr = addr + (l.memUseAddrRel ? addrRel : 0);
         const hashAddr = anyHash ? (l.hashOffset ?? 0) + fe2n(Fr, ctx.E[0]) : 0;
         
@@ -858,30 +868,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashK[hashAddr].digest);
                     nHits++;
                 }
-                if (l.hashS) {
-                    if (typeof ctx.hashS[hashAddr] === "undefined") ctx.hashS[hashAddr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-                    const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
-                    const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-                    if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS(${hashAddr}) ${sourceRef}`);
-                    if (pos+size > ctx.hashS[hashAddr].data.length) throw new Error(`Accessing hashS(${hashAddr}) out of bounds (${pos+size} > ${ctx.hashS[hashAddr].data.length}) ${sourceRef}`);
-                    let s = Scalar.zero;
-                    for (let k=0; k<size; k++) {
-                        if (typeof ctx.hashS[hashAddr].data[pos + k] === "undefined") throw new Error(`Accessing hashS(${hashAddr}) not defined place ${pos+k} ${sourceRef}`);
-                        s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashS[hashAddr].data[pos + k]));
-                    }
-                    fi = scalar2fea(Fr, s);
-                    nHits++;
-                }
-                if (l.hashSDigest == 1) {
-                    if (typeof ctx.hashS[hashAddr] === "undefined") {
-                        throw new Error(`digest sha256(${hashAddr}) not defined ${sourceRef}`);
-                    }
-                    if (typeof ctx.hashS[hashAddr].digest === "undefined") {
-                        throw new Error(`digest sha256(${hashAddr}) not calculated. Call hashSlen to finish digest ${sourceRef}`);
-                    }
-                    fi = scalar2fea(Fr, ctx.hashS[hashAddr].digest);
-                    nHits++;
-                }
                 if (l.hashP) {
                     if (typeof ctx.hashP[hashAddr] === "undefined") ctx.hashP[hashAddr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
@@ -1085,7 +1071,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     Fr.e(0),
                 ];
         }
-
+/*
         if (l.sRD || l.sWR) {
             if (!Fr.isZero(ctx.A[7]) || !Fr.isZero(ctx.A[6]) || !Fr.isZero(ctx.A[5])) {
                 const values = '0x' + ([ctx.A[7], ctx.A[6], ctx.A[5]].map(x => x.toString(16)).join(',0x'));
@@ -1253,7 +1239,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.sKey[k][i] = Fr.zero;
             }
         }
-
+*/
         pols.hashBytesInD[i] = l.hashBytesInD ? 1n : 0n;
         pols.hashBytes[i] = l.hashBytes ? BigInt(l.hashBytes) : 0n;
         pols.hashOffset[i] = l.hashOffset ? BigInt(l.hashOffset) : 0n;
@@ -1334,85 +1320,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             incCounter = Math.ceil((ctx.hashK[hashAddr].data.length + 1) / 136)
         } else {
             pols.hashKDigest[i] = 0n;
-        }
-
-
-        if (l.hashS) {
-            if (typeof ctx.hashS[hashAddr] === "undefined") ctx.hashS[hashAddr] = { data: [], reads: {} , digestCalled: false, lenCalled: false, sourceRef };
-            pols.hashS[i] = l.hashS ? 1n : 0n;
-            const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
-            const pos = fe2n(Fr, ctx.HASHPOS, ctx);
-            if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS ${sourceRef}`);
-            const a = l.assumeFree ? safeFea2scalar(Fr, [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]):
-                                     safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            const maskByte = Scalar.e("0xFF");
-            for (let k=0; k<size; k++) {
-                const bm = Scalar.toNumber(Scalar.band( Scalar.shr( a, (size-k -1)*8 ) , maskByte));
-                const bh = ctx.hashS[hashAddr].data[pos + k];
-                if (typeof bh === "undefined") {
-                    ctx.hashS[hashAddr].data[pos + k] = bm;
-                } else if (bm != bh) {
-                    throw new Error(`HashS(${hashAddr}) do not match, pos ${pos+k} is ${bm} and should be ${bh} ${sourceRef}`)
-                }
-            }
-            const paddingA = Scalar.shr(a, size * 8);
-            if (!Scalar.isZero(paddingA)) {
-                throw new Error(`HashS(${hashAddr}) incoherent size (${size}) and data (0x${a.toString(16)}) padding (0x${paddingA.toString(16)}) (w=${step}) ${sourceRef}`);
-            }
-
-            if ((typeof ctx.hashS[hashAddr].reads[pos] !== "undefined") &&
-                (ctx.hashS[hashAddr].reads[pos] != size))
-            {
-                throw new Error(`HashS(${hashAddr}) diferent read sizes (${ctx.hashS[hashAddr].reads[pos]} != ${size}) in the same position ${pos} ${sourceRef}`)
-            }
-            ctx.hashS[hashAddr].reads[pos] = size;
-            ctx.hashS[hashAddr].sourceRef = sourceRef;
-            incHashPos = size;
-        } else {
-            pols.hashS[i] = 0n;
-        }
-
-        if (l.hashSLen) {
-            pols.hashSLen[i] = 1n;
-            const lm = fe2n(Fr, op0, ctx);
-            // If it's undefined compute hash of 0 bytes
-            if(typeof ctx.hashS[hashAddr] === "undefined") {
-                // len must be 0
-                if (lm != 0) throw new Error(`HashSLen(${hashAddr}) length does not match is ${lm} and should be 0 ${sourceRef}`);
-                ctx.hashS[hashAddr] = { data: [], reads: {} , digestCalled: false};
-                ctx.hashS[hashAddr].digest = `0x${createHash('sha256').update(Uint8Array.from([])).digest('hex')}`;
-            }
-            ctx.hashS[hashAddr].sourceRef = sourceRef;
-
-            if (ctx.hashS[hashAddr].lenCalled) {
-                throw new Error(`Call HASHSLEN @${hashAddr} more than once: ${ctx.ln} at ${ctx.fileName}:${ctx.line}`);
-            }
-            ctx.hashS[hashAddr].lenCalled = true;
-            const lh = ctx.hashS[hashAddr].data.length;
-            if (lm != lh) throw new Error(`HashSLen(${hashAddr}) length does not match is ${lm} and should be ${lh} ${sourceRef}`);
-            if (typeof ctx.hashS[hashAddr].digest === "undefined") {
-                ctx.hashS[hashAddr].digest = `0x${createHash('sha256').update(Uint8Array.from(ctx.hashS[hashAddr].data)).digest('hex')}`;
-            }
-        } else {
-            pols.hashSLen[i] = 0n;
-        }
-
-        if (l.hashSDigest) {
-            pols.hashSDigest[i] = 1n;
-            const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            if (typeof ctx.hashS[hashAddr].digest === "undefined") {
-                throw new Error(`HASHSDIGEST(${hashAddr}) cannot load sha256 from DB ${sourceRef}`);
-            }
-            if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashS[hashAddr].digest))) {
-                throw new Error(`HashSDigest(${hashAddr}) doesn't match ${sourceRef}`);
-            }
-            if (ctx.hashS[hashAddr].digestCalled) {
-                throw new Error(`Call HASHSDIGEST(${hashAddr}) more than once: ${sourceRef}`);
-            }
-            ctx.hashS[hashAddr].digestCalled = true;
-            incCounter = Math.ceil((ctx.hashS[hashAddr].data.length + 1 + 8) / 64)
-        } else {
-            pols.hashSDigest[i] = 0n;
         }
 
         if (l.hashP) {
@@ -1698,10 +1605,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.arithEq0[i] = 0n;
             pols.arithEq1[i] = 0n;
-            pols.arithEq2[i] = 0n;
-            pols.arithEq3[i] = 0n;
-            pols.arithEq4[i] = 0n;
-            pols.arithEq5[i] = 0n;
+            // pols.arithEq2[i] = 0n;
+            // pols.arithEq3[i] = 0n;
+            // pols.arithEq4[i] = 0n;
+            // pols.arithEq5[i] = 0n;
         }
 
         if (l.bin) {            
@@ -1715,7 +1622,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.binOpcode[i] = 0n;
             pols.carry[i] = 0n;
         }
-
+/*
         if (l.memAlignRD || l.memAlignWR || l.memAlignWR8) {
             const m0 = safeFea2scalar(Fr, ctx.A);
             const v = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
@@ -1775,7 +1682,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.memAlignWR[i] = 0n;
             pols.memAlignWR8[i] = 0n;
         }
-
+*/
         if (l.repeat) {
             pols.repeat[i] = 1n;
         } else {
@@ -2124,11 +2031,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.cntBinary[nexti] = pols.cntBinary[i];
         }
 
-        if (!skipCounters && (l.memAlignRD || l.memAlignWR || l.memAlignWR8)) {
-            pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
-        } else {
-            pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
-        }
+        // if (!skipCounters && (l.memAlignRD || l.memAlignWR || l.memAlignWR8)) {
+        //     pols.cntMemAlign[nexti] = pols.cntMemAlign[i] + 1n;
+        // } else {
+        //     pols.cntMemAlign[nexti] = pols.cntMemAlign[i];
+        // }
 
         if (l.setRCX == 1) {
             pols.setRCX[i] = 1n;
@@ -2285,7 +2192,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         }
 
-        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest || l.hashSDigest) {
+        if (l.sRD || l.sWR || l.hashKDigest || l.hashPDigest) {
             pols.incCounter[i] = Fr.e(incCounter);
         } else {
             pols.incCounter[i] = Fr.zero;
@@ -2301,16 +2208,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
         } else {
             pols.cntKeccakF[nexti] = pols.cntKeccakF[i];
-        }
-
-        if (l.hashSDigest) {
-            if (skipCounters) {
-                pols.cntSha256F[nexti] = pols.cntSha256F[i];
-            } else {
-                pols.cntSha256F[nexti] = pols.cntSha256F[i] + BigInt(incCounter);
-            }
-        } else {
-            pols.cntSha256F[nexti] = pols.cntSha256F[i];
         }
 
         if (l.hashPDigest) {
@@ -2394,42 +2291,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             console.log('WARNING:'+msg)
         }
         required.PaddingKK.push(h);
-    }
-
-
-    for (let i=0; i<ctx.hashS.length; i++) {
-        if (typeof ctx.hashS[i] === 'undefined') {
-            const nextAddr = Object.keys(ctx.hashS)[i];
-            throw new Error(`Reading hashS(${i}) not defined, next defined was ${nextAddr} on ${ctx.hashS[nextAddr].sourceRef||''}`);
-        }
-        const h = {
-            data: ctx.hashS[i].data,
-            reads: [],
-            digestCalled: ctx.hashS[i].digestCalled,
-            lenCalled: ctx.hashS[i].lenCalled
-        }
-        let p= 0;
-        while (p<ctx.hashS[i].data.length) {
-            if (ctx.hashS[i].reads[p]) {
-                h.reads.push(ctx.hashS[i].reads[p]);
-                p += ctx.hashS[i].reads[p];
-            } else {
-                h.reads.push(1);
-                p += 1;
-            }
-        }
-        if (p!= ctx.hashS[i].data.length) {
-            throw new Error(`Reading hashS(${i}) out of limits (${p} != ${ctx.hashS[i].data.length})`);
-        }
-        if (checkHashNoDigest && !ctx.hashS[i].digestCalled) {
-            const msg = `Reading hashS(${i}) not call to hashSDigest, last access on ${ctx.hashS[i].sourceRef||''}`;
-            if (checkHashNoDigest === ErrorCheck) {
-                throw new Error('ERROR:'+msg);
-            }
-            console.log('WARNING:'+msg)
-        }
-
-        required.PaddingSha256.push(h);
     }
 
     for (let i=0; i<ctx.hashP.length; i++) {
@@ -2680,7 +2541,7 @@ function assertOutputs(ctx){
  * @param {Object} ctx - context
  */
 function initState(Fr, pols, ctx) {
-    // Set oldStateRoot to register B
+    // Set oldBlobStateRoot to register B
     [
         pols.B0[0],
         pols.B1[0],
@@ -2690,9 +2551,9 @@ function initState(Fr, pols, ctx) {
         pols.B5[0],
         pols.B6[0],
         pols.B7[0]
-    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobStateRoot));
 
-    // Set oldAccInputHash to register C
+    // Set oldBlobAccInputHash to register C
     [
         pols.C0[0],
         pols.C1[0],
@@ -2702,16 +2563,27 @@ function initState(Fr, pols, ctx) {
         pols.C5[0],
         pols.C6[0],
         pols.C7[0]
-    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldAccInputHash));
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobAccInputHash));
 
-    // Set oldNumBatch to SP register
-    pols.SP[0] = ctx.Fr.e(ctx.input.oldNumBatch)
+    // Set oldNumBlob to RR register
+    pols.RR[0] = ctx.Fr.e(ctx.input.oldNumBlob)
 
-    // Set chainID to GAS register
-    pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
+    // Scalar.e(ctx.input.oldBlobStateRoot);
 
-    // Set forkID to CTX register
-    pols.CTX[0] = ctx.Fr.e(ctx.input.forkID)
+    // Set oldStateRoot to register SR
+    [
+        pols.SR0[0],
+        pols.SR1[0],
+        pols.SR2[0],
+        pols.SR3[0],
+        pols.SR4[0],
+        pols.SR5[0],
+        pols.SR6[0],
+        pols.SR7[0]
+    ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+
+    // Set forkID to RCX register
+    pols.RCX[0] = ctx.Fr.e(ctx.input.forkID)
 
     pols.A0[0] = Fr.zero;
     pols.A1[0] = Fr.zero;
@@ -2737,26 +2609,19 @@ function initState(Fr, pols, ctx) {
     pols.E5[0] = Fr.zero;
     pols.E6[0] = Fr.zero;
     pols.E7[0] = Fr.zero;
-    pols.SR0[0] = Fr.zero;
-    pols.SR1[0] = Fr.zero;
-    pols.SR2[0] = Fr.zero;
-    pols.SR3[0] = Fr.zero;
-    pols.SR4[0] = Fr.zero;
-    pols.SR5[0] = Fr.zero;
-    pols.SR6[0] = Fr.zero;
-    pols.SR7[0] = Fr.zero;
+    pols.CTX[0] = 0n;
+    pols.SP[0] = 0n;
     pols.PC[0] = 0n;
+    pols.GAS[0] = 0n;
     pols.HASHPOS[0] = 0n;
-    pols.RR[0] = 0n;
     pols.zkPC[0] = 0n;
     pols.cntArith[0] = 0n;
     pols.cntBinary[0] = 0n;
     pols.cntKeccakF[0] = 0n;
-    pols.cntSha256F[0] = 0n;
-    pols.cntMemAlign[0] = 0n;
+    // pols.cntSha256F[0] = 0n;
+    // pols.cntMemAlign[0] = 0n;
     pols.cntPaddingPG[0] = 0n;
     pols.cntPoseidonG[0] = 0n;
-    pols.RCX[0] = 0n;
     pols.RCXInv[0] = 0n;
     pols.op0Inv[0] = 0n;
     pols.RID[0] = 0n;

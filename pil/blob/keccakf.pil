@@ -1,0 +1,21 @@
+include "../global.pil";
+
+
+namespace KeccakF(%N);
+
+    pol constant ConnA, ConnB, ConnC, GateType, kGateType, kA, kB, kC;
+    pol commit a[4], b[4], c[4];
+
+    pol a40 = a[3] * 2**30 + a[2] * 2**20 + a[1] * 2**10 + a[0];
+    pol b40 = b[3] * 2**30 + b[2] * 2**20 + b[1] * 2**10 + b[0];
+    pol c40 = c[3] * 2**30 + c[2] * 2**20 + c[1] * 2**10 + c[0];
+
+    {a40, b40, c40} connect {ConnA, ConnB, ConnC};
+
+    { GateType, a[0], b[0], c[0] } in { kGateType, kA, kB, kC } ;
+    { GateType, a[1], b[1], c[1] } in { kGateType, kA, kB, kC } ;
+    { GateType, a[2], b[2], c[2] } in { kGateType, kA, kB, kC } ;
+    { GateType, a[3], b[3], c[3] } in { kGateType, kA, kB, kC } ;
+
+    Global.L1 * a40 = 0;
+    Global.L1 * (2**40-1-b40) = 0;

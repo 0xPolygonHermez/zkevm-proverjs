@@ -1,0 +1,13 @@
+include "keccakf.pil";
+
+namespace Bits2Field(%N);
+    pol constant FieldLatch;  // [0:44,1]
+    pol constant Factor;  // 1,2,4,8,...,2**43
+
+    pol commit bit;
+    pol commit field40;
+
+    field40' = (1-FieldLatch)*field40 + bit*Factor;
+    bit *(1-bit) = 0;
+
+    FieldLatch*(field40 - KeccakF.a40) = 0;

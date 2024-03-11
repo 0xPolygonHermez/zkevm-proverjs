@@ -200,7 +200,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 12161933621946006603n,
             ];
 
-            const feaInitSR = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
+            const feaInitSR = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobStateRoot));
             const res = await smt.get(sr8to4(ctx.Fr, feaInitSR), keyToRead);
 
             // write in memory
