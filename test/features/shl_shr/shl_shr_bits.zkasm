@@ -117,21 +117,22 @@ SHRbits:
     %MAX_CNT_STEPS - STEP - 9   :JMPN(outOfCountersStep)
     255 - D                     :JMPN(SHRBit_A0)
 
-    D => RR,RCX                 :SAVE(B,C,D,E,RCX,RR),JMPN(failAssert)
+    D => RR                     :SAVE(B,C,D,E,RCX,RR),JMPZ(SHRBit_D0)
     0 => C,B                    :JMP(@SHRbits_table + RR)
 
 SHRbits_arith:
     %MAX_CNT_ARITH - CNT_ARITH - 1  :JMPN(outOfCountersArith)
 
-    ${(A >> RCX) & const.MAX_UINT_256} => D
-    ${(A << (256 - RCX)) & const.MAX_UINT_256} :ARITH
-    D => A
-                                :RESTORE, RETURN
+    ${(A >> RR) & const.MAX_UINT_256} => D
+    ${(A << (256 - RR)) & const.MAX_UINT_256} :ARITH
+    D => A                     :RESTORE, RETURN
+
 SHRbits_memalign:
     %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
     A => B
     0 => A
     $ => A                      :MEM_ALIGN_RD
+SHRBit_D0:
                                 :RESTORE, RETURN
 SHRBit_A0:
     0 => A                      :RETURN
@@ -142,21 +143,22 @@ SHRBit_A0:
 ; @out A - (A << D) => A
 
 SHLbits:
-    %MAX_CNT_STEPS - STEP - 9   :JMPN(outOfCountersStep)
+    %MAX_CNT_STEPS - STEP - 8   :JMPN(outOfCountersStep)
     255 - D                     :JMPN(SHLBit_A0)
 
-    D => RR,RCX                 :SAVE(B,C,D,E,RCX,RR)
+    D => RR                     :SAVE(B,C,D,E,RCX,RR),JMPZ(SHLBit_D0)
     0 => C,B                    :JMP(@SHLbits_table + RR)
 
 SHLbits_arith:
     %MAX_CNT_ARITH - CNT_ARITH - 1  :JMPN(outOfCountersArith)
 
-    ${(A >> (256 - RCX)) & const.MAX_UINT_256} => D
-    ${(A << RCX) & const.MAX_UINT_256} => A             :ARITH
+    ${(A >> (256 - RR)) & const.MAX_UINT_256} => D
+    ${(A << RR) & const.MAX_UINT_256} => A              :ARITH
                                                         :RESTORE, RETURN
 SHLbits_memalign:
     %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
     $ => A                                  :MEM_ALIGN_RD
+SHLBit_D0:
                                 :RESTORE, RETURN
 SHLBit_A0:
     0 => A                      :RETURN    
