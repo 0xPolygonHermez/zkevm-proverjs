@@ -1,0 +1,187 @@
+CONST %MAX_CNT_STEPS = 2**23
+CONST %MAX_CNT_ARITH = %MAX_CNT_STEPS / 32
+CONST %MAX_CNT_MEM_ALIGN = %MAX_CNT_STEPS / 16
+CONSTL %MAX_UINT_256 = 2**256 - 1
+
+start:
+
+    STEP => A
+    0   :ASSERT
+
+    :CALL(testSHLbytes)
+    $ => A  :MLOAD(totalSteps)
+    A       :MSTORE(SHLbytesSteps)
+
+    :CALL(testSHRbytes)
+    $ => A  :MLOAD(totalSteps)
+    A       :MSTORE(SHRbytesSteps)
+
+    :CALL(testSHLbits)
+    $ => A  :MLOAD(totalSteps)
+    A       :MSTORE(SHLbitsSteps)
+    
+    :CALL(testSHRbits)
+    $ => A  :MLOAD(totalSteps)
+    A       :MSTORE(SHRbitsSteps)
+
+    ${dump(mem.SHLbytesSteps,mem.SHRbytesSteps,mem.SHLbitsSteps,mem.SHRbitsSteps)}
+
+    :JMP(end)
+
+VAR GLOBAL SHLbytesSteps
+VAR GLOBAL SHRbytesSteps
+VAR GLOBAL SHLbitsSteps
+VAR GLOBAL SHRbitsSteps
+
+VAR GLOBAL tmpB
+VAR GLOBAL tmpC
+VAR GLOBAL tmpD
+VAR GLOBAL tmpE
+VAR GLOBAL tmpRCX
+VAR GLOBAL initialSteps
+VAR GLOBAL totalSteps
+
+SaveRegs:
+    B       :MSTORE(tmpB)
+    C       :MSTORE(tmpC)
+    D       :MSTORE(tmpD)
+    RCX     :MSTORE(tmpRCX)
+    E       :MSTORE(tmpE)
+    STEP    :MSTORE(initialSteps), RETURN
+
+
+CheckRegs:    
+    B       :MLOAD(tmpB)
+    C       :MLOAD(tmpC)
+    $ => B  :MLOAD(initialSteps)
+    STEP - B - 6 => B
+    $ => C  :MLOAD(totalSteps)
+    C + B   :MSTORE(totalSteps)
+    D       :MLOAD(tmpD)
+    RCX     :MLOAD(tmpRCX)
+    E       :MLOAD(tmpE), RETURN
+
+; @info Shift right D bytes to A
+; @in A
+; @in D
+; @out A - A >> (8*D) => A
+
+SHRbytes:
+    %MAX_CNT_STEPS - STEP - 8               :JMPN(outOfCountersStep)
+
+    31 - D      :JMPN(SHRbytes_32)
+    D           :JMPZ(SHRbytes_0)
+
+    %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+
+    32 - D => C :SAVE(B,C,D,E,RCX,RR)
+    A => B
+    0 => A
+    $ => A      :MEM_ALIGN_RD
+                :RESTORE, RETURN
+
+SHRbytes_32:
+    0 => A      :RETURN
+SHRbytes_0:
+                :RETURN
+
+; @info Shift right D bytes to A
+; @in A
+; @in D
+; @out A - A >> (8*D)) => A
+
+
+SHLbytes:
+    %MAX_CNT_STEPS - STEP - 6               :JMPN(outOfCountersStep)
+
+    31 - D      :JMPN(SHLbytes_32)
+
+    D => C      :SAVE(B,C,D,E,RCX,RR),JMPZ(SHLbytes_0)
+
+    %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+    0 => B
+    $ => A      :MEM_ALIGN_RD
+                :RESTORE, RETURN
+
+SHLbytes_32:
+    0 => A      :RETURN
+SHLbytes_0:
+                :RESTORE,RETURN
+
+; @info Shift right D bits to A
+; @in A
+; @in D
+; @out A - (A >> D) => A
+
+SHRbits:
+    %MAX_CNT_STEPS - STEP - 9   :JMPN(outOfCountersStep)
+    255 - D                     :JMPN(SHRBit_A0)
+
+    D => RR,RCX                 :SAVE(B,C,D,E,RCX,RR),JMPN(failAssert)
+    0 => C,B                    :JMP(@SHRbits_table + RR)
+
+SHRbits_arith:
+    %MAX_CNT_ARITH - CNT_ARITH - 1  :JMPN(outOfCountersArith)
+
+    ${(A >> RCX) & const.MAX_UINT_256} => D
+    ${(A << (256 - RCX)) & const.MAX_UINT_256} :ARITH
+    D => A
+                                :RESTORE, RETURN
+SHRbits_memalign:
+    %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+    A => B
+    0 => A
+    $ => A                      :MEM_ALIGN_RD
+                                :RESTORE, RETURN
+SHRBit_A0:
+    0 => A                      :RETURN
+
+; @info Shift left D bits to A
+; @in A
+; @in D
+; @out A - (A << D) => A
+
+SHLbits:
+    %MAX_CNT_STEPS - STEP - 9   :JMPN(outOfCountersStep)
+    255 - D                     :JMPN(SHLBit_A0)
+
+    D => RR,RCX                 :SAVE(B,C,D,E,RCX,RR)
+    0 => C,B                    :JMP(@SHLbits_table + RR)
+
+SHLbits_arith:
+    %MAX_CNT_ARITH - CNT_ARITH - 1  :JMPN(outOfCountersArith)
+
+    ${(A >> (256 - RCX)) & const.MAX_UINT_256} => D
+    ${(A << RCX) & const.MAX_UINT_256} => A             :ARITH
+                                                        :RESTORE, RETURN
+SHLbits_memalign:
+    %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+    $ => A                                  :MEM_ALIGN_RD
+                                :RESTORE, RETURN
+SHLBit_A0:
+    0 => A                      :RETURN    
+
+ERROR:
+outOfCountersStep:
+outOfCountersMemalign:
+outOfCountersArith:
+failAssert:
+        A + 1 :ASSERT
+
+
+INCLUDE "shl_bits_table.zkasm"
+INCLUDE "shr_bits_table.zkasm"
+INCLUDE "shr_shr_test_data.zkasm"
+
+end:
+        /* 0 :MSTORE(totalSteps)
+        :CALL(SaveRegs)
+        :CALL(CheckRegs)
+        ${dump(mem.totalSteps)}*/
+       0 => A,B,C,D,E, SP, PC, GAS, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
