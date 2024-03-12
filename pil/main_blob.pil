@@ -1,6 +1,6 @@
 include "config.pil";
 include "global.pil";
-include "rom.pil";
+include "blob/rom.pil";
 include "mem_align.pil";
 include "arith.pil";
 include "binary.pil";
@@ -9,7 +9,6 @@ include "padding_pg.pil";
 include "storage.pil";
 include "padding_kk.pil";
 include "mem.pil";
-include "padding_sha256.pil";
 
 namespace Main(%N);
 
@@ -18,6 +17,8 @@ namespace Main(%N);
 ///////////
 
     /////// State Polynomials
+    pol commit SR7, SR6, SR5, SR4, SR3, SR2, SR1, SR0;          // State Root
+
     pol commit A7, A6, A5, A4, A3, A2, A1;
     pol commit A0;
 
@@ -33,7 +34,6 @@ namespace Main(%N);
     pol commit E7, E6, E5, E4, E3, E2, E1;
     pol commit E0;
 
-    pol commit SR7, SR6, SR5, SR4, SR3, SR2, SR1, SR0;          // State Root
     pol commit CTX;                    // Call Cntext
     pol commit SP;                     // Stack Pointer
     pol commit PC;                     // EVM Program counter
@@ -64,7 +64,6 @@ namespace Main(%N);
     pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashKLen, hashKDigest;
     pol commit hashP, hashPLen, hashPDigest;
-    pol commit hashS, hashSLen, hashSDigest;
     pol commit hashBytesInD, hashBytes, hashOffset;
     pol commit bin;
     pol commit binOpcode;
@@ -75,8 +74,8 @@ namespace Main(%N);
     pol commit isNeg;
 
     /// Counters
-    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntSha256F, cntPoseidonG, cntPaddingPG;
-    pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntSha256F, inCntPoseidonG, inCntPaddingPG;
+    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntPoseidonG, cntPaddingPG;
+    pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
     pol commit inRID;
@@ -129,7 +128,6 @@ namespace Main(%N);
         cntBinary * inCntBinary +
         cntMemAlign * inCntMemAlign +
         cntKeccakF * inCntKeccakF +
-        cntSha256F * inCntSha256F +
         cntPoseidonG * inCntPoseidonG +
         cntPaddingPG * inCntPaddingPG +
         RCX * inRCX +
@@ -381,6 +379,43 @@ namespace Main(%N);
     (A6-op6)*assert = 0;
     (A7-op7)*assert = 0;
 
+    public oldBlobStateRoot0 = B0(0);
+    public oldBlobStateRoot1 = B1(0);
+    public oldBlobStateRoot2 = B2(0);
+    public oldBlobStateRoot3 = B3(0);
+    public oldBlobStateRoot4 = B4(0);
+    public oldBlobStateRoot5 = B5(0);
+    public oldBlobStateRoot6 = B6(0);
+    public oldBlobStateRoot7 = B7(0);
+    Global.L1 * (B0 - :oldBlobStateRoot0) = 0;
+    Global.L1 * (B1 - :oldBlobStateRoot1) = 0;
+    Global.L1 * (B2 - :oldBlobStateRoot2) = 0;
+    Global.L1 * (B3 - :oldBlobStateRoot3) = 0;
+    Global.L1 * (B4 - :oldBlobStateRoot4) = 0;
+    Global.L1 * (B5 - :oldBlobStateRoot5) = 0;
+    Global.L1 * (B6 - :oldBlobStateRoot6) = 0;
+    Global.L1 * (B7 - :oldBlobStateRoot7) = 0;
+
+    public oldBlobAccInputHash0 = C0(0);
+    public oldBlobAccInputHash1 = C1(0);
+    public oldBlobAccInputHash2 = C2(0);
+    public oldBlobAccInputHash3 = C3(0);
+    public oldBlobAccInputHash4 = C4(0);
+    public oldBlobAccInputHash5 = C5(0);
+    public oldBlobAccInputHash6 = C6(0);
+    public oldBlobAccInputHash7 = C7(0);
+    Global.L1 * (C0 - :oldBlobAccInputHash0) = 0;
+    Global.L1 * (C1 - :oldBlobAccInputHash1) = 0;
+    Global.L1 * (C2 - :oldBlobAccInputHash2) = 0;
+    Global.L1 * (C3 - :oldBlobAccInputHash3) = 0;
+    Global.L1 * (C4 - :oldBlobAccInputHash4) = 0;
+    Global.L1 * (C5 - :oldBlobAccInputHash5) = 0;
+    Global.L1 * (C6 - :oldBlobAccInputHash6) = 0;
+    Global.L1 * (C7 - :oldBlobAccInputHash7) = 0;
+
+    public oldNumBlob = RR(0);
+    Global.L1 * (RR - :oldNumBlob) = 0;
+
     public oldStateRoot0 = SR0(0);
     public oldStateRoot1 = SR1(0);
     public oldStateRoot2 = SR2(0);
@@ -398,122 +433,105 @@ namespace Main(%N);
     Global.L1 * (SR6 - :oldStateRoot6) = 0;
     Global.L1 * (SR7 - :oldStateRoot7) = 0;
 
-    public oldBatchAccInputHash0 = C0(0);
-    public oldBatchAccInputHash1 = C1(0);
-    public oldBatchAccInputHash2 = C2(0);
-    public oldBatchAccInputHash3 = C3(0);
-    public oldBatchAccInputHash4 = C4(0);
-    public oldBatchAccInputHash5 = C5(0);
-    public oldBatchAccInputHash6 = C6(0);
-    public oldBatchAccInputHash7 = C7(0);
-    Global.L1 * (C0 - :oldBatchAccInputHash0) = 0;
-    Global.L1 * (C1 - :oldBatchAccInputHash1) = 0;
-    Global.L1 * (C2 - :oldBatchAccInputHash2) = 0;
-    Global.L1 * (C3 - :oldBatchAccInputHash3) = 0;
-    Global.L1 * (C4 - :oldBatchAccInputHash4) = 0;
-    Global.L1 * (C5 - :oldBatchAccInputHash5) = 0;
-    Global.L1 * (C6 - :oldBatchAccInputHash6) = 0;
-    Global.L1 * (C7 - :oldBatchAccInputHash7) = 0;
+    public forkId = RCX(0);
+    Global.L1 * (RCX - :forkId) = 0;
 
-    public previousL1InfoTreeRoot0 = D0(0);
-    public previousL1InfoTreeRoot1 = D1(0);
-    public previousL1InfoTreeRoot2 = D2(0);
-    public previousL1InfoTreeRoot3 = D3(0);
-    public previousL1InfoTreeRoot4 = D4(0);
-    public previousL1InfoTreeRoot5 = D5(0);
-    public previousL1InfoTreeRoot6 = D6(0);
-    public previousL1InfoTreeRoot7 = D7(0);
-    Global.L1 * (D0 - :previousL1InfoTreeRoot0) = 0;
-    Global.L1 * (D1 - :previousL1InfoTreeRoot1) = 0;
-    Global.L1 * (D2 - :previousL1InfoTreeRoot2) = 0;
-    Global.L1 * (D3 - :previousL1InfoTreeRoot3) = 0;
-    Global.L1 * (D4 - :previousL1InfoTreeRoot4) = 0;
-    Global.L1 * (D5 - :previousL1InfoTreeRoot5) = 0;
-    Global.L1 * (D6 - :previousL1InfoTreeRoot6) = 0;
-    Global.L1 * (D7 - :previousL1InfoTreeRoot7) = 0;
+    public newBlobStateRoot0 = B0(%N-1);
+    public newBlobStateRoot1 = B1(%N-1);
+    public newBlobStateRoot2 = B2(%N-1);
+    public newBlobStateRoot3 = B3(%N-1);
+    public newBlobStateRoot4 = B4(%N-1);
+    public newBlobStateRoot5 = B5(%N-1);
+    public newBlobStateRoot6 = B6(%N-1);
+    public newBlobStateRoot7 = B7(%N-1);
+    Global.LLAST * (B0 - :newBlobStateRoot0) = 0;
+    Global.LLAST * (B1 - :newBlobStateRoot1) = 0;
+    Global.LLAST * (B2 - :newBlobStateRoot2) = 0;
+    Global.LLAST * (B3 - :newBlobStateRoot3) = 0;
+    Global.LLAST * (B4 - :newBlobStateRoot4) = 0;
+    Global.LLAST * (B5 - :newBlobStateRoot5) = 0;
+    Global.LLAST * (B6 - :newBlobStateRoot6) = 0;
+    Global.LLAST * (B7 - :newBlobStateRoot7) = 0;
 
-    public previousL1InfoTreeIndex = RCX(0);
-    Global.L1 * (RCX - :previousL1InfoTreeIndex) = 0;
+    public newBlobAccInputHash0 = C0(%N -1);
+    public newBlobAccInputHash1 = C1(%N -1);
+    public newBlobAccInputHash2 = C2(%N -1);
+    public newBlobAccInputHash3 = C3(%N -1);
+    public newBlobAccInputHash4 = C4(%N -1);
+    public newBlobAccInputHash5 = C5(%N -1);
+    public newBlobAccInputHash6 = C6(%N -1);
+    public newBlobAccInputHash7 = C7(%N -1);
+    Global.LLAST * (C0 - :newBlobAccInputHash0) = 0;
+    Global.LLAST * (C1 - :newBlobAccInputHash1) = 0;
+    Global.LLAST * (C2 - :newBlobAccInputHash2) = 0;
+    Global.LLAST * (C3 - :newBlobAccInputHash3) = 0;
+    Global.LLAST * (C4 - :newBlobAccInputHash4) = 0;
+    Global.LLAST * (C5 - :newBlobAccInputHash5) = 0;
+    Global.LLAST * (C6 - :newBlobAccInputHash6) = 0;
+    Global.LLAST * (C7 - :newBlobAccInputHash7) = 0;
 
-    public chainId = GAS(0);
-    Global.L1 * (GAS - :chainId) = 0;
+    public newNumBlob = GAS(%N-1);
+    Global.LLAST * (BAS - :newNumBlob) = 0;
 
-    public forkId = CTX(0);
-    Global.L1 * (CTX - :forkId) = 0;
+    public finalAccBatchHashData0 = A0(%N-1);
+    public finalAccBatchHashData1 = A1(%N-1);
+    public finalAccBatchHashData2 = A2(%N-1);
+    public finalAccBatchHashData3 = A3(%N-1);
+    public finalAccBatchHashData4 = A4(%N-1);
+    public finalAccBatchHashData5 = A5(%N-1);
+    public finalAccBatchHashData6 = A6(%N-1);
+    public finalAccBatchHashData7 = A7(%N-1);
+    Global.LLAST * (A0 - :finalAccBatchHashData0) = 0;
+    Global.LLAST * (A1 - :finalAccBatchHashData1) = 0;
+    Global.LLAST * (A2 - :finalAccBatchHashData2) = 0;
+    Global.LLAST * (A3 - :finalAccBatchHashData3) = 0;
+    Global.LLAST * (A4 - :finalAccBatchHashData4) = 0;
+    Global.LLAST * (A5 - :finalAccBatchHashData5) = 0;
+    Global.LLAST * (A6 - :finalAccBatchHashData6) = 0;
+    Global.LLAST * (A7 - :finalAccBatchHashData7) = 0;
 
-    public newStateRoot0 = SR0(%N-1);
-    public newStateRoot1 = SR1(%N-1);
-    public newStateRoot2 = SR2(%N-1);
-    public newStateRoot3 = SR3(%N-1);
-    public newStateRoot4 = SR4(%N-1);
-    public newStateRoot5 = SR5(%N-1);
-    public newStateRoot6 = SR6(%N-1);
-    public newStateRoot7 = SR7(%N-1);
-    Global.LLAST * (SR0 - :newStateRoot0) = 0;
-    Global.LLAST * (SR1 - :newStateRoot1) = 0;
-    Global.LLAST * (SR2 - :newStateRoot2) = 0;
-    Global.LLAST * (SR3 - :newStateRoot3) = 0;
-    Global.LLAST * (SR4 - :newStateRoot4) = 0;
-    Global.LLAST * (SR5 - :newStateRoot5) = 0;
-    Global.LLAST * (SR6 - :newStateRoot6) = 0;
-    Global.LLAST * (SR7 - :newStateRoot7) = 0;
+    public localExitRootFromBlob0 = E0(%N-1);
+    public localExitRootFromBlob1 = E1(%N-1);
+    public localExitRootFromBlob2 = E2(%N-1);
+    public localExitRootFromBlob3 = E3(%N-1);
+    public localExitRootFromBlob4 = E4(%N-1);
+    public localExitRootFromBlob5 = E5(%N-1);
+    public localExitRootFromBlob6 = E6(%N-1);
+    public localExitRootFromBlob7 = E7(%N-1);
+    Global.LLAST * (E0 - :localExitRootFromBlob0) = 0;
+    Global.LLAST * (E1 - :localExitRootFromBlob1) = 0;
+    Global.LLAST * (E2 - :localExitRootFromBlob2) = 0;
+    Global.LLAST * (E3 - :localExitRootFromBlob3) = 0;
+    Global.LLAST * (E4 - :localExitRootFromBlob4) = 0;
+    Global.LLAST * (E5 - :localExitRootFromBlob5) = 0;
+    Global.LLAST * (E6 - :localExitRootFromBlob6) = 0;
+    Global.LLAST * (E7 - :localExitRootFromBlob7) = 0;
 
-    public newBatchAccInputHash0 = C0(%N -1);
-    public newBatchAccInputHash1 = C1(%N -1);
-    public newBatchAccInputHash2 = C2(%N -1);
-    public newBatchAccInputHash3 = C3(%N -1);
-    public newBatchAccInputHash4 = C4(%N -1);
-    public newBatchAccInputHash5 = C5(%N -1);
-    public newBatchAccInputHash6 = C6(%N -1);
-    public newBatchAccInputHash7 = C7(%N -1);
-    Global.LLAST * (C0 - :newBatchAccInputHash0) = 0;
-    Global.LLAST * (C1 - :newBatchAccInputHash1) = 0;
-    Global.LLAST * (C2 - :newBatchAccInputHash2) = 0;
-    Global.LLAST * (C3 - :newBatchAccInputHash3) = 0;
-    Global.LLAST * (C4 - :newBatchAccInputHash4) = 0;
-    Global.LLAST * (C5 - :newBatchAccInputHash5) = 0;
-    Global.LLAST * (C6 - :newBatchAccInputHash6) = 0;
-    Global.LLAST * (C7 - :newBatchAccInputHash7) = 0;
+    public isInvalid = CTX(%N-1);
+    Global.LLAST * (CTX - :isInvalid) = 0;
 
-    public currentL1InfoTreeRoot0 = D0(%N-1);
-    public currentL1InfoTreeRoot1 = D1(%N-1);
-    public currentL1InfoTreeRoot2 = D2(%N-1);
-    public currentL1InfoTreeRoot3 = D3(%N-1);
-    public currentL1InfoTreeRoot4 = D4(%N-1);
-    public currentL1InfoTreeRoot5 = D5(%N-1);
-    public currentL1InfoTreeRoot6 = D6(%N-1);
-    public currentL1InfoTreeRoot7 = D7(%N-1);
-    Global.LLAST * (D0 - :currentL1InfoTreeRoot0) = 0;
-    Global.LLAST * (D1 - :currentL1InfoTreeRoot1) = 0;
-    Global.LLAST * (D2 - :currentL1InfoTreeRoot2) = 0;
-    Global.LLAST * (D3 - :currentL1InfoTreeRoot3) = 0;
-    Global.LLAST * (D4 - :currentL1InfoTreeRoot4) = 0;
-    Global.LLAST * (D5 - :currentL1InfoTreeRoot5) = 0;
-    Global.LLAST * (D6 - :currentL1InfoTreeRoot6) = 0;
-    Global.LLAST * (D7 - :currentL1InfoTreeRoot7) = 0;
+    public timestampLimit = RR(%N-1);
+    Global.LLAST * (RR - :timestampLimit) = 0;
 
-    public currentL1InfoTreeIndex = RCX(%N-1);
-    Global.LLAST * (RCX - :currentL1InfoTreeIndex) = 0;
+    public lastL1InfoTreeRoot0 = D0(%N-1);
+    public lastL1InfoTreeRoot1 = D1(%N-1);
+    public lastL1InfoTreeRoot2 = D2(%N-1);
+    public lastL1InfoTreeRoot3 = D3(%N-1);
+    public lastL1InfoTreeRoot4 = D4(%N-1);
+    public lastL1InfoTreeRoot5 = D5(%N-1);
+    public lastL1InfoTreeRoot6 = D6(%N-1);
+    public lastL1InfoTreeRoot7 = D7(%N-1);
+    Global.LLAST * (D0 - :lastL1InfoTreeRoot0) = 0;
+    Global.LLAST * (D1 - :lastL1InfoTreeRoot1) = 0;
+    Global.LLAST * (D2 - :lastL1InfoTreeRoot2) = 0;
+    Global.LLAST * (D3 - :lastL1InfoTreeRoot3) = 0;
+    Global.LLAST * (D4 - :lastL1InfoTreeRoot4) = 0;
+    Global.LLAST * (D5 - :lastL1InfoTreeRoot5) = 0;
+    Global.LLAST * (D6 - :lastL1InfoTreeRoot6) = 0;
+    Global.LLAST * (D7 - :lastL1InfoTreeRoot7) = 0;
 
-    public newLocalExitRoot0 = E0(%N-1);
-    public newLocalExitRoot1 = E1(%N-1);
-    public newLocalExitRoot2 = E2(%N-1);
-    public newLocalExitRoot3 = E3(%N-1);
-    public newLocalExitRoot4 = E4(%N-1);
-    public newLocalExitRoot5 = E5(%N-1);
-    public newLocalExitRoot6 = E6(%N-1);
-    public newLocalExitRoot7 = E7(%N-1);
-    Global.LLAST * (E0 - :newLocalExitRoot0) = 0;
-    Global.LLAST * (E1 - :newLocalExitRoot1) = 0;
-    Global.LLAST * (E2 - :newLocalExitRoot2) = 0;
-    Global.LLAST * (E3 - :newLocalExitRoot3) = 0;
-    Global.LLAST * (E4 - :newLocalExitRoot4) = 0;
-    Global.LLAST * (E5 - :newLocalExitRoot5) = 0;
-    Global.LLAST * (E6 - :newLocalExitRoot6) = 0;
-    Global.LLAST * (E7 - :newLocalExitRoot7) = 0;
-
-    public newLastTimestamp = RR(%N-1);
-    Global.LLAST * (RR - :newLastTimestamp) = 0;
+    public lastL1InfoTreeIdx = RCX(%N-1);
+    Global.LLAST * (RCX - :lastL1InfoTreeIdx) = 0;
 
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
@@ -531,27 +549,26 @@ namespace Main(%N);
 // ROM Plookpups
 /////////
 
-
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" -b
+       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" -b
     */
 
     pol operations =
-              2**0  * arithEq0         + 2**1  * arithEq1         + 2**2  * arithEq2         + 2**3  * assert
-            + 2**4  * bin              + 2**5  * hashK            + 2**6  * hashKDigest      + 2**7  * hashKLen
-            + 2**8  * hashP            + 2**9  * hashPDigest      + 2**10 * hashPLen         + 2**11 * isMem
-            + 2**12 * isStack          + 2**13 * JMP              + 2**14 * JMPC             + 2**15 * JMPN
-            + 2**16 * memAlignRD       + 2**17 * memAlignWR       + 2**18 * memAlignWR8      + 2**19 * mOp
-            + 2**20 * mWR              + 2**21 * repeat           + 2**22 * setA             + 2**23 * setB
-            + 2**24 * setC             + 2**25 * setCTX           + 2**26 * setD             + 2**27 * setE
-            + 2**28 * setGAS           + 2**29 * setHASHPOS       + 2**30 * setPC            + 2**31 * setRCX
-            + 2**32 * setRR            + 2**33 * setSP            + 2**34 * setSR            + 2**35 * sRD
-            + 2**36 * sWR              + 2**37 * useCTX           + 2**38 * JMPZ             + 2**39 * call
-            + 2**40 * return           + 2**41 * arithEq3         + 2**42 * arithEq4         + 2**43 * arithEq5
-            + 2**44 * save             + 2**45 * restore          + 2**46 * setRID           + 2**47 * hashBytesInD
-            + 2**48 * assumeFree       + 2**49 * memUseAddrRel    + 2**50 * jmpUseAddrRel    + 2**51 * elseUseAddrRel
-            + 2**52 * free0IsByte      + 2**53 * hashS            + 2**54 * hashSDigest      + 2**55 * hashSLen;
+          2**0  * arithEq0         + 2**1  * arithEq1         + 2**2  * arithEq2         + 2**3  * assert
+        + 2**4  * bin              + 2**5  * hashK            + 2**6  * hashKDigest      + 2**7  * hashKLen
+        + 2**8  * hashP            + 2**9  * hashPDigest      + 2**10 * hashPLen         + 2**11 * isMem
+        + 2**12 * isStack          + 2**13 * JMP              + 2**14 * JMPC             + 2**15 * JMPN
+        + 2**16 * memAlignRD       + 2**17 * memAlignWR       + 2**18 * memAlignWR8      + 2**19 * mOp
+        + 2**20 * mWR              + 2**21 * repeat           + 2**22 * setA             + 2**23 * setB
+        + 2**24 * setC             + 2**25 * setCTX           + 2**26 * setD             + 2**27 * setE
+        + 2**28 * setGAS           + 2**29 * setHASHPOS       + 2**30 * setPC            + 2**31 * setRCX
+        + 2**32 * setRR            + 2**33 * setSP            + 2**34 * setSR            + 2**35 * sRD
+        + 2**36 * sWR              + 2**37 * useCTX           + 2**38 * JMPZ             + 2**39 * call
+        + 2**40 * return           + 2**41 * arithEq3         + 2**42 * arithEq4         + 2**43 * arithEq5
+        + 2**44 * save             + 2**45 * restore          + 2**46 * setRID           + 2**47 * hashBytesInD
+        + 2**48 * assumeFree       + 2**49 * memUseAddrRel    + 2**50 * jmpUseAddrRel    + 2**51 * elseUseAddrRel
+        + 2**52 * free0IsByte;
 
     (1 - arithEq0) * arithEq0 = 0;
     (1 - arithEq1) * arithEq1 = 0;
@@ -606,21 +623,18 @@ namespace Main(%N);
     (1 - jmpUseAddrRel) * jmpUseAddrRel = 0;
     (1 - elseUseAddrRel) * elseUseAddrRel = 0;
     (1 - free0IsByte) * free0IsByte = 0;
-    (1 - hashS) * hashS = 0;
-    (1 - hashSDigest) * hashSDigest = 0;
-    (1 - hashSLen) * hashSLen = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR, 
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID, hashBytes, hashOffset,
-        inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
+        inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR, 
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID, Rom.hashBytes, Rom.hashOffset,
-        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
+        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
 
@@ -803,51 +817,6 @@ namespace Main(%N);
     };
 
     cntKeccakF' = cntKeccakF*(1-Global.L1) + incCounter*hashKDigest;
-
-/////////
-// HASHS Plookpups (Sha256)
-/////////
-
-    hashS {
-        hashOffset + E0,
-        HASHPOS,
-        hashBytesInD * (D0 - hashBytes) + hashBytes,
-        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
-        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
-    } in
-    PaddingSha256.crLatch * PaddingSha256.r8valid {
-        PaddingSha256.addr,
-        PaddingSha256.len - PaddingSha256.rem - PaddingSha256.crLen + 1,
-        PaddingSha256.crLen,
-        PaddingSha256.crV0C, PaddingSha256.crV1C, PaddingSha256.crV2C, PaddingSha256.crV3C,
-        PaddingSha256.crV4C, PaddingSha256.crV5C, PaddingSha256.crV6C, PaddingSha256.crV7C
-    };
-
-    hashSLen {
-        hashOffset + E0,
-        op0
-    } is
-    PaddingSha256.lastHashLen {
-        PaddingSha256.addr,
-        PaddingSha256.len
-    };
-
-    // The Sha digest's chunks are ordered from most to least significant.
-    // (hash0 => op7, hash1 => op6, ..)
-    hashSDigest {
-        hashOffset + E0,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7,
-        incCounter
-    } is
-    PaddingSha256.lastHashDigest {
-        PaddingSha256.addr,
-        PaddingSha256.hash7, PaddingSha256.hash6, PaddingSha256.hash5, PaddingSha256.hash4,
-        PaddingSha256.hash3, PaddingSha256.hash2, PaddingSha256.hash1, PaddingSha256.hash0,
-        PaddingSha256.incCounter
-    };
-
-    cntSha256F' = cntSha256F*(1-Global.L1) + incCounter*hashSDigest;
 
 /////////
 // HASHP Plookpups

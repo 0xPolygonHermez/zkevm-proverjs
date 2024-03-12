@@ -10,6 +10,7 @@ const { cwd } = require("process");
 const argv = require("yargs")
     .usage("node zkasmtest filename [-p <pil>] [-P <pilconfig>]")
     .help('h')
+    .alias("b", "blob")
     .alias("A", "all")
     .alias("p", "pil")
     .alias("P", "pilconfig")
@@ -60,6 +61,11 @@ async function main(){
     const debug = argv.debug ? true : false;
     const stats = argv.stats ? true : false;
     const all = argv.all ? true : false;
+    const blob = argv.blob ? true : false;
+
+    const targetSuffix = blob ? '_blob':'';
+
+
     let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
@@ -90,6 +96,7 @@ async function main(){
     let defaultConfig = {
         constants,
         debug,
+        blob,
         debugInfo: {},
         continueOnError: true,
         externalPilVerification,
@@ -111,7 +118,8 @@ async function main(){
         console.log(`Setting steps upto ${steps} vs rows upto ${rows} (debug: active)`);
     }
 
-    const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : (__dirname + "/../pil/main.pil");
+    const defaultPilFile = __dirname + `/../pil/main${targetSuffix}.pil`;
+    const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : defaultPilFile;
     let pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : defaultPilConfig;
     let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultConfig;
     if (argv.reserved === true) {

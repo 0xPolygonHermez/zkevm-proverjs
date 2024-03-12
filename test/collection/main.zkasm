@@ -1,5 +1,6 @@
 ; constants needed by executor C++
 CONST %N = 2**23
+CONST %MAX_CNT_STEPS = %N
 CONST %MAX_CNT_STEPS_LIMIT = %N
 CONST %MAX_CNT_ARITH_LIMIT = %N
 CONST %MAX_CNT_BINARY_LIMIT = %N
