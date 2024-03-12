@@ -17,20 +17,9 @@ Total: 1696
 
 include "sha256/sha256.circom";
 include "bitify.circom";
+include "lessthangl.circom";
 include "recursivef.verifier.circom";
 
-template LessThanGoldilocks() {
-    var n = 64;
-    var p = 0xFFFFFFFF00000001;
-    signal input in;
-    signal output out;
-
-    component n2b = Num2Bits(n+1);
-
-    n2b.in <== in + (1<<n) - p;
-
-    out <== 1-n2b.out[n];
-}
 
 template Main() {
     signal output publicsHash;
@@ -43,12 +32,13 @@ template Main() {
     signal input root3;
     signal input root4;
 
-    signal input evals[70][3];
+    signal input evals[86][3]; // Evaluations of the set polynomials at a challenge value z and gz
 
+    // Leaves values of the merkle tree used to check all the queries
     signal input s0_vals1[32][12];
-    signal input s0_vals3[32][9];
-    signal input s0_vals4[32][24];
-    signal input s0_valsC[32][34];
+    signal input s0_vals3[32][21];
+    signal input s0_vals4[32][21];
+    signal input s0_valsC[32][39];
 
     signal input s0_siblings1[32][6][16];
     signal input s0_siblings3[32][6][16];
@@ -61,18 +51,18 @@ template Main() {
     signal input s4_root;
     signal input s5_root;
 
-    signal input s1_vals[32][24];
+    signal input s1_vals[32][48];
     signal input s1_siblings[32][5][16];
-    signal input s2_vals[32][48];
+    signal input s2_vals[32][24];
     signal input s2_siblings[32][4][16];
-    signal input s3_vals[32][48];
+    signal input s3_vals[32][24];
     signal input s3_siblings[32][3][16];
-    signal input s4_vals[32][48];
+    signal input s4_vals[32][24];
     signal input s4_siblings[32][2][16];
-    signal input s5_vals[32][48];
-    signal input s5_siblings[32][1][16];
+    signal input s5_vals[32][24];
+    signal input s5_siblings[32][2][16];
 
-    signal input finalPol[16][3];
+    signal input finalPol[32][3];
 
 
     component sv = StarkVerifier();
@@ -128,10 +118,8 @@ template Main() {
         }
     }
 
-    signal isValidOldStateRoot[4];
     for (var i = 0; i < 4; i++) {
-        isValidOldStateRoot[i] <== LessThanGoldilocks()(publics[0 + 2*i] + (1 << 32) * publics[0 + 2*i + 1]);
-        isValidOldStateRoot[i] === 1;
+        _<== LessThanGoldilocks()(publics[0 + 2*i] + (1 << 32) * publics[0 + 2*i + 1]);
     }
 
     signal n2bOldAccInputHash[8][32];
@@ -169,10 +157,8 @@ template Main() {
         }
     }
 
-    signal isValidNewStateRoot[4];
     for (var i = 0; i < 4; i++) {
-        isValidNewStateRoot[i] <== LessThanGoldilocks()(publics[19 + 2*i] + (1 << 32)*publics[19 + 2*i + 1]);
-        isValidNewStateRoot[i] === 1;
+        _<== LessThanGoldilocks()(publics[19 + 2*i] + (1 << 32)*publics[19 + 2*i + 1]);
     }
 
     signal n2bNewAccInputHash[8][32];

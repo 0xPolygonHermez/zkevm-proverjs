@@ -5,9 +5,27 @@
         "filterOpcodes": ["EXTCODECOPY"],
         "initFinalState": true,
         "bytecode": true,
-        "saveInitFinalState": true
+        "saveInitFinalState": true,
+        "outputs": true,
+        "saveOutputs": true
     },
     "zkPC": false,
     "batchL2Data": false,
-    "step": 1000000
+    "getNameSelector": "https://api.openchain.xyz/signature-database/v1/lookup?filter=false&function=",
+    "step": 1000000,
+    "enableExternalLogs": false,
+    "externalLogs": [
+        {
+            "fileName": "main.zkasm",
+            "line": 19,
+            "tag": "first",
+            "regs": ["A", "HASHPOS"]
+        },
+        {
+            "fileName": "main.zkasm",
+            "line": 100,
+            "tag": "second",
+            "regs": ["A", "B","C"]
+        }
+    ]
 }

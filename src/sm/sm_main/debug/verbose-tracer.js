@@ -6,6 +6,7 @@ const chalk = require('chalk');
 const { Scalar } = require('ffjavascript');
 
 const { smtUtils, stateUtils, utils } = require('@0xpolygonhermez/zkevm-commonjs');
+const { convertBigIntsToNumbers } = require('./full-tracer-utils');
 
 class VerboseTracer {
     /**
@@ -22,13 +23,16 @@ class VerboseTracer {
         this.initFinalState = options.initFinalState;
         this.saveInitFinalState = options.saveInitFinalState;
         this.bytecode = options.bytecode;
+        this.printReturn = options.printReturn;
+        this.saveReturn = options.saveReturn;
 
         this.smt = smt;
         this.touched = {};
 
         // Logs init-final state path
         this.folderLogs = path.join(__dirname, '../logs-verbose');
-        this.pathLogFile = `${this.folderLogs}/${fileName.split('.')[0]}-verbose`;
+        this.pathLogFileState = `${this.folderLogs}/${fileName.split('.')[0]}-pre-post-state`;
+        this.pathLogFileReturn = `${this.folderLogs}/${fileName.split('.')[0]}-return-data`;
     }
 
     saveInitStateRoot(initSR) {
@@ -61,18 +65,26 @@ class VerboseTracer {
         }
     }
 
-    printTx(message) {
-        if (this.enable !== true) return;
-
-        let info = `${chalk.yellowBright('TX'.padEnd(7))} | `;
-        info += `${message}`;
-        console.log(info);
-    }
-
     printBatch(message) {
         if (this.enable !== true) return;
 
         let info = `${chalk.blue('BATCH'.padEnd(7))} | `;
+        info += `${message}`;
+        console.log(info);
+    }
+
+    printBlock(message) {
+        if (this.enable !== true) return;
+
+        let info = `${chalk.magenta('BLOCK'.padEnd(7))} | `;
+        info += `${message}`;
+        console.log(info);
+    }
+
+    printTx(message) {
+        if (this.enable !== true) return;
+
+        let info = `${chalk.yellowBright('TX'.padEnd(7))} | `;
         info += `${message}`;
         console.log(info);
     }
@@ -104,14 +116,14 @@ class VerboseTracer {
         }
 
         let infoHeader = `${chalk.greenBright('/////////////////////////////\n')}`;
-        infoHeader += `${chalk.greenBright('//////////PRE STATE/////////\n')}`;
+        infoHeader += `${chalk.greenBright(`//////////PRE STATE: ${this.initSR}/////////\n`)}`;
         infoHeader += `${chalk.greenBright('///////////////////////////')}`;
 
         console.log(infoHeader);
         console.log(fullInfo.pre);
 
         infoHeader = `${chalk.blueBright('/////////////////////////////\n')}`;
-        infoHeader += `${chalk.blueBright('//////////POST STATE////////\n')}`;
+        infoHeader += `${chalk.blueBright(`//////////POST STATE: ${this.finalSR}////////\n`)}`;
         infoHeader += `${chalk.blueBright('///////////////////////////')}`;
 
         console.log(infoHeader);
@@ -121,7 +133,7 @@ class VerboseTracer {
             if (!fs.existsSync(this.folderLogs)) {
                 fs.mkdirSync(this.folderLogs);
             }
-            fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(fullInfo, null, 2));
+            fs.writeFileSync(`${this.pathLogFileState}.json`, JSON.stringify(fullInfo, null, 2));
         }
     }
 
@@ -136,6 +148,7 @@ class VerboseTracer {
         const hashBytecode = await stateUtils.getContractHashBytecode(address, this.smt, rootArray);
         const hashBytecodeLength = await stateUtils.getContractBytecodeLength(address, this.smt, rootArray);
         const bytecodeArray = await this.smt.db.getProgram(smtUtils.stringToH4(hashBytecode));
+
         const sto = await stateUtils.getContractStorage(address, this.smt, rootArray, storage);
 
         info.balance = state.balance.toString();
@@ -155,6 +168,40 @@ class VerboseTracer {
         info.storage = storageInfo;
 
         return info;
+    }
+
+    printSaveReturn(returnData) {
+        if (this.enable !== true) return;
+
+        if (this.printReturn) {
+            let info = `${chalk.whiteBright('/////////////////////////////\n')}`;
+            info += `${chalk.whiteBright('//////////RETURN////////////\n')}`;
+            info += `${chalk.whiteBright('///////////////////////////')}`;
+            console.log(info);
+
+            info = `${chalk.magenta('---> OUTPUTS\n')}`;
+            console.log(returnData.outputs);
+
+            info = `${chalk.magenta('\n---> COUNTERS\n')}`;
+            console.log(returnData.counters);
+
+            info = `${chalk.magenta('\n---> ERRORS\n')}`;
+            console.log(returnData.errors);
+        }
+
+        if (this.saveReturn) {
+            const saveData = {
+                outputs: convertBigIntsToNumbers(returnData.outputs),
+                counters: convertBigIntsToNumbers(returnData.counters),
+                errors: returnData.errors,
+                logs: returnData.logs,
+            };
+
+            if (!fs.existsSync(this.folderLogs)) {
+                fs.mkdirSync(this.folderLogs);
+            }
+            fs.writeFileSync(`${this.pathLogFileReturn}.json`, JSON.stringify(saveData, null, 2));
+        }
     }
 }
 

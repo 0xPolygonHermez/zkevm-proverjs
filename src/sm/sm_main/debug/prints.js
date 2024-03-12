@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-syntax */
-const { smtUtils, stateUtils } = require('@0xpolygonhermez/zkevm-commonjs');
+const { smtUtils, stateUtils, utils } = require('@0xpolygonhermez/zkevm-commonjs');
 const { Scalar } = require('ffjavascript');
+const chalk = require('chalk');
 
 function sr8to4(F, SR) {
     const r = [];
@@ -14,9 +15,10 @@ function sr8to4(F, SR) {
 }
 
 class Prints {
-    constructor(ctx, smt) {
+    constructor(ctx, smt, externalLogs) {
         this.ctx = ctx;
         this.smt = smt;
+        this.externalLogs = externalLogs;
     }
 
     async printAddress(address, stoKeys = [], options = {}) {
@@ -60,6 +62,52 @@ class Prints {
         }
     }
 
+    async printRegister(options = {}) {
+        const print = this._shouldPrint(options);
+
+        if (print) {
+            const h4 = sr8to4(this.ctx.Fr, this.ctx.SR);
+            const root = smtUtils.h4toString(h4);
+            console.log('State Root: ', root);
+        }
+    }
+
+    processExternalLogs() {
+        const currentFileName = this.ctx.fileName;
+        const currentLine = this.ctx.line;
+
+        for (const log of this.externalLogs) {
+            // check hit line
+            if (log.fileName === currentFileName && log.line === currentLine) {
+                // print registers
+                for (const reg of log.regs) {
+                    let info = `${chalk.yellow(`-----> ${log.fileName}:${log.line}`)} | `;
+
+                    const frReg = this.ctx[reg];
+
+                    // build output
+                    info += `${chalk.yellowBright(`${reg}`)} | `;
+
+                    if (typeof log.tag !== 'undefined') {
+                        info += `${chalk.yellowBright(`${log.tag}`)} | `;
+                    }
+
+                    let resNum;
+                    // check if register is an array
+                    if (Array.isArray(frReg)) {
+                        resNum = this.safeFea2scalar(this.ctx.Fr, frReg);
+                    } else {
+                        resNum = Scalar.e(frReg);
+                    }
+                    const resHex = utils.valueToHexStr(resNum, true);
+                    info += `${chalk.white(`${resNum}`)} | `;
+                    info += `${chalk.white(`${resHex}`)} | `;
+                    console.log(info);
+                }
+            }
+        }
+    }
+
     _shouldPrint(options) {
         let print = false;
 
@@ -75,6 +123,17 @@ class Prints {
         }
 
         return print;
+    }
+
+    safeFea2scalar(Fr, arr) {
+        for (let index = 0; index < 8; ++index) {
+            const value = Fr.toObject(arr[index]);
+            if (value > 0xFFFFFFFFn) {
+                throw new Error(`Invalid value 0x${value.toString(16)} to convert to scalar on index ${index}`);
+            }
+        }
+
+        return smtUtils.fea2scalar(Fr, arr);
     }
 }
 

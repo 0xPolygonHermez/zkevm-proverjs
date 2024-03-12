@@ -1,15 +1,16 @@
 /* eslint-disable default-param-last */
 const { ethers } = require('ethers');
+const { Scalar } = require('ffjavascript');
 const { toHexStringRlp, addressToHexStringRlp } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
 const { scalar2fea, fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
 
 /**
- * Compute transaction hash from a transaction RLP enconding and hashing with keccak
+ * Compute transaction hash from a transaction RLP encoding and hashing with keccak
  * @param {String} to - hex string
  * @param {Number} value - int number
  * @param {Number} nonce - int number
- * @param {String} gasLimit - hex string
- * @param {String} gasPrice - hex string
+ * @param {Number} gasLimit - int number
+ * @param {Number} gasPrice - int number
  * @param {String} data - hex string of the data
  * @param {String} r - hex string of r signature
  * @param {String} s - hex string of s signature
@@ -63,10 +64,12 @@ function findOffsetLabel(program, label) {
  * @param {Object} ctx current context object
  * @param {Boolean} global true if label is global, false if is ctx label
  * @param {String} varLabel name of the label
+ * @param {Number} customCTX get memory from a custom context
  * @returns {Scalar} value of the label
  */
-function getVarFromCtx(ctx, global, varLabel) {
-    const offsetCtx = global ? 0 : Number(ctx.CTX) * 0x40000;
+function getVarFromCtx(ctx, global, varLabel, customCTX) {
+    const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
+    const offsetCtx = global ? 0 : Number(CTX) * 0x40000;
     const offsetRelative = findOffsetLabel(ctx.rom.program, varLabel);
     const addressMem = offsetCtx + offsetRelative;
     const value = ctx.mem[addressMem];
@@ -74,28 +77,6 @@ function getVarFromCtx(ctx, global, varLabel) {
     if (!finalValue) return 0n;
 
     return fea2scalar(ctx.Fr, finalValue);
-}
-
-/**
- * Get the stored calldata in the stack
- * @param {Object} ctx current context object
- * @param {Number} offset to start read from calldata
- * @param {Number} length size of the bytes to read from offset
- * @returns {Scalar} value of the label
- */
-function getCalldataFromStack(ctx, offset = 0, length) {
-    const addr = 0x10000 + 1024 + Number(ctx.CTX) * 0x40000;
-    let value = '0x';
-    for (let i = addr + Number(offset); i < 0x20000 + Number(ctx.CTX) * 0x40000; i++) {
-        const memVal = ctx.mem[i];
-        if (!memVal) break;
-        value += ethers.utils.hexlify(fea2scalar(ctx.Fr, memVal)).slice(2);
-    }
-    if (length) {
-        value = value.slice(0, 2 + length * 2);
-    }
-
-    return value;
 }
 
 /**
@@ -110,18 +91,20 @@ function getRegFromCtx(ctx, reg) {
 
 /**
  * Get range from memory
- * @param {Object} ctx current context object
  * @param {Number} offset to start read from calldata
  * @param {Number} length size of the bytes to read from offset
- * @returns {Array} string array with 32 bytes hexa values
+ * @param {Object} ctx current context object
+ * @param {Number} customCTX get memory from a custom context
+ * @returns {Array} string array with 32 bytes hex values
  */
-function getFromMemory(offset, length, ctx) {
-    const offsetCtx = Number(ctx.CTX) * 0x40000;
+function getFromMemory(offset, length, ctx, customCTX) {
+    const CTX = typeof customCTX === 'undefined' ? ctx.CTX : customCTX;
+    const offsetCtx = Number(CTX) * 0x40000;
     let addrMem = 0;
     addrMem += offsetCtx;
     addrMem += 0x20000;
 
-    let finalMemory = '';
+    let finalMemory = '0x';
 
     const init = addrMem + (Number(offset) / 32);
     const end = addrMem + ((Number(offset) + Number(length)) / 32);
@@ -159,7 +142,7 @@ function getFromMemory(offset, length, ctx) {
         finalMemory = finalMemory.concat(hexStringEnd);
     }
 
-    return finalMemory;
+    return finalMemory.substring(0, length * 2 + 2);
 }
 
 /**
@@ -175,20 +158,42 @@ function getConstantFromCtx(ctx, constantName) {
 /**
  * Get a padded hex string from its numeric value
  * @param {BigInt} bn numeric value
- * @param {Numver} paddingLength left padding size with zeros
+ * @param {Number} paddingLength left padding size with zeros
  * @returns {String} hex value of the bn left padded with zeros
  */
 function bnToPaddedHex(bn, paddingLength) {
     return `0x${ethers.utils.hexlify(bn).slice(2).padStart(paddingLength, '0')}`;
 }
 
+function convertBigIntsToNumbers(obj) {
+    if (typeof (obj) === 'bigint') {
+        if (Scalar.gt(obj, Number.MAX_SAFE_INTEGER)) {
+            throw new Error(`Cannot convert ${obj} to number. Greater than MAX_SAFE_INTEGER`);
+        }
+
+        return Number(obj);
+    } if (Array.isArray(obj)) {
+        return obj.map(convertBigIntsToNumbers);
+    } if (typeof obj === 'object') {
+        const res = {};
+        const keys = Object.keys(obj);
+        keys.forEach((k) => {
+            res[k] = convertBigIntsToNumbers(obj[k]);
+        });
+
+        return res;
+    }
+
+    return obj;
+}
+
 module.exports = {
     getTransactionHash,
     findOffsetLabel,
     getVarFromCtx,
-    getCalldataFromStack,
     getRegFromCtx,
     getFromMemory,
     getConstantFromCtx,
     bnToPaddedHex,
+    convertBigIntsToNumbers,
 };

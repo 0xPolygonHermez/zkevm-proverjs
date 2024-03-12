@@ -1,0 +1,17 @@
+{
+  "gas": 63372,
+  "failed": true,
+  "returnValue": "",
+  "structLogs": [
+    {
+      "pc": 0,
+      "op": "PUSH1",
+      "gas": 0,
+      "gasCost": 3,
+      "depth": 1,
+      "error": "out of gas",
+      "stack": [],
+      "memory": []
+    }
+  ]
+}
