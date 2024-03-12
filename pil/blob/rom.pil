@@ -17,16 +17,17 @@ namespace Rom(%N);
     pol constant binOpcode;
     pol constant jmpAddr, elseAddr;
     pol constant ind, indRR;
+    pol constant arithEquation;
 
     pol constant line;
     pol constant operations;
 
     /*
-      comment genereated with:
-      node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,arithEq3,arithEq4,arithEq5,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte"
+      comment generated with:
+      node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" 
 
       operations =
-              2**0  * arithEq0         + 2**1  * arithEq1         + 2**2  * arithEq2         + 2**3  * assert
+              2**0  * arith            + 2**1  * arithSame12      + 2**2  * arithUseE        + 2**3  * assert
             + 2**4  * bin              + 2**5  * hashK            + 2**6  * hashKDigest      + 2**7  * hashKLen
             + 2**8  * hashP            + 2**9  * hashPDigest      + 2**10 * hashPLen         + 2**11 * isMem
             + 2**12 * isStack          + 2**13 * JMP              + 2**14 * JMPC             + 2**15 * JMPN
@@ -36,8 +37,7 @@ namespace Rom(%N);
             + 2**28 * setGAS           + 2**29 * setHASHPOS       + 2**30 * setPC            + 2**31 * setRCX
             + 2**32 * setRR            + 2**33 * setSP            + 2**34 * setSR            + 2**35 * sRD
             + 2**36 * sWR              + 2**37 * useCTX           + 2**38 * JMPZ             + 2**39 * call
-            + 2**40 * return           + 2**41 * arithEq3         + 2**42 * arithEq4         + 2**43 * arithEq5
-            + 2**44 * save             + 2**45 * restore          + 2**46 * setRID           + 2**47 * hashBytesInD
-            + 2**48 * assumeFree       + 2**49 * memUseAddrRel    + 2**50 * jmpUseAddrRel    + 2**51 * elseUseAddrRel
-            + 2**52 * free0IsByte;
+            + 2**40 * return           + 2**41 * save             + 2**42 * restore          + 2**43 * setRID
+            + 2**44 * hashBytesInD     + 2**45 * assumeFree       + 2**46 * memUseAddrRel    + 2**47 * jmpUseAddrRel
+            + 2**48 * elseUseAddrRel   + 2**49 * free0IsByte;
     */

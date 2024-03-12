@@ -30,12 +30,17 @@ function dblPoint(x1, y1) {
 
 function addPoint(p) {
     const same = (typeof p.x2 === 'undefined' && typeof p.y2 === 'undefined');
-    let res = {...p, selEq4: 0n, selEq5: 0n, selEq6: 0n, selEq0:0n, selEq3: 1n};
+    let res = {selEq3: 0n, selEq4: 0n, selEq5: 0n, selEq6: 0n};
 
     if (same) {
-        return {...res, x2: p.x1, y2: p.y1, selEq1: 0n, selEq2: 1n, ... dblPoint(p.x1, p.y1)};
+        return {...p, x2: p.x1, y2: p.y1, ...dblPoint(p.x1, p.y1), selEq0:0n, selEq1: 0n, selEq2: 1n, ...res};
     }
-    return {...res, selEq1: 1n, selEq2: 0n, ... addDiffPoint(p.x1, p.y1, p.x2, p.y2)};
+    return {...p, ...addDiffPoint(p.x1, p.y1, p.x2, p.y2), selEq0:0n, selEq1: 1n, selEq2: 0n, ...res};
+}
+
+function modArith(input) {
+    const y3 = (input.x1 * input.y1 + input.x2) % input.y2;
+    return {...input, x3: 0n, y3, selEq0:0n, selEq1: 0n, selEq2: 0n, selEq3: 0n, selEq4: 0n, selEq5: 0n, selEq6: 1n};
 }
 
 const input = [
@@ -178,7 +183,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -194,7 +199,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -210,7 +215,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -226,7 +231,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -242,7 +247,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -258,7 +263,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -274,7 +279,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -290,7 +295,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -306,7 +311,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -322,7 +327,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -338,7 +343,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -354,7 +359,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -370,7 +375,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -386,7 +391,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -402,7 +407,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -418,7 +423,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -434,7 +439,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -450,7 +455,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -466,7 +471,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -482,7 +487,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -498,7 +503,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -514,7 +519,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -530,7 +535,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -546,7 +551,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -562,7 +567,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -578,7 +583,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -594,7 +599,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -610,7 +615,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -626,7 +631,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -642,7 +647,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -658,7 +663,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -674,7 +679,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -690,7 +695,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -706,7 +711,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -722,7 +727,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -738,7 +743,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -754,7 +759,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -770,7 +775,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -786,7 +791,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -802,7 +807,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -818,7 +823,7 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 1n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -834,7 +839,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -850,7 +855,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -866,7 +871,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -882,7 +887,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -898,7 +903,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -914,7 +919,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -930,7 +935,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -946,7 +951,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -962,7 +967,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -978,7 +983,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -994,7 +999,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1010,7 +1015,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1026,7 +1031,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1042,7 +1047,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1058,7 +1063,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1074,7 +1079,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1090,7 +1095,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1106,7 +1111,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1122,7 +1127,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1138,7 +1143,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1154,7 +1159,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1170,7 +1175,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1186,7 +1191,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1202,7 +1207,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1218,7 +1223,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1234,7 +1239,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1250,7 +1255,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1266,7 +1271,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1282,7 +1287,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1298,7 +1303,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1314,7 +1319,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1330,7 +1335,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1346,7 +1351,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1362,7 +1367,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1378,7 +1383,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1394,7 +1399,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1410,7 +1415,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1426,7 +1431,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1442,7 +1447,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1458,7 +1463,7 @@ const input = [
         selEq0: 0n,
         selEq1: 1n,
         selEq2: 0n,
-        selEq3: 1n,
+        selEq3: 0n,
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
@@ -1497,8 +1502,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1512,8 +1517,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1527,8 +1532,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1542,8 +1547,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1557,8 +1562,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1572,8 +1577,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1587,8 +1592,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1602,8 +1607,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1617,8 +1622,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1632,8 +1637,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1647,8 +1652,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1662,8 +1667,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1677,8 +1682,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1692,8 +1697,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1707,8 +1712,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1722,8 +1727,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1737,8 +1742,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1752,8 +1757,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1767,8 +1772,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1782,8 +1787,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1797,8 +1802,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1812,8 +1817,8 @@ const input = [
         selEq0: 0n,
         selEq1: 0n,
         selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 1n,
+        selEq3: 1n,
+        selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
     },
@@ -1829,8 +1834,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1844,8 +1849,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1859,8 +1864,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1874,8 +1879,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1889,8 +1894,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1904,8 +1909,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1919,8 +1924,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1934,8 +1939,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1949,8 +1954,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1964,8 +1969,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1979,8 +1984,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -1994,8 +1999,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2009,8 +2014,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2024,8 +2029,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2039,8 +2044,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2054,8 +2059,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2069,8 +2074,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2084,8 +2089,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2099,8 +2104,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2114,8 +2119,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2129,8 +2134,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     {
@@ -2144,8 +2149,8 @@ const input = [
         selEq1: 0n,
         selEq2: 0n,
         selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 1n,
+        selEq4: 1n,
+        selEq5: 0n,
         selEq6: 0n,
     },
     // Complex subtraction tests
@@ -2161,8 +2166,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 19056371982582167475593876340225319134850470258276413387066558886464698322210n,
@@ -2176,8 +2181,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 17439296149470651955399191622773763934734095199211718365410414983381309759864n,
@@ -2191,8 +2196,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 10474021739025925932785928731057203470917859260988012564714012471518727308608n,
@@ -2206,8 +2211,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 13035654309185072747007684899608188564738180212873843624120098867068659728379n,
@@ -2221,8 +2226,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 2461466524536061550339181353212015521462274663804793738545776528032343767724n,
@@ -2236,8 +2241,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 138826511351159327237431406645218469792228779423591846788088579129301438600n,
@@ -2251,8 +2256,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 19480032858599349237783739348857222898900985826623279208013807997533177831349n,
@@ -2266,8 +2271,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 8279176438218218101317736458812046719029759513136611258705774745931768461256n,
@@ -2281,8 +2286,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 21013165940349711590804640157754084232415898489763484115487409886935251766813n,
@@ -2296,8 +2301,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 7802749448203350996553316612407949749581043505762467160361662239145921287212n,
@@ -2311,8 +2316,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 3213816781616397671686965302147637570172145420338600032641393742383178340709n,
@@ -2326,8 +2331,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 0n,
@@ -2341,8 +2346,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 8185294398670857206588387453006456912211107202444686619085770886559782939833n,
@@ -2356,8 +2361,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 19161049757122130269379804349801115723326823420863114519014390733160342246998n,
@@ -2371,8 +2376,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 20530596605376994910007569173016238557447322979422639258302340622059080394453n,
@@ -2386,8 +2391,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: pBN254 - 1n,
@@ -2401,8 +2406,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: limit - 1n,
@@ -2416,8 +2421,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: limit - 1n,
@@ -2431,8 +2436,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: limit - 1n,
@@ -2446,8 +2451,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 0n,
@@ -2461,8 +2466,8 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
     {
         x1: 0n,
@@ -2476,9 +2481,219 @@ const input = [
         selEq2: 0n,
         selEq3: 0n,
         selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 1n,
+        selEq5: 1n,
+        selEq6: 0n,
     },
+    // Modular arithmetic tests
+	{
+		...modArith({
+			x1:28412251859617856565916545308021261525338497374340879241208827143819663421176n,
+			y1:27013823660747016385382266003340734373471772167128950658741524931377488941911n,
+			x2:105569212652913171972673762937719578064890232589262581309421673662773379974849n,
+			y2:100063198834903007162703478902705185168662071695608152618741881551084412694682n,
+		})
+	},
+	{
+		...modArith({
+			x1:25937020722514455069548461221773039614375142766480958501369146952201428769106n,
+			y1:17859893910030526839505286541590321532994164161596466834281518920106704789812n,
+			x2:98521214169739519375843094294239669255442827977290851258207495127284865606614n,
+			y2:49295381812205892790758137593734392435737619243122918152330202795351675183136n,
+		})
+	},
+	{
+		...modArith({
+			x1:55249526657251277154383458858904546219254061806133066197549990615793126401380n,
+			y1:34613983063895737215471589216321153486825555657890202853081921832874335117267n,
+			x2:6554761644304878499134454842403871167160189857669123957629253572028135354689n,
+			y2:36948475467834567510381857067123718041554448239488027503994760278930648872420n,
+		})
+	},
+	{
+		...modArith({
+			x1:59050911625899372011719783733016165719803247393319589206325956204297778824602n,
+			y1:98605411396962788029981565148860376759654028565124451173848293550233954618827n,
+			x2:76372338208444005038748317463994340795682579086202564745269751826085405250012n,
+			y2:17341495923038380258705270765473683118438092668360091289929085482008843290679n,
+		})
+	},
+	{
+		...modArith({
+			x1:22580020663247363117072426093190236889904086110877700978075601264335391713504n,
+			y1:47311389586684409663417046742753273440495425700850509275969950111968212401454n,
+			x2:11622148840550382411002286083712266765247060499429359982071829040404806539087n,
+			y2:42698019694454869038271446049612900955148460398321286958597319059972834776873n,
+		})
+	},
+	{
+		...modArith({
+			x1:93238277830528996718089203226802211457939687445666496907828084474986797155110n,
+			y1:35542606880224033283786011112097177885973029853494773368003101882528089321949n,
+			x2:114574806974336494289233340625580103740210566690935661361573769569277793223044n,
+			y2:33920407473309348793528883120049098129361710216704365783742746009846470328094n,
+		})
+	},
+	{
+		...modArith({
+			x1:99222303421049829433153109472090137431784833962205015704948313263206903894244n,
+			y1:98246578160478885607773739797762788511074259929955541953625250529777134162497n,
+			x2:56982910748597874541753901355148362707370425569231119843151260289858712746436n,
+			y2:97856589633450350859839782357367346227415799776300845772971860049088003357399n,
+		})
+	},
+	{
+		...modArith({
+			x1:104283213015166866248031435780382207451855747775094444448913638021007419005641n,
+			y1:29963663685880405028555079137076138041189429537662586214765273763923850673232n,
+			x2:25113052474659464339281229828060861727584498602556452691302986760895498605827n,
+			y2:77773488568653095987784784380862108453484737344511229312088778825275653756350n,
+		})
+	},
+	{
+		...modArith({
+			x1:14682983277668363797792785972647570759024213074505234672600079146460417605881n,
+			y1:115218319116600069252033190863903210869672127522662516324322279929166890214938n,
+			x2:89080640125826426803961978002784486356356735025739476745618463942148648798656n,
+			y2:73138709325761060616896295096669265397940778038688884592389840975222450936774n,
+		})
+	},
+	{
+		...modArith({
+			x1:12173788218977203040336553183227183684806381773248469496452908552404536102287n,
+			y1:104863777445457030849196607193667668919045301454212878979525138905880526676589n,
+			x2:104681763070820442861816012445938412865172607325264956784786609052622381668442n,
+			y2:86763235143642141480529316026142686616752336151503593938037540421163904408701n,
+		})
+	},
+	{
+		...modArith({
+			x1:153173309081637304925337829221933322978149459900257621717163568441042862103n,
+			y1:49116142624175510955310965810119728203596527398760109568331779389853344345926n,
+			x2:47176813751773646077969024700268321563611267013460414630870497147967389027397n,
+			y2:48419185945762034018650701837901239245021345875327020899545443468515923193534n,
+		})
+	},
+	{
+		...modArith({
+			x1:114403338888328845568945529223123574886672924515037291616851014539856830934467n,
+			y1:14955041280210970073839087381377067199916044093454727606959770738855887959615n,
+			x2:22390940190435445784503684410855078186179276075092771913449315804974398836854n,
+			y2:98006375425489432066184939799987076046635791947555899062907720728927715117228n,
+		})
+	},
+	{
+		...modArith({
+			x1:42401433246290911359563038040231713395575705245356376332693871120794423769860n,
+			y1:66901117072888090723352721087701495034766084203766641266363752029366777763631n,
+			x2:10704036537611859825739240040163276607449070056290771420148189588858947648739n,
+			y2:28798258767744981606567737657401980429919114322523154304432281587505620995046n,
+		})
+	},
+	{
+		...modArith({
+			x1:18819888649660846249321074537151567142736807961573209288818341332734708040190n,
+			y1:87813493569273606306723889424900112514738923305759981031601732768242758512309n,
+			x2:36715534675533204762663978169420450532535982643082507939386889249463576594446n,
+			y2:83680445325555055893391016013013421611387726237350796183786645998532626909069n,
+		})
+	},
+	{
+		...modArith({
+			x1:107923068177616530763702270055579065892251635944497740796600193814053099711902n,
+			y1:40660728200568157601555966797950719905777193630424169702446031886792138806204n,
+			x2:37222773399079578692569259512712112084742078068123240522536753928620529157840n,
+			y2:12671101216615345713676290027103335224066416987280118558827576548180218733035n,
+		})
+	},
+	{
+		...modArith({
+			x1:24994914449488363569465643980318130267056295659606183018746457090671054409399n,
+			y1:54908350065827087239217463653513341766719581569394464738829281915183484878006n,
+			x2:83257466412661778368239696432118582722250151302636902703957141937352537259087n,
+			y2:34475464069652149000966104782337314747334182598543029364997970259542725356721n,
+		})
+	},
+	{
+		...modArith({
+			x1:25032383981380462123330249009799055346490132133414168674474550135820799284945n,
+			y1:95511306482545854647751095840378354010006936275376717572589930848934535942348n,
+			x2:6443311243269639197115841482963199871575920899768669206742694499251623921723n,
+			y2:63751134856470493219992720268579339940007832815034250070987993376925281759401n,
+		})
+	},
+	{
+		...modArith({
+			x1:10039077928091834299920035751097973163248491812460189212453281896278295979626n,
+			y1:1102854341966036727340285720522492899683700021954935980604545065806002824856n,
+			x2:86708415630383371729537249310184781217663961655156616892056484405033549621068n,
+			y2:1696520273338969092670384151868054712826342698040871980974858846616549425236n,
+		})
+	},
+	{
+		...modArith({
+			x1:99843808537409298898975641355319646628673625239742172144045435416692645035289n,
+			y1:24503038217600697495726597993984487678322960128796048495567641796453446425994n,
+			x2:54154536710486736866701563616343156033389124782658890482860571160111731097709n,
+			y2:42136229593645023521439794685680630650836783745910983386008565650859278039425n,
+		})
+	},
+	{
+		...modArith({
+			x1:31997732120071063268458875560211312170003166607685989713913712537742161608339n,
+			y1:68953416910750365039139708644150455621711991573926473956379687638978832321889n,
+			x2:31010181075790710432315127921275560367015889479805700118808838729284631352523n,
+			y2:32641501738515140233833155199658905399515749467137520434913372664401571560570n,
+		})
+	},
+	{
+		...modArith({
+			x1:4469543454582892968080608386033692557283769627514156704794683078377174259947n,
+			y1:94275470112169766146692198080398804804128610083097095742766589506548776467067n,
+			x2:72058634786345972027422413014117150405312597437561027959016713003113677040302n,
+			y2:19676755553538843491181821587808589559299492444980236908834277822823331255607n,
+		})
+	},
+	{
+		...modArith({
+			x1:115707558115680783159511941885988809655123129909147687981377958615708731186538n,
+			y1:39017164560344154191131497156019215306728516199871572681917435010658958936638n,
+			x2:77107495096421711681193428394967613966299405099026449869443364184685219860330n,
+			y2:107259466138953635895284775242617179844958972916716262025661941409952128540346n,
+		})
+	},
+	{
+		...modArith({
+			x1:97851020978990620909991977549952192801182496814044946022420457696280846519911n,
+			y1:82487257793418514491068621685011592427270643152997159057719456300426839202474n,
+			x2:99136000580470453845598459917192454258272003246567563205910371611477626018021n,
+			y2:87292749982868168138804468123888262233448278323462720382841810298862347042535n,
+		})
+	},
+	{
+		...modArith({
+			x1:32156757581249298967812864499691436845287166515616248671251238573154188123201n,
+			y1:84286893272082260861093068624763888214607790982451808947730845682645352714770n,
+			x2:43086326828050167259275798864698068082038792999572772055579342387306898907475n,
+			y2:111072748276804264558769903516399614554459772816144476414847111901162157946638n,
+		})
+	},
+	{
+		...modArith({
+			x1:48866692921558129427747202684179982498352032534691364735380912741811357180723n,
+			y1:16210595590465329122557753704636355159596994974436009156484479260538738680699n,
+			x2:19396683271269522427067023239525126140652735250322767688956205219392651402460n,
+			y2:75443968619978277048164790519483407622388894602899933916683569199411107643400n,
+		})
+	},
+        // Worst quotient case
+	{
+		...modArith({
+			x1:115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+			y1:115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+			x2:115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+			y2:2n,
+		})
+	},
 ];
 
 const inputWithAlias = [
@@ -2785,31 +3000,204 @@ function to32bitsRegisters(value) {
 
 async function loadPil(pilFile) {
     const pil = await compile(Fr, pilFile, null, {defines: { N: 2 ** 22 }});
-/*
-    pilLines = fs.readFileSync(pilFile, 'utf8').split("\n");
-    const RANGE_SEL_ID = constPols.$$def.Arith.RANGE_SEL.id;
-    lines[0] = pil.plookupIdentities.filter(x => x.t.length == 2 && pil.expressions[x.t[0]].id == RANGE_SEL_ID &&  pil.expressions[x.t[0]].op == 'const')[0].line;
-    lines[1] = pilLines.findIndex(x => x.replace(/\s/g, '') === "xAreDifferent'=xAreDifferent*(1-Global.CLK32[0]-Global.CLK32[16])+xChunkDifferent;")+1;
-    lines[2] = pilLines.findIndex(x => x.replace(/\s/g, '') === "(valueLtPrime'-selEq[3])*(Global.CLK32[15]+Global.CLK32[31])=0;")+1;
-*/
     // remove all lookups to signed 22 bits, 19 bits to used N 2**18
+    // pilLines = fs.readFileSync(pilFile, 'utf8').split("\n");
+    // const RANGE_SEL_ID = constPols.$$def.Arith.RANGE_SEL.id;
+    // lines[0] = pil.plookupIdentities.filter(x => x.t.length == 2 && pil.expressions[x.t[0]].id == RANGE_SEL_ID &&  pil.expressions[x.t[0]].op == 'const')[0].line;
+    // lines[1] = pilLines.findIndex(x => x.replace(/\s/g, '') === "xAreDifferent'=xAreDifferent*(1-Global.CLK32[0]-Global.CLK32[16])+xChunkDifferent;")+1;
+    // lines[2] = pilLines.findIndex(x => x.replace(/\s/g, '') === "(valueLtPrime'-selEq[3])*(Global.CLK32[15]+Global.CLK32[31])=0;")+1;
+
     const GL_SIGNED_22BITS_ID = pil.references['Arith.GL_SIGNED_22BITS'].id;
-    const BYTE2_BIT19 = pil.references['Arith.BYTE2_BIT19'].id;
+    const BYTE2_BIT19 = pil.references['Arith.BYTE2_BIT21'].id;
     pil.plookupIdentities = pil.plookupIdentities.filter(x => !x.t.some(id => ([BYTE2_BIT19, GL_SIGNED_22BITS_ID].includes(pil.expressions[id].id) &&  pil.expressions[id].op == 'const')));
     return pil;
 }
 
-describe("test plookup operations", async function () {
+describe("Arithmetic state machines tests", async function () {
     this.timeout(10000000);
 
-    it("It should create the pols of two programs and verify the pil", async () => {
-        const pil = await loadPil("pil/arith.pil");
-        constPols = newConstantPolsArray(pil);
-        cmPols = newCommitPolsArray(pil);
+    function executeMain(pols, input) {
+        const N = pols.arith.length;
+
+        for (let i = 0; i < N; ++i) {
+            for (let j = 0; j < 8; ++j) {
+                pols.A[j][i] = 0n;
+                pols.B[j][i] = 0n;
+                pols.C[j][i] = 0n;
+                pols.D[j][i] = 0n;
+                pols.E[j][i] = 0n;
+                pols.op[j][i] = 0n;
+            }
+            pols.arith[i] = 0n;
+            pols.arithEquation[i] = 0n;
+            pols.arithSame12[i] = 0n;
+            pols.arithUseE[i] = 0n;
+        }
+        for (let i = 0; i < input.length; ++i) {
+            for (let j = 0; j < 8; j++) {
+                pols.A[j][i] = BigInt(input[i]["x1"][j]);
+                pols.B[j][i] = BigInt(input[i]["y1"][j]);
+                pols.C[j][i] = BigInt(input[i]["x2"][j]);
+                pols.D[j][i] = BigInt(input[i]["y2"][j]);
+                pols.E[j][i] = BigInt(input[i]["x3"][j]);
+                pols.op[j][i] = BigInt(input[i]["y3"][j]);
+            }
+
+            if (input[i].selEq0) {
+                pols.arithEquation[i] = 1n;
+            } else if (input[i].selEq1) {
+                pols.arithEquation[i] = 2n;
+            } else if (input[i].selEq2) {
+                pols.arithEquation[i] = 3n;
+            } else if (input[i].selEq3) {
+                pols.arithEquation[i] = 4n;
+            } else if (input[i].selEq4) {
+                pols.arithEquation[i] = 5n;
+            } else if (input[i].selEq5) {
+                pols.arithEquation[i] = 6n;
+            } else if (input[i].selEq6) {
+                pols.arithEquation[i] = 7n;
+            }
+
+            pols.arith[i] = 1n;
+            pols.arithUseE[i] = (pols.arithEquation[i] === 1n || pols.arithEquation[i] === 7n) ? 0n : 1n;
+            pols.arithSame12[i] = (pols.arithEquation[i] === 3n) ? 1n : 0n;
+        }
+    }
+
+    async function generatePols(F, input) {
+        const pilCode = `
+        include "pil/global.pil";
+        include "pil/arith.pil";
+
+        namespace Main(%N);
+
+        pol commit A[8];
+        pol commit B[8];
+        pol commit C[8];
+        pol commit D[8];
+        pol commit E[8];
+        pol commit op[8];
+
+        pol commit arith, arithEquation, arithSame12, arithUseE;
+
+        pol ax1_0 = Arith.x1[0] + Arith.x1[1]*2**16;
+        pol ax1_1 = Arith.x1[2] + Arith.x1[3]*2**16;
+        pol ax1_2 = Arith.x1[4] + Arith.x1[5]*2**16;
+        pol ax1_3 = Arith.x1[6] + Arith.x1[7]*2**16;
+        pol ax1_4 = Arith.x1[8] + Arith.x1[9]*2**16;
+        pol ax1_5 = Arith.x1[10] + Arith.x1[11]*2**16;
+        pol ax1_6 = Arith.x1[12] + Arith.x1[13]*2**16;
+        pol ax1_7 = Arith.x1[14] + Arith.x1[15]*2**16;
+
+        pol ay1_0 = Arith.y1[0] + Arith.y1[1]*2**16;
+        pol ay1_1 = Arith.y1[2] + Arith.y1[3]*2**16;
+        pol ay1_2 = Arith.y1[4] + Arith.y1[5]*2**16;
+        pol ay1_3 = Arith.y1[6] + Arith.y1[7]*2**16;
+        pol ay1_4 = Arith.y1[8] + Arith.y1[9]*2**16;
+        pol ay1_5 = Arith.y1[10] + Arith.y1[11]*2**16;
+        pol ay1_6 = Arith.y1[12] + Arith.y1[13]*2**16;
+        pol ay1_7 = Arith.y1[14] + Arith.y1[15]*2**16;
+
+        pol ax2_0 = Arith.x2[0] + Arith.x2[1]*2**16;
+        pol ax2_1 = Arith.x2[2] + Arith.x2[3]*2**16;
+        pol ax2_2 = Arith.x2[4] + Arith.x2[5]*2**16;
+        pol ax2_3 = Arith.x2[6] + Arith.x2[7]*2**16;
+        pol ax2_4 = Arith.x2[8] + Arith.x2[9]*2**16;
+        pol ax2_5 = Arith.x2[10] + Arith.x2[11]*2**16;
+        pol ax2_6 = Arith.x2[12] + Arith.x2[13]*2**16;
+        pol ax2_7 = Arith.x2[14] + Arith.x2[15]*2**16;
+
+        pol ay2_0 = Arith.y2[0] + Arith.y2[1]*2**16;
+        pol ay2_1 = Arith.y2[2] + Arith.y2[3]*2**16;
+        pol ay2_2 = Arith.y2[4] + Arith.y2[5]*2**16;
+        pol ay2_3 = Arith.y2[6] + Arith.y2[7]*2**16;
+        pol ay2_4 = Arith.y2[8] + Arith.y2[9]*2**16;
+        pol ay2_5 = Arith.y2[10] + Arith.y2[11]*2**16;
+        pol ay2_6 = Arith.y2[12] + Arith.y2[13]*2**16;
+        pol ay2_7 = Arith.y2[14] + Arith.y2[15]*2**16;
+
+        pol ax3_0 = Arith.x3[0] + Arith.x3[1]*2**16;
+        pol ax3_1 = Arith.x3[2] + Arith.x3[3]*2**16;
+        pol ax3_2 = Arith.x3[4] + Arith.x3[5]*2**16;
+        pol ax3_3 = Arith.x3[6] + Arith.x3[7]*2**16;
+        pol ax3_4 = Arith.x3[8] + Arith.x3[9]*2**16;
+        pol ax3_5 = Arith.x3[10] + Arith.x3[11]*2**16;
+        pol ax3_6 = Arith.x3[12] + Arith.x3[13]*2**16;
+        pol ax3_7 = Arith.x3[14] + Arith.x3[15]*2**16;
+
+        pol ay3_0 = Arith.y3[0] + Arith.y3[1]*2**16;
+        pol ay3_1 = Arith.y3[2] + Arith.y3[3]*2**16;
+        pol ay3_2 = Arith.y3[4] + Arith.y3[5]*2**16;
+        pol ay3_3 = Arith.y3[6] + Arith.y3[7]*2**16;
+        pol ay3_4 = Arith.y3[8] + Arith.y3[9]*2**16;
+        pol ay3_5 = Arith.y3[10] + Arith.y3[11]*2**16;
+        pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
+        pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
+
+        arith {
+            arithEquation,
+            A[0], A[1], A[2], A[3], A[4], A[5], A[6], A[7],
+            B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7],
+            arithSame12 * (A[0] - C[0]) + C[0], // This should be A iff EQ2 (point doubling)
+            arithSame12 * (A[1] - C[1]) + C[1],
+            arithSame12 * (A[2] - C[2]) + C[2],
+            arithSame12 * (A[3] - C[3]) + C[3],
+            arithSame12 * (A[4] - C[4]) + C[4],
+            arithSame12 * (A[5] - C[5]) + C[5],
+            arithSame12 * (A[6] - C[6]) + C[6],
+            arithSame12 * (A[7] - C[7]) + C[7],
+            arithSame12 * (B[0] - D[0]) + D[0], // This should be B iff EQ2 (point doubling)
+            arithSame12 * (B[1] - D[1]) + D[1],
+            arithSame12 * (B[2] - D[2]) + D[2],
+            arithSame12 * (B[3] - D[3]) + D[3],
+            arithSame12 * (B[4] - D[4]) + D[4],
+            arithSame12 * (B[5] - D[5]) + D[5],
+            arithSame12 * (B[6] - D[6]) + D[6],
+            arithSame12 * (B[7] - D[7]) + D[7],
+            arithUseE * E[0], // This must be deactivated in EQ0 and EQ11 (standard and modular arith)
+            arithUseE * E[1],
+            arithUseE * E[2],
+            arithUseE * E[3],
+            arithUseE * E[4],
+            arithUseE * E[5],
+            arithUseE * E[6],
+            arithUseE * E[7],
+            op[0], op[1], op[2], op[3], op[4], op[5], op[6], op[7] } is
+        Arith.resultEq {
+            Arith.selEq[0] + 2 * Arith.selEq[1] + 3 * Arith.selEq[2] + 4 * Arith.selEq[3] + 5 * Arith.selEq[4] + 6 * Arith.selEq[5] + 7 * Arith.selEq[6],
+            ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
+            ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
+            ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
+            ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_0,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_1,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_2,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_3,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_4,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_5,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_6,
+            (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_7,
+            ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
+        };`;
+
+        const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 23}});
+        const constPols = newConstantPolsArray(pil);
+        const cmPols = newCommitPolsArray(pil);
 
         await global.buildConstants(constPols.Global);
         await arith.buildConstants(constPols.Arith);
-        await arith.execute(cmPols.Arith, prepareInput32bits(input));
+
+        const splitInput = prepareInput32bits(input)
+
+        executeMain(cmPols.Main, splitInput);
+
+        await arith.execute(cmPols.Arith, splitInput);
+        return [pil, cmPols, constPols];
+    }
+
+    it("It should check the main-arith permutation and the arith constraints", async () => {
+        const [pil, cmPols, constPols] = await generatePols(Fr, input);
 
         const res = await verifyPil(Fr, pil, cmPols, constPols, {continueOnError: true});
 
@@ -2822,7 +3210,7 @@ describe("test plookup operations", async function () {
         }
     });
 
-    it("It should create the pols of two programs and fail the pil verification", async () => {
+    it("It should fail since some of the inputs are not lower than the expecti field order", async () => {
         const pil = await loadPil("pil/arith.pil");
         constPols = newConstantPolsArray(pil);
         cmPols = newCommitPolsArray(pil);

@@ -110,26 +110,32 @@ function calculateLimits(limits, qs)
         let terms = eqInfo.terms.slice();
 
         // obtain information about q term
-        let qterm = terms.find(x => qs.includes(x)) ?? false;
-        let qsign = false;
-        if (qterm !== false) {
+        let qterms = terms.filter(x => qs.includes(x));
+        let qsigns = Array(qterms.length).fill(false);
+        for ([i, qterm] of qterms.entries()) {
             for (const prod of prods) {
                 if (prod.includes(qterm)) {
-                    qsign = (prod.slice(-1)[0].slice(0,1) === '-') ? '-':'+';
+                    qsigns[i] = (prod.slice(-1)[0].slice(0,1) === '-') ? '-':'+';
                     break;
                 }
             }
-            if (qsign === false) {
+
+            if (qsigns[i] === false) {
                 if (sums.includes(qterm)) {
-                    qsign = '+';
+                    qsigns = '+';
                 } else if (sums.includes('-'+qterm)) {
-                    qsign = '-';
+                    qsigns = '-';
                 }
             }
-            eqInfo.q = qsign+qterm;
-            eqInfo.qterm = qterm;
-            eqInfo.qsign = qsign;
         }
+        eqInfo.qs = qterms.map((x, index) => qsigns[index]+x);
+        eqInfo.qterms = qterms;
+        eqInfo.qsigns = qsigns;
+
+        if (eqIndex === 11) {
+            eqInfo.constants.p = max256bits;
+        }
+
         for (let step = 0; step < 6; ++step) {
             // step 0 - natural limits
             // step 1 - map carry limits
@@ -137,20 +143,20 @@ function calculateLimits(limits, qs)
             // step 3 - calculate q last chunk (assume inputs values alias free)
             // step 4 - calculate offset
             // step 5 - calculate q last chunk with calculated offset
-            
+
             let sts = step < 2 ?  { carry: {min: false, max: false}, eq: {min: false, max: false}, step } :
                                   { eqtot: {min: false, max: false, _min: false, _max: false}, q: {min: false, max: false, bits: false} };
-            if (step > 1 && qterm == false) break;
+            if (step > 1 && !qterms.length) break;
             stats.push(sts);
 
             let index = 0;
             let res;
             if (step < 2) {
-                while ((res = index2aindex(index, lengths)) !== false) {      
-                    // load on pols chunk values specified in res (array of limits index)          
+                while ((res = index2aindex(index, lengths)) !== false) {
+                    // load on pols chunk values specified in res (array of limits index)
                     let pols = terms.reduce((_pols, term, index) =>  { _pols[term] = valueToChunks(limits[term][res[index]]).map(x => [x]); return _pols;}, {});
                     let carry = 0n;
-                    for (let clk = 0; clk < 32; ++clk) {               
+                    for (let clk = 0; clk < 32; ++clk) {
                         let eqv = calculate(pols, clk, 0);
                         if (step === 1) {
                             // assume worse case of carry
@@ -164,19 +170,21 @@ function calculateLimits(limits, qs)
                         if (sts.carry.max === false || sts.carry.max < carry) sts.carry.max = carry;
                     }
                     ++index;
-                } 
+                }
             } else {
-                let plimit = step !== 3 || typeof eqInfo.constants.p === 'undefined' ? false : (eqInfo.constants.p - 1n);
-                while ((res = index2aindex(index, lengths)) !== false) {                
-                    // load on pols values specified in res (array of limits index)          
-                    let values = terms.reduce((_values, term, index) =>  { 
-                            const limit = limits[term][res[index]]; 
-                            _values[term] = (plimit === false || plimit > limit)? limit:plimit; 
+                let plimit = (step !== 3 || (typeof eqInfo.constants.p === 'undefined')) ? false : eqInfo.constants.p - 1n;
+                while ((res = index2aindex(index, lengths)) !== false) {
+                    // load on pols values specified in res (array of limits index)
+                    let values = terms.reduce((_values, term, index) =>  {
+                            const limit = limits[term][res[index]];
+                            _values[term] = (plimit === false || plimit > limit)? limit:plimit;
                             return _values;
                         }, {});
 
-                    // setting qterm to zero.
-                    values[qterm] = 0n;
+                    // setting qterms to zero.
+                    for (qterm of qterms) {
+                        values[qterm] = 0n;
+                    }
 
                     // adding constants as variables
                     let valuesAndConstants = {...values, ...eqInfo.constants};
@@ -194,7 +202,7 @@ function calculateLimits(limits, qs)
                     ++index;
                 }
                 if (step === 4) {
-                    sts.q.max = sts.eqtot.max / eqInfo.constants.p;                
+                    sts.q.max = sts.eqtot.max / eqInfo.constants.p;
                     sts.q.min = sts.eqtot.min / eqInfo.constants.p;
                     sts.q.maxSign = sts.q.max < 0n ? '-':'+';
                     sts.q.minSign = sts.q.min < 0n ? '-':'+';
@@ -214,32 +222,32 @@ function calculateLimits(limits, qs)
                     eqInfo.offset = sts.offset;
                     let _prods = [];
                     if (sts.offset < 0n) {
-                        _prods = [['p', 'offset', '-'], ['p', qterm]];
+                        _prods = [['p', 'offset', '-'], ['p', ...qterms]];
                     }
                     else {
-                        _prods = [['p', 'offset'], ['p', qterm, '-']];
+                        _prods = [['p', 'offset'], ['p', ...qterms, '-']];
                     }
-                    eqInfo._prods = [...eqInfo.prods.filter(x => x.includes('offset') === false && x.includes(qterm) === false),..._prods];
+                    eqInfo._prods = [...eqInfo.prods.filter(x => x.includes('offset') === false && x.some(y => qterms.includes(y) === false)), ..._prods];
                 } else {
-                    sts.q.max = sts.eqtot.max / eqInfo.constants.p;                
+                    sts.q.max = sts.eqtot.max / eqInfo.constants.p;
                     sts.q.min = sts.eqtot.min / eqInfo.constants.p;
                     sts.q.bits = Math.max(log2(sts.q.max), log2(sts.q.min));
                     sts.q15bits = Math.max(sts.q.bits-240, 16);
                 }
             }
         }
-        tdata[0].push([eqInfo.name, eqInfo.equation, eqInfo.q, 
+        tdata[0].push([eqInfo.name, eqInfo.equation, ...eqInfo.qs,
                        eqInfo.constants.offset ? '0x' + eqInfo.constants.offset.toString(16):'',
                        eqInfo.constants.offset ? log2(eqInfo.constants.offset):'',
                        eqInfo.constants.p ? '0x' + eqInfo.constants.p.toString(16):'',
                        eqInfo.constants.p ? log2(eqInfo.constants.p):'']);
 
         tdata[1].push([eqInfo.name,
-                       stats[0].eq.min, log2, stats[0].eq.max, log2, 
+                       stats[0].eq.min, log2, stats[0].eq.max, log2,
                        stats[0].carry.min, log2, stats[0].carry.max, log2,
                        stats[1].eq.min, log2, stats[1].eq.max, log2]);
 
-        
+
         if (stats[2]) {
             tdata[2].push([eqInfo.name,
                            log2(stats[2].eqtot.min), log2(stats[2].eqtot.max),
@@ -249,13 +257,13 @@ function calculateLimits(limits, qs)
         }
         if (stats[4]) {
             tdata[3].push([eqInfo.name,
-                           stats[4].q.minSign+stats[4].q.maxSign, 
-                           stats[4].offsetSign+'0x'+(stats[4].offset < 0n ? -stats[4].offset:stats[4].offset).toString(16), 
+                           stats[4].q.minSign+stats[4].q.maxSign,
+                           stats[4].offsetSign+'0x'+(stats[4].offset < 0n ? -stats[4].offset:stats[4].offset).toString(16),
                            log2(stats[4].offset),
                            log2(stats[5].eqtot.min), log2(stats[5].eqtot.max),
                            log2(stats[5].q.min), log2(stats[5].q.max), stats[5].q15bits]);
         }
-                                 
+
     }
     const titles = ['id', 'equation', 'q', 'eq.min','b','eq.max','b','carry.min','b','carry.max','b',`eq.min+c${cbits[0]}`,'b',`eq.max+c${cbits[1]}`,'b',
                     'tmin.b','tmax.b','qmin.b','qmax.b','q15.b', 'tpmin.b','tpmax.b','qpmin.b','qpmax.b','qp15.b',];
