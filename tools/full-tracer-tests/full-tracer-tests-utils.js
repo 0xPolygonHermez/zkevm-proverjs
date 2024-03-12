@@ -53,7 +53,6 @@ async function checkBlockInfoRootsFromTrace(testName) {
             if (l2TxHash !== response.tx_hash_l2) {
                 throw new Error(`L2 tx hash mismatch at block ${i} tx ${j}`);
             }
-            const status = response.error === '' ? 1 : 0;
             const logs = [];
             for (let k = 0; k < response.logs.length; k++) {
                 logs.push([[], response.logs[k].topics, response.logs[k].data.reduce((previousValue, currentValue) => previousValue + currentValue.toString('hex'), '')]);
@@ -64,7 +63,7 @@ async function checkBlockInfoRootsFromTrace(testName) {
                 j,
                 logs,
                 logIndex,
-                status,
+                response.status,
                 response.tx_hash_l2,
                 response.cumulative_gas_used,
                 response.effective_percentage,
@@ -122,7 +121,6 @@ async function checkBlockInfoRootsFromProverTrace(joinedTraces) {
             if (l2TxHash !== `0x${response.tx_hash_l2.toString('hex')}`) {
                 throw new Error(`L2 tx hash mismatch at block ${i} tx ${j}`);
             }
-            const status = response.error === 'ROM_ERROR_NO_ERROR' ? 1 : 0;
             const logs = [];
             for (let k = 0; k < response.logs.length; k++) {
                 logs.push([[], response.logs[k].topics, response.logs[k].data.toString('hex')]);
@@ -133,7 +131,7 @@ async function checkBlockInfoRootsFromProverTrace(joinedTraces) {
                 j,
                 logs,
                 logIndex,
-                status,
+                response.status,
                 `0x${response.tx_hash_l2.toString('hex')}`,
                 response.cumulative_gas_used,
                 response.effective_percentage,

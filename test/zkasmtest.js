@@ -10,6 +10,7 @@ const { cwd } = require("process");
 const argv = require("yargs")
     .usage("node zkasmtest filename [-p <pil>] [-P <pilconfig>]")
     .help('h')
+    .alias("A", "all")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("c", "config")
@@ -23,6 +24,7 @@ const argv = require("yargs")
     .alias("d", "debug")
     .alias("s", "stats")
     .alias("H", "helper")
+    .alias("E", "reserved")
     .argv;
 
 async function main(){
@@ -57,6 +59,7 @@ async function main(){
     const constants = argv.constants ? true : false;
     const debug = argv.debug ? true : false;
     const stats = argv.stats ? true : false;
+    const all = argv.all ? true : false;
     let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
@@ -75,10 +78,13 @@ async function main(){
 
     let defaultPilConfig = {
         defines: {N: rows},
-        namespaces,
         verbose,
         color: true,
         disableUnusedError: true
+    }
+    
+    if (!all) {
+        defaultPilConfig.namespaces = namespaces;
     }
 
     let defaultConfig = {
@@ -108,6 +114,9 @@ async function main(){
     const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : (__dirname + "/../pil/main.pil");
     let pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : defaultPilConfig;
     let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultConfig;
+    if (argv.reserved === true) {
+        config = {...config, reserved: true}
+    }
 
     if (externalPilVerification && !outputPath) {
         outputPath = '.';
@@ -150,7 +159,7 @@ async function main(){
         console.log("Debug and constants options are incompatible");
         process.exit(1);
     }
-
+    
     await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
     console.log('Done!');
 }

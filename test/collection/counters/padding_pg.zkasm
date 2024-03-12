@@ -133,6 +133,8 @@
 
     114            :HASHPLEN(E)
 
+    ${dump(E)}
+
     ; if HASHPDIGEST wasn't called, counter not increase
     ; $ => A         :HASHPDIGEST(E)
 
