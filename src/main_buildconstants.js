@@ -36,6 +36,7 @@ const argv = require("yargs")
     .alias("p", "pil")
     .alias("P", "pilconfig")
     .alias("v", "verbose")
+    .alias("b", "blob")
     .argv;
 
 async function run() {
@@ -51,7 +52,9 @@ async function run() {
     const outputFile = argv.output.trim();
     const outputTextDir = argv.text ? (typeof argv.text == 'string' ? argv.text.trim() : ''):false;
 
-    let pilFile = __dirname + "/../pil/main.pil";
+    const blob = argv.blob ? true : false;
+
+    let pilFile = __dirname + `/../pil/main${blob?'_blob':''}.pil`;
     if (argv.pil) {
         if (typeof(argv.pil) !== "string") {
             throw new Error("Pil file needs to be specified with pil option")

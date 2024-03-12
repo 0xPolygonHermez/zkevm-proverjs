@@ -52,6 +52,7 @@ const argv = require("yargs")
     .alias("G", "dbprogramtable")
     .alias("a", "assertOutputs")
     .alias("TO", "tracerOptions")
+    .alias("b", "blob")
     .argv;
 
 async function run() {
@@ -70,6 +71,8 @@ async function run() {
         console.log("Only one input file at a time is permitted");
         process.exit(1);
     }
+    
+    const blob = argv.blob ? true : false;
 
     // parse commandline config sets
 
@@ -87,11 +90,11 @@ async function run() {
     }
 
     const configFiles = {
-        rom: 'rom.json',
+        rom: `rom${blob?'_blob':''}.json`,
         output: undefined,
         logs: false,
         stats: 'program.stats',
-        pil: path.join(__dirname, "/../pil/main.pil"),
+        pil: path.join(__dirname, `/../pil/main${blob?'_blob':''}.pil`),
         pilConfig: false,
     };
 
@@ -101,6 +104,7 @@ async function run() {
         config[confname] = (typeof argv[argname] === 'string' ? argv[argname].trim() : (config[confname] ?? configFiles[name]));
     }
 
+    config.blob = blob;
     if (argv.define) {
         config.defines = config.defines ?? {};
         for (define of argv.define) {
@@ -114,7 +118,7 @@ async function run() {
 
     config.stats = ((argv.stats === true || typeof argv.stats === 'string') ? true : (config.stats ?? false));
     config.stepsN = (typeof argv.stepsN !== 'undefined' ? argv.stepsN : (config.stepsN ?? undefined));
-    config.cachePilFile = config.cachePilFile ?? path.join(__dirname, "../cache-main-pil.json");
+    config.cachePilFile = config.cachePilFile ?? path.join(__dirname, `../cache-main-${blob?'blob-':''}pil.json`);
     config.databaseURL = typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local";
     config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
     config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";

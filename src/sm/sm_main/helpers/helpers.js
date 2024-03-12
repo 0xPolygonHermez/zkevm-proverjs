@@ -15,6 +15,67 @@ module.exports = class myHelper {
      * Compares two unsigned integers represented as arrays of BigInts.
      * @param a - Unsigned integer represented as an array of BigInts.
      * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns i+1 if a > b, -i-1 if a < b, 0 if a == b, where i is the position of the first different chunk.
+     */
+    eval_signedComparison(ctx, tag) {
+        const addr1 = Number(this.evalCommand(ctx, tag.params[0]));
+        const addr2 = Number(this.evalCommand(ctx, tag.params[1]));
+        const len = tag.params[2] ? Number(this.evalCommand(ctx, tag.params[2])) : 1;
+
+        for (let i = len - 1; i >= 0; i--) {
+            const input1i = fea2scalar(ctx.Fr, ctx.mem[addr1 + i]);
+            const input2i = fea2scalar(ctx.Fr, ctx.mem[addr2 + i]);
+
+            if (input1i !== input2i) {
+                return [ctx.Fr.e(input1i < input2i ? -i-1 : i+1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Compares two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns i+1 if a > b, -i-1 if a < b, 0 if a == b, where i is the position of the first different chunk.
+     */
+    eval_signedComparisonWithConst(ctx, tag) {
+        const addr = Number(this.evalCommand(ctx, tag.params[0]));
+        const input = fea2scalar(ctx.Fr, ctx.mem[addr]);
+        const constant = BigInt(this.evalCommand(ctx, tag.params[1]));
+        if (input !== constant) {
+            return [ctx.Fr.e(input < constant ? -1 : 1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Gets the first different chunk between two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
+     * @returns i, where i is the position of the first different chunk.
+     */
+    eval_getFirstDiffChunkRem(ctx, tag) {
+        const addr = Number(this.evalCommand(ctx, tag.params[0]));
+        const len = Number(this.evalCommand(ctx, tag.params[1]));
+        const rem = ctx.remainder;
+
+        for (let i = len - 1; i >= 0; i--) {
+            const inputi = fea2scalar(ctx.Fr, ctx.mem[addr + i]);
+
+            if (inputi[i] !== rem[i]) {
+                return i;
+            }
+        }
+
+        throw new Error("The input and the remainder are equal");
+    }
+
+    /**
+     * Compares two unsigned integers represented as arrays of BigInts.
+     * @param a - Unsigned integer represented as an array of BigInts.
+     * @param b - Unsigned integer represented as an array of BigInts.
      * @returns 1 if a > b, -1 if a < b, 0 if a == b.
      */
     compare(a, b) {
@@ -392,6 +453,21 @@ module.exports = class myHelper {
     ///////////// PAIRINGS
 
     /**
+     * Checks whether the given elements are zero
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
+    eval_checkIfZero(ctx, tag) {
+        const len = tag.params.length;
+        for (let i = 0; i < len; ++i) {
+            if (this.evalCommand(ctx, tag.params[i]) !== 0n) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    /**
      * Computes the inverse of the given Fp element.
      * @param ctx - Context.
      * @param tag - Tag.
@@ -429,5 +505,14 @@ module.exports = class myHelper {
         const den = ctx.FpBN254.add(ctx.FpBN254.mul(a, a), ctx.FpBN254.mul(b, b));
 
         return ctx.FpBN254.div(ctx.FpBN254.neg(b), den);
+    }
+    eval_getPendingRID(ctx, tag) {
+        const rid = Number(this.evalCommand(ctx, tag.params[0]));
+        const _rid = Object.keys(ctx.saved).find(id => id != rid && !ctx.saved[id].restored);
+
+        if (typeof _rid === 'undefined') {
+            return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+        }        
+        return [ctx.Fr.e(_rid), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 };

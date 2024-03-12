@@ -1,0 +1,161 @@
+
+        1 => A
+        2 => B
+        3 => C
+
+        :SAVE(B,C,D,E,RR,RCX)
+        10 => A
+        20 => B
+        30 => C
+        :RESTORE
+            
+        10  :ASSERT
+        B => A
+        2   :ASSERT
+        C => A
+        3   :ASSERT
+
+        1 => A
+        A       :SAVE(B,C,D,E,RR,RCX)
+        10 => A
+        20 => B
+        30 => C
+        $ => A  :RESTORE
+
+        1  :ASSERT
+        B => A
+        2   :ASSERT
+        C => A
+        3   :ASSERT
+
+        32 => A :CALL(f1)
+        128 :ASSERT
+
+        32 => A  :CALL(fact)
+        263130836933693530167218012160000000n :ASSERT
+
+        B => A
+        2   :ASSERT
+        C => A
+        3   :ASSERT
+        :JMP(continueSaveRestoreTest)
+f1:
+        :SAVE(B,C,D,E,RR,RCX)
+        A * 3 => A :CALL(f2)
+        :RESTORE,RETURN
+
+f2:
+        :SAVE(B,C,D,E,RR,RCX)
+        A + 32 => A
+        :RESTORE,RETURN
+
+fact:   
+        :SAVE(B,C,D,E,RR,RCX)
+
+        ; check if direct case (A == 1)
+        1 => B
+        $             :EQ,JMPC(fact_finish)
+
+        ; store current value of A in C
+        A => C
+
+        ; call again to fact with A - 1
+        $ => A        :SUB,CALL(fact)
+        
+        ; A * fact(A - 1)
+        C => B
+        0 => D,C
+        ${A * B} => A :ARITH
+
+fact_finish:        
+        :RESTORE,RETURN
+
+continueSaveRestoreTest:
+
+        A        :SAVE(B,C,D,E,RR,RCX)
+        HASHPOS  :SAVE(B,C,D,E,RR,RCX)
+        ; pending restores     
+
+VAR GLOBAL tmpSaveRestoreB
+        400 => B
+
+        B           :SAVE(B,C,D,E,RR,RCX),MSTORE(tmpSaveRestoreB)
+        10 => B
+        15 => C
+        $ => B      :MLOAD(tmpSaveRestoreB)
+        B + 2 => A
+        B + C => PC :RESTORE
+
+        402         :ASSERT 
+        PC => A
+        415         :ASSERT
+
+        1400 => B
+        100 => A
+        50 => C
+
+        A           :SAVE(B,C,D,E,RR,RCX)
+        
+        B * 2 => C
+        $ + C => A  :RESTORE
+
+        2900        :ASSERT 
+        B => A
+        1400        :ASSERT
+        C => A
+        50          :ASSERT
+
+        %LVALUE_001 => A
+        %LVALUE_002 => B
+        %LVALUE_003 => C
+        %LVALUE_004 => D
+        %LVALUE_005 => E
+        12345 => RR
+        67890 => RCX
+        
+        A :SAVE(B,C,D,E,RR,RCX)
+
+        %LVALUE_006 => A
+        %LVALUE_007 => B
+        %LVALUE_008 => C
+        %LVALUE_009 => D
+        %LVALUE_010 => E
+        310305 => RR
+        360800 => RCX
+
+        $ => A :RESTORE
+            
+        %LVALUE_001 :ASSERT
+
+        B => A
+        %LVALUE_002 :ASSERT
+
+        C => A
+        %LVALUE_003 :ASSERT
+
+        D => A
+        %LVALUE_004 :ASSERT
+        
+        E => A
+        %LVALUE_005 :ASSERT
+
+        RR => A
+        12345       :ASSERT
+
+        RCX => A
+        67890       :ASSERT
+
+VAR GLOBAL lastRID
+clearPedingRestores:
+        A        :SAVE(B,C,D,E,RR,RCX)
+        RID      :MSTORE(lastRID)
+
+clearPedingRestores_loop:
+        ${getPendingRID(mem.lastRID)} => RID    :JMPN(clearPedingRestores_end)
+                                                :RESTORE, JMP(clearPedingRestores_loop)
+
+clearPedingRestores_end:
+        $ => RID         :MLOAD(lastRID)
+                         :RESTORE
+
+        0 => RID

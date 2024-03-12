@@ -1,5 +1,6 @@
 ; constants needed by executor C++
 CONST %N = 2**23
+CONST %MAX_CNT_STEPS = %N
 CONST %MAX_CNT_STEPS_LIMIT = %N
 CONST %MAX_CNT_ARITH_LIMIT = %N
 CONST %MAX_CNT_BINARY_LIMIT = %N
@@ -10,6 +11,7 @@ CONST %MAX_CNT_POSEIDON_G_LIMIT = %N
 
 VAR GLOBAL lastHashKId
 VAR GLOBAL lastHashPId
+VAR GLOBAL lastHashSId
 
 VAR GLOBAL initial_A
 VAR GLOBAL initial_B
@@ -48,11 +50,14 @@ start:
 
         -1          :MSTORE(lastHashKId)
         -1          :MSTORE(lastHashPId)
+        -1          :MSTORE(lastHashSId)
 
+INCLUDE "lvalues.zkasm"
 INCLUDE "counters.zkasm"
 INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
 INCLUDE "fix.zkasm"
+INCLUDE "features.zkasm"
 
 end:
 

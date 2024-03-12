@@ -55,15 +55,17 @@ namespace Main(%N);
     pol commit ind, indRR;
     pol commit useCTX;
     pol commit carry;
+    pol commit assumeFree, free0IsByte;
 
     // operations
     pol commit mOp, mWR;
     pol commit sWR, sRD;
     pol commit arith, arithEquation, arithSame12, arithUseE;
     pol commit memAlignRD, memAlignWR, memAlignWR8;
-    pol commit hashK, hashK1, hashKLen, hashKDigest;
-    pol commit hashP, hashP1, hashPLen, hashPDigest;
-    pol commit hashS, hashS1, hashSLen, hashSDigest;
+    pol commit hashK, hashKLen, hashKDigest;
+    pol commit hashP, hashPLen, hashPDigest;
+    pol commit hashS, hashSLen, hashSDigest;
+    pol commit hashBytesInD, hashBytes, hashOffset;
     pol commit bin;
     pol commit binOpcode;
     pol commit assert;
@@ -77,13 +79,37 @@ namespace Main(%N);
     pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntSha256F, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
+    pol commit inRID;
+    pol commit RID;
+    pol commit save;
+    pol commit restore;
+    pol commit setRID;
+
+    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7, 
+                          B0', B1', B2', B3', B4', B5', B6', B7', 
+                          C0', C1', C2', C3', C4', C5', C6', C7', 
+                          D0', D1', D2', D3', D4', D5', D6', D7', 
+                          E0', E1', E2', E3', E4', E5', E6', E7', 
+                          RR', RCX'
+    } is save { Global.STEP, RID, op0, op1, op2, op3, op4, op5, op6, op7,
+                            B0, B1, B2, B3, B4, B5, B6, B7, 
+                            C0, C1, C2, C3, C4, C5, C6, C7, 
+                            D0, D1, D2, D3, D4, D5, D6, D7, 
+                            E0, E1, E2, E3, E4, E5, E6, E7, 
+                            RR, RCX};
+
+    RID' * (1 - restore) = setRID * (op0 - RID) + save * (Global.STEP - RID) + RID - restore * RID;
+    
+    Global.L1 * RID = 0;
+
 ///////////
 // Intermediary calculations and checks
 ///////////
 
 
     /////// op
-    pol op0 =
+    pol commit op0;
+    op0 =
         A0 * inA +
         B0 * inB +
         C0 * inC +
@@ -107,9 +133,11 @@ namespace Main(%N);
         cntPoseidonG * inCntPoseidonG +
         cntPaddingPG * inCntPaddingPG +
         RCX * inRCX +
+        RID * inRID +
         CONST0;
 
-    pol op1 =
+    pol commit op1;
+    op1 =
         A1 * inA +
         B1 * inB +
         C1 * inC +
@@ -120,7 +148,8 @@ namespace Main(%N);
         FREE1 * inFREE +
         CONST1;
 
-    pol op2 =
+    pol commit op2;
+    op2 = 
         A2 * inA +
         B2 * inB +
         C2 * inC +
@@ -131,7 +160,8 @@ namespace Main(%N);
         FREE2 * inFREE +
         CONST2;
 
-    pol op3 =
+    pol commit op3;
+    op3 = 
         A3 * inA +
         B3 * inB +
         C3 * inC +
@@ -142,7 +172,8 @@ namespace Main(%N);
         FREE3 * inFREE +
         CONST3;
 
-    pol op4 =
+    pol commit op4;
+    op4 =
         A4 * inA +
         B4 * inB +
         C4 * inC +
@@ -153,7 +184,8 @@ namespace Main(%N);
         FREE4 * inFREE +
         CONST4;
 
-    pol op5 =
+    pol commit op5;
+    op5 =
         A5 * inA +
         B5 * inB +
         C5 * inC +
@@ -164,7 +196,8 @@ namespace Main(%N);
         FREE5 * inFREE +
         CONST5;
 
-    pol op6 =
+    pol commit op6;
+    op6 =
         A6 * inA +
         B6 * inB +
         C6 * inC +
@@ -175,7 +208,8 @@ namespace Main(%N);
         FREE6 * inFREE +
         CONST6;
 
-    pol op7 =
+    pol commit op7;
+    op7 =
         A7 * inA +
         B7 * inB +
         C7 * inC +
@@ -199,8 +233,10 @@ namespace Main(%N);
 
     */
 
-    pol addrRel = ind*E0 + indRR*RR + offset;
-    pol addr = useCTX*CTX*2**18 + isStack*2**16 + isStack*SP + isMem*2**17+ addrRel;
+    pol commit memUseAddrRel;
+
+    pol addrRel = ind*E0 + indRR*RR;
+    pol addr =  offset + useCTX*CTX*2**18 + isStack*2**16 + isStack*SP + isMem*2**17+ memUseAddrRel * addrRel;
 
     /////// isNeg
 
@@ -226,6 +262,10 @@ namespace Main(%N);
                     2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
                     2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
 
+    free0IsByte * (2**7 * hJmpnCondValueBit[7] + 2**6 * hJmpnCondValueBit[6] + 2**5 * hJmpnCondValueBit[5] + 
+                   2**4 * hJmpnCondValueBit[4] + 2**3 * hJmpnCondValueBit[3] + 2**2 * hJmpnCondValueBit[2] + 
+                   2**1 * hJmpnCondValueBit[1] + 2**0 * hJmpnCondValueBit[0] - FREE0) = 0;
+
 
     /// RCX check zero
     pol commit RCXInv;
@@ -250,41 +290,41 @@ namespace Main(%N);
     A6' = setA * (op6 - A6) + A6;
     A7' = setA * (op7 - A7) + A7;
 
-    B0' = setB * (op0 - B0) + B0;
-    B1' = setB * (op1 - B1) + B1;
-    B2' = setB * (op2 - B2) + B2;
-    B3' = setB * (op3 - B3) + B3;
-    B4' = setB * (op4 - B4) + B4;
-    B5' = setB * (op5 - B5) + B5;
-    B6' = setB * (op6 - B6) + B6;
-    B7' = setB * (op7 - B7) + B7;
+    B0' * (1 - restore) = setB * (op0 - B0) + B0 - restore * B0;
+    B1' * (1 - restore) = setB * (op1 - B1) + B1 - restore * B1;
+    B2' * (1 - restore) = setB * (op2 - B2) + B2 - restore * B2;
+    B3' * (1 - restore) = setB * (op3 - B3) + B3 - restore * B3;
+    B4' * (1 - restore) = setB * (op4 - B4) + B4 - restore * B4;
+    B5' * (1 - restore) = setB * (op5 - B5) + B5 - restore * B5;
+    B6' * (1 - restore) = setB * (op6 - B6) + B6 - restore * B6;
+    B7' * (1 - restore) = setB * (op7 - B7) + B7 - restore * B7;
 
-    C0' = setC * (op0 - C0) + C0;
-    C1' = setC * (op1 - C1) + C1;
-    C2' = setC * (op2 - C2) + C2;
-    C3' = setC * (op3 - C3) + C3;
-    C4' = setC * (op4 - C4) + C4;
-    C5' = setC * (op5 - C5) + C5;
-    C6' = setC * (op6 - C6) + C6;
-    C7' = setC * (op7 - C7) + C7;
+    C0' * (1 - restore) = setC * (op0 - C0) + C0 - restore * C0;
+    C1' * (1 - restore) = setC * (op1 - C1) + C1 - restore * C1;
+    C2' * (1 - restore) = setC * (op2 - C2) + C2 - restore * C2;
+    C3' * (1 - restore) = setC * (op3 - C3) + C3 - restore * C3;
+    C4' * (1 - restore) = setC * (op4 - C4) + C4 - restore * C4;
+    C5' * (1 - restore) = setC * (op5 - C5) + C5 - restore * C5;
+    C6' * (1 - restore) = setC * (op6 - C6) + C6 - restore * C6;
+    C7' * (1 - restore) = setC * (op7 - C7) + C7 - restore * C7;
 
-    D0' = setD * (op0 - D0) + D0;
-    D1' = setD * (op1 - D1) + D1;
-    D2' = setD * (op2 - D2) + D2;
-    D3' = setD * (op3 - D3) + D3;
-    D4' = setD * (op4 - D4) + D4;
-    D5' = setD * (op5 - D5) + D5;
-    D6' = setD * (op6 - D6) + D6;
-    D7' = setD * (op7 - D7) + D7;
+    D0' * (1 - restore) = setD * (op0 - D0) + D0 - restore * D0;
+    D1' * (1 - restore) = setD * (op1 - D1) + D1 - restore * D1;
+    D2' * (1 - restore) = setD * (op2 - D2) + D2 - restore * D2;
+    D3' * (1 - restore) = setD * (op3 - D3) + D3 - restore * D3;
+    D4' * (1 - restore) = setD * (op4 - D4) + D4 - restore * D4;
+    D5' * (1 - restore) = setD * (op5 - D5) + D5 - restore * D5;
+    D6' * (1 - restore) = setD * (op6 - D6) + D6 - restore * D6;
+    D7' * (1 - restore) = setD * (op7 - D7) + D7 - restore * D7;
 
-    E0' = setE * (op0 - E0) + E0;
-    E1' = setE * (op1 - E1) + E1;
-    E2' = setE * (op2 - E2) + E2;
-    E3' = setE * (op3 - E3) + E3;
-    E4' = setE * (op4 - E4) + E4;
-    E5' = setE * (op5 - E5) + E5;
-    E6' = setE * (op6 - E6) + E6;
-    E7' = setE * (op7 - E7) + E7;
+    E0' * (1 - restore) = setE * (op0 - E0) + E0 - restore * E0;
+    E1' * (1 - restore) = setE * (op1 - E1) + E1 - restore * E1;
+    E2' * (1 - restore) = setE * (op2 - E2) + E2 - restore * E2;
+    E3' * (1 - restore) = setE * (op3 - E3) + E3 - restore * E3;
+    E4' * (1 - restore) = setE * (op4 - E4) + E4 - restore * E4;
+    E5' * (1 - restore) = setE * (op5 - E5) + E5 - restore * E5;
+    E6' * (1 - restore) = setE * (op6 - E6) + E6 - restore * E6;
+    E7' * (1 - restore) = setE * (op7 - E7) + E7 - restore * E7;
 
     SR0' = setSR * (op0 - SR0) + SR0;
     SR1' = setSR * (op1 - SR1) + SR1;
@@ -300,27 +340,33 @@ namespace Main(%N);
     PC' = setPC * (op0 - PC) + PC;
 
     // ROM constraint: call * setRR = 0
-    RR' = setRR * (op0 - RR) + call * (zkPC + 1 - RR) + RR;
+    RR' * (1 - restore) = setRR * (op0 - RR) + call * (zkPC + 1 - RR) + RR - restore * RR;
     GAS' = setGAS * (op0 - GAS) + GAS;
 
     pol decRCX = repeat * (1-RCXIsZero);
-    RCX' = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX);
+    RCX' * (1 - restore)  = setRCX * (op0 - (RCX-decRCX)) + (RCX-decRCX) - restore * (RCX - decRCX);
 
-    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + (hashK + hashP + hashS)*D0 + hashK1 + hashP1 + hashS1;
+    HASHPOS' = setHASHPOS * (op0 - HASHPOS) + HASHPOS + hashBytesInD*D0 + hashBytes;
 
-    pol doJMP = JMPN*isNeg + JMP + JMPC*carry + JMPZ*op0IsZero + return + call;
+    pol doJMP = JMPN*isNeg + JMP + JMPC*carry + JMPZ*op0IsZero + return;
     pol elseJMP = JMPN*(1-isNeg) + JMPC*(1-carry) + JMPZ*(1-op0IsZero);
 
     pol commit jmpAddr;
     pol commit elseAddr;
-    pol commit useJmpAddr;
-    pol commit useElseAddr;
+    pol commit jmpUseAddrRel;
+    pol commit elseUseAddrRel;
 
     // ROM/Zkasm constraint: useJmpAddr * return = 0
-    pol finalJmpAddr = useJmpAddr * (jmpAddr - addr ) + return * (RR - addr) + addr;
+    // compiler check return = 1 ==> jmpAddr === 0 && jmpUseAddrRel === 0 && elseAddr === 0 && elseUseAddrRel === 0;
+    pol finalJmpAddr = jmpAddr + jmpUseAddrRel * addrRel + return * RR';
     pol nextNoJmpZkPC = zkPC + 1 - ((1-RCXIsZero)*repeat);
-    pol finalElseAddr = useElseAddr * (elseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
+    //     pol finalElseAddr = useElseAddr * (elseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
+
+    // repeat, compatible with ??? elseAddr = next
+    pol finalElseAddr = elseAddr + elseUseAddrRel * addrRel;
+
+        
     // if elseAddr wasn't specified on zkasm, compiler put current address + 1
     zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (finalElseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
@@ -335,42 +381,59 @@ namespace Main(%N);
     (A6-op6)*assert = 0;
     (A7-op7)*assert = 0;
 
-    public oldStateRoot0 = B0(0);
-    public oldStateRoot1 = B1(0);
-    public oldStateRoot2 = B2(0);
-    public oldStateRoot3 = B3(0);
-    public oldStateRoot4 = B4(0);
-    public oldStateRoot5 = B5(0);
-    public oldStateRoot6 = B6(0);
-    public oldStateRoot7 = B7(0);
-    Global.L1 * (B0 - :oldStateRoot0) = 0;
-    Global.L1 * (B1 - :oldStateRoot1) = 0;
-    Global.L1 * (B2 - :oldStateRoot2) = 0;
-    Global.L1 * (B3 - :oldStateRoot3) = 0;
-    Global.L1 * (B4 - :oldStateRoot4) = 0;
-    Global.L1 * (B5 - :oldStateRoot5) = 0;
-    Global.L1 * (B6 - :oldStateRoot6) = 0;
-    Global.L1 * (B7 - :oldStateRoot7) = 0;
+    public oldStateRoot0 = SR0(0);
+    public oldStateRoot1 = SR1(0);
+    public oldStateRoot2 = SR2(0);
+    public oldStateRoot3 = SR3(0);
+    public oldStateRoot4 = SR4(0);
+    public oldStateRoot5 = SR5(0);
+    public oldStateRoot6 = SR6(0);
+    public oldStateRoot7 = SR7(0);
+    Global.L1 * (SR0 - :oldStateRoot0) = 0;
+    Global.L1 * (SR1 - :oldStateRoot1) = 0;
+    Global.L1 * (SR2 - :oldStateRoot2) = 0;
+    Global.L1 * (SR3 - :oldStateRoot3) = 0;
+    Global.L1 * (SR4 - :oldStateRoot4) = 0;
+    Global.L1 * (SR5 - :oldStateRoot5) = 0;
+    Global.L1 * (SR6 - :oldStateRoot6) = 0;
+    Global.L1 * (SR7 - :oldStateRoot7) = 0;
 
-    public oldAccInputHash0 = C0(0);
-    public oldAccInputHash1 = C1(0);
-    public oldAccInputHash2 = C2(0);
-    public oldAccInputHash3 = C3(0);
-    public oldAccInputHash4 = C4(0);
-    public oldAccInputHash5 = C5(0);
-    public oldAccInputHash6 = C6(0);
-    public oldAccInputHash7 = C7(0);
-    Global.L1 * (C0 - :oldAccInputHash0) = 0;
-    Global.L1 * (C1 - :oldAccInputHash1) = 0;
-    Global.L1 * (C2 - :oldAccInputHash2) = 0;
-    Global.L1 * (C3 - :oldAccInputHash3) = 0;
-    Global.L1 * (C4 - :oldAccInputHash4) = 0;
-    Global.L1 * (C5 - :oldAccInputHash5) = 0;
-    Global.L1 * (C6 - :oldAccInputHash6) = 0;
-    Global.L1 * (C7 - :oldAccInputHash7) = 0;
+    public oldBatchAccInputHash0 = C0(0);
+    public oldBatchAccInputHash1 = C1(0);
+    public oldBatchAccInputHash2 = C2(0);
+    public oldBatchAccInputHash3 = C3(0);
+    public oldBatchAccInputHash4 = C4(0);
+    public oldBatchAccInputHash5 = C5(0);
+    public oldBatchAccInputHash6 = C6(0);
+    public oldBatchAccInputHash7 = C7(0);
+    Global.L1 * (C0 - :oldBatchAccInputHash0) = 0;
+    Global.L1 * (C1 - :oldBatchAccInputHash1) = 0;
+    Global.L1 * (C2 - :oldBatchAccInputHash2) = 0;
+    Global.L1 * (C3 - :oldBatchAccInputHash3) = 0;
+    Global.L1 * (C4 - :oldBatchAccInputHash4) = 0;
+    Global.L1 * (C5 - :oldBatchAccInputHash5) = 0;
+    Global.L1 * (C6 - :oldBatchAccInputHash6) = 0;
+    Global.L1 * (C7 - :oldBatchAccInputHash7) = 0;
 
-    public oldBatchNum = SP(0);
-    Global.L1 * (SP - :oldBatchNum) = 0;
+    public previousL1InfoTreeRoot0 = D0(0);
+    public previousL1InfoTreeRoot1 = D1(0);
+    public previousL1InfoTreeRoot2 = D2(0);
+    public previousL1InfoTreeRoot3 = D3(0);
+    public previousL1InfoTreeRoot4 = D4(0);
+    public previousL1InfoTreeRoot5 = D5(0);
+    public previousL1InfoTreeRoot6 = D6(0);
+    public previousL1InfoTreeRoot7 = D7(0);
+    Global.L1 * (D0 - :previousL1InfoTreeRoot0) = 0;
+    Global.L1 * (D1 - :previousL1InfoTreeRoot1) = 0;
+    Global.L1 * (D2 - :previousL1InfoTreeRoot2) = 0;
+    Global.L1 * (D3 - :previousL1InfoTreeRoot3) = 0;
+    Global.L1 * (D4 - :previousL1InfoTreeRoot4) = 0;
+    Global.L1 * (D5 - :previousL1InfoTreeRoot5) = 0;
+    Global.L1 * (D6 - :previousL1InfoTreeRoot6) = 0;
+    Global.L1 * (D7 - :previousL1InfoTreeRoot7) = 0;
+
+    public previousL1InfoTreeIndex = RCX(0);
+    Global.L1 * (RCX - :previousL1InfoTreeIndex) = 0;
 
     public chainId = GAS(0);
     Global.L1 * (GAS - :chainId) = 0;
@@ -395,44 +458,62 @@ namespace Main(%N);
     Global.LLAST * (SR6 - :newStateRoot6) = 0;
     Global.LLAST * (SR7 - :newStateRoot7) = 0;
 
-    public newAccInputHash0 = D0(%N -1);
-    public newAccInputHash1 = D1(%N -1);
-    public newAccInputHash2 = D2(%N -1);
-    public newAccInputHash3 = D3(%N -1);
-    public newAccInputHash4 = D4(%N -1);
-    public newAccInputHash5 = D5(%N -1);
-    public newAccInputHash6 = D6(%N -1);
-    public newAccInputHash7 = D7(%N -1);
-    Global.LLAST * (D0 - :newAccInputHash0) = 0;
-    Global.LLAST * (D1 - :newAccInputHash1) = 0;
-    Global.LLAST * (D2 - :newAccInputHash2) = 0;
-    Global.LLAST * (D3 - :newAccInputHash3) = 0;
-    Global.LLAST * (D4 - :newAccInputHash4) = 0;
-    Global.LLAST * (D5 - :newAccInputHash5) = 0;
-    Global.LLAST * (D6 - :newAccInputHash6) = 0;
-    Global.LLAST * (D7 - :newAccInputHash7) = 0;
+    public newBatchAccInputHash0 = C0(%N -1);
+    public newBatchAccInputHash1 = C1(%N -1);
+    public newBatchAccInputHash2 = C2(%N -1);
+    public newBatchAccInputHash3 = C3(%N -1);
+    public newBatchAccInputHash4 = C4(%N -1);
+    public newBatchAccInputHash5 = C5(%N -1);
+    public newBatchAccInputHash6 = C6(%N -1);
+    public newBatchAccInputHash7 = C7(%N -1);
+    Global.LLAST * (C0 - :newBatchAccInputHash0) = 0;
+    Global.LLAST * (C1 - :newBatchAccInputHash1) = 0;
+    Global.LLAST * (C2 - :newBatchAccInputHash2) = 0;
+    Global.LLAST * (C3 - :newBatchAccInputHash3) = 0;
+    Global.LLAST * (C4 - :newBatchAccInputHash4) = 0;
+    Global.LLAST * (C5 - :newBatchAccInputHash5) = 0;
+    Global.LLAST * (C6 - :newBatchAccInputHash6) = 0;
+    Global.LLAST * (C7 - :newBatchAccInputHash7) = 0;
 
-    public localExitRoot0 = E0(%N-1);
-    public localExitRoot1 = E1(%N-1);
-    public localExitRoot2 = E2(%N-1);
-    public localExitRoot3 = E3(%N-1);
-    public localExitRoot4 = E4(%N-1);
-    public localExitRoot5 = E5(%N-1);
-    public localExitRoot6 = E6(%N-1);
-    public localExitRoot7 = E7(%N-1);
-    Global.LLAST * (E0 - :localExitRoot0) = 0;
-    Global.LLAST * (E1 - :localExitRoot1) = 0;
-    Global.LLAST * (E2 - :localExitRoot2) = 0;
-    Global.LLAST * (E3 - :localExitRoot3) = 0;
-    Global.LLAST * (E4 - :localExitRoot4) = 0;
-    Global.LLAST * (E5 - :localExitRoot5) = 0;
-    Global.LLAST * (E6 - :localExitRoot6) = 0;
-    Global.LLAST * (E7 - :localExitRoot7) = 0;
+    public currentL1InfoTreeRoot0 = D0(%N-1);
+    public currentL1InfoTreeRoot1 = D1(%N-1);
+    public currentL1InfoTreeRoot2 = D2(%N-1);
+    public currentL1InfoTreeRoot3 = D3(%N-1);
+    public currentL1InfoTreeRoot4 = D4(%N-1);
+    public currentL1InfoTreeRoot5 = D5(%N-1);
+    public currentL1InfoTreeRoot6 = D6(%N-1);
+    public currentL1InfoTreeRoot7 = D7(%N-1);
+    Global.LLAST * (D0 - :currentL1InfoTreeRoot0) = 0;
+    Global.LLAST * (D1 - :currentL1InfoTreeRoot1) = 0;
+    Global.LLAST * (D2 - :currentL1InfoTreeRoot2) = 0;
+    Global.LLAST * (D3 - :currentL1InfoTreeRoot3) = 0;
+    Global.LLAST * (D4 - :currentL1InfoTreeRoot4) = 0;
+    Global.LLAST * (D5 - :currentL1InfoTreeRoot5) = 0;
+    Global.LLAST * (D6 - :currentL1InfoTreeRoot6) = 0;
+    Global.LLAST * (D7 - :currentL1InfoTreeRoot7) = 0;
 
-    public newBatchNum = PC(%N-1);
-    Global.LLAST * (PC - :newBatchNum) = 0;
+    public currentL1InfoTreeIndex = RCX(%N-1);
+    Global.LLAST * (RCX - :currentL1InfoTreeIndex) = 0;
 
+    public newLocalExitRoot0 = E0(%N-1);
+    public newLocalExitRoot1 = E1(%N-1);
+    public newLocalExitRoot2 = E2(%N-1);
+    public newLocalExitRoot3 = E3(%N-1);
+    public newLocalExitRoot4 = E4(%N-1);
+    public newLocalExitRoot5 = E5(%N-1);
+    public newLocalExitRoot6 = E6(%N-1);
+    public newLocalExitRoot7 = E7(%N-1);
+    Global.LLAST * (E0 - :newLocalExitRoot0) = 0;
+    Global.LLAST * (E1 - :newLocalExitRoot1) = 0;
+    Global.LLAST * (E2 - :newLocalExitRoot2) = 0;
+    Global.LLAST * (E3 - :newLocalExitRoot3) = 0;
+    Global.LLAST * (E4 - :newLocalExitRoot4) = 0;
+    Global.LLAST * (E5 - :newLocalExitRoot5) = 0;
+    Global.LLAST * (E6 - :newLocalExitRoot6) = 0;
+    Global.LLAST * (E7 - :newLocalExitRoot7) = 0;
 
+    public newLastTimestamp = RR(%N-1);
+    Global.LLAST * (RR - :newLastTimestamp) = 0;
 
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
@@ -450,25 +531,27 @@ namespace Main(%N);
 // ROM Lookups
 /////////
 
+
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,hashS,hashSDigest,hashSLen,hashS1" -b
+       node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" -b
     */
 
     pol operations =
-              2**0  * arith         + 2**1  * arithSame12   + 2**2  * arithUseE     + 2**3  * assert
-            + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
-            + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
-            + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
-            + 2**16 * JMPC          + 2**17 * JMPN          + 2**18 * memAlignRD    + 2**19 * memAlignWR
-            + 2**20 * memAlignWR8   + 2**21 * mOp           + 2**22 * mWR           + 2**23 * repeat
-            + 2**24 * setA          + 2**25 * setB          + 2**26 * setC          + 2**27 * setCTX
-            + 2**28 * setD          + 2**29 * setE          + 2**30 * setGAS        + 2**31 * setHASHPOS
-            + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
-            + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
-            + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * hashS
-            + 2**48 * hashSDigest   + 2**49 * hashSLen      + 2**50 * hashS1;
+          2**0  * arith            + 2**1  * arithSame12      + 2**2  * arithUseE        + 2**3  * assert
+        + 2**4  * bin              + 2**5  * hashK            + 2**6  * hashKDigest      + 2**7  * hashKLen
+        + 2**8  * hashP            + 2**9  * hashPDigest      + 2**10 * hashPLen         + 2**11 * isMem
+        + 2**12 * isStack          + 2**13 * JMP              + 2**14 * JMPC             + 2**15 * JMPN
+        + 2**16 * memAlignRD       + 2**17 * memAlignWR       + 2**18 * memAlignWR8      + 2**19 * mOp
+        + 2**20 * mWR              + 2**21 * repeat           + 2**22 * setA             + 2**23 * setB
+        + 2**24 * setC             + 2**25 * setCTX           + 2**26 * setD             + 2**27 * setE
+        + 2**28 * setGAS           + 2**29 * setHASHPOS       + 2**30 * setPC            + 2**31 * setRCX
+        + 2**32 * setRR            + 2**33 * setSP            + 2**34 * setSR            + 2**35 * sRD
+        + 2**36 * sWR              + 2**37 * useCTX           + 2**38 * JMPZ             + 2**39 * call
+        + 2**40 * return           + 2**41 * save             + 2**42 * restore          + 2**43 * setRID
+        + 2**44 * hashBytesInD     + 2**45 * assumeFree       + 2**46 * memUseAddrRel    + 2**47 * jmpUseAddrRel
+        + 2**48 * elseUseAddrRel   + 2**49 * free0IsByte      + 2**50 * hashS            + 2**51 * hashSDigest
+        + 2**52 * hashSLen;
 
     (1 - arith) * arith = 0;
     (1 - arithSame12) * arithSame12 = 0;
@@ -481,8 +564,6 @@ namespace Main(%N);
     (1 - hashP) * hashP = 0;
     (1 - hashPDigest) * hashPDigest = 0;
     (1 - hashPLen) * hashPLen = 0;
-    (1 - ind) * ind = 0;
-    (1 - indRR) * indRR = 0;
     (1 - isMem) * isMem = 0;
     (1 - isStack) * isStack = 0;
     (1 - JMP) * JMP = 0;
@@ -510,28 +591,32 @@ namespace Main(%N);
     (1 - sRD) * sRD = 0;
     (1 - sWR) * sWR = 0;
     (1 - useCTX) * useCTX = 0;
-    (1 - useJmpAddr) * useJmpAddr = 0;
     (1 - JMPZ) * JMPZ = 0;
     (1 - call) * call = 0;
     (1 - return) * return = 0;
-    (1 - hashK1) * hashK1 = 0;
-    (1 - hashP1) * hashP1 = 0;
-    (1 - useElseAddr) * useElseAddr = 0;
+    (1 - save) * save = 0;
+    (1 - restore) * restore = 0;
+    (1 - setRID) * setRID = 0;
+    (1 - hashBytesInD) * hashBytesInD = 0;
+    (1 - assumeFree) * assumeFree = 0;
+    (1 - memUseAddrRel) * memUseAddrRel = 0;
+    (1 - jmpUseAddrRel) * jmpUseAddrRel = 0;
+    (1 - elseUseAddrRel) * elseUseAddrRel = 0;
+    (1 - free0IsByte) * free0IsByte = 0;
     (1 - hashS) * hashS = 0;
     (1 - hashSDigest) * hashSDigest = 0;
     (1 - hashSLen) * hashSLen = 0;
-    (1 - hashS1) * hashS1 = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0,
-        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR, arithEquation,
+        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID, hashBytes, hashOffset,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0,
-        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR, Rom.arithEquation,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID, Rom.hashBytes, Rom.hashOffset,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
@@ -682,12 +767,12 @@ namespace Main(%N);
 /////////
 // HASHK Lookups
 /////////
-    hashK + hashK1 {
-        addr,
+    hashK {
+        hashOffset + E0,
         HASHPOS,
-        D0 * hashK + hashK1,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
+        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
+        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
     } in
     PaddingKK.crLatch * PaddingKK.r8valid {
         PaddingKK.addr,
@@ -698,7 +783,7 @@ namespace Main(%N);
     };
 
     hashKLen {
-        addr,
+        hashOffset + E0,
         op0
     } is
     PaddingKK.lastHashLen {
@@ -707,7 +792,7 @@ namespace Main(%N);
     };
 
     hashKDigest {
-        addr,
+        hashOffset + E0,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         incCounter
@@ -725,12 +810,12 @@ namespace Main(%N);
 // HASHS Lookups (Sha256)
 /////////
 
-    hashS + hashS1 {
-        addr,
+    hashS {
+        hashOffset + E0,
         HASHPOS,
-        D0 * hashS + hashS1,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
+        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
+        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
     } in
     PaddingSha256.crLatch * PaddingSha256.r8valid {
         PaddingSha256.addr,
@@ -741,7 +826,7 @@ namespace Main(%N);
     };
 
     hashSLen {
-        addr,
+        hashOffset + E0,
         op0
     } is
     PaddingSha256.lastHashLen {
@@ -752,7 +837,7 @@ namespace Main(%N);
     // The Sha digest's chunks are ordered from most to least significant.
     // (hash0 => op7, hash1 => op6, ..)
     hashSDigest {
-        addr,
+        hashOffset + E0,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         incCounter
@@ -769,12 +854,12 @@ namespace Main(%N);
 /////////
 // HASHP Lookups
 /////////
-    hashP + hashP1 {
-        addr,
+    hashP {
+        hashOffset + E0,
         HASHPOS,
-        D0 * hashP + hashP1,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
+        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
+        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
     } in
     PaddingPG.crLatch * PaddingPG.crValid {
         PaddingPG.addr,
@@ -785,7 +870,7 @@ namespace Main(%N);
     };
 
     hashPLen {
-        addr,
+        hashOffset + E0,
         op0
     } is
     PaddingPG.lastHashLen {
@@ -794,7 +879,7 @@ namespace Main(%N);
     };
 
     hashPDigest {
-        addr,
+        hashOffset + E0,
         op0 + 2**32 * op1,
         op2 + 2**32 * op3,
         op4 + 2**32 * op5,
@@ -820,8 +905,8 @@ namespace Main(%N);
         addr,
         Global.STEP,
         mWR,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7
+        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
+        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
     } is
     Mem.mOp {
         Mem.addr,
