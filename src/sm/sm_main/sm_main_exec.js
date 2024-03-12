@@ -2386,9 +2386,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.hJmpnCondValueBit[index][i] = value & 0x01n;
                 value = value >> 1n;
             }
+            pols.hJmpnCondValueBit[8][i] = 0n;
             pols.isNeg[i] = 0n;
-            pols.lJmpnCondValueBit[9][i] = 0n;
-            pols.hJmpnCondValueBit[i] = 0n;
+            pols.lJmpnCondValue[i] = 0n;
             pols.free0IsByte[i] = 1n;
         } else {
             pols.free0IsByte[i] = 0n;
@@ -2429,11 +2429,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.JMPN[i] = 1n;
         } else {
             if (!l.free0IsByte) {
-                pols.isNeg[i] = 0n;
-                pols.lJmpnCondValue[i] = 0n;
                 for (let index = 0; index < 9; ++index) {
                     pols.hJmpnCondValueBit[index][i] = 0n;
                 }
+                pols.isNeg[i] = 0n;
+                pols.lJmpnCondValue[i] = 0n;
             }
             if (l.JMPC) {
                 if (pols.carry[i]) {

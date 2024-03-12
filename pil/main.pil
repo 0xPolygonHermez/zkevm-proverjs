@@ -85,21 +85,21 @@ namespace Main(%N);
     pol commit restore;
     pol commit setRID;
 
-    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7, 
-                          B0', B1', B2', B3', B4', B5', B6', B7', 
-                          C0', C1', C2', C3', C4', C5', C6', C7', 
-                          D0', D1', D2', D3', D4', D5', D6', D7', 
-                          E0', E1', E2', E3', E4', E5', E6', E7', 
+    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7,
+                          B0', B1', B2', B3', B4', B5', B6', B7',
+                          C0', C1', C2', C3', C4', C5', C6', C7',
+                          D0', D1', D2', D3', D4', D5', D6', D7',
+                          E0', E1', E2', E3', E4', E5', E6', E7',
                           RR', RCX'
     } is save { Global.STEP, RID, op0, op1, op2, op3, op4, op5, op6, op7,
-                            B0, B1, B2, B3, B4, B5, B6, B7, 
-                            C0, C1, C2, C3, C4, C5, C6, C7, 
-                            D0, D1, D2, D3, D4, D5, D6, D7, 
-                            E0, E1, E2, E3, E4, E5, E6, E7, 
+                            B0, B1, B2, B3, B4, B5, B6, B7,
+                            C0, C1, C2, C3, C4, C5, C6, C7,
+                            D0, D1, D2, D3, D4, D5, D6, D7,
+                            E0, E1, E2, E3, E4, E5, E6, E7,
                             RR, RCX};
 
     RID' * (1 - restore) = setRID * (op0 - RID) + save * (Global.STEP - RID) + RID - restore * RID;
-    
+
     Global.L1 * RID = 0;
 
 ///////////
@@ -149,7 +149,7 @@ namespace Main(%N);
         CONST1;
 
     pol commit op2;
-    op2 = 
+    op2 =
         A2 * inA +
         B2 * inB +
         C2 * inC +
@@ -161,7 +161,7 @@ namespace Main(%N);
         CONST2;
 
     pol commit op3;
-    op3 = 
+    op3 =
         A3 * inA +
         B3 * inB +
         C3 * inC +
@@ -262,8 +262,9 @@ namespace Main(%N);
                     2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
                     2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
 
-    free0IsByte * (2**7 * hJmpnCondValueBit[7] + 2**6 * hJmpnCondValueBit[6] + 2**5 * hJmpnCondValueBit[5] + 
-                   2**4 * hJmpnCondValueBit[4] + 2**3 * hJmpnCondValueBit[3] + 2**2 * hJmpnCondValueBit[2] + 
+    // hJmpnCondValueBit[0..7] here represents the LSBs of the provided free input value
+    free0IsByte * (2**7 * hJmpnCondValueBit[7] + 2**6 * hJmpnCondValueBit[6] + 2**5 * hJmpnCondValueBit[5] +
+                   2**4 * hJmpnCondValueBit[4] + 2**3 * hJmpnCondValueBit[3] + 2**2 * hJmpnCondValueBit[2] +
                    2**1 * hJmpnCondValueBit[1] + 2**0 * hJmpnCondValueBit[0] - FREE0) = 0;
 
 
@@ -366,7 +367,7 @@ namespace Main(%N);
     // repeat, compatible with ??? elseAddr = next
     pol finalElseAddr = elseAddr + elseUseAddrRel * addrRel;
 
-        
+
     // if elseAddr wasn't specified on zkasm, compiler put current address + 1
     zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (finalElseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
@@ -491,7 +492,7 @@ namespace Main(%N);
     };
 
 /////////
-// ROM Plookpups
+// ROM Lookups
 /////////
 
     /*
@@ -570,17 +571,17 @@ namespace Main(%N);
     (1 - memUseAddrRel) * memUseAddrRel = 0;
     (1 - jmpUseAddrRel) * jmpUseAddrRel = 0;
     (1 - elseUseAddrRel) * elseUseAddrRel = 0;
-    (1 - free0IsByte) * free0IsByte = 0;   
+    (1 - free0IsByte) * free0IsByte = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR, 
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR,
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID, hashBytes, hashOffset,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR, 
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR,
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID, Rom.hashBytes, Rom.hashOffset,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
@@ -590,7 +591,7 @@ namespace Main(%N);
     pol commit sKey[4];
 
 /////////
-// Arithmetic Plookpups
+// Arithmetic Lookups
 /////////
 
     pol ax1_0 = Arith.x1[0] + Arith.x1[1]*2**16;
@@ -704,7 +705,7 @@ namespace Main(%N);
     cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2 + arithEq3 + arithEq4 + arithEq5;
 
 /////////
-// Binary Plookpups
+// Binary Lookups
 /////////
 
     bin {
@@ -725,7 +726,7 @@ namespace Main(%N);
     cntBinary' = cntBinary*(1-Global.L1) + bin + sWR + hashPDigest;
 
 /////////
-// HASHK Plookpups
+// HASHK Lookups
 /////////
     hashK {
         hashOffset + E0,
@@ -767,7 +768,7 @@ namespace Main(%N);
     cntKeccakF' = cntKeccakF*(1-Global.L1) + incCounter*hashKDigest;
 
 /////////
-// HASHS Plookpups (Sha256)
+// HASHS Lookups (Sha256)
 /////////
 
     hashS {
@@ -812,7 +813,7 @@ namespace Main(%N);
     cntSha256F' = cntSha256F*(1-Global.L1) + incCounter*hashSDigest;
 
 /////////
-// HASHP Plookpups
+// HASHP Lookups
 /////////
     hashP {
         hashOffset + E0,
@@ -859,7 +860,7 @@ namespace Main(%N);
     cntPoseidonG' = cntPoseidonG*(1-Global.L1) + (hashPDigest + sRD + sWR) * incCounter;
 
 /////////
-// Mem Plookpups
+// Mem Lookups
 /////////
     mOp {
         addr,
@@ -878,7 +879,7 @@ namespace Main(%N);
 
 
 /////////
-// Storage Plookpups
+// Storage Lookups
 /////////
 
     (sRD + sWR) {
@@ -969,7 +970,7 @@ namespace Main(%N);
 
 
 /////////
-// MemAlign Plookpups
+// MemAlign Lookups
 /////////
 
     // memAlign RD

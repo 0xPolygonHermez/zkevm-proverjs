@@ -74,10 +74,10 @@ namespace MemAlign(%N);
     pol RESET = Global.CLK32[0];
 
     //              RangeCheck                  Latch   Clock
-    // factorV      Plookup (FACTORV)           no      yes
-    // wr256        Plookup (WR256)             yes     no
-    // wr8          Plookup (WR8)               yes     no
-    // offset       Plookup (OFFSET)            yes     no
+    // factorV      Lookup (FACTORV)           no      yes
+    // wr256        Lookup (WR256)             yes     no
+    // wr8          Lookup (WR8)               yes     no
+    // offset       Lookup (OFFSET)            yes     no
     // inV          RangeCheck (BYTE_C4096)     no      yes
     // inM[0..1]    RangeCheck (BYTE2A,BYTE2)   no      yes
     // m0[0..7]     Built                       no      yes
@@ -85,7 +85,7 @@ namespace MemAlign(%N);
     // w0[0..7]     Built                       no      yes
     // w1[0..7]     Built                       no      yes
     // v[0..7]      Built                       no      yes
-    // selM1        Plookup (SELM1)             no      yes
+    // selM1        Lookup (SELM1)             no      yes
 
     // Latchs
     (1 - RESET) * wr256' = (1 - RESET) * wr256;
@@ -109,7 +109,7 @@ namespace MemAlign(%N);
     // RangeCheck
     {inM[1], inM[0]} in {Global.BYTE_2A, Global.BYTE};
 
-    // Plookup
+    // Lookup
     {
         Global.STEP32, offset', wr256', wr8', selM1, inV,
         factorV[0], factorV[1], factorV[2], factorV[3], factorV[4], factorV[5], factorV[6], factorV[7]
