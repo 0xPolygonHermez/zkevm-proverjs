@@ -1,4 +1,5 @@
 CONST %MAX_CNT_STEPS = 2**23
+CONST %MAX_CNT_ARITH = %MAX_CNT_STEPS / 32
 CONST %MAX_CNT_MEM_ALIGN = %MAX_CNT_STEPS / 16
 CONSTL %MAX_UINT_256 = 2**256 - 1
 
@@ -60,208 +61,117 @@ CheckRegs:
     RCX     :MLOAD(tmpRCX)
     E       :MLOAD(tmpE), RETURN
 
-; ### MEM_ALIGN_RD
-;
-; M0=A, M1=B, V=op, Offset=C
-;
-; M0 = 256bit word read in position x of ZKEVM memory (32x EVM)
-; M1 = 256bit word read in position x+1 of ZKEVM memory (32x+1 EVM)
-; Offset = 0..31 bytes
-; V = value of 256 bits
-;
-
 ; @info Shift right D bytes to A
-; @in A - (A >> D)
-; @in D - (A >> D) D bytes
-; @out A - A >> D => A
-VAR GLOBAL tmpSHRbytes_B
-VAR GLOBAL tmpSHRbytes_C
+; @in A
+; @in D
+; @out A - A >> (8*D) => A
 
 SHRbytes:
-    %MAX_CNT_STEPS - STEP - 11              :JMPN(outOfCountersStep)
+    %MAX_CNT_STEPS - STEP - 8               :JMPN(outOfCountersStep)
 
-    31 - D  :JMPN(SHRbytes_32)
-    C       :MSTORE(tmpSHRbytes_C)
-    D => C  :JMPZ(SHRbytes_0)
+    31 - D      :JMPN(SHRbytes_32)
+    D           :JMPZ(SHRbytes_0)
 
     %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
-    
-    B       :MSTORE(tmpSHRbytes_B)
+
+    32 - D => C :SAVE(B,C,D,E,RCX,RR)
     A => B
     0 => A
-    32 - D => C
-    $ => A  :MEM_ALIGN_RD
-    $ => B  :MLOAD(tmpSHRbytes_B)
-    $ => C  :MLOAD(tmpSHRbytes_C), RETURN
+    $ => A      :MEM_ALIGN_RD
+                :RESTORE, RETURN
 
 SHRbytes_32:
-    0 => A  :RETURN
+    0 => A      :RETURN
 SHRbytes_0:
-    $ => C  :MLOAD(tmpSHRbytes_C), RETURN
+                :RETURN
 
 ; @info Shift right D bytes to A
-; @in A - (A >> D)
-; @in D - (A >> D) D bytes
-; @out A - A >> D => A
+; @in A
+; @in D
+; @out A - A >> (8*D)) => A
 
-VAR GLOBAL tmpSHLbytes_B
-VAR GLOBAL tmpSHLbytes_C
 
 SHLbytes:
-    %MAX_CNT_STEPS - STEP - 10              :JMPN(outOfCountersStep)
+    %MAX_CNT_STEPS - STEP - 7               :JMPN(outOfCountersStep)
 
-    31 - D  :JMPN(SHLbytes_32)
-    C       :MSTORE(tmpSHLbytes_C)
-    D => C  :JMPZ(SHLbytes_0)
+    31 - D      :JMPN(SHLbytes_32)
+    D           :JMPZ(SHLbytes_0)
 
     %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
 
-    B       :MSTORE(tmpSHLbytes_B)
+    D => C      :SAVE(B,C,D,E,RCX,RR)
     0 => B
-    D => C
-    $ => A  :MEM_ALIGN_RD
-    $ => C  :MLOAD(tmpSHLbytes_C)
-    $ => B  :MLOAD(tmpSHLbytes_B), RETURN
+    $ => A      :MEM_ALIGN_RD
+                :RESTORE, RETURN
 
 SHLbytes_32:
-    0 => A  :RETURN
+    0 => A      :RETURN
 SHLbytes_0:
-    $ => C  :MLOAD(tmpSHLbytes_C), RETURN
+                :RETURN
 
-VAR GLOBAL tmpSHLBit_A
-VAR GLOBAL tmpSHLBit_B
-VAR GLOBAL tmpSHLBit_C
-VAR GLOBAL tmpSHLBit_D
-VAR GLOBAL tmpSHLBit_RR
-
-SHLbits:
-    A               :MSTORE(tmpSHLBit_A)
-
-    ; if D >= 2**32 ==> SHLarithBitTooBig 
-    ; else A = D0 (A1,A2..A7 = 0)
-    $0{D >= 0x100000000 ? -1 : D} => A  :JMPN(SHLBitTooBig)
-    RR              :MSTORE(tmpSHLBit_RR)
-    D => RR         :ASSERT,JMPN(failAssert)
-    A               :JMPZ(SHLBit_D0)
-    255 - D         :JMPN(SHLBit_A0)
-
-    B               :MSTORE(tmpSHLBit_B)
-    C               :MSTORE(tmpSHLBit_C)
-    0 => C          :CALL(@bytes_neg_bits_2n + RR)
-    $ => A          :MLOAD(tmpSHLBit_A)
-    B               :JMPN(SHLBitByte)
-    D               :MSTORE(tmpSHLBit_D)
-
-    ${(A >> (256 - mem.tmpSHLBit_D)) & const.MAX_UINT_256} => D
-    ${(A << mem.tmpSHLBit_D) & const.MAX_UINT_256} => A    :ARITH
-
-    RR => D
-    $ => RR         :MLOAD(tmpSHLBit_RR)
-    $ => B          :MLOAD(tmpSHLBit_B)
-    $ => D          :MLOAD(tmpSHLBit_D)
-    $ => C          :MLOAD(tmpSHLBit_C), RETURN
-
-SHLBitByte:
-    -B => C     
-    0 => B        
-    $ => A          :MEM_ALIGN_RD
-    $ => RR         :MLOAD(tmpSHLBit_RR)
-    $ => B          :MLOAD(tmpSHLBit_B)
-    $ => C          :MLOAD(tmpSHLBit_C), RETURN
-    
-
-SHLBit_A0:
-    $ => RR         :MLOAD(tmpSHLBit_RR)
-    0 => A          :RETURN
-
-SHLBit_D0:
-    $ => RR         :MLOAD(tmpSHLBit_RR)
-    $ => A          :MLOAD(tmpSHLBit_A), RETURN
-
-SHLBitTooBig:
-    B               :MSTORE(tmpSHLBit_B)
-
-    D => A
-    0x100000000n => B
-    0               :LT
-    
-    0 => A
-    $ => B          :MLOAD(tmpSHLBit_B), RETURN
-
-
-VAR GLOBAL tmpSHRBit_A
-VAR GLOBAL tmpSHRBit_B
-VAR GLOBAL tmpSHRBit_C
-VAR GLOBAL tmpSHRBit_D
-VAR GLOBAL tmpSHRBit_RR
+; @info Shift right D bits to A
+; @in A
+; @in D
+; @out A - (A >> D) => A
 
 SHRbits:
-    A               :MSTORE(tmpSHRBit_A)
+    %MAX_CNT_STEPS - STEP - 9   :JMPN(outOfCountersStep)
+    255 - D                     :JMPN(SHRBit_A0)
 
-    ; if D >= 2**32 ==> SHRarithBitTooBig 
-    ; else A = D0 (A1,A2..A7 = 0)
-    $0{D >= 0x100000000 ? -1 : D} => A  :JMPN(SHRBitTooBig)
-    RR              :MSTORE(tmpSHRBit_RR)
-    D => RR         :ASSERT,JMPN(failAssert),MSTORE(tmpSHRBit_D)
-    A               :JMPZ(SHRBit_D0)
-    255 - D         :JMPN(SHRBit_A0)
+    D => RR,RCX                 :SAVE(B,C,D,E,RCX,RR)
+    0 => C,B                    :JMP(@SHRbits_table + RR)
 
-    B               :MSTORE(tmpSHRBit_B)
-    C               :MSTORE(tmpSHRBit_C)
-    256 - RR => RR,D
-    0 => C          :CALL(@bytes_neg_bits_2n + RR)
-    B               :JMPN(SHRBitByte)
-    $ => A          :MLOAD(tmpSHRBit_A)
+SHRbits_arith:
+    %MAX_CNT_ARITH - CNT_ARITH - 1  :JMPN(outOfCountersArith)
 
-    ${(A >> mem.tmpSHRBit_D) & const.MAX_UINT_256} => D
-    ${(A << (256 - mem.tmpSHRBit_D)) & const.MAX_UINT_256} :ARITH
-
+    ${(A >> RCX) & const.MAX_UINT_256} => D
+    ${(A << (256 - RCX)) & const.MAX_UINT_256} :ARITH
     D => A
-    $ => RR         :MLOAD(tmpSHRBit_RR)
-    $ => B          :MLOAD(tmpSHRBit_B)
-    $ => D          :MLOAD(tmpSHRBit_D)
-    $ => C          :MLOAD(tmpSHRBit_C), RETURN
-
-SHRBitByte:
-    -B => C     
-    $ => B          :MLOAD(tmpSHRBit_A)
-    0 => A        
-    $ => A          :MEM_ALIGN_RD
-    $ => RR         :MLOAD(tmpSHRBit_RR)
-    $ => B          :MLOAD(tmpSHRBit_B)
-    $ => D          :MLOAD(tmpSHRBit_D)
-    $ => C          :MLOAD(tmpSHRBit_C), RETURN
-    
-
-SHRBit_A0:
-    $ => RR         :MLOAD(tmpSHRBit_RR)
-    0 => A          :RETURN
-
-SHRBit_D0:
-    $ => RR         :MLOAD(tmpSHRBit_RR)
-    $ => A          :MLOAD(tmpSHRBit_A), RETURN
-
-SHRBitTooBig:
-    B               :MSTORE(tmpSHRBit_B)
-
-    D => A
-    0x100000000n => B
-    0               :LT
-    
+                                :RESTORE, RETURN
+SHRbits_memalign:
+    %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+    A => B
     0 => A
-    $ => B          :MLOAD(tmpSHRBit_B), RETURN
+    $ => A                      :MEM_ALIGN_RD
+                                :RESTORE, RETURN
+SHRBit_A0:
+    0 => A                      :RETURN
 
+; @info Shift left D bits to A
+; @in A
+; @in D
+; @out A - (A << D) => A
 
+SHLbits:
+    %MAX_CNT_STEPS - STEP - 9   :JMPN(outOfCountersStep)
+    255 - D                     :JMPN(SHLBit_A0)
+
+    D => RR,RCX                 :SAVE(B,C,D,E,RCX,RR)
+    0 => C,B                    :JMP(@SHLbits_table + RR)
+
+SHLbits_arith:
+    %MAX_CNT_ARITH - CNT_ARITH - 1  :JMPN(outOfCountersArith)
+
+    ${(A >> (256 - RCX)) & const.MAX_UINT_256} => D
+    ${(A << RCX) & const.MAX_UINT_256} => A             :ARITH
+                                                        :RESTORE, RETURN
+SHLbits_memalign:
+    %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+    $ => A                                  :MEM_ALIGN_RD
+                                :RESTORE, RETURN
+SHLBit_A0:
+    0 => A                      :RETURN    
 
 ERROR:
 outOfCountersStep:
 outOfCountersMemalign:
+outOfCountersArith:
 failAssert:
         A + 1 :ASSERT
 
-; for (let i=0; i<256;++i) console.log(((i % 8 === 0 && i) ? `\t${-(i/8)} => B`:`\t0x${(2n**BigInt(i)).toString(16)}n => B`).padEnd(74) + `:RETURN ;2**${i}`)
 
-INCLUDE "bytes_neg_bits_2n.zkasm"
+INCLUDE "shl_bits_table.zkasm"
+INCLUDE "shr_bits_table.zkasm"
 INCLUDE "shr_shr_test_data.zkasm"
 
 end:
