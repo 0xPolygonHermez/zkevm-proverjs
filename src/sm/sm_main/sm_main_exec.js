@@ -1589,7 +1589,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.arith) {
             pols.arith[i] = 1n;
-            pols.arithSame12[i] = (l.arithEquation == 3) ? 0n : 1n;
+            pols.arithSame12[i] = (l.arithEquation == 3) ? 1n : 0n;
             pols.arithUseE[i] = (l.arithEquation == 1 || l.arithEquation == 7) ? 0n : 1n;
 
             if (l.arithEquation == 1) {
