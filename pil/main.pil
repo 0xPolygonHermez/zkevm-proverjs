@@ -85,21 +85,21 @@ namespace Main(%N);
     pol commit restore;
     pol commit setRID;
 
-    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7, 
-                          B0', B1', B2', B3', B4', B5', B6', B7', 
-                          C0', C1', C2', C3', C4', C5', C6', C7', 
-                          D0', D1', D2', D3', D4', D5', D6', D7', 
-                          E0', E1', E2', E3', E4', E5', E6', E7', 
+    restore  { RID, RID', FREE0, FREE1, FREE2, FREE3, FREE4, FREE5, FREE6, FREE7,
+                          B0', B1', B2', B3', B4', B5', B6', B7',
+                          C0', C1', C2', C3', C4', C5', C6', C7',
+                          D0', D1', D2', D3', D4', D5', D6', D7',
+                          E0', E1', E2', E3', E4', E5', E6', E7',
                           RR', RCX'
     } is save { Global.STEP, RID, op0, op1, op2, op3, op4, op5, op6, op7,
-                            B0, B1, B2, B3, B4, B5, B6, B7, 
-                            C0, C1, C2, C3, C4, C5, C6, C7, 
-                            D0, D1, D2, D3, D4, D5, D6, D7, 
-                            E0, E1, E2, E3, E4, E5, E6, E7, 
+                            B0, B1, B2, B3, B4, B5, B6, B7,
+                            C0, C1, C2, C3, C4, C5, C6, C7,
+                            D0, D1, D2, D3, D4, D5, D6, D7,
+                            E0, E1, E2, E3, E4, E5, E6, E7,
                             RR, RCX};
 
     RID' * (1 - restore) = setRID * (op0 - RID) + save * (Global.STEP - RID) + RID - restore * RID;
-    
+
     Global.L1 * RID = 0;
 
 ///////////
@@ -149,7 +149,7 @@ namespace Main(%N);
         CONST1;
 
     pol commit op2;
-    op2 = 
+    op2 =
         A2 * inA +
         B2 * inB +
         C2 * inC +
@@ -161,7 +161,7 @@ namespace Main(%N);
         CONST2;
 
     pol commit op3;
-    op3 = 
+    op3 =
         A3 * inA +
         B3 * inB +
         C3 * inC +
@@ -262,8 +262,9 @@ namespace Main(%N);
                     2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
                     2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
 
-    free0IsByte * (2**7 * hJmpnCondValueBit[7] + 2**6 * hJmpnCondValueBit[6] + 2**5 * hJmpnCondValueBit[5] + 
-                   2**4 * hJmpnCondValueBit[4] + 2**3 * hJmpnCondValueBit[3] + 2**2 * hJmpnCondValueBit[2] + 
+    // hJmpnCondValueBit[0..7] here represents the LSBs of the provided free input value
+    free0IsByte * (2**7 * hJmpnCondValueBit[7] + 2**6 * hJmpnCondValueBit[6] + 2**5 * hJmpnCondValueBit[5] +
+                   2**4 * hJmpnCondValueBit[4] + 2**3 * hJmpnCondValueBit[3] + 2**2 * hJmpnCondValueBit[2] +
                    2**1 * hJmpnCondValueBit[1] + 2**0 * hJmpnCondValueBit[0] - FREE0) = 0;
 
 
@@ -366,7 +367,7 @@ namespace Main(%N);
     // repeat, compatible with ??? elseAddr = next
     pol finalElseAddr = elseAddr + elseUseAddrRel * addrRel;
 
-        
+
     // if elseAddr wasn't specified on zkasm, compiler put current address + 1
     zkPC' = doJMP * (finalJmpAddr - nextNoJmpZkPC) + elseJMP * (finalElseAddr - nextNoJmpZkPC) + nextNoJmpZkPC;
 
