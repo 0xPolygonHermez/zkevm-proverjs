@@ -255,7 +255,7 @@ class FullTracer {
         this.currentBlock = {
             block_number: blockNumber,
             coinbase: ethers.utils.hexlify(getVarFromCtx(ctx, true, 'sequencerAddr')),
-            gas_limit: `0x${Constants.BLOCK_GAS_LIMIT.toString(16)}`,
+            gas_limit: `0x${Scalar.e(getConstantFromCtx(ctx, 'BLOCK_GAS_LIMIT')).toString(16)}`,
             responses: [],
             error: '',
             ctx: Number(ctx.CTX),

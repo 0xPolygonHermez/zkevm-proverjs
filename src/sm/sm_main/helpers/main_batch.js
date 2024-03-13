@@ -1,4 +1,9 @@
 const Helper = require('./helper.js');
+const { Scalar } = require("ffjavascript");
+const {
+    scalar2fea,
+    fea2String,
+} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 module.exports = class Main extends Helper {
     /**
@@ -17,8 +22,8 @@ module.exports = class Main extends Helper {
             pols.SR4[0],
             pols.SR5[0],
             pols.SR6[0],
-            pols.SR7[0]
-        ] = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldStateRoot));
+            pols.SR7[0],
+        ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
 
         // Set oldBatchAccInputHash to register C
         [
@@ -29,8 +34,8 @@ module.exports = class Main extends Helper {
             pols.C4[0],
             pols.C5[0],
             pols.C6[0],
-            pols.C7[0]
-        ] = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldBatchAccInputHash));
+            pols.C7[0],
+        ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBatchAccInputHash));
 
         // Set previousL1InfoTreeRoot to register D
         [
@@ -41,18 +46,19 @@ module.exports = class Main extends Helper {
             pols.D4[0],
             pols.D5[0],
             pols.D6[0],
-            pols.D7[0]
-        ] = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.previousL1InfoTreeRoot));
+            pols.D7[0],
+        ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.previousL1InfoTreeRoot));
 
         // Set previousL1InfoTreeIndex to RCX register
         pols.RCX[0] = ctx.Fr.e(ctx.input.previousL1InfoTreeIndex);
 
         // Set chainID to GAS register
-        pols.GAS[0] = ctx.Fr.e(ctx.input.chainID)
+        pols.GAS[0] = ctx.Fr.e(ctx.input.chainID);
 
         // Set forkID to CTX register
-        pols.CTX[0] = ctx.Fr.e(ctx.input.forkID)
+        pols.CTX[0] = ctx.Fr.e(ctx.input.forkID);
 
+        // Set other registers to zero
         pols.A0[0] = Fr.zero;
         pols.A1[0] = Fr.zero;
         pols.A2[0] = Fr.zero;
@@ -130,15 +136,16 @@ module.exports = class Main extends Helper {
             (pols.PC[0]) ||
             (pols.SP[0]) ||
             (pols.HASHPOS[0]) ||
-            (pols.RR[0])
+            (pols.RR[0]) ||
+            (pols.zkPC[0])
         ) {
             if(this.fullTracer) this.fullTracer.exportTrace();
 
             if(ctx.step >= (ctx.stepsN - 1)) console.log("Not enough steps to finalize execution (${ctx.step},${ctx.stepsN-1})\n");
-            throw new Error("Program terminated with registers A, B, E, SP, PC, HASHPOS, RR, zkPC not set to zero");
+            throw new Error("Program terminated with registers A, B, E, PC, SP, HASHPOS, RR, zkPC not set to zero");
         }
 
-        const feaOldStateRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldStateRoot));
+        const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
         if (
             (!Fr.eq(pols.SR0[0], feaOldStateRoot[0])) ||
             (!Fr.eq(pols.SR1[0], feaOldStateRoot[1])) ||
@@ -150,25 +157,25 @@ module.exports = class Main extends Helper {
             (!Fr.eq(pols.SR7[0], feaOldStateRoot[7]))
         ) {
             if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error("Register SR not terminetd equal as its initial value");
+            throw new Error("Register SR not ended equal as its initial value");
         }
 
-        const feaOldBatchAccInputHash = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldBatchAccInputHash));
+        const feaOldBatchAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBatchAccInputHash));
         if (
-            (!Fr.eq(pols.C0[0], oldBatchAccInputHash[0])) ||
-            (!Fr.eq(pols.C1[0], oldBatchAccInputHash[1])) ||
-            (!Fr.eq(pols.C2[0], oldBatchAccInputHash[2])) ||
-            (!Fr.eq(pols.C3[0], oldBatchAccInputHash[3])) ||
-            (!Fr.eq(pols.C4[0], oldBatchAccInputHash[4])) ||
-            (!Fr.eq(pols.C5[0], oldBatchAccInputHash[5])) ||
-            (!Fr.eq(pols.C6[0], oldBatchAccInputHash[6])) ||
-            (!Fr.eq(pols.C7[0], oldBatchAccInputHash[7]))
+            (!Fr.eq(pols.C0[0], feaOldBatchAccInputHash[0])) ||
+            (!Fr.eq(pols.C1[0], feaOldBatchAccInputHash[1])) ||
+            (!Fr.eq(pols.C2[0], feaOldBatchAccInputHash[2])) ||
+            (!Fr.eq(pols.C3[0], feaOldBatchAccInputHash[3])) ||
+            (!Fr.eq(pols.C4[0], feaOldBatchAccInputHash[4])) ||
+            (!Fr.eq(pols.C5[0], feaOldBatchAccInputHash[5])) ||
+            (!Fr.eq(pols.C6[0], feaOldBatchAccInputHash[6])) ||
+            (!Fr.eq(pols.C7[0], feaOldBatchAccInputHash[7]))
         ) {
             if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error("Register C not termined equal as its initial value");
+            throw new Error("Register C not ended equal as its initial value");
         }
 
-        const feaPreviousL1InfoTreeRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.previousL1InfoTreeRoot));
+        const feaPreviousL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.previousL1InfoTreeRoot));
         if (
             (!Fr.eq(pols.D0[0], feaPreviousL1InfoTreeRoot[0])) ||
             (!Fr.eq(pols.D1[0], feaPreviousL1InfoTreeRoot[1])) ||
@@ -180,22 +187,22 @@ module.exports = class Main extends Helper {
             (!Fr.eq(pols.D7[0], feaPreviousL1InfoTreeRoot[7]))
         ) {
             if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error("Register D not termined equal as its initial value");
+            throw new Error("Register D not ended equal as its initial value");
         }
 
         if (!Fr.eq(pols.RCX[0], ctx.Fr.e(ctx.input.previousL1InfoTreeIndex))){
             if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error("Register RCX not termined equal as its initial value");
+            throw new Error("Register RCX not ended equal as its initial value");
         }
 
         if (!Fr.eq(pols.GAS[0], ctx.Fr.e(ctx.input.chainID))){
             if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error("Register GAS not termined equal as its initial value");
+            throw new Error("Register GAS not ended equal as its initial value");
         }
 
         if (!Fr.eq(pols.CTX[0], ctx.Fr.e(ctx.input.forkID))){
             if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error(`Register CTX not termined equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
+            throw new Error(`Register CTX not ended equal as its initial value CTX[0]:${pols.CTX[0]} forkID:${ctx.input.forkID}`);
         }
     }
 
@@ -205,7 +212,7 @@ module.exports = class Main extends Helper {
     * @param {Object} ctx - context
     */
     assertOutputs(ctx){
-        const feaNewStateRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.newStateRoot));
+        const feaNewStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newStateRoot));
 
         if (
             (!ctx.Fr.eq(ctx.SR[0], feaNewStateRoot[0])) ||
@@ -218,13 +225,56 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.SR[7], feaNewStateRoot[7]))
         ) {
             let errorMsg = "Assert Error: newStateRoot does not match\n";
-            errorMsg += `   State root computed: ${this.fea2String(ctx.Fr, ctx.SR)}\n`;
+            errorMsg += `   State root computed: ${fea2String(ctx.Fr, ctx.SR)}\n`;
             errorMsg += `   State root expected: ${ctx.input.newStateRoot}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
 
-        const feaNewBatchAccInputHash = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.newBatchAccInputHash));
+    // Check timestamp
+    const scalarNewTimestamp = Scalar.e(ctx.input.newTimestamp);
+
+    if (!Scalar.eq(ctx.RR, scalarNewTimestamp)) {
+        let errorMsg = "Assert Error: newTimestamp does not match\n";
+        errorMsg += `   newTimestamp computed: ${Scalar.e(ctx.RR)}\n`;
+        errorMsg += `   newTimestamp expected: ${scalarNewTimestamp}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    // Check newL1InfoTreeIndex
+    const scalarNewL1InfoTreeIndex = Scalar.e(ctx.input.newL1InfoTreeIndex);
+
+    if (!Scalar.eq(ctx.RCX, scalarNewL1InfoTreeIndex)) {
+        let errorMsg = "Assert Error: newL1InfoTreeIndex does not match\n";
+        errorMsg += `   newL1InfoTreeIndex computed: ${Scalar.e(ctx.RCX)}\n`;
+        errorMsg += `   newL1InfoTreeIndex expected: ${scalarNewL1InfoTreeIndex}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+    // Check newL1InfoTreeRoot
+    const feaNewL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newL1InfoTreeRoot));
+
+    if (
+        (!ctx.Fr.eq(ctx.D[0], feaNewL1InfoTreeRoot[0])) ||
+        (!ctx.Fr.eq(ctx.D[1], feaNewL1InfoTreeRoot[1])) ||
+        (!ctx.Fr.eq(ctx.D[2], feaNewL1InfoTreeRoot[2])) ||
+        (!ctx.Fr.eq(ctx.D[3], feaNewL1InfoTreeRoot[3])) ||
+        (!ctx.Fr.eq(ctx.D[4], feaNewL1InfoTreeRoot[4])) ||
+        (!ctx.Fr.eq(ctx.D[5], feaNewL1InfoTreeRoot[5])) ||
+        (!ctx.Fr.eq(ctx.D[6], feaNewL1InfoTreeRoot[6])) ||
+        (!ctx.Fr.eq(ctx.D[7], feaNewL1InfoTreeRoot[7]))
+    ) {
+        let errorMsg = "Assert Error: newL1InfoTreeRoot does not match\n";
+        errorMsg += `   newL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
+        errorMsg += `   newL1InfoTreeRoot expected: ${ctx.input.newL1InfoTreeRoot}\n`;
+        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        throw new Error(errorMsg);
+    }
+
+        // Check newBatchAccInputHash
+        const feaNewBatchAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newBatchAccInputHash));
 
         if (
             (!ctx.Fr.eq(ctx.C[0], feaNewBatchAccInputHash[0])) ||
@@ -237,32 +287,14 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.C[7], feaNewBatchAccInputHash[7]))
         ) {
             let errorMsg = "Assert Error: newBatchAccInputHash does not match\n";
-            errorMsg += `   newBatchAccInputHash computed: ${this.fea2String(ctx.Fr, ctx.C)}\n`;
-            errorMsg += `   newBatchAccInputHash expected: ${ctx.input.newAccInputHash}\n`;
+            errorMsg += `   newBatchAccInputHash computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
+            errorMsg += `   newBatchAccInputHash expected: ${ctx.input.newBatchAccInputHash}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
 
-        const feaCurrentL1InfoTreeRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.currentL1InfoTreeRoot));
-
-        if (
-            (!ctx.Fr.eq(ctx.D[0], feaCurrentL1InfoTreeRoot[0])) ||
-            (!ctx.Fr.eq(ctx.D[1], feaCurrentL1InfoTreeRoot[1])) ||
-            (!ctx.Fr.eq(ctx.D[2], feaCurrentL1InfoTreeRoot[2])) ||
-            (!ctx.Fr.eq(ctx.D[3], feaCurrentL1InfoTreeRoot[3])) ||
-            (!ctx.Fr.eq(ctx.D[4], feaCurrentL1InfoTreeRoot[4])) ||
-            (!ctx.Fr.eq(ctx.D[5], feaCurrentL1InfoTreeRoot[5])) ||
-            (!ctx.Fr.eq(ctx.D[6], feaCurrentL1InfoTreeRoot[6])) ||
-            (!ctx.Fr.eq(ctx.D[7], feaCurrentL1InfoTreeRoot[7]))
-        ) {
-            let errorMsg = "Assert Error: currentL1InfoTreeRoot does not match\n";
-            errorMsg += `   currentL1InfoTreeRoot computed: ${this.fea2String(ctx.Fr, ctx.D)}\n`;
-            errorMsg += `   currentL1InfoTreeRoot expected: ${ctx.input.newAccInputHash}\n`;
-            errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
-            throw new Error(errorMsg);
-        }
-
-        const feaNewLocalExitRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.newLocalExitRoot));
+        // Check newLocalExitRoot
+        const feaNewLocalExitRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newLocalExitRoot));
 
         if (
             (!ctx.Fr.eq(ctx.E[0], feaNewLocalExitRoot[0])) ||
@@ -275,28 +307,11 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.E[7], feaNewLocalExitRoot[7]))
         ) {
             let errorMsg = "Assert Error: NewLocalExitRoot does not match\n";
-            errorMsg += `   NewLocalExitRoot computed: ${this.fea2String(ctx.Fr, ctx.E)}\n`;
+            errorMsg += `   NewLocalExitRoot computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
             errorMsg += `   NewLocalExitRoot expected: ${ctx.input.newLocalExitRoot}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
-
-        if (!ctx.Fr.eq(ctx.RCX, ctx.Fr.e(ctx.input.currentL1InfoTreeIndex))){
-            let errorMsg = "Assert Error: currentL1InfoTreeIndex does not match\n";
-            errorMsg += `   currentL1InfoTreeIndex computed: ${Number(ctx.RCX)}\n`;
-            errorMsg += `   currentL1InfoTreeIndex expected: ${ctx.input.currentL1InfoTreeIndex}\n`;
-            errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
-            throw new Error(errorMsg);
-        }
-
-        if (!ctx.Fr.eq(ctx.RR, ctx.Fr.e(ctx.input.newLastTimestamp))){
-            let errorMsg = "Assert Error: newLastTimestamp does not match\n";
-            errorMsg += `   newLastTimestamp computed: ${Number(ctx.RR)}\n`;
-            errorMsg += `   newLastTimestamp expected: ${ctx.input.newLastTimestamp}\n`;
-            errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
-            throw new Error(errorMsg);
-        }
-
         console.log("Assert outputs run succesfully");
     }
 }
