@@ -290,6 +290,12 @@ class FullTracer {
         this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         this.currentBlock.logs = [];
 
+        // Set block hash to all txs of block
+        this.currentBlock.responses.forEach((tx) => {
+            tx.block_hash = this.currentBlock.block_hash;
+            tx.block_number = this.currentBlock.block_number;
+        });
+
         // add blockhash to all logs on every tx
         for (let response of this.currentBlock.responses) {
             for (let log of response.logs) {
