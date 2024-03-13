@@ -297,15 +297,15 @@ class FullTracer {
         });
 
         // add blockhash to all logs on every tx
-        for (let response of this.currentBlock.responses) {
-            for (let log of response.logs) {
+        for (const response of this.currentBlock.responses) {
+            for (const log of response.logs) {
                 log.block_hash = this.currentBlock.block_hash;
             }
         }
 
         // add logs to block response
-        for (let response of this.currentBlock.responses) {
-            for (let log of response.logs) {
+        for (const response of this.currentBlock.responses) {
+            for (const log of response.logs) {
                 this.currentBlock.logs.push(log);
             }
         }
