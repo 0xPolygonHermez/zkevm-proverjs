@@ -3074,9 +3074,8 @@ function eval_functionCall(ctx, tag) {
         return eval_ARITH_BN254_ADDFP2(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_SUBFP2") {
         return eval_ARITH_BN254_SUBFP2(ctx, tag);
-    } else {
-        return ctx.helpers.Rom.evalRomCommand(ctx, tag)
     }
+    throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
 
 function eval_getSequencerAddr(ctx, tag) {
