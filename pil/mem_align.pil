@@ -15,22 +15,15 @@ namespace MemAlign(%N);
     *  inM (8 bits, 32 steps)
     */
 
-    /*
-     * memAlign (cherry) A   pol_ids:631  [cm1_2ns:665 cm2_2ns:128 cm3_2ns:371 q_2ns:3 tot:1167]
-     * memAlign (varlen) A   pol_ids:631  [cm1_2ns:668 cm2_2ns:128 cm3_2ns:362 q_2ns:3 tot:1161]
-    */
-
     // 32 bytes of M0, M1 ordered from HSB to LSB (32, 31, 30, ... == M[7].3, M[7].2, M[7].1, M[7].0, M[6].3, ..)
     pol commit inM[2];
 
     // 32 bytes of V non-ordered
     // In a particular order depending on how to apply to M0, M1 that have a predetermined order
     // One particular byte only was on M0, M1 or nowhere.
-    pol commit inV7;
-    pol commit inV06;
-
-    // Little Big Enddian Selector  lbes = 0 big enddian, lebs = 1 little enddian
-    pol commit lbes;
+    pol commit inV[2];
+    pol inV_M = inV[0] + inV[1];
+    pol commit inV_V;
 
     // write
     pol commit wr;
@@ -45,13 +38,10 @@ namespace MemAlign(%N);
     // when m1 is "active", means aligned with inV an must be read/write from/to M1
     pol commit selM0;
     pol commit selM1;
+    pol commit selV;
+    pol commit bytePos;
 
-    // factors to build V[] in correct way, because order of V bytes
-    // changes according the offset and wr8
-    pol commit factorV[8];
-
-    pol commit offset;
-    pol commit len;
+    pol commit mode;
 
     // FACTOR was same for all combinations of offset, wr8, wr256 is a f(step)
     // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x28)
@@ -61,29 +51,20 @@ namespace MemAlign(%N);
     // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1
     pol constant FACTOR[8];     // [0:4*(7-i),2**24, 2**16, 2**8, 1, 0:4*i]
 
-    // FACTOR change according the combinations of offset, be, len and step.
-    pol constant FACTORV[8];
-
     // offset', lbes', len', Global.STEP32,
 
-                            // STEP [0..31]
-    pol constant OFFSET;    // [0:32..31:32]
-    pol constant LBES;      // [0:1024,1:1024]
-    pol constant LEN;       // [0:2048..31:2048]
+    pol constant MODE_SELM1_SELM0; //  4*MODE + 2*SELM1 + SELM0
+    pol constant ID;               // [1:32,2:32..+..]
+    pol constant T_BYTE_POS;          
 
-    pol constant BIT7_C64K; // [0:65536..127:65536];
-
-    pol constant SELM0;
-    pol constant SELM1;
-
-    pol RESET = Global.CLK32[0];
+    pol RESET = Global.CLK32[31];
 
     //              RangeCheck                  Latch   Clock
-    // factorV      Plookup (FACTORV)           no      yes
+    // factorV      lookup (FACTORV)            no      yes
     // wr           Binary constraint           yes     no
-    // len          Plookup (LEN)               yes     no
-    // lbes         Plookup (LBES)              yes     no
-    // offset       Plookup (OFFSET)            yes     no
+    // len          lookup (LEN)                yes     no
+    // lbes         lookup (LBES)               yes     no
+    // offset       lookup (OFFSET)             yes     no
     // inV7         RangeCheck (BYTE_C8192)     no      yes
     // inV06        RangeCheck (BYTE_C8192)     no      yes
     // inM[0..1]    RangeCheck (BYTE2A,BYTE2)   no      yes
@@ -92,41 +73,37 @@ namespace MemAlign(%N);
     // w0[0..7]     Built                       no      yes
     // w1[0..7]     Built                       no      yes
     // v[0..7]      Built                       no      yes
-    // selM0        Plookup (SELM0)             no      yes
-    // selM1        Plookup (SELM1)             no      yes
+    // selM0        lookup (SELM0)              no      yes
+    // selM1        lookup (SELM1)              no      yes
 
     // Latchs
     (1 - RESET) * wr' = (1 - RESET) * wr;
-    (1 - RESET) * offset' = (1 - RESET) * offset;
-    (1 - RESET) * len' = (1 - RESET) * len;
-    (1 - RESET) * lbes' = (1 - RESET) * lbes;
+    (1 - RESET) * mode' = (1 - RESET) * mode;
 
-    pol commit resultRd;
-    pol commit resultWr;
-    (1 - RESET) * resultRd = 0;
-    (1 - RESET) * resultWr = 0;
-    resultRd * (1 - resultRd) = 0;
-    resultWr * (1 - resultWr) = 0;
+    (1 - selM0) * selM0 = 0;
+    (1 - selM1) * selM1 = 0;
+
+    pol commit result;
+
+    (1 - RESET) * result = 0;
+    result * (1 - result) = 0;
 
     wr  * ( 1 - wr ) = 0;
-    (1 - wr) * resultWr = 0;
-
-    inV7 * ( 1 - inV7 ) = 0;
-    pol inV = inV7 * 128 + inV06;
 
     // RangeCheck
-    {inM[1], inM[0], inV06} in {Global.BYTE_2A, Global.BYTE, BIT7_C64K};
+    // 2^16 + 2^6 = 2^22
+    { inM[1], inM[0], inV[0] } in { Global.BYTE_2A, Global.BYTE, INV1 };
 
-    // Plookup
-    {
-        Global.STEP32, offset', len', lbes',            // selectors 5 + 5 + 1 + 5 = 16 bits
-        selM0, selM1,
-        factorV[0], factorV[1], factorV[2], factorV[3], factorV[4], factorV[5], factorV[6], factorV[7]
-    } in {
-        Global.STEP32, OFFSET, LEN, LBES,
-        SELM0, SELM1,
-        FACTORV[0], FACTORV[1], FACTORV[2], FACTORV[3], FACTORV[4], FACTORV[5], FACTORV[6], FACTORV[7]
-    };
+    pol constant INV1, INV2;
+
+    // 32 clocks * 65 offsets (0-64) * 33 lengths (0-32) * 2 left/right * 2 le/be = 274560 (2^19 = 524288)
+    // 2^19 + 2^2 = 2^21
+    { Global.STEP32, mode*4 + selM1 * 2 + selM0, bytePos, inV[1] } in { Global.STEP32, MODE_SELM1_SELM0, T_BYTE_POS, INV2 };
+
+    (1 - selV) * inV_V = 0;
+
+    selM0 + selM1 { ID, bytePos, inV_M } is selV { ID, Global.STEP32, inV_V };
+
 
     m0[0]' = (1-RESET) * m0[0] + FACTOR[0] * inM[0];
     m0[1]' = (1-RESET) * m0[1] + FACTOR[1] * inM[0];
@@ -149,35 +126,38 @@ namespace MemAlign(%N);
     // data to "write" on w, if current byte must be override by V contains inV
     // if not contains inM "in reading mode" value don't matter
     // because there are two permutation checks, one for read and other for write.
-    pol dataW0 = inM[0] + selM0 * (inV - inM[0]);
-    pol dataW1 = inM[1] + selM1 * (inV - inM[1]);
 
-    w0[0]' = (1-RESET) * w0[0] + FACTOR[0] * dataW0;
-    w0[1]' = (1-RESET) * w0[1] + FACTOR[1] * dataW0;
-    w0[2]' = (1-RESET) * w0[2] + FACTOR[2] * dataW0;
-    w0[3]' = (1-RESET) * w0[3] + FACTOR[3] * dataW0;
-    w0[4]' = (1-RESET) * w0[4] + FACTOR[4] * dataW0;
-    w0[5]' = (1-RESET) * w0[5] + FACTOR[5] * dataW0;
-    w0[6]' = (1-RESET) * w0[6] + FACTOR[6] * dataW0;
-    w0[7]' = (1-RESET) * w0[7] + FACTOR[7] * dataW0;
+    pol inW0 = inM[0] + selM0 * (inV_M - inM[0]);
+    pol inW1 = inM[1] + selM1 * (inV_M - inM[1]);
 
-    w1[0]' = (1-RESET) * w1[0] + FACTOR[0] * dataW1;
-    w1[1]' = (1-RESET) * w1[1] + FACTOR[1] * dataW1;
-    w1[2]' = (1-RESET) * w1[2] + FACTOR[2] * dataW1;
-    w1[3]' = (1-RESET) * w1[3] + FACTOR[3] * dataW1;
-    w1[4]' = (1-RESET) * w1[4] + FACTOR[4] * dataW1;
-    w1[5]' = (1-RESET) * w1[5] + FACTOR[5] * dataW1;
-    w1[6]' = (1-RESET) * w1[6] + FACTOR[6] * dataW1;
-    w1[7]' = (1-RESET) * w1[7] + FACTOR[7] * dataW1;
+    // when reading, inW must be equal to inM, same
+    // as selM0 * (inV_M - inM[0]) === 0 when reading
+    (1 - wr) * (inW0 - inM[0]) = 0;
+    (1 - wr) * (inW1 - inM[1]) = 0;
 
-    pol dataV = inV + selM0 * (inM[0] - inV) + selM1 * (inM[1] - inV);
+    w0[0]' = (1-RESET) * w0[0] + FACTOR[0] * inW0;
+    w0[1]' = (1-RESET) * w0[1] + FACTOR[1] * inW0;
+    w0[2]' = (1-RESET) * w0[2] + FACTOR[2] * inW0;
+    w0[3]' = (1-RESET) * w0[3] + FACTOR[3] * inW0;
+    w0[4]' = (1-RESET) * w0[4] + FACTOR[4] * inW0;
+    w0[5]' = (1-RESET) * w0[5] + FACTOR[5] * inW0;
+    w0[6]' = (1-RESET) * w0[6] + FACTOR[6] * inW0;
+    w0[7]' = (1-RESET) * w0[7] + FACTOR[7] * inW0;
 
-    // factorV = f(STEP, offset, wr8)
-    v[0]' = (1-RESET) * v[0] + factorV[0] * dataV;
-    v[1]' = (1-RESET) * v[1] + factorV[1] * dataV;
-    v[2]' = (1-RESET) * v[2] + factorV[2] * dataV;
-    v[3]' = (1-RESET) * v[3] + factorV[3] * dataV;
-    v[4]' = (1-RESET) * v[4] + factorV[4] * dataV;
-    v[5]' = (1-RESET) * v[5] + factorV[5] * dataV;
-    v[6]' = (1-RESET) * v[6] + factorV[6] * dataV;
-    v[7]' = (1-RESET) * v[7] + factorV[7] * dataV;
+    w1[0]' = (1-RESET) * w1[0] + FACTOR[0] * inW1;
+    w1[1]' = (1-RESET) * w1[1] + FACTOR[1] * inW1;
+    w1[2]' = (1-RESET) * w1[2] + FACTOR[2] * inW1;
+    w1[3]' = (1-RESET) * w1[3] + FACTOR[3] * inW1;
+    w1[4]' = (1-RESET) * w1[4] + FACTOR[4] * inW1;
+    w1[5]' = (1-RESET) * w1[5] + FACTOR[5] * inW1;
+    w1[6]' = (1-RESET) * w1[6] + FACTOR[6] * inW1;
+    w1[7]' = (1-RESET) * w1[7] + FACTOR[7] * inW1;
+
+    v[0]' = (1-RESET) * v[0] + FACTOR[0] * inV_V;
+    v[1]' = (1-RESET) * v[1] + FACTOR[1] * inV_V;
+    v[2]' = (1-RESET) * v[2] + FACTOR[2] * inV_V;
+    v[3]' = (1-RESET) * v[3] + FACTOR[3] * inV_V;
+    v[4]' = (1-RESET) * v[4] + FACTOR[4] * inV_V;
+    v[5]' = (1-RESET) * v[5] + FACTOR[5] * inV_V;
+    v[6]' = (1-RESET) * v[6] + FACTOR[6] * inV_V;
+    v[7]' = (1-RESET) * v[7] + FACTOR[7] * inV_V;

@@ -25,7 +25,7 @@ const CONST_F = {
                                     (CONST_F.OFFSET(i) > (i % 32))) ? 1:0,
 
     FACTOR: (index, i) => mapRange(i % 32, 28 - 4 * index, [0x1000000, 0x10000, 0x100, 1], 0),
-    FACTORV: (index, i) => (CONST_F.V_BYTE(i) >> 2) == index ? [1, 0x100, 0x10000, 0x1000000][CONST_F.V_BYTE(i) % 4] : 0,
+//    FACTORV: (index, i) => (CONST_F.V_BYTE(i) >> 2) == index ? [1, 0x100, 0x10000, 0x1000000][CONST_F.V_BYTE(i) % 4] : 0,
 }
 
 module.exports.buildConstants = async function (pols) {
@@ -44,8 +44,25 @@ module.exports.buildConstants = async function (pols) {
         }
     });
 }
+/*
 
+function buildConstants  (pols) {
+    for (const leftAlign of [0,1]) {
+        for (const littleEndian of [0,1]) {
+            for (let len = 0; len <= 32; ++len) {
+                for (let offset = 0; offset <= 32; ++offset) {
+                    for (let clock = 0; clock < 32; ++clock) {
+                        const _len = len === 0 ? 32:len;
+                        
+                
+                    }        
+                }
+            }
+        }
+    }
 
+    MODE_SELM1_SELM0
+}*/
 module.exports.execute = async function (pols, input) {
     // Get N from definitions
     const N = pols.offset.length;
