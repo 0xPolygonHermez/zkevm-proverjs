@@ -290,34 +290,22 @@ class FullTracer {
         this.currentBlock.block_hash = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         this.currentBlock.logs = [];
 
-        // Append logs correctly formatted to block and transactions response logs
-        // Put all logs in an array
-        this.logs = this.logs.filter((n) => n);
-        let auxLogs = [];
-        for (let i = 0; i < this.logs.length; i++) {
-            auxLogs = auxLogs.concat(Object.values(this.logs[i]));
+        // add blockhash to all logs on every tx
+        for (let response of this.currentBlock.responses) {
+            for (let log of response.logs) {
+                log.block_hash = this.currentBlock.block_hash;
+            }
         }
-        // Sort auxLogs by index
-        auxLogs.sort((a, b) => a.index - b.index);
-        // Update index to be sequential
-        for (let i = 0; i < auxLogs.length; i++) {
-            const singleLog = auxLogs[i];
-            // set logIndex
-            // singleLog.index = i;
-            singleLog.block_hash = this.currentBlock.block_hash;
-            // store block log
-            this.currentBlock.logs.push(singleLog);
-            // store transaction log
-            this.currentBlock.responses[singleLog.tx_index].logs.push(singleLog);
-        }
-        // Set block hash to all txs of block
-        this.currentBlock.responses.forEach((tx) => {
-            tx.block_hash = this.currentBlock.block_hash;
-            tx.block_number = this.currentBlock.block_number;
-        });
 
-        // Reset logs
-        this.logs = [];
+        // add logs to block response
+        for (let response of this.currentBlock.responses) {
+            for (let log of response.logs) {
+                this.currentBlock.logs.push(log);
+            }
+        }
+
+        // sort logs by logIndex
+        this.currentBlock.logs.sort((a, b) => a.index - b.index);
 
         this.verbose.printBlock(`${'finish'.padEnd(10)} ${this.currentBlock.block_number}`);
     }
@@ -529,6 +517,29 @@ class FullTracer {
         if ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1)) {
             throw new Error(`Invalid tx status error is "${response.error}" and status is "${response.status}"`);
         }
+
+        // Append logs correctly formatted to response logs
+        this.logs = this.logs.filter((n) => n); // Remove null values
+        // Put all logs in an array
+        let auxLogs = [];
+        for (let i = 0; i < this.logs.length; i++) {
+            auxLogs = auxLogs.concat(Object.values(this.logs[i]));
+        }
+        // Sort auxLogs by index
+        auxLogs.sort((a, b) => a.index - b.index);
+
+        // Update index to be sequential
+        // eslint-disable-next-line no-restricted-syntax
+        response.logs = [];
+        for (let i = 0; i < auxLogs.length; i++) {
+            const singleLog = auxLogs[i];
+            // store log
+            response.logs.push(singleLog);
+        }
+
+        // Reset logs
+        this.logs = [];
+
         // verbose
         this.verbose.printTx(`${'finish'.padEnd(10)} ${this.txIndex}`);
 
