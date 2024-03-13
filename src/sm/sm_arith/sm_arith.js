@@ -2,7 +2,6 @@ const {fea2scalar} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 // all arith sources and tools on https://github.com/hermeznetwork/sm_arith.git
 
-
 const arithEq0 = require('./sm_arith_eq0');
 const arithEq1 = require('./sm_arith_eq1');
 const arithEq2 = require('./sm_arith_eq2');
@@ -14,6 +13,7 @@ const arithEq7 = require('./sm_arith_eq7');
 const arithEq8 = require('./sm_arith_eq8');
 const arithEq9 = require('./sm_arith_eq9');
 const arithEq10 = require('./sm_arith_eq10');
+const arithEq11 = require('./sm_arith_eq11');
 
 const F1Field = require("ffjavascript").F1Field;
 
@@ -108,7 +108,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
                         arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
-                        arithEq10.calculate];
+                        arithEq10.calculate, arithEq11.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -126,9 +126,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             if (j < pols.carry.length) pols.carry[j][i] = 0n;
             if (j < pols.selEq.length) pols.selEq[j][i] = 0n;
         }
-        pols.resultEq0[i] = 0n;
-        pols.resultEq1[i] = 0n;
-        pols.resultEq2[i] = 0n;
+        pols.y2clock[i] = 0n;
+        pols.x3clock[i] = 0xFFFFn;
+        pols.y3clock[i] = 0n;
+
+        pols.resultEq[i] = 0n;
         pols.xDeltaChunkInverse[i] = 0n;
         pols.xAreDifferent[i] = 0n;
 
@@ -157,7 +159,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         // Note2: x1,x2,y1,y2 can be assumed to be alias free, as this is the pre condition in the Arith SM.
         //        I.e, x1,x2,y1,y2 ∈ [0, 2^256-1].
         if (input[i].selEq1) {
-            let pq0;
+            let eq;
             if (Fec.eq(x2, x1) && !continueOnError) {
                 throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
             } else {
@@ -166,11 +168,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 } else {
                     s = Fec.div(Fec.sub(y2, y1), Fec.sub(x2, x1));
                 }
-                pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are {-2^256*(2^256-1),2^256*(2^256-1)}
+                eq = s * x2 - s * x1 - y2 + y1; // Worst values are {-2^256*(2^256-1),2^256*(2^256-1)}
             }
-            q0 = pq0/pFec;
+            q0 = eq/pFec;
             nDivErrors = errorHandler(
-                (pq0 - pFec * q0) != 0n,
+                (eq - pFec * q0) != 0n,
                 `For input ${i}, with the calculated q0 the residual is not zero (diff point)`,
                 continueOnError,
                 nDivErrors
@@ -190,11 +192,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             } else {
                 s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
             }
-            let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2}
+            let eq = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2}
                                                   // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
-            q0 = -(pq0/pFec);
+            q0 = -(eq/pFec);
             nDivErrors = errorHandler(
-                (pq0 + pFec*q0) != 0n,
+                (eq + pFec*q0) != 0n,
                 `For input ${i}, with the calculated q0 the residual is not zero (same point)`,
                 continueOnError,
                 nDivErrors
@@ -213,12 +215,12 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             q0 = 0n;
         }
 
-        if (input[i].selEq3) {
-            let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
+        if (input[i].selEq1 || input[i].selEq2) {
+            let eqa = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
                                             // with (2^256-1)**2 > |-3*(2^256-1)|
-            q1 = pq1/pFec;
+            q1 = eqa/pFec;
             nDivErrors = errorHandler(
-                (pq1 - pFec*q1) != 0n,
+                (eqa - pFec*q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (point addition)`,
                 continueOnError,
                 nDivErrors
@@ -235,11 +237,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];
             }
-            let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(2^256+1)*(2^256-1),(2^256-1)**2}
+            let eqb = s * x1 - s * x3 - y1 - y3; // Worst values are {-(2^256+1)*(2^256-1),(2^256-1)**2}
                                                  // with |-(2^256+1)*(2^256-1)| > (2^256-1)**2
-            q2 = -(pq2/pFec);
+            q2 = -(eqb/pFec);
             nDivErrors = errorHandler(
-                (pq2 + pFec*q2) != 0n,
+                (eqb + pFec*q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (point addition)`,
                 continueOnError,
                 nDivErrors
@@ -253,12 +255,12 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq4) {
-            let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
+        else if (input[i].selEq3) {
+            let eqa = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
                                               // with |-2^256*(2^256-1)| > (2^256-1)**2
-            q1 = -(pq1/pBN254);
+            q1 = -(eqa/pBN254);
             nDivErrors = errorHandler(
-                (pq1 + pBN254*q1) != 0n,
+                (eqa + pBN254*q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (complex mul)`,
                 continueOnError,
                 nDivErrors
@@ -272,11 +274,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
 
-            let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)**2}
+            let eqb = y1 * x2 + x1 * y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)**2}
                                               // with 2*(2^256-1)**2 > |-(2^256-1)|
-            q2 = pq2/pBN254;
+            q2 = eqb/pBN254;
             nDivErrors = errorHandler(
-                (pq2 - pBN254*q2) != 0n,
+                (eqb - pBN254*q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (complex mul)`,
                 continueOnError,
                 nDivErrors
@@ -290,12 +292,12 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq5) {
-            let pq1 = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
+        else if (input[i].selEq4) {
+            let eqa = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
                                     // with 2*(2^256-1) > |-(2^256-1)|
-            q1 = pq1/pBN254;
+            q1 = eqa/pBN254;
             nDivErrors = errorHandler(
-                (pq1 - pBN254*q1) != 0n,
+                (eqa - pBN254*q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (complex add)`,
                 continueOnError,
                 nDivErrors
@@ -309,11 +311,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
 
-            let pq2 = y1 + y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)}
+            let eqb = y1 + y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)}
                                     // with 2*(2^256-1) > |-(2^256-1)|
-            q2 = pq2/pBN254;
+            q2 = eqb/pBN254;
             nDivErrors = errorHandler(
-                (pq2 - pBN254*q2) != 0n,
+                (eqb - pBN254*q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (complex add)`,
                 continueOnError,
                 nDivErrors
@@ -327,12 +329,12 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq6) {
-            let pq1 = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
+        else if (input[i].selEq5) {
+            let eqa = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
-            q1 = -(pq1/pBN254);
+            q1 = -(eqa/pBN254);
             nDivErrors = errorHandler(
-                (pq1 + pBN254*q1) != 0n,
+                (eqa + pBN254*q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (complex sub)`,
                 continueOnError,
                 nDivErrors
@@ -346,11 +348,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
 
-            let pq2 = y1 - y2 - y3; // Worst values are {-2*(2^256-1),(2^256-1)}
+            let eqb = y1 - y2 - y3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
-            q2 = -(pq2/pBN254);
+            q2 = -(eqb/pBN254);
             nDivErrors = errorHandler(
-                (pq2 + pBN254*q2) != 0n,
+                (eqb + pBN254*q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (complex sub)`,
                 continueOnError,
                 nDivErrors
@@ -363,11 +365,28 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 continueOnError,
                 nNegErrors
             );
-        }
-        else {
+        } else {
             q1 = 0n;
             q2 = 0n;
         }
+
+        if (input[i].selEq6) {
+            let eq = x1 * y1 + x2 - y3;
+            if (y2 === 0n) {
+                throw new Error(`For input ${i}, y2 is zero on modular arithmetic`);
+            }
+            let quotient = eq / y2;
+            q1 = quotient >> 256n;
+            q0 = quotient & (2n ** 256n - 1n);
+
+            nDivErrors = errorHandler(
+                eq - y2 * 2n ** 256n * q1 - y2 * q0 !== 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (modular arith)`,
+                continueOnError,
+                nDivErrors
+            );
+        }
+
         input[i]['_s'] = to16bitsRegisters(s);
         input[i]['_q0'] = to16bitsRegisters(q0);
         input[i]['_q1'] = to16bitsRegisters(q1);
@@ -407,6 +426,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.q1[j][index] = BigInt(input[i]["_q1"][j])
                 pols.q2[j][index] = BigInt(input[i]["_q2"][j])
             }
+            pols.y2clock[index] = BigInt(input[i]["_y2"][15 - step16])
+            pols.y3clock[index] = BigInt(input[i]["_y3"][15 - step16])
             pols.selEq[0][index] = BigInt(input[i].selEq0);
             pols.selEq[1][index] = BigInt(input[i].selEq1);
             pols.selEq[2][index] = BigInt(input[i].selEq2);
@@ -425,16 +446,26 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
             }
 
-            // If either selEq3,selEq4,selEq5,selEq6 is selected, we need to ensure that x3, y3 is alias free.
-            // Recall that selEq3 work over the Secp256k1 curve, and selEq4,selEq5,selEq6 work over the BN254 curve.
-            if (pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index]) {
+            // If either selEq1,selEq2,selEq3,selEq4,selEq5,selEq6 is selected, we need to ensure that x3, y3 is alias free.
+            // Recall that selEq1,selEq2 work over the base field of the Secp256k1 curve, selEq3,selEq4,selEq5 works over the
+            // base field of the BN254 curve and selEq6 works modulo y2.
+            if (pols.selEq[1][index] || pols.selEq[2][index] || pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index]) {
                 const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
-                const chunkPrime = pols.selEq[3][index] ? chunksPrimeSecp256k1[step16] : chunksPrimeBN254[step16];
+                let chunkPrime;
+                if (pols.selEq[1][index] || pols.selEq[2][index]) {
+                    chunkPrime = chunksPrimeSecp256k1[step16];
+                } else if (pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index]) {
+                    chunkPrime = chunksPrimeBN254[step16];
+                } else if (pols.selEq[6][index]) {
+                    chunkPrime = pols.y2[15 - step16][offset]
+                }
                 const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
                 valueLtPrime = valueLtPrime || chunkLtPrime;
                 pols.chunkLtPrime[index] = chunkLtPrime ? 1n : 0n;
                 pols.valueLtPrime[nextIndex] = valueLtPrime ? 1n : 0n;
             }
+
+            pols.x3clock[index] = 0xFFFFn + pols.y3[15 - step16][offset] - pols.y2[15 - step16][offset] + pols.chunkLtPrime[index];
 
             pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
             pols.selEq[1][offset + step] = BigInt(input[i].selEq1);
@@ -445,17 +476,18 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             pols.selEq[6][offset + step] = BigInt(input[i].selEq6);
         }
         let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2];
-        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
+        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0];
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
 
         let eqIndexes = [];
         if (pols.selEq[0][offset]) eqIndexes.push(0);
         if (pols.selEq[1][offset]) eqIndexes.push(1);
         if (pols.selEq[2][offset]) eqIndexes.push(2);
-        if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([3, 4]);
-        if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([5, 6]);
-        if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([7, 8]);
-        if (pols.selEq[6][offset]) eqIndexes = eqIndexes.concat([9, 10]);
+        if (pols.selEq[1][offset] || pols.selEq[2][offset]) eqIndexes = eqIndexes.concat([3, 4]);
+        if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([5, 6]);
+        if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([7, 8]);
+        if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([9, 10]);
+        if (pols.selEq[6][offset]) eqIndexes.push(11);
 
         for (let step = 0; step < 32; ++step) {
             eqIndexes.forEach((eqIndex) => {
@@ -468,9 +500,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
         }
-        pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
-        pols.resultEq1[offset + 31] = ((pols.selEq[1][offset] && pols.selEq[3][offset]) || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]) ? 1n : 0n;
-        pols.resultEq2[offset + 31] = (pols.selEq[2][offset] && pols.selEq[3][offset]) ? 1n : 0n;
+        pols.resultEq[offset + 31] =
+            pols.selEq[0][offset] || pols.selEq[1][offset] || pols.selEq[2][offset] ||
+            pols.selEq[3][offset] || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]
+                ? 1n
+                : 0n;
     }
 }
 
@@ -503,6 +537,7 @@ function splitFeaTo16bits(chunks) {
     }
     return res;
 }
+
 function prepareInput256bits(input, N) {
     for (let i = 0; i < input.length; i++) {
         for (var key of Object.keys(input[i])) {
