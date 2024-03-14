@@ -1,0 +1,316 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+include "<%- verifierNames[0] %>.verifier.circom";
+include "mux1.circom";
+include "iszero.circom";
+
+<% let starkInfo = starkInfoVerifiers[0]; %>
+
+template Main() {
+    var rootCSingle[4] = [<%- vks[0].join(",") %>];
+
+<% if(isBatchRecursion) { -%>
+<%  let p = 0; -%>
+    var oldBatchStatePos = <%- p %>;
+<% p += 8; -%>
+    var oldBatchAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var oldBatchNumPos = <%- p++ %>;
+<%  if(isEip4844) { -%>
+    var oldL1InfoTreeRootPos = <%- p %>;
+<% p += 8; -%>
+    var oldL1InfoTreeIndexPos = <%- p++ %>;
+<%  } -%>
+    var chainIdPos = <%- p++ %>;
+    var forkIdPos = <%- p++ %>;
+    var newBatchStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBatchAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+<%  if(isEip4844) { -%>
+    var newBatchNumPos = <%- p++ %>;
+    var newL1InfoTreeRootPos = <%- p %>;
+<% p += 8; -%>
+    var newL1InfoTreeIndexPos = <%- p++ %>;
+    var newLocalExitRootPos = <%- p %>;
+<% p += 8; -%>
+    var newLastTimestampPos = <%- p++ %>;
+<%  } else { -%> 
+    var newLocalExitRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBatchNumPos = <%- p++ %>;
+<%  } -%>
+<%  nPublics = p; -%>
+<% } else { -%>
+<%  let p = 0; -%>
+    var oldBlobOuterStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var oldBlobOuterBlobStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var oldBlobOuterAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var oldBlobOuterNumPos = <%- p++ %>;
+
+    var chainIdBlobOuterPos = <%- p++ %>;
+    var forkIdBlobOuterPos = <%- p++ %>;
+
+    var newBlobOuterStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBlobOuterBlobStateRootPos = <%- p %>;
+<% p += 8; -%>
+    var newBlobOuterAccInputHashPos = <%- p %>;
+<% p += 8; -%>
+    var newBlobOuterNumPos = <%- p++ %>;  
+    var newLocalExitRootBlobOuterPos = <%- p %>;
+<% p += 8; -%>
+<%  nPublics = p; -%>
+<% } -%>
+
+    signal input publics[<%- nPublics %>];
+    signal input rootC[4];
+
+    signal input a_publics[<%- nPublics %>];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input a_root<%- s %>[4];
+<%  } -%>
+   
+    signal input a_evals[<%- starkInfo.evMap.length %>][3];
+
+    signal input a_s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
+    signal input a_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input a_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input a_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+    
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input a_s<%- s %>_root[4];
+<% }                                                  -%>
+
+<% for (let s=1; s< starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input a_s<%- s %>_vals[<%- starkInfo.starkStruct.nQueries %>][<%- (1 << parseInt(starkInfo.starkStruct.steps[s-1].nBits - starkInfo.starkStruct.steps[s].nBits))*3 %>];
+    signal input a_s<%- s %>_siblings[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[s].nBits %>][4];
+<% }                                                  -%>
+   
+    signal input a_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+
+    signal input b_publics[<%- nPublics %>];
+ 
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input b_root<%- s %>[4];
+<%  } -%>
+
+    signal input b_evals[<%- starkInfo.evMap.length %>][3];
+
+    signal input b_s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
+    signal input b_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input b_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input b_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+    
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input b_s<%- s %>_root[4];
+<% }                                                  -%>
+
+<% for (let s=1; s< starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input b_s<%- s %>_vals[<%- starkInfo.starkStruct.nQueries %>][<%- (1 << parseInt(starkInfo.starkStruct.steps[s-1].nBits - starkInfo.starkStruct.steps[s].nBits))*3 %>];
+    signal input b_s<%- s %>_siblings[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[s].nBits %>][4];
+<% }                                                  -%>
+
+    signal input b_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+
+    component vA = StarkVerifier();
+
+    for (var i=0; i< <%- nPublics %>; i++) {
+        vA.publics[i] <== a_publics[i];
+    }
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vA.root<%- s %> <== a_root<%- s %>;
+<% } -%>
+
+    vA.evals <== a_evals;
+
+    vA.s0_valsC <== a_s0_valsC;
+    vA.s0_siblingsC <== a_s0_siblingsC;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vA.s0_vals<%- s %> <== a_s0_vals<%- s %>;
+    vA.s0_siblings<%- s %> <== a_s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vA.s<%- s %>_root <== a_s<%- s %>_root;
+<% }                                                  -%>
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vA.s<%- s %>_vals <== a_s<%- s %>_vals;
+    vA.s<%- s %>_siblings <== a_s<%- s %>_siblings;
+<% }                                                  -%>
+    vA.finalPol <== a_finalPol;
+<%  if(isBatchRecursion) { -%>
+    vA.enable <== 1;
+<%  } -%>
+
+<%  if(isBatchRecursion) { -%>
+    signal isOneBatchA <== IsZero()(a_publics[newBatchNumPos] - a_publics[oldBatchNumPos] - 1);
+<%  } else { -%>
+    signal isOneBatchA <== IsZero()(a_publics[newBlobOuterNumPos] - a_publics[oldBlobOuterNumPos] - 1);
+<%  } -%>
+
+    vA.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchA);
+    
+    for (var i=0; i<4; i++) {
+        vA.publics[<%- nPublics %> + i] <== rootC[i];
+    }
+
+    component vB = StarkVerifier();
+
+    for (var i=0; i< <%- nPublics %>; i++) {
+        vB.publics[i] <== b_publics[i];
+    }
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vB.root<%- s %> <== b_root<%- s %>;
+<% } -%>
+   
+    vB.evals <== b_evals;
+
+    vB.s0_valsC <== b_s0_valsC;
+    vB.s0_siblingsC <== b_s0_siblingsC;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vB.s0_vals<%- s %> <== b_s0_vals<%- s %>;
+    vB.s0_siblings<%- s %> <== b_s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vB.s<%- s %>_root <== b_s<%- s %>_root;
+<% }                                                  -%>
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vB.s<%- s %>_vals <== b_s<%- s %>_vals;
+    vB.s<%- s %>_siblings <== b_s<%- s %>_siblings;
+<% }                                                  -%>
+    vB.finalPol <== b_finalPol;
+<%  if(isBatchRecursion) { -%>
+    vB.enable <== 1;
+<%  } -%>
+
+<%  if(isBatchRecursion) { -%>
+    signal isOneBatchB <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
+<%  } else { -%>
+    signal isOneBatchB <== IsZero()(b_publics[newBlobOuterNumPos] - b_publics[oldBlobOuterNumPos] - 1);
+<%  } -%>
+
+    vB.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchB);
+
+    for (var i=0; i<4; i++) {
+        vB.publics[<%- nPublics %> +i] <== rootC[i];
+    }
+
+<%  if(isBatchRecursion) { -%>
+
+    // Batch State Root
+    for (var i=0; i<8; i++) {
+        a_publics[oldBatchStatePos + i] === publics[oldBatchStatePos + i]; // Old
+        a_publics[newBatchStateRootPos + i] === b_publics[oldBatchStatePos + i]; // Mid
+        publics[newBatchStateRootPos + i] === b_publics[newBatchStateRootPos + i]; // New
+    }
+
+    // Batch Accumulated Input Hash
+    for (var i=0; i<8; i++) {
+        a_publics[oldBatchAccInputHashPos + i] === publics[oldBatchAccInputHashPos + i]; // Old
+        a_publics[newBatchAccInputHashPos + i] === b_publics[oldBatchAccInputHashPos + i]; // Mid
+        publics[newBatchAccInputHashPos + i] === b_publics[newBatchAccInputHashPos + i]; // New
+    }
+
+    // Batch Number
+    a_publics[oldBatchNumPos] === publics[oldBatchNumPos]; // Old
+    a_publics[newBatchNumPos] === b_publics[oldBatchNumPos]; // Mid
+    publics[newBatchNumPos] === b_publics[newBatchNumPos]; // New
+
+    // chainId
+    a_publics[chainIdPos] === publics[chainIdPos];
+    a_publics[chainIdPos] === b_publics[chainIdPos];
+
+    // forkId
+    a_publics[forkIdPos] === publics[forkIdPos];
+    a_publics[forkIdPos] === b_publics[forkIdPos];
+
+    // localExitRoot
+    for (var i=0; i<8; i++) {
+        publics[newLocalExitRootPos+i] === b_publics[newLocalExitRootPos+i];
+    }
+
+<%  if(isEip4844) { -%>
+    //  L1 Info Tree Root
+    for (var i=0; i<8; i++) {
+        a_publics[oldL1InfoTreeRootPos+i] === publics[oldL1InfoTreeRootPos+i]; // Old
+        a_publics[newL1InfoTreeRootPos+i] === b_publics[oldL1InfoTreeRootPos+i]; // Mid
+        publics[newL1InfoTreeRootPos+i] === b_publics[newL1InfoTreeRootPos+i]; // New
+    }
+
+    // L1 Info Tree Index
+    a_publics[oldL1InfoTreeIndexPos] === publics[oldL1InfoTreeIndexPos]; // Old
+    a_publics[newL1InfoTreeIndexPos] === b_publics[oldL1InfoTreeIndexPos]; // Mid
+    publics[newL1InfoTreeIndexPos] === b_publics[newL1InfoTreeIndexPos]; // New
+
+    // Last timestamp
+    publics[newLastTimestampPos] === b_publics[newLastTimestampPos];
+<%  } -%>
+
+<%  } else { -%>
+    // State Root
+    for (var i=0; i<8; i++) {
+        a_publics[oldBlobOuterStateRootPos + i] === publics[oldBlobOuterStateRootPos + i]; // Old
+        a_publics[newBlobOuterStateRootPos + i] === b_publics[oldBlobOuterStateRootPos + i]; // Mid
+        publics[newBlobOuterStateRootPos + i] === b_publics[newBlobOuterStateRootPos + i]; // New
+    }
+
+    // Blob State Root
+    for (var i=0; i<8; i++) {
+        a_publics[oldBlobOuterBlobStateRootPos + i] === publics[oldBlobOuterBlobStateRootPos + i]; // Old
+        a_publics[newBlobOuterBlobStateRootPos + i] === b_publics[oldBlobOuterBlobStateRootPos + i]; // Mid
+        publics[newBlobOuterBlobStateRootPos + i] === b_publics[newBlobOuterBlobStateRootPos + i]; // New
+    }
+
+    // Blob Accumulated Input Hash
+    for (var i=0; i<8; i++) {
+        a_publics[oldBlobOuterAccInputHashPos + i] === publics[oldBlobOuterAccInputHashPos + i]; // Old
+        a_publics[newBlobOuterAccInputHashPos + i] === b_publics[oldBlobOuterAccInputHashPos + i]; // Mid
+        publics[newBlobOuterAccInputHashPos + i] === b_publics[newBlobOuterAccInputHashPos + i]; // New
+    }
+
+    // Blob number
+    a_publics[oldBlobOuterNumPos] === publics[oldBlobOuterNumPos]; // Old
+    a_publics[newBlobOuterNumPos] === b_publics[oldBlobOuterNumPos]; // Mid
+    publics[newBlobOuterNumPos] === b_publics[newBlobOuterNumPos]; // New
+
+    // chainId
+    a_publics[chainIdBlobOuterPos] === publics[chainIdBlobOuterPos];
+    a_publics[chainIdBlobOuterPos] === b_publics[chainIdBlobOuterPos];
+
+    // forkId
+    a_publics[forkIdBlobOuterPos] === publics[forkIdBlobOuterPos];
+    a_publics[forkIdBlobOuterPos] === b_publics[forkIdBlobOuterPos];
+
+    // localExitRoot
+    for (var i=0; i<8; i++) {
+        publics[newLocalExitRootBlobOuterPos+i] === b_publics[newLocalExitRootBlobOuterPos+i];
+    }
+<%  } -%> 
+}
+
+component main {public [publics, rootC]}= Main();

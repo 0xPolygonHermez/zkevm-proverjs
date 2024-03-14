@@ -9,6 +9,7 @@ checkAllMandatoryOptArgs() {
     checkMandatoryOptArg pil $npm_config_pil file.pil
     checkMandatoryOptArg pilconfig $npm_config_pilconfig pilconfig.json
     checkMandatoryOptArg bctree $npm_config_bctree constanttreebuilder
+    checkMandatoryOptArg fflonksetup $npm_config_fflonk_setup fflonksetupbuilder
     checkMandatoryOptArg nth $npm_config_nth
     checkMandatoryOptArg starkstruct $npm_config_starkstruct debug
     checkMandatoryOptArg input $npm_config_input input
@@ -24,6 +25,7 @@ usage() {
     echo " --pil=<file.pil>"
     echo " --pilconfig=<pilconfig.json>"
     echo " --bctree=<builder>                alternative binary to generate constanttree (ex: ../zkevm-prover/build/bctree)"
+    echo " --fflonksetup=<builder>           alternative binary to generate fflonksetup (ex: ../zkevm-prover/build/fflonksetup)"
     echo " --nth=<sufix>                     suffix used on commited files and derivated (ex: _0)"
     echo " --starkstruct=debug               auto-generate starkstruct, used in non-stardard pil as basic."
     echo " --input=<input.json>              input used in execution/proof."
@@ -58,6 +60,8 @@ PILSTARK="node $NODE node_modules/pil-stark/src"
 PILCOM="node $NODE node_modules/.bin/pilcom"
 SNARKJS="node $NODE node_modules/snarkjs/cli.js"
 BCTREE="${npm_config_bctree:=$PILSTARK/main_buildconsttree.js}"
+FFLONKSETUP="${npm_config_fflonksetup:=$SNARKJS --verbose ffs}"
+NUMCORES=$(nproc)
 # [ ! -z $npm_config_nth ] &&
 NTH="${npm_config_nth}"
 true
