@@ -968,40 +968,8 @@ namespace Main(%N);
 
 
 /////////
-// MemAlign Plookpups
+// MemAlign
 /////////
-
-    //                      memAlignRD  memAlignWR  memAlignVarLen  memAlignLbes
-    // MEM_ALIGN_RD              1           0            1              0
-    // MEM_ALIGN_RD32            1           0            0              0
-    // MEM_ALIGN_RD_LE           1           0            1              1
-    // MEM_ALIGN_RD32_LE         1           0            0              1
-    // MEM_ALIGN_WR              0           1            1              0
-    // MEM_ALIGN_WR32            0           1            0              0
-    // MEM_ALIGN_WR_LE           0           1            1              1
-    // MEM_ALIGN_WR32_LE         0           1            0              1
-
-    // memAlign RD
-    /*memAlignRD {
-        0,
-        A0, A1, A2, A3,
-        A4, A5, A6, A7,
-        B0, B1, B2, B3,
-        B4, B5, B6, B7,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7,
-        C0, 32 + (RCX - 32) * memAlignVarLen, memAlignLbes
-    } is
-    MemAlign.resultRd {
-        MemAlign.wr,
-        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
-        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
-        MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
-        MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
-        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
-        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset, MemAlign.len, MemAlign.lbes
-    };*/
 
     memAlignRD + memAlignWR {
         memAlignWR,
@@ -1011,7 +979,7 @@ namespace Main(%N);
         B4, B5, B6, B7,
         op0, op1, op2, op3,
         op4, op5, op6, op7,
-        C0, // 32 + (RCX - 32) * memAlignVarLen, memAlignLbes,
+        C0,
         memAlignWR * D0, memAlignWR * D1, memAlignWR * D2, memAlignWR * D3,
         memAlignWR * D4, memAlignWR * D5, memAlignWR * D6, memAlignWR * D7,
         memAlignWR * E0, memAlignWR * E1, memAlignWR * E2, memAlignWR * E3,
@@ -1033,4 +1001,3 @@ namespace Main(%N);
     };
 
     cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR;
-

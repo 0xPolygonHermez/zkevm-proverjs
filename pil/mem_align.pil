@@ -13,20 +13,31 @@ namespace MemAlign(%N);
     *  m0[7],m0[6],...,m0[1],m0[0],m1[7],m1[6],...,m1[1],m1[0]
     *
     *  inM (8 bits, 32 steps)
+    *
+    *  mode = offset (0-64) + 128 * len (0-32, 0=32 x BC) +
+    *         4096 * left/right alignment (1 = left x BC) +
+    *         8192 * little endian/big endian (1 = little endian x BC)
+    *
+    *  BC: backward compatibility
     */
 
     // 32 bytes of M0, M1 ordered from HSB to LSB (32, 31, 30, ... == M[7].3, M[7].2, M[7].1, M[7].0, M[6].3, ..)
     pol commit inM[2];
 
-    // 32 bytes of V non-ordered
-    // In a particular order depending on how to apply to M0, M1 that have a predetermined order
-    // One particular byte only was on M0, M1 or nowhere.
+    // inV_M are bytes of V ordered to be aligned with offset and memory (M0,M1,W0,W1). To verify range check of
+    // inV using existent lookups, divide inV in two parts. 
+
     pol commit inV[2];
-    pol inV_M = inV[0] + inV[1];
+    pol inV_M = inV[0] + 64 * inV[1];
+
+    // inV_V are bytes of V ordered to rebuild V value, this value used in main permutation check.
     pol commit inV_V;
 
-    // write
+    // flag to indicate a write
     pol commit wr;
+
+    // mode to coding input arguments (offset, length, alignment, endian) on a single register
+    pol commit mode;
 
     pol commit m0[8];
     pol commit m1[8];
@@ -35,93 +46,99 @@ namespace MemAlign(%N);
     pol commit v[8];
 
     // when m0 is "active", means aligned with inV an must be read/write from/to M0
-    // when m1 is "active", means aligned with inV an must be read/write from/to M1
     pol commit selM0;
+
+    // when m1 is "active", means aligned with inV an must be read/write from/to M1
     pol commit selM1;
-    pol commit selV;
+
+    // it's a free input verified by lookup to define byte-position inside V, of the 
+    // current inV_M byte.
     pol commit bytePos;
 
-    pol commit mode;
-
-    // FACTOR was same for all combinations of offset, wr8, wr256 is a f(step)
-    // FACTOR[7] = 2**24, 2**16, 2**8, 1, 0 (x28)
-    // FACTOR[6] = 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x24)
-    // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x20)
+    // FACTOR was same for all combinations of arguments (mode), factor was
+    // shifted left one clock
+    // FACTOR[7] = 2**16, 2**8, 1, 0 (x28), 2**24
+    // FACTOR[6] = 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x25)
+    // FACTOR[5] = 0, 0, 0, 0, 0, 0, 0, 2**24, 2**16, 2**8, 1, 0 (x21)
     // :
-    // FACTOR[0] = 0 (x28), 2**24, 2**16, 2**8, 1
-    pol constant FACTOR[8];     // [0:4*(7-i),2**24, 2**16, 2**8, 1, 0:4*i]
+    // FACTOR[0] = 0 (x27), 2**24, 2**16, 2**8, 1, 0
 
-    // offset', lbes', len', Global.STEP32,
+    pol constant FACTOR[8];
 
+    // constant pol to code mode and selectors, how mode isn't a free input,
+    // an it must match with main, could be compressed with two selectors
     pol constant MODE_SELM1_SELM0; //  4*MODE + 2*SELM1 + SELM0
+
+    // used to identify each 32-clock input
     pol constant ID;               // [1:32,2:32..+..]
+
+    // byte position on rebuild B.
     pol constant T_BYTE_POS;          
+
+    // flag to active permutation check with a valid result
+    pol commit result;
 
     pol RESET = Global.CLK32[31];
 
-    //              RangeCheck                  Latch   Clock
-    // factorV      lookup (FACTORV)            no      yes
-    // wr           Binary constraint           yes     no
-    // len          lookup (LEN)                yes     no
-    // lbes         lookup (LBES)               yes     no
-    // offset       lookup (OFFSET)             yes     no
-    // inV7         RangeCheck (BYTE_C8192)     no      yes
-    // inV06        RangeCheck (BYTE_C8192)     no      yes
-    // inM[0..1]    RangeCheck (BYTE2A,BYTE2)   no      yes
-    // m0[0..7]     Built                       no      yes
-    // m1[0..7]     Built                       no      yes
-    // w0[0..7]     Built                       no      yes
-    // w1[0..7]     Built                       no      yes
-    // v[0..7]      Built                       no      yes
-    // selM0        lookup (SELM0)              no      yes
-    // selM1        lookup (SELM1)              no      yes
-
-    // Latchs
-    (1 - RESET) * wr' = (1 - RESET) * wr;
-    (1 - RESET) * mode' = (1 - RESET) * mode;
-
+    // binary constraints
+    (1 - result) * result = 0;
+    (1 - wr)  * wr = 0;
     (1 - selM0) * selM0 = 0;
     (1 - selM1) * selM1 = 0;
 
-    pol commit result;
+    // latch constraints
+    (1 - RESET) * wr' = (1 - RESET) * wr;
+    (1 - RESET) * mode' = (1 - RESET) * mode;
 
+    // result only active in last clock, when all information is rebuild
     (1 - RESET) * result = 0;
-    result * (1 - result) = 0;
 
-    wr  * ( 1 - wr ) = 0;
+    pol constant C2P16_0_63;    // [0:2**16..63:2**16]...
+    pol constant C274560_0_3;   // [0:274560..3:274560]...
 
     // RangeCheck
-    // 2^16 + 2^6 = 2^22
-    { inM[1], inM[0], inV[0] } in { Global.BYTE_2A, Global.BYTE, INV1 };
+    // 2^16 * 2^6 = 2^22
+    { inM[1], inM[0], inV[0] } in { Global.BYTE_2A, Global.BYTE, C2P16_0_63 };
 
     pol constant INV1, INV2;
 
+    // mode = offset (0-64) + 128 * len (0-32,0=>32) + 4096 * left/right + 8192 * le/be
+
     // 32 clocks * 65 offsets (0-64) * 33 lengths (0-32) * 2 left/right * 2 le/be = 274560 (2^19 = 524288)
-    // 2^19 + 2^2 = 2^21
+    // 2^19 * 2^2 = 2^21
     { Global.STEP32, mode*4 + selM1 * 2 + selM0, bytePos, inV[1] } in { Global.STEP32, MODE_SELM1_SELM0, T_BYTE_POS, INV2 };
 
-    (1 - selV) * inV_V = 0;
+    // { ID, bytePos, (selM0 + selM1) * inV_M } is { ID, Global.STEP32, inV_V };
+    pol commit selV;
+        
+    (1 - selV) * selV = 0;
+    
+    (selM0 + selM1) * (selV - 1) = 0;
+    (1 - selM0 - selM1) * (selV - wr) = 0;
 
-    selM0 + selM1 { ID, bytePos, inV_M } is selV { ID, Global.STEP32, inV_V };
+    // when reading selV must be zero because it's important than "non-selected"
+    // or "padding" part of v must be zero. But when verifing that a write operation,
+    // be more usefull if this part could be dirty.
+    { ID, bytePos, selV * inV_M } is { ID, Global.STEP32, inV_V };
 
 
-    m0[0]' = (1-RESET) * m0[0] + FACTOR[0] * inM[0];
-    m0[1]' = (1-RESET) * m0[1] + FACTOR[1] * inM[0];
-    m0[2]' = (1-RESET) * m0[2] + FACTOR[2] * inM[0];
-    m0[3]' = (1-RESET) * m0[3] + FACTOR[3] * inM[0];
-    m0[4]' = (1-RESET) * m0[4] + FACTOR[4] * inM[0];
-    m0[5]' = (1-RESET) * m0[5] + FACTOR[5] * inM[0];
-    m0[6]' = (1-RESET) * m0[6] + FACTOR[6] * inM[0];
-    m0[7]' = (1-RESET) * m0[7] + FACTOR[7] * inM[0];
+    m0[0]' = (1-RESET) * m0[0] + FACTOR[0] * inM[0]';
+    m0[1]' = (1-RESET) * m0[1] + FACTOR[1] * inM[0]';
+    m0[2]' = (1-RESET) * m0[2] + FACTOR[2] * inM[0]';
+    m0[3]' = (1-RESET) * m0[3] + FACTOR[3] * inM[0]';
+    m0[4]' = (1-RESET) * m0[4] + FACTOR[4] * inM[0]';
+    m0[5]' = (1-RESET) * m0[5] + FACTOR[5] * inM[0]';
+    m0[6]' = (1-RESET) * m0[6] + FACTOR[6] * inM[0]';
+    m0[7]' = (1-RESET) * m0[7] + FACTOR[7] * inM[0]';
 
-    m1[0]' = (1-RESET) * m1[0] + FACTOR[0] * inM[1];
-    m1[1]' = (1-RESET) * m1[1] + FACTOR[1] * inM[1];
-    m1[2]' = (1-RESET) * m1[2] + FACTOR[2] * inM[1];
-    m1[3]' = (1-RESET) * m1[3] + FACTOR[3] * inM[1];
-    m1[4]' = (1-RESET) * m1[4] + FACTOR[4] * inM[1];
-    m1[5]' = (1-RESET) * m1[5] + FACTOR[5] * inM[1];
-    m1[6]' = (1-RESET) * m1[6] + FACTOR[6] * inM[1];
-    m1[7]' = (1-RESET) * m1[7] + FACTOR[7] * inM[1];
+    m1[0]' = (1-RESET) * m1[0] + FACTOR[0] * inM[1]';
+    m1[1]' = (1-RESET) * m1[1] + FACTOR[1] * inM[1]';
+    m1[2]' = (1-RESET) * m1[2] + FACTOR[2] * inM[1]';
+    m1[3]' = (1-RESET) * m1[3] + FACTOR[3] * inM[1]';
+    m1[4]' = (1-RESET) * m1[4] + FACTOR[4] * inM[1]';
+    m1[5]' = (1-RESET) * m1[5] + FACTOR[5] * inM[1]';
+    m1[6]' = (1-RESET) * m1[6] + FACTOR[6] * inM[1]';
+    m1[7]' = (1-RESET) * m1[7] + FACTOR[7] * inM[1]';
 
     // data to "write" on w, if current byte must be override by V contains inV
     // if not contains inM "in reading mode" value don't matter
@@ -132,32 +149,33 @@ namespace MemAlign(%N);
 
     // when reading, inW must be equal to inM, same
     // as selM0 * (inV_M - inM[0]) === 0 when reading
+
     (1 - wr) * (inW0 - inM[0]) = 0;
     (1 - wr) * (inW1 - inM[1]) = 0;
 
-    w0[0]' = (1-RESET) * w0[0] + FACTOR[0] * inW0;
-    w0[1]' = (1-RESET) * w0[1] + FACTOR[1] * inW0;
-    w0[2]' = (1-RESET) * w0[2] + FACTOR[2] * inW0;
-    w0[3]' = (1-RESET) * w0[3] + FACTOR[3] * inW0;
-    w0[4]' = (1-RESET) * w0[4] + FACTOR[4] * inW0;
-    w0[5]' = (1-RESET) * w0[5] + FACTOR[5] * inW0;
-    w0[6]' = (1-RESET) * w0[6] + FACTOR[6] * inW0;
-    w0[7]' = (1-RESET) * w0[7] + FACTOR[7] * inW0;
+    w0[0]' = (1-RESET) * w0[0] + FACTOR[0] * inW0';
+    w0[1]' = (1-RESET) * w0[1] + FACTOR[1] * inW0';
+    w0[2]' = (1-RESET) * w0[2] + FACTOR[2] * inW0';
+    w0[3]' = (1-RESET) * w0[3] + FACTOR[3] * inW0';
+    w0[4]' = (1-RESET) * w0[4] + FACTOR[4] * inW0';
+    w0[5]' = (1-RESET) * w0[5] + FACTOR[5] * inW0';
+    w0[6]' = (1-RESET) * w0[6] + FACTOR[6] * inW0';
+    w0[7]' = (1-RESET) * w0[7] + FACTOR[7] * inW0';
 
-    w1[0]' = (1-RESET) * w1[0] + FACTOR[0] * inW1;
-    w1[1]' = (1-RESET) * w1[1] + FACTOR[1] * inW1;
-    w1[2]' = (1-RESET) * w1[2] + FACTOR[2] * inW1;
-    w1[3]' = (1-RESET) * w1[3] + FACTOR[3] * inW1;
-    w1[4]' = (1-RESET) * w1[4] + FACTOR[4] * inW1;
-    w1[5]' = (1-RESET) * w1[5] + FACTOR[5] * inW1;
-    w1[6]' = (1-RESET) * w1[6] + FACTOR[6] * inW1;
-    w1[7]' = (1-RESET) * w1[7] + FACTOR[7] * inW1;
+    w1[0]' = (1-RESET) * w1[0] + FACTOR[0] * inW1';
+    w1[1]' = (1-RESET) * w1[1] + FACTOR[1] * inW1';
+    w1[2]' = (1-RESET) * w1[2] + FACTOR[2] * inW1';
+    w1[3]' = (1-RESET) * w1[3] + FACTOR[3] * inW1';
+    w1[4]' = (1-RESET) * w1[4] + FACTOR[4] * inW1';
+    w1[5]' = (1-RESET) * w1[5] + FACTOR[5] * inW1';
+    w1[6]' = (1-RESET) * w1[6] + FACTOR[6] * inW1';
+    w1[7]' = (1-RESET) * w1[7] + FACTOR[7] * inW1';
 
-    v[0]' = (1-RESET) * v[0] + FACTOR[0] * inV_V;
-    v[1]' = (1-RESET) * v[1] + FACTOR[1] * inV_V;
-    v[2]' = (1-RESET) * v[2] + FACTOR[2] * inV_V;
-    v[3]' = (1-RESET) * v[3] + FACTOR[3] * inV_V;
-    v[4]' = (1-RESET) * v[4] + FACTOR[4] * inV_V;
-    v[5]' = (1-RESET) * v[5] + FACTOR[5] * inV_V;
-    v[6]' = (1-RESET) * v[6] + FACTOR[6] * inV_V;
-    v[7]' = (1-RESET) * v[7] + FACTOR[7] * inV_V;
+    v[0]' = (1-RESET) * v[0] + FACTOR[0] * inV_V';
+    v[1]' = (1-RESET) * v[1] + FACTOR[1] * inV_V';
+    v[2]' = (1-RESET) * v[2] + FACTOR[2] * inV_V';
+    v[3]' = (1-RESET) * v[3] + FACTOR[3] * inV_V';
+    v[4]' = (1-RESET) * v[4] + FACTOR[4] * inV_V';
+    v[5]' = (1-RESET) * v[5] + FACTOR[5] * inV_V';
+    v[6]' = (1-RESET) * v[6] + FACTOR[6] * inV_V';
+    v[7]' = (1-RESET) * v[7] + FACTOR[7] * inV_V';
