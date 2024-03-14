@@ -1,6 +1,7 @@
 const Helper = require('./helper.js')
 
 module.exports = class Arith extends Helper {
+/*
     eval_inverseFpEc(ctx, tag) {
         const a = ctx.Fec.e(this.evalCommand(ctx, tag.params[0]));
         if (ctx.Fec.isZero(a)) {
@@ -115,4 +116,5 @@ module.exports = class Arith extends Helper {
 
         return ctx.FpBN254.sub(x1,x2);
     }
+*/
 }

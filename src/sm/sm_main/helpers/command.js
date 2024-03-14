@@ -1,6 +1,10 @@
 const Helper = require('./helper.js');
-
+const {
+    scalar2fea,
+    fea2scalar,
+} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 module.exports = class Command extends Helper {
+/*
     eval(ctx, tag) {
         if (tag.op == "number") {
             return this.eval_number(ctx, tag);
@@ -39,7 +43,7 @@ module.exports = class Command extends Helper {
     }
 
     eval_number(ctx, tag) {
-        return this.Scalar.e(tag.num);
+        return Scalar.e(tag.num);
     }
 
 
@@ -69,7 +73,7 @@ module.exports = class Command extends Helper {
         if (tag.varName[0] !== '_' && typeof ctx.vars[tag.varName] != "undefined") {
             throw new Error(`Variable ${tag.varName} already declared ${ctx.sourceRef}`);
         }
-        ctx.vars[tag.varName] = this.Scalar.e(0);
+        ctx.vars[tag.varName] = Scalar.e(0);
         return ctx.vars[tag.varName];
     }
 
@@ -80,51 +84,51 @@ module.exports = class Command extends Helper {
 
     eval_getReg(ctx, tag) {
         if (tag.regName == "A") {
-            return ctx.fullFe ? this.fea2scalar(ctx.Fr, ctx.A) : this.safeFea2scalar(ctx.Fr, ctx.A);
+            return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.A) : this.safeFea2scalar(ctx.Fr, ctx.A);
         } else if (tag.regName == "B") {
-            return ctx.fullFe ? this.fea2scalar(ctx.Fr, ctx.B) : this.safeFea2scalar(ctx.Fr, ctx.B);
+            return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.B) : this.safeFea2scalar(ctx.Fr, ctx.B);
         } else if (tag.regName == "C") {
-            return ctx.fullFe ? this.fea2scalar(ctx.Fr, ctx.C) : this.safeFea2scalar(ctx.Fr, ctx.C);
+            return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.C) : this.safeFea2scalar(ctx.Fr, ctx.C);
         } else if (tag.regName == "D") {
-            return ctx.fullFe ? this.fea2scalar(ctx.Fr, ctx.D) : this.safeFea2scalar(ctx.Fr, ctx.D);
+            return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.D) : this.safeFea2scalar(ctx.Fr, ctx.D);
         } else if (tag.regName == "E") {
-            return ctx.fullFe ? this.fea2scalar(ctx.Fr, ctx.E) : this.safeFea2scalar(ctx.Fr, ctx.E);
+            return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.E) : this.safeFea2scalar(ctx.Fr, ctx.E);
         } else if (tag.regName == "SR") {
-            return ctx.fullFe ? this.fea2scalar(ctx.Fr, ctx.SR) : this.safeFea2scalar(ctx.Fr, ctx.SR);
+            return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.SR) : this.safeFea2scalar(ctx.Fr, ctx.SR);
         } else if (tag.regName == "CTX") {
-            return this.Scalar.e(ctx.CTX);
+            return Scalar.e(ctx.CTX);
         } else if (tag.regName == "SP") {
-            return this.Scalar.e(ctx.SP);
+            return Scalar.e(ctx.SP);
         } else if (tag.regName == "PC") {
-            return this.Scalar.e(ctx.PC);
+            return Scalar.e(ctx.PC);
         } else if (tag.regName == "GAS") {
-            return this.Scalar.e(ctx.GAS);
+            return Scalar.e(ctx.GAS);
         } else if (tag.regName == "zkPC") {
-            return this.Scalar.e(ctx.zkPC);
+            return Scalar.e(ctx.zkPC);
         } else if (tag.regName == "RR") {
-            return this.Scalar.e(ctx.RR);
+            return Scalar.e(ctx.RR);
         } else if (tag.regName == "CNT_ARITH") {
-            return this.Scalar.e(ctx.cntArith);
+            return Scalar.e(ctx.cntArith);
         } else if (tag.regName == "CNT_BINARY") {
-            return this.Scalar.e(ctx.cntBinary);
+            return Scalar.e(ctx.cntBinary);
         } else if (tag.regName == "CNT_KECCAK_F") {
-            return this.Scalar.e(ctx.cntKeccakF);
+            return Scalar.e(ctx.cntKeccakF);
         } else if (tag.regName == 'CNT_SHA256_F') {
-            return this.Scalar.e(ctx.cntSha256F);
+            return Scalar.e(ctx.cntSha256F);
         } else if (tag.regName == "CNT_MEM_ALIGN") {
-            return this.Scalar.e(ctx.cntMemAlign);
+            return Scalar.e(ctx.cntMemAlign);
         } else if (tag.regName == "CNT_PADDING_PG") {
-            return this.Scalar.e(ctx.cntPaddingPG);
+            return Scalar.e(ctx.cntPaddingPG);
         } else if (tag.regName == "CNT_POSEIDON_G") {
-            return this.Scalar.e(ctx.cntPoseidonG);
+            return Scalar.e(ctx.cntPoseidonG);
         } else if (tag.regName == "STEP") {
-            return this.Scalar.e(ctx.step);
+            return Scalar.e(ctx.step);
         } else if (tag.regName == "HASHPOS") {
-            return this.Scalar.e(ctx.HASHPOS);
+            return Scalar.e(ctx.HASHPOS);
         } else if (tag.regName == "RCX") {
-            return this.Scalar.e(ctx.RCX);
+            return Scalar.e(ctx.RCX);
         } else if (tag.regName == "RID") {
-            return this.Scalar.e(ctx.RID);
+            return Scalar.e(ctx.RID);
         } else {
             throw new Error(`Invalid register ${tag.regName} ${ctx.sourceRef}`);
         }
@@ -133,36 +137,36 @@ module.exports = class Command extends Helper {
     eval_add(ctx, tag) {
         const a = this.evalCommand(ctx, tag.values[0]);
         const b = this.evalCommand(ctx, tag.values[1]);
-        return this.Scalar.add(a,b);
+        return Scalar.add(a,b);
     }
 
     eval_sub(ctx, tag) {
         const a = this.evalCommand(ctx, tag.values[0]);
         const b = this.evalCommand(ctx, tag.values[1]);
-        return this.Scalar.sub(a,b);
+        return Scalar.sub(a,b);
     }
 
     eval_neg(ctx, tag) {
         const a = this.evalCommand(ctx, tag.values[0]);
-        return this.Scalar.neg(a);
+        return Scalar.neg(a);
     }
 
     eval_mul(ctx, tag) {
         const a = this.evalCommand(ctx, tag.values[0]);
         const b = this.evalCommand(ctx, tag.values[1]);
-        return this.Scalar.mul(a,b);
+        return Scalar.mul(a,b);
     }
 
     eval_div(ctx, tag) {
         const a = this.evalCommand(ctx, tag.values[0]);
         const b = this.evalCommand(ctx, tag.values[1]);
-        return this.Scalar.div(a,b);
+        return Scalar.div(a,b);
     }
 
     eval_mod(ctx, tag) {
         const a = this.evalCommand(ctx, tag.values[0]);
         const b = this.evalCommand(ctx, tag.values[1]);
-        return this.Scalar.mod(a,b);
+        return Scalar.mod(a,b);
     }
 
     eval_bit_operation(ctx, tag)
@@ -173,11 +177,11 @@ module.exports = class Command extends Helper {
         }
         const b = this.evalCommand(ctx, tag.values[1]);
         switch(tag.op) {
-            case 'bitor':    return this.Scalar.bor(a,b);
-            case 'bitand':   return this.Scalar.band(a,b);
-            case 'bitxor':   return this.Scalar.bxor(a,b);
-            case 'shl':      return this.Scalar.shl(a,b);
-            case 'shr':      return this.Scalar.shr(a,b);
+            case 'bitor':    return Scalar.bor(a,b);
+            case 'bitand':   return Scalar.band(a,b);
+            case 'bitxor':   return Scalar.bxor(a,b);
+            case 'shl':      return Scalar.shl(a,b);
+            case 'shr':      return Scalar.shr(a,b);
         }
         throw new Error(`bit operation ${tag.op} not defined ${ctx.sourceRef}`);
     }
@@ -216,9 +220,9 @@ module.exports = class Command extends Helper {
         }
 
         if (ctx.fullFe) {
-            return this.fea2scalar(ctx.Fr, ctx.mem[addr]);
+            return fea2scalar(ctx.Fr, ctx.mem[addr]);
         }
 
         return this.safeFea2scalar(ctx.Fr, ctx.mem[addr]);
-    }
+    }*/
 }
