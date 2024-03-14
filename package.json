@@ -146,7 +146,7 @@
     "postblob_outer_compile": ". ./pre.sh && cp -rf $BDIR/build/blob_outer_cpp/blob_outer.dat $BDIR/config/blob_outer/blob_outer.dat && cp -rf $BDIR/build/blob_outer_cpp $BDIR/c_files",
     "postblob_outer_recursive2_compile": ". ./pre.sh && cp -rf $BDIR/build/blob_outer_recursive2_cpp/blob_outer_recursive2.dat $BDIR/config/blob_outer_recursive2/blob_outer_recursive2.dat && cp -rf $BDIR/build/blob_outer_recursive2_cpp $BDIR/c_files",
     "postrecursivef_compile": ". ./pre.sh && cp -rf $BDIR/build/recursivef_cpp/recursivef.dat $BDIR/config/recursivef/recursivef.dat && cp -rf $BDIR/build/recursivef_cpp $BDIR/c_files",
-    "postfinal_compile": ". ./pre.sh && cp -rf $BDIR/build/final_cpp/final.dat $BDIR/config/final/final.verifier.dat && cp -rf $BDIR/build/final_cpp $BDIR/c_files",
+    "postfinal_compile": ". ./pre.sh && cp -rf $BDIR/build/final_cpp/final.dat $BDIR/config/final/final.dat && cp -rf $BDIR/build/final_cpp $BDIR/c_files",
     "buildsetup:basic": "npm run buildsetup --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildall:basic": "npm run buildall --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildproof:basic": "npm run buildproof --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
