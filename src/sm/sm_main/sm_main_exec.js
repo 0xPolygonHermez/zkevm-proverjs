@@ -118,6 +118,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
 
     // load programs into DB
+    let batchHashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -126,7 +127,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }   
 
         // Load batchL2Data into DB
-        const batchHashData = await hashContractBytecode(input.batchL2Data);
+        batchHashData = await hashContractBytecode(input.batchL2Data);
         await db.setProgram(stringToH4(batchHashData), hexString2byteArray(input.batchL2Data));
     }
 
@@ -210,10 +211,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     // if (verboseOptions.batchL2Data) {
     //     await ctx.helpers.Debug.printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
     // }
-    
-    try {
-
     const sha256Enabled = typeof pols.cntSha256F !== 'undefined';
+    try {
 
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
