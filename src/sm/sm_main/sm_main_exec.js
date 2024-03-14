@@ -85,7 +85,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const defaultHelpers = [...(blob ? ['main_blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
     const customHelpers = (config && config.helpers) ? (Array.isArray(config.helpers) ? config.helpers : [config.helpers]) : [];
     const helpers = [...defaultHelpers, ...customHelpers ];
-
+    
     const defaultHelperPaths = [__dirname  + '/helpers'];
     const customHelperPaths = (config && config.helperPaths) ? (Array.isArray(config.helperPaths) ? config.helperPaths : [config.helperPaths]) : [];
     const helperPaths =  [...defaultHelperPaths, ...customHelperPaths ];
@@ -131,6 +131,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(batchHashData), hexString2byteArray(input.batchL2Data));
     }
 
+    if(blob) {
+        // Load poseidonBlobData into DB
+        const z = await hashContractBytecode(input.blobData);
+        await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
+    
+        // Load keccak256BlobData into DB
+        const blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
+    
+    }
     // load smt
     const smt = new SMT(db, poseidon, Fr);
 
@@ -264,6 +274,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.line = l.line;
         sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
+
 
         if (verboseOptions.zkPC) {
             console.log(sourceRef);
@@ -1390,8 +1401,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.hashKDigest) {
             pols.hashKDigest[i] = 1n;
             const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            if (typeof ctx.hashK[hashAddr].digest === "undefined") {
-                throw new Error(`HASHKDIGEST(${hashAddr}) cannot load keccak from DB ${sourceRef}`);
+            if (typeof ctx.hashK[hashAddr] === "undefined") {
+                const k = scalar2h4(dg);
+                const data = await smt.db.getProgram(k);
+
+                ctx.hashK[hashAddr] = {
+                    data: data,
+                    digest: dg,
+                    lenCalled: false,
+                    sourceRef,
+                    reads: {}
+                }
             }
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashK[hashAddr].digest))) {
                 throw new Error(`HashKDigest(${hashAddr}) doesn't match ${sourceRef}`);
