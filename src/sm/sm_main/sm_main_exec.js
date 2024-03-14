@@ -83,11 +83,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     // const defaultHelpers = ['arith', 'batch', 'debug', 'helper', 'mem_align', 'operations', 'save_restore', 'binary', 'command', 'counter_controls'];
     const defaultHelpers = [...(blob ? ['main_blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
-    const customHelpers = (config && config.helpers) ? Array.isArray(config.helpers ? config.helpers : [config.helpers]) : [];
+    const customHelpers = (config && config.helpers) ? (Array.isArray(config.helpers) ? config.helpers : [config.helpers]) : [];
     const helpers = [...defaultHelpers, ...customHelpers ];
 
     const defaultHelperPaths = [__dirname  + '/helpers'];
-    const customHelperPaths = (config && config.helpers) ? Array.isArray(config.helpers ? config.helpers : [config.helpers]) : [];
+    const customHelperPaths = (config && config.helperPaths) ? (Array.isArray(config.helperPaths) ? config.helperPaths : [config.helperPaths]) : [];
     const helperPaths =  [...defaultHelperPaths, ...customHelperPaths ];
     
     const POSEIDONG_PERMUTATION1_ID = 1;
