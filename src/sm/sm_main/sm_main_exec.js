@@ -276,6 +276,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         // breaks the loop in debug mode in order to test and debug faster
         // assert outputs
+
         if (debug && Number(ctx.zkPC) === rom.labels.finalizeExecution) {
             fastDebugExit = true;
             if (typeof verboseOptions.step === 'number') {
@@ -1140,7 +1141,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 ];
         }
 
-        // overwrite 'op' when hiting 'writeBlockInfoRoot' label
+        // overwrite 'op' when hitting 'writeBlockInfoRoot' label
         if ((Number(ctx.zkPC) === rom.labels.writeBlockInfoRoot) && input.skipWriteBlockInfoRoot === true) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
                 [
@@ -3027,8 +3028,8 @@ function eval_functionCall(ctx, tag) {
         return eval_getTxs(ctx, tag);
     } else if (tag.funcName == "getTxsLen") {
         return eval_getTxsLen(ctx, tag);
-    } else if (tag.funcName == "getSmtProof") {
-        return eval_getSmtProof(ctx, tag);
+    } else if (tag.funcName == "getSmtProofPreviousIndex") {
+        return eval_getSmtProofPreviousIndex(ctx, tag);
     } else if (tag.funcName == "eventLog") {
         return eval_eventLog(ctx, tag);
     } else if (tag.funcName == "cond") {
@@ -3109,13 +3110,13 @@ function eval_getTxsLen(ctx, tag) {
     return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
-function eval_getSmtProof(ctx, tag) {
+function eval_getSmtProofPreviousIndex(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
     const index = Number(evalCommand(ctx, tag.params[0]));
     const level = Number(evalCommand(ctx, tag.params[1]));
 
-    const leafValue = ctx.input.l1InfoTree[index].smtProof[level];
+    const leafValue = ctx.input.l1InfoTree[index].smtProofPreviousIndex[level];
 
     return scalar2fea(ctx.Fr, Scalar.e(leafValue));
 }

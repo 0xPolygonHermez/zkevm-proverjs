@@ -238,7 +238,7 @@ module.exports = class Main extends Helper {
         let errorMsg = "Assert Error: newTimestamp does not match\n";
         errorMsg += `   newTimestamp computed: ${Scalar.e(ctx.RR)}\n`;
         errorMsg += `   newTimestamp expected: ${scalarNewTimestamp}\n`;
-        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
@@ -249,7 +249,7 @@ module.exports = class Main extends Helper {
         let errorMsg = "Assert Error: newL1InfoTreeIndex does not match\n";
         errorMsg += `   newL1InfoTreeIndex computed: ${Scalar.e(ctx.RCX)}\n`;
         errorMsg += `   newL1InfoTreeIndex expected: ${scalarNewL1InfoTreeIndex}\n`;
-        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
@@ -269,7 +269,7 @@ module.exports = class Main extends Helper {
         let errorMsg = "Assert Error: newL1InfoTreeRoot does not match\n";
         errorMsg += `   newL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
         errorMsg += `   newL1InfoTreeRoot expected: ${ctx.input.newL1InfoTreeRoot}\n`;
-        errorMsg += `Errors: ${nameRomErrors.toString()}`;
+        errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
@@ -312,6 +312,6 @@ module.exports = class Main extends Helper {
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
-        console.log("Assert outputs run succesfully");
+        console.log("Assert outputs run successfully");
     }
 }
