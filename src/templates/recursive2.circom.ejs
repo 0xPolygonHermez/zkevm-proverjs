@@ -16,11 +16,12 @@ template Main() {
 <% p += 8; -%>
     var oldBatchAccInputHashPos = <%- p %>;
 <% p += 8; -%>
-    var oldBatchNumPos = <%- p++ %>;
 <%  if(isEip4844) { -%>
     var oldL1InfoTreeRootPos = <%- p %>;
 <% p += 8; -%>
     var oldL1InfoTreeIndexPos = <%- p++ %>;
+<%  } else { -%>
+    var oldBatchNumPos = <%- p++ %>;
 <%  } -%>
     var chainIdPos = <%- p++ %>;
     var forkIdPos = <%- p++ %>;
@@ -29,7 +30,6 @@ template Main() {
     var newBatchAccInputHashPos = <%- p %>;
 <% p += 8; -%>
 <%  if(isEip4844) { -%>
-    var newBatchNumPos = <%- p++ %>;
     var newL1InfoTreeRootPos = <%- p %>;
 <% p += 8; -%>
     var newL1InfoTreeIndexPos = <%- p++ %>;
@@ -99,6 +99,10 @@ template Main() {
    
     signal input a_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
+<%  if(isBatchRecursion && isEip4844) { -%>
+    signal input a_isAggregatedCircuit;
+<%  } -%>
+
     signal input b_publics[<%- nPublics %>];
  
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
@@ -127,6 +131,10 @@ template Main() {
 <% }                                                  -%>
 
     signal input b_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+
+<%  if(isBatchRecursion && isEip4844) { -%>
+    signal input b_isAggregatedCircuit;
+<%  } -%>
 
     component vA = StarkVerifier();
 
@@ -163,7 +171,11 @@ template Main() {
 <%  } -%>
 
 <%  if(isBatchRecursion) { -%>
+<%      if(isEip4844) { -%>
+    signal isOneBatchA <== 1 - a_isAggregatedCircuit;
+<%      } else { -%>
     signal isOneBatchA <== IsZero()(a_publics[newBatchNumPos] - a_publics[oldBatchNumPos] - 1);
+<%      } -%>
 <%  } else { -%>
     signal isOneBatchA <== IsZero()(a_publics[newBlobOuterNumPos] - a_publics[oldBlobOuterNumPos] - 1);
 <%  } -%>
@@ -209,7 +221,11 @@ template Main() {
 <%  } -%>
 
 <%  if(isBatchRecursion) { -%>
+<%      if(isEip4844) { -%>
+    signal isOneBatchA <== 1 - b_isAggregatedCircuit;
+<%      } else { -%>
     signal isOneBatchB <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
+<%      } -%>
 <%  } else { -%>
     signal isOneBatchB <== IsZero()(b_publics[newBlobOuterNumPos] - b_publics[oldBlobOuterNumPos] - 1);
 <%  } -%>
@@ -236,11 +252,6 @@ template Main() {
         publics[newBatchAccInputHashPos + i] === b_publics[newBatchAccInputHashPos + i]; // New
     }
 
-    // Batch Number
-    a_publics[oldBatchNumPos] === publics[oldBatchNumPos]; // Old
-    a_publics[newBatchNumPos] === b_publics[oldBatchNumPos]; // Mid
-    publics[newBatchNumPos] === b_publics[newBatchNumPos]; // New
-
     // chainId
     a_publics[chainIdPos] === publics[chainIdPos];
     a_publics[chainIdPos] === b_publics[chainIdPos];
@@ -254,7 +265,7 @@ template Main() {
         publics[newLocalExitRootPos+i] === b_publics[newLocalExitRootPos+i];
     }
 
-<%  if(isEip4844) { -%>
+<%      if(isEip4844) { -%>
     //  L1 Info Tree Root
     for (var i=0; i<8; i++) {
         a_publics[oldL1InfoTreeRootPos+i] === publics[oldL1InfoTreeRootPos+i]; // Old
@@ -269,8 +280,12 @@ template Main() {
 
     // Last timestamp
     publics[newLastTimestampPos] === b_publics[newLastTimestampPos];
-<%  } -%>
-
+<%      } else { -%>
+    // Batch Number
+    a_publics[oldBatchNumPos] === publics[oldBatchNumPos]; // Old
+    a_publics[newBatchNumPos] === b_publics[oldBatchNumPos]; // Mid
+    publics[newBatchNumPos] === b_publics[newBatchNumPos]; // New
+<%      } -%>
 <%  } else { -%>
     // State Root
     for (var i=0; i<8; i++) {
