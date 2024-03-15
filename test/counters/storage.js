@@ -18,7 +18,7 @@ describe("Test Storage Counters", async function () {
     });
 
     it("Verify Storage Zkasm Test (some delete edge cases)", async () => {
-        await verifyZkasm("../zkasm/counters/storage2.zkasm", true,
+        await verifyZkasm("../zkasm/counters/storage_keys.zkasm", true,
             { defines: {N: 2 ** 22},
               namespaces: ['Global', 'Main', 'Storage', 'ClimbKey'],
               verbose: true,

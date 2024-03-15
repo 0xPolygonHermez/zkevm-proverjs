@@ -1,32 +1,74 @@
-    ${dump(CNT_ARITH)}
 
+    ; Save the initial counters
     :CALL(SaveCounters)
 
+    ; 1] ADD: A + B
     0x5000000000000n => A
     0x3000000000000n => B
-    $ => A    :SUB
-    0x2000000000000n :ASSERT
+    0x8000000000000n    :ADD
 
     CNT_BINARY - 1 :MLOAD(v_cnt_binary)
 
+    ; 2] SUB: A - B
     0x5000000000000n => A
     0x3000000000000n => B
-    $ => A    :ADD
-    0x8000000000000n :ASSERT
+    0x2000000000000n    :SUB
 
     CNT_BINARY - 2 :MLOAD(v_cnt_binary)
 
+    ; 3] LT: A < B
     0x4000000000000n => A
     0x6000000000000n => B
-    $ => A    :LT
-    1 :ASSERT
+    1                   :LT
 
     CNT_BINARY - 3 :MLOAD(v_cnt_binary)
 
-    ${dump(CNT_ARITH)}
+    ; 4] SLT: A < B (signed comparison)
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn => A
+    0n => B
+    1                   :SLT
 
+    CNT_BINARY - 4 :MLOAD(v_cnt_binary)
+
+    ; 5] EQ: A == B
+    0x71998b31fe824ece2f0351c35025feadf4e00ed02f138309d3a5238742f545fn => A
+    0x71998b31fe824ece2f0351c35025feadf4e00ed02f138309d3a5238742f545fn => B
+    1                   :EQ
+
+    CNT_BINARY - 5 :MLOAD(v_cnt_binary)
+
+    ; 6] AND: A & B
+    0x3ffffffffffffn => A
+    0x5f4efaffefbcdn => B
+    0x1f4efaffefbcdn    :AND
+
+    CNT_BINARY - 6 :MLOAD(v_cnt_binary)
+
+    ; 7] OR: A | B
+    0x3ffffffffffffn => A
+    0x5f4efaffefbcdn => B
+    0x7ffffffffffffn    :OR
+
+    CNT_BINARY - 7 :MLOAD(v_cnt_binary)
+
+    ; 8] XOR: A ^ B
+    0x3ffffffffffffn => A
+    0x5f4efaffefbcdn => B
+    0x60b1050010432n    :XOR
+
+    CNT_BINARY - 8 :MLOAD(v_cnt_binary)
+
+    ; 9] LT4: [A[0],A[1],A[2],A[3]] < [B[0],B[1],B[2],B[3]] pairwise
+    0xfffffffffffffffefffffffffffffffefffffffffffffffefffffffffffffffen => A
+    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+    1                   :LT4
+
+    CNT_BINARY - 9 :MLOAD(v_cnt_binary)
+
+    ; Check the other counters have not changed
     CNT_ARITH       :MLOAD(v_cnt_arith)
     CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
     CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
     CNT_POSEIDON_G  :MLOAD(v_cnt_poseidon_g)
     CNT_PADDING_PG  :MLOAD(v_cnt_padding_pg)

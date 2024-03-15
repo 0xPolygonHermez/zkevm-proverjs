@@ -1,8 +1,10 @@
+
+    ; Save the initial counters
     :CALL(SaveCounters)
 
+    ; 1] TEST 135 bytes => counter increase 1
     $ => E              :MLOAD(lastHashKId)
     E + 1 => E          :MSTORE(lastHashKId)
-
     0 => HASHPOS
     32 => D
 
@@ -18,6 +20,7 @@
 
     CNT_KECCAK_F - 1    :MLOAD(v_cnt_keccak_f)
 
+    ; 2] TEST 136 bytes => counter increase 2
     E + 1  => E         :MSTORE(lastHashKId)
     0 => HASHPOS
     32 => D
@@ -34,7 +37,7 @@
 
     CNT_KECCAK_F - 3    :MLOAD(v_cnt_keccak_f)
 
-    ; TEST 271 bytes => counter increase 2 => total = 5
+    ; 3] TEST 271 bytes => counter increase 2
 
     E + 1 => E          :MSTORE(lastHashKId)
     0 => HASHPOS
@@ -49,7 +52,6 @@
     0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHK(E)
     0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHK(E)
     ; 256
-
     15 => D
     0x5E1268E5B2A8DC1D0BB047386FC227n :HASHK(E)
 
@@ -58,7 +60,7 @@
 
     CNT_KECCAK_F - 5    :MLOAD(v_cnt_keccak_f)
 
-    ; TEST 272 bytes => counter increase 3 => total = 8
+    ; 4] TEST 272 bytes => counter increase 3
 
     E + 1 => E          :MSTORE(lastHashKId)
     0 => HASHPOS
@@ -82,8 +84,10 @@
 
     CNT_KECCAK_F - 8    :MLOAD(v_cnt_keccak_f)
 
+    ; Check the other counters have not changed
     CNT_ARITH       :MLOAD(v_cnt_arith)
     CNT_BINARY      :MLOAD(v_cnt_binary)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
     CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
     CNT_POSEIDON_G  :MLOAD(v_cnt_poseidon_g)
     CNT_PADDING_PG  :MLOAD(v_cnt_padding_pg)
