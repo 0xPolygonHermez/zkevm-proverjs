@@ -36,7 +36,6 @@ template Main() {
 <% p += 8; -%>
     var oldBatchAccInputHashPos = <%- p %>;
 <% p += 8; -%>
-    var oldBatchNumPos = <%- p++ %>;
     var oldL1InfoTreeRootPos = <%- p %>;
 <% p += 8; -%>
     var oldL1InfoTreeIndexPos = <%- p++ %>;
@@ -46,7 +45,6 @@ template Main() {
 <% p += 8; -%>
     var newBatchAccInputHashPos = <%- p %>;
 <% p += 8; -%>
-    var newBatchNumPos = <%- p++ %>;
     var newL1InfoTreeRootPos = <%- p %>;
 <% p += 8; -%>
     var newL1InfoTreeIndexPos = <%- p++ %>;
@@ -141,7 +139,8 @@ template Main() {
 
     signal input batch_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
-
+    signal input batch_isAggregatedCircuit;
+    
     // Blob Inner Proof Inputs
     signal input blob_inner_publics[<%- nPublicsBlobInner %>];
  
@@ -217,7 +216,7 @@ template Main() {
 <% }                                                  -%>
     vBatch.finalPol <== batch_finalPol;
 
-    signal isOneBatch <== IsZero()(batch_publics[newBatchNumPos] - batch_publics[oldBatchNumPos] - 1);
+    signal isOneBatch <== 1 - batch_isAggregatedCircuit;
     vBatch.rootC <== MultiMux1(4)([rootCRecursive2Batch, rootCRecursive1Batch], isOneBatch);
     
     vBatch.isEnable <== isValidBlob; // Check isValid public
