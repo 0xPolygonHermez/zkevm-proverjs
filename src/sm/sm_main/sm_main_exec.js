@@ -119,6 +119,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     // load programs into DB
     let batchHashData;
+    let blobL2HashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -137,7 +138,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
     
         // Load keccak256BlobData into DB
-        const blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        blobL2HashData = await ethers.utils.keccak256(input.blobData);
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
     
     }
@@ -166,7 +167,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         final: false,
         helpers: new Helpers(helpers, {paths: helperPaths}),
         saved:{},
-        batchHashData: blob ? '' : batchHashData
+        batchHashData,
+        blobL2HashData,
     }
 
     if (config.stats) {

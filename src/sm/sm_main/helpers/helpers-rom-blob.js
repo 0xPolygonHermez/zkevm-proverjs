@@ -43,7 +43,7 @@ module.exports = class myHelperBlob {
     eval_getBlobL2HashData(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
         console.log(ctx.input.blobL2HashData)
-        return scalar2fea(ctx.Fr, Scalar.e(ctx.input.blobL2HashData));
+        return scalar2fea(ctx.Fr, Scalar.e(ctx.blobL2HashData));
     }
 
     eval_getForcedHashData(ctx, tag) {
