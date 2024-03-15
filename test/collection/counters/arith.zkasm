@@ -121,6 +121,7 @@
 
     CNT_ARITH - 14  :MLOAD(v_cnt_arith)
 
+    ; Check the other counters have not changed
     CNT_BINARY      :MLOAD(v_cnt_binary)
     CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
     CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)

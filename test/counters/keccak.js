@@ -14,10 +14,12 @@ describe("Test Keccak Counter", async function () {
                   namespaces: ['Global', 'Main', 'Rom', 'PaddingKK' ,'KeccakF', 'PaddingKKBit', 'Bits2Field'],
                   verbose: true,
                   color: true,
-                  disableUnusedError: true},
-		{ commitFilename: '/mnt/data/zkronos73/build/test/commit.bin',
-		  constFilename: '/mnt/data/zkronos73/build/test/const.bin',
-		  pilJsonFilename: '/mnt/data/zkronos73/build/test/mail.pil.json',
-		  externalPilVerification: true});
+                  disableUnusedError: true
+                },
+                { commitFilename: '/mnt/data/zkronos73/build/test/commit.bin',
+                  constFilename: '/mnt/data/zkronos73/build/test/const.bin',
+                  pilJsonFilename: '/mnt/data/zkronos73/build/test/mail.pil.json',
+                  externalPilVerification: true
+                });
     });
 });
