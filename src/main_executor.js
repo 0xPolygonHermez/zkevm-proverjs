@@ -79,14 +79,16 @@ async function run() {
     for (set of (argv.set ?? [])) {
         const index = set.indexOf('=');
         const name = index < 0 ? set : set.substr(0, index);
-        let value = index < 0 ? true : set.substr(index+1);
-        if (!isNaN(value)) {
-            const numValue = parseInt(value);
-            const bigValue = BigInt(value);
-            if ( bigValue === BigInt(numValue)) value = numValue;
-            else value = BigInt(value);
+        let value = index < 0 ? [true] : set.substr(index+1).split(',');
+        for (let index = 0; index < value.length; ++index) {
+            if (value[index] !== '' && !isNaN(value[index])) {
+                const numValue = parseInt(value[index]);
+                const bigValue = BigInt(value[index]);
+                if ( bigValue === BigInt(numValue)) value[index] = numValue;
+                else value[index] = BigInt(value[index]);
+            }
         }
-        config[name] = value;
+        config[name] = value.length === 1 ? value[0] : value.filter(x => x !== '');
     }
 
     const configFiles = {
@@ -110,9 +112,9 @@ async function run() {
         for (define of argv.define) {
             const index = define.indexOf('=');
             const name = index < 0 ? define : define.substr(0, index);
-            let value = index < 0 ? true : define.substr(index+1);
+            let value = index < 0 ? [true] : define.substr(index+1).split(',');
 
-            config.defines[name] = value;
+            config.defines[name] = value.length === 1 ? value[0] : value.filter(x => x !== '');
         }
     }
 

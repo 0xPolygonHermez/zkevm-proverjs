@@ -7,6 +7,7 @@ const {
 } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
 
 module.exports = class Debug extends Helper {
+/*
     eval_dumpRegs(ctx, tag) {
 
         console.log(`dumpRegs ${ctx.fileName}:${ctx.line}`);
@@ -234,5 +235,5 @@ module.exports = class Debug extends Helper {
         console.log('/////////////////////////////');
         console.log('/////////////////////////////\n');
     }
-
+*/
 }

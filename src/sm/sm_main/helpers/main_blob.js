@@ -1,5 +1,9 @@
 const Helper = require('./helper.js');
-
+const { Scalar } = require("ffjavascript");
+const {
+    scalar2fea,
+    fea2String,
+} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 module.exports = class Main extends Helper {
     /**
     * Set input parameters to initial registers
@@ -18,7 +22,7 @@ module.exports = class Main extends Helper {
             pols.B5[0],
             pols.B6[0],
             pols.B7[0]
-        ] = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldBlobStateRoot));
+        ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobStateRoot));
 
         // Set oldBlobAccInputHash to register C
         [
@@ -30,7 +34,7 @@ module.exports = class Main extends Helper {
             pols.C5[0],
             pols.C6[0],
             pols.C7[0]
-        ] = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldBlobAccInputHash));
+        ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobAccInputHash));
 
         // Set oldNumBlob to RR register
         pols.RR[0] = ctx.Fr.e(ctx.input.oldNumBlob);
@@ -45,7 +49,7 @@ module.exports = class Main extends Helper {
             pols.SR5[0],
             pols.SR6[0],
             pols.SR7[0]
-        ] = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldStateRoot));
+        ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
 
         // Set forkID to RCX register
         pols.RCX[0] = ctx.Fr.e(ctx.input.forkID);
@@ -133,7 +137,7 @@ module.exports = class Main extends Helper {
             throw new Error("Program terminated with registers A, D, E, SP, PC, GAS, HASHPOS, zkPC not set to zero");
         }
 
-        const feaOldBlobStateRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldBlobStateRoot));
+        const feaOldBlobStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobStateRoot));
         if (
             (!Fr.eq(pols.B0[0], feaOldBlobStateRoot[0])) ||
             (!Fr.eq(pols.B1[0], feaOldBlobStateRoot[1])) ||
@@ -148,7 +152,7 @@ module.exports = class Main extends Helper {
             throw new Error("Register B not terminetd equal as its initial value");
         }
 
-        const feaOldBlobAccInputHash = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldBlobAccInputHash));
+        const feaOldBlobAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldBlobAccInputHash));
         if (
             (!Fr.eq(pols.C0[0], feaOldBlobAccInputHash[0])) ||
             (!Fr.eq(pols.C1[0], feaOldBlobAccInputHash[1])) ||
@@ -168,7 +172,7 @@ module.exports = class Main extends Helper {
             throw new Error("Register RR not termined equal as its initial value");
         }
 
-        const feaOldStateRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.oldStateRoot));
+        const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
         if (
             (!Fr.eq(pols.SR0[0], feaOldStateRoot[0])) ||
             (!Fr.eq(pols.SR1[0], feaOldStateRoot[1])) ||
@@ -194,7 +198,7 @@ module.exports = class Main extends Helper {
     * @param {Object} ctx - context
     */
     assertOutputs(ctx){
-        const feaNewBlobStateRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.newBlobStateRoot));
+        const feaNewBlobStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newBlobStateRoot));
 
         if (
             (!ctx.Fr.eq(ctx.B[0], feaNewBlobStateRoot[0])) ||
@@ -207,13 +211,13 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.B[7], feaNewBlobStateRoot[7]))
         ) {
             let errorMsg = "Assert Error: newStateRoot does not match\n";
-            errorMsg += `   newBlobStateRoot computed: ${this.fea2String(ctx.Fr, ctx.B)}\n`;
+            errorMsg += `   newBlobStateRoot computed: ${fea2String(ctx.Fr, ctx.B)}\n`;
             errorMsg += `   newBlobStateRoot expected: ${ctx.input.newBlobStateRoot}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
 
-        const feaNewBlobAccInputHash = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.newBlobAccInputHash));
+        const feaNewBlobAccInputHash = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newBlobAccInputHash));
 
         if (
             (!ctx.Fr.eq(ctx.C[0], feaNewBlobAccInputHash[0])) ||
@@ -226,7 +230,7 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.C[7], feaNewBlobAccInputHash[7]))
         ) {
             let errorMsg = "Assert Error: newBlobAccInputHash does not match\n";
-            errorMsg += `   newBlobAccInputHash computed: ${this.fea2String(ctx.Fr, ctx.C)}\n`;
+            errorMsg += `   newBlobAccInputHash computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
             errorMsg += `   newBlobAccInputHash expected: ${ctx.input.newBlobAccInputHash}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
@@ -240,7 +244,7 @@ module.exports = class Main extends Helper {
             throw new Error(errorMsg);
         }
 
-        const feaFinalAccBatchHashData = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.finalAccBatchHashData));
+        const feaFinalAccBatchHashData = scalar2fea(ctx.Fr, Scalar.e(ctx.input.finalAccBatchHashData));
 
         if (
             (!ctx.Fr.eq(ctx.A[0], feaFinalAccBatchHashData[0])) ||
@@ -253,13 +257,13 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.A[7], feaFinalAccBatchHashData[7]))
         ) {
             let errorMsg = "Assert Error: finalAccBatchHashData does not match\n";
-            errorMsg += `   finalAccBatchHashData computed: ${this.fea2String(ctx.Fr, ctx.A)}\n`;
+            errorMsg += `   finalAccBatchHashData computed: ${fea2String(ctx.Fr, ctx.A)}\n`;
             errorMsg += `   finalAccBatchHashData expected: ${ctx.input.finalAccBatchHashData}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
 
-        const feaLocalExitRootFromBlob = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.localExitRootFromBlob));
+        const feaLocalExitRootFromBlob = scalar2fea(ctx.Fr, Scalar.e(ctx.input.localExitRootFromBlob));
 
         if (
             (!ctx.Fr.eq(ctx.E[0], feaLocalExitRootFromBlob[0])) ||
@@ -272,7 +276,7 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.E[7], feaLocalExitRootFromBlob[7]))
         ) {
             let errorMsg = "Assert Error: localExitRootFromBlob does not match\n";
-            errorMsg += `   localExitRootFromBlob computed: ${this.fea2String(ctx.Fr, ctx.E)}\n`;
+            errorMsg += `   localExitRootFromBlob computed: ${fea2String(ctx.Fr, ctx.E)}\n`;
             errorMsg += `   localExitRootFromBlob expected: ${ctx.input.localExitRootFromBlob}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
@@ -294,7 +298,7 @@ module.exports = class Main extends Helper {
             throw new Error(errorMsg);
         }
 
-        const feaLastL1InfoTreeRoot = this.scalar2fea(ctx.Fr, this.Scalar.e(ctx.input.lastL1InfoTreeRoot));
+        const feaLastL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.lastL1InfoTreeRoot));
 
         if (
             (!ctx.Fr.eq(ctx.D[0], feaLastL1InfoTreeRoot[0])) ||
@@ -307,7 +311,7 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.D[7], feaLastL1InfoTreeRoot[7]))
         ) {
             let errorMsg = "Assert Error: lastL1InfoTreeRoot does not match\n";
-            errorMsg += `   lastL1InfoTreeRoot computed: ${this.fea2String(ctx.Fr, ctx.D)}\n`;
+            errorMsg += `   lastL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
             errorMsg += `   lastL1InfoTreeRoot expected: ${ctx.input.lastL1InfoTreeRoot}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);

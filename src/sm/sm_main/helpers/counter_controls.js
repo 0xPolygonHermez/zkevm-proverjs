@@ -5,6 +5,7 @@ const PRIME = 0xFFFFFFFF00000001n;
 const FIRST_NEGATIVE_VALUE = PRIME - MASK64;
 
 module.exports = class CounterControls extends Helper {
+/*
     constructor() {
         super();
         this.counterControls = {
@@ -55,4 +56,5 @@ module.exports = class CounterControls extends Helper {
             cc.lessThanFinalSteps = true;
         }        
     }
+*/
 }
