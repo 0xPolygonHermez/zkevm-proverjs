@@ -11,60 +11,42 @@ template Main() {
     var rootCSingle[4] = [<%- vks[0].join(",") %>];
 
 <% if(isBatchRecursion) { -%>
-<%  let p = 0; -%>
-    var oldBatchStatePos = <%- p %>;
-<% p += 8; -%>
-    var oldBatchAccInputHashPos = <%- p %>;
-<% p += 8; -%>
+    var oldStateRootPos = <%- batchPublics.oldStateRootPos %>;
+    var oldBatchAccInputHashPos = <%- batchPublics.oldBatchAccInputHashPos %>;
 <%  if(isEip4844) { -%>
-    var oldL1InfoTreeRootPos = <%- p %>;
-<% p += 8; -%>
-    var oldL1InfoTreeIndexPos = <%- p++ %>;
+    var previousL1InfoTreeRootPos = <%- batchPublics.previousL1InfoTreeRootPos %>;
+    var previousL1InfoTreeIndexPos = <%- batchPublics.previousL1InfoTreeIndexPos %>;
 <%  } else { -%>
-    var oldBatchNumPos = <%- p++ %>;
+    var oldBatchNumPos = <%- batchPublics.oldBatchNumPos %>;
 <%  } -%>
-    var chainIdPos = <%- p++ %>;
-    var forkIdPos = <%- p++ %>;
-    var newBatchStateRootPos = <%- p %>;
-<% p += 8; -%>
-    var newBatchAccInputHashPos = <%- p %>;
-<% p += 8; -%>
+    var chainIdPos = <%- batchPublics.chainIdPos %>;
+    var forkIdPos = <%- batchPublics.forkIdPos %>;
+    var newStateRootPos = <%- batchPublics.newStateRootPos %>;
+    var newBatchAccInputHashPos = <%- batchPublics.newBatchAccInputHashPos %>;
 <%  if(isEip4844) { -%>
-    var newL1InfoTreeRootPos = <%- p %>;
-<% p += 8; -%>
-    var newL1InfoTreeIndexPos = <%- p++ %>;
-    var newLocalExitRootPos = <%- p %>;
-<% p += 8; -%>
-    var newLastTimestampPos = <%- p++ %>;
+    var currentL1InfoTreeRootPos = <%- batchPublics.currentL1InfoTreeRootPos %>;
+    var currentL1InfoTreeIndexPos = <%- batchPublics.currentL1InfoTreeIndexPos %>;
+    var newLocalExitRootPos = <%- batchPublics.newLocalExitRootPos %>;
+    var newLastTimestampPos = <%- batchPublics.newLastTimestampPos %>;
+<%      nPublics = batchPublics.newLastTimestampPos + 1; -%>
 <%  } else { -%> 
-    var newLocalExitRootPos = <%- p %>;
-<% p += 8; -%>
-    var newBatchNumPos = <%- p++ %>;
+    var newLocalExitRootPos = <%- batchPublics.newLocalExitRootPos %>;
+    var newBatchNumPos = <%- batchPublics.newBatchNumPos %>;
+<%      nPublics = batchPublics.newBatchNumPos + 1; -%>
 <%  } -%>
-<%  nPublics = p; -%>
 <% } else { -%>
-<%  let p = 0; -%>
-    var oldBlobOuterStateRootPos = <%- p %>;
-<% p += 8; -%>
-    var oldBlobOuterBlobStateRootPos = <%- p %>;
-<% p += 8; -%>
-    var oldBlobOuterAccInputHashPos = <%- p %>;
-<% p += 8; -%>
-    var oldBlobOuterNumPos = <%- p++ %>;
-
-    var chainIdBlobOuterPos = <%- p++ %>;
-    var forkIdBlobOuterPos = <%- p++ %>;
-
-    var newBlobOuterStateRootPos = <%- p %>;
-<% p += 8; -%>
-    var newBlobOuterBlobStateRootPos = <%- p %>;
-<% p += 8; -%>
-    var newBlobOuterAccInputHashPos = <%- p %>;
-<% p += 8; -%>
-    var newBlobOuterNumPos = <%- p++ %>;  
-    var newLocalExitRootBlobOuterPos = <%- p %>;
-<% p += 8; -%>
-<%  nPublics = p; -%>
+    var blobOuter_oldStateRootPos = <%- blobOuterPublics.oldStateRootPos %>;
+    var blobOuter_oldBlobStateRootPos = <%- blobOuterPublics.oldBlobStateRootPos %>;
+    var blobOuter_oldBlobAccInputHashPos = <%- blobOuterPublics.oldBlobAccInputHashPos %>;
+    var blobOuter_oldBlobNumPos = <%- blobOuterPublics.oldBlobNumPos %>;
+    var blobOuter_chainIdPos = <%- blobOuterPublics.chainIdPos %>;
+    var blobOuter_forkIdPos = <%- blobOuterPublics.forkIdPos %>;
+    var blobOuter_newStateRootPos = <%- blobOuterPublics.newStateRootPos %>;
+    var blobOuter_newBlobStateRootPos = <%- blobOuterPublics.newBlobStateRootPos %>;
+    var blobOuter_newBlobAccInputHashPos = <%- blobOuterPublics.newBlobAccInputHashPos %>;
+    var blobOuter_newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
+    var blobOuter_newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos %>;
+<%  nPublics = blobOuterPublics.newLocalExitRootPos + 8; -%>
 <% } -%>
 
     signal input publics[<%- nPublics %>];
@@ -177,7 +159,7 @@ template Main() {
     signal isOneBatchA <== IsZero()(a_publics[newBatchNumPos] - a_publics[oldBatchNumPos] - 1);
 <%      } -%>
 <%  } else { -%>
-    signal isOneBatchA <== IsZero()(a_publics[newBlobOuterNumPos] - a_publics[oldBlobOuterNumPos] - 1);
+    signal isOneBatchA <== IsZero()(a_publics[blobOuter_newBlobNumPos] - a_publics[blobOuter_oldBlobNumPos] - 1);
 <%  } -%>
 
     vA.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchA);
@@ -227,7 +209,7 @@ template Main() {
     signal isOneBatchB <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
 <%      } -%>
 <%  } else { -%>
-    signal isOneBatchB <== IsZero()(b_publics[newBlobOuterNumPos] - b_publics[oldBlobOuterNumPos] - 1);
+    signal isOneBatchB <== IsZero()(b_publics[blobOuter_newBlobNumPos] - b_publics[blobOuter_oldBlobNumPos] - 1);
 <%  } -%>
 
     vB.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchB);
@@ -240,9 +222,9 @@ template Main() {
 
     // Batch State Root
     for (var i=0; i<8; i++) {
-        a_publics[oldBatchStatePos + i] === publics[oldBatchStatePos + i]; // Old
-        a_publics[newBatchStateRootPos + i] === b_publics[oldBatchStatePos + i]; // Mid
-        publics[newBatchStateRootPos + i] === b_publics[newBatchStateRootPos + i]; // New
+        a_publics[oldStateRootPos + i] === publics[oldStateRootPos + i]; // Old
+        a_publics[newStateRootPos + i] === b_publics[oldStateRootPos + i]; // Mid
+        publics[newStateRootPos + i] === b_publics[newStateRootPos + i]; // New
     }
 
     // Batch Accumulated Input Hash
@@ -268,15 +250,15 @@ template Main() {
 <%      if(isEip4844) { -%>
     //  L1 Info Tree Root
     for (var i=0; i<8; i++) {
-        a_publics[oldL1InfoTreeRootPos+i] === publics[oldL1InfoTreeRootPos+i]; // Old
-        a_publics[newL1InfoTreeRootPos+i] === b_publics[oldL1InfoTreeRootPos+i]; // Mid
-        publics[newL1InfoTreeRootPos+i] === b_publics[newL1InfoTreeRootPos+i]; // New
+        a_publics[previousL1InfoTreeRootPos+i] === publics[previousL1InfoTreeRootPos+i]; // Old
+        a_publics[currentL1InfoTreeRootPos+i] === b_publics[previousL1InfoTreeRootPos+i]; // Mid
+        publics[currentL1InfoTreeRootPos+i] === b_publics[currentL1InfoTreeRootPos+i]; // New
     }
 
     // L1 Info Tree Index
-    a_publics[oldL1InfoTreeIndexPos] === publics[oldL1InfoTreeIndexPos]; // Old
-    a_publics[newL1InfoTreeIndexPos] === b_publics[oldL1InfoTreeIndexPos]; // Mid
-    publics[newL1InfoTreeIndexPos] === b_publics[newL1InfoTreeIndexPos]; // New
+    a_publics[previousL1InfoTreeIndexPos] === publics[previousL1InfoTreeIndexPos]; // Old
+    a_publics[currentL1InfoTreeIndexPos] === b_publics[previousL1InfoTreeIndexPos]; // Mid
+    publics[currentL1InfoTreeIndexPos] === b_publics[currentL1InfoTreeIndexPos]; // New
 
     // Last timestamp
     publics[newLastTimestampPos] === b_publics[newLastTimestampPos];
@@ -289,41 +271,41 @@ template Main() {
 <%  } else { -%>
     // State Root
     for (var i=0; i<8; i++) {
-        a_publics[oldBlobOuterStateRootPos + i] === publics[oldBlobOuterStateRootPos + i]; // Old
-        a_publics[newBlobOuterStateRootPos + i] === b_publics[oldBlobOuterStateRootPos + i]; // Mid
-        publics[newBlobOuterStateRootPos + i] === b_publics[newBlobOuterStateRootPos + i]; // New
+        a_publics[blobOuter_oldStateRootPos + i] === publics[blobOuter_oldStateRootPos + i]; // Old
+        a_publics[blobOuter_newStateRootPos + i] === b_publics[blobOuter_oldStateRootPos + i]; // Mid
+        publics[blobOuter_newStateRootPos + i] === b_publics[blobOuter_newStateRootPos + i]; // New
     }
 
     // Blob State Root
     for (var i=0; i<8; i++) {
-        a_publics[oldBlobOuterBlobStateRootPos + i] === publics[oldBlobOuterBlobStateRootPos + i]; // Old
-        a_publics[newBlobOuterBlobStateRootPos + i] === b_publics[oldBlobOuterBlobStateRootPos + i]; // Mid
-        publics[newBlobOuterBlobStateRootPos + i] === b_publics[newBlobOuterBlobStateRootPos + i]; // New
+        a_publics[blobOuter_oldBlobStateRootPos + i] === publics[blobOuter_oldBlobStateRootPos + i]; // Old
+        a_publics[blobOuter_newBlobStateRootPos + i] === b_publics[blobOuter_oldBlobStateRootPos + i]; // Mid
+        publics[blobOuter_newBlobStateRootPos + i] === b_publics[blobOuter_newBlobStateRootPos + i]; // New
     }
 
     // Blob Accumulated Input Hash
     for (var i=0; i<8; i++) {
-        a_publics[oldBlobOuterAccInputHashPos + i] === publics[oldBlobOuterAccInputHashPos + i]; // Old
-        a_publics[newBlobOuterAccInputHashPos + i] === b_publics[oldBlobOuterAccInputHashPos + i]; // Mid
-        publics[newBlobOuterAccInputHashPos + i] === b_publics[newBlobOuterAccInputHashPos + i]; // New
+        a_publics[blobOuter_oldBlobAccInputHashPos + i] === publics[blobOuter_oldBlobAccInputHashPos + i]; // Old
+        a_publics[blobOuter_newBlobAccInputHashPos + i] === b_publics[blobOuter_oldBlobAccInputHashPos + i]; // Mid
+        publics[blobOuter_newBlobAccInputHashPos + i] === b_publics[blobOuter_newBlobAccInputHashPos + i]; // New
     }
 
     // Blob number
-    a_publics[oldBlobOuterNumPos] === publics[oldBlobOuterNumPos]; // Old
-    a_publics[newBlobOuterNumPos] === b_publics[oldBlobOuterNumPos]; // Mid
-    publics[newBlobOuterNumPos] === b_publics[newBlobOuterNumPos]; // New
+    a_publics[blobOuter_oldBlobNumPos] === publics[blobOuter_oldBlobNumPos]; // Old
+    a_publics[blobOuter_newBlobNumPos] === b_publics[blobOuter_oldBlobNumPos]; // Mid
+    publics[blobOuter_newBlobNumPos] === b_publics[blobOuter_newBlobNumPos]; // New
 
     // chainId
-    a_publics[chainIdBlobOuterPos] === publics[chainIdBlobOuterPos];
-    a_publics[chainIdBlobOuterPos] === b_publics[chainIdBlobOuterPos];
+    a_publics[blobOuter_chainIdPos] === publics[blobOuter_chainIdPos];
+    a_publics[blobOuter_chainIdPos] === b_publics[blobOuter_chainIdPos];
 
     // forkId
-    a_publics[forkIdBlobOuterPos] === publics[forkIdBlobOuterPos];
-    a_publics[forkIdBlobOuterPos] === b_publics[forkIdBlobOuterPos];
+    a_publics[blobOuter_forkIdPos] === publics[blobOuter_forkIdPos];
+    a_publics[blobOuter_forkIdPos] === b_publics[blobOuter_forkIdPos];
 
     // localExitRoot
     for (var i=0; i<8; i++) {
-        publics[newLocalExitRootBlobOuterPos+i] === b_publics[newLocalExitRootBlobOuterPos+i];
+        publics[blobOuter_newLocalExitRootPos+i] === b_publics[blobOuter_newLocalExitRootPos+i];
     }
 <%  } -%> 
 }
