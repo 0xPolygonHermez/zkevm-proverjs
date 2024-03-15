@@ -7,7 +7,6 @@ const zkasm = require("@0xpolygonhermez/zkasmcom");
 
 const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
 
-
 const smArith = require("../src/sm/sm_arith/sm_arith.js");
 const smBinary = require("../src/sm/sm_binary.js");
 const smGlobal = require("../src/sm/sm_global.js");
@@ -27,12 +26,10 @@ const smPaddingSha256 = require("../src/sm/sm_padding_sha256.js");
 const smPaddingSha256Bit = require("../src/sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
 const smBits2FieldSha256 = require("../src/sm/sm_bits2field_sha256.js");
 const smSha256F = require("../src/sm/sm_sha256f/sm_sha256f.js");
-const { config } = require("yargs");
 
 module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
 
     const Fr = new F1Field("0xFFFFFFFF00000001");
-    const brief = false;
 
     /*
         pilConfig example:
@@ -41,7 +38,6 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     */
 
     const blob = mainConfig.blob ?? false;
-    const target = blob ? 'blob' : 'batch';
     const targetPrefix = blob ? 'blob_':'';
     const targetSuffix = blob ? '_blob':'';
 
@@ -51,19 +47,18 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
     const pil = await compile(Fr, pilFile, null,  pilConfig);
     if (pilConfig.defines && pilConfig.defines.N) {
-        console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
+        console.log('Force use N = 2 ** '+Math.log2(pilConfig.defines.N));
     }
 
     const constPols =  (mainConfig && mainConfig.constants === false) ? false : newConstantPolsArray(pil);
     const cmPols =  newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
     const N = polDeg;
-    console.log('Pil N = 2 ** '+Math.log2(polDeg));
+    console.log('PIL N = 2 ** '+Math.log2(polDeg));
 
     const inputContent = await fs.promises.readFile(path.join(__dirname, "inputs", `${targetPrefix}empty_input.json`));
     const input = JSON.parse(inputContent, "utf8");
     const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
-    console.log(zkasmFinalFilename);
     const rom = await zkasm.compile(zkasmFinalFilename);
 
     if (mainConfig && mainConfig.romFilename) {
@@ -163,38 +158,38 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         }
     }
 
-    console.log("Exec Main...");
+    console.log("Executing Main...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
     console.log(requiredMain.counters);
 
     if (!mainConfig || !mainConfig.fastDebugExit) {
-        if (cmPols.PaddingKK) console.log("Exec PaddingKK...");
+        if (cmPols.PaddingKK) console.log("Executing PaddingKK...");
         const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK) : false;
 
-        if (cmPols.PaddingKKBit) console.log("Exec PaddingKKbit...");
+        if (cmPols.PaddingKKBit) console.log("Executing PaddingKKbit...");
         const requiredKKbit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit) : false;
 
-        if (cmPols.Bits2Field) console.log("Exec Bits2Field...");
+        if (cmPols.Bits2Field) console.log("Executing Bits2Field...");
         const requiredBits2Field = cmPols.Bits2Field ? await smBits2Field.execute(cmPols.Bits2Field, requiredKKbit.Bits2Field) : false;
 
-        if (cmPols.KeccakF) console.log("Exec KeccakF...");
+        if (cmPols.KeccakF) console.log("Executing KeccakF...");
         const requiredKeccakF = cmPols.KeccakF ? await smKeccakF.execute(cmPols.KeccakF, requiredBits2Field.KeccakF) : false;
 
         if (cmPols.MemAlign) {
-            console.log("Exec MemAlign...");
+            console.log("Executing MemAlign...");
             await smMemAlign.execute(cmPols.MemAlign, requiredMain.MemAlign || []);
         } else if (verifyPilFlag && requiredMain.MemAlign && requiredMain.MemAlign.length) {
             console.log(`WARNING: Namespace MemAlign isn't included, but there are ${requiredMain.MemAlign.length} MemAlign operations`);
         }
 
         if (cmPols.Mem) {
-            console.log("Exec Mem...");
+            console.log("Executing Mem...");
             await smMem.execute(cmPols.Mem, requiredMain.Mem || []);
         } else if (verifyPilFlag && requiredMain.Mem && requiredMain.Mem.length) {
             console.log(`WARNING: Namespace Mem isn't included, but there are ${requiredMain.Mem.length} Mem operations`);
         }
 
-        if (cmPols.Storage) console.log("Exec Storage...");
+        if (cmPols.Storage) console.log("Executing Storage...");
         const requiredStorage = cmPols.Storage ? await smStorage.execute(cmPols.Storage, requiredMain.Storage || []) : false;
 
 
@@ -203,51 +198,51 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         }
 
 
-        if (cmPols.PaddingPG) console.log("Exec PaddingPG...");
+        if (cmPols.PaddingPG) console.log("Executing PaddingPG...");
         const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG,  requiredMain.PaddingPG || []) : false;
 
         const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
         console.log('POSEIDONS='+allPoseidonG.length);
         if (cmPols.PoseidonG) {
-            console.log("Exec PoseidonG...");
+            console.log("Executing PoseidonG...");
             await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         } else if (verifyPilFlag && allPoseidonG.length) {
             console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations `+
                             `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
         }
 
-        if (cmPols.PaddingSha256) console.log("Exec PaddingSha256...");
+        if (cmPols.PaddingSha256) console.log("Executing PaddingSha256...");
         const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
 
-        if (cmPols.PaddingSha256Bit) console.log("Exec PaddingSha256bit...");
+        if (cmPols.PaddingSha256Bit) console.log("Executing PaddingSha256bit...");
         const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
 
-        if (cmPols.Bits2FieldSha256) console.log("Exec Bits2FieldSha256...");
+        if (cmPols.Bits2FieldSha256) console.log("Executing Bits2FieldSha256...");
         const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
 
         if (cmPols.Sha256F) {
-            console.log("Exec Sha256F...");
+            console.log("Executing Sha256F...");
             await smSha256F.execute(cmPols.Sha256F, requiredBits2FieldSha256.Sha256F || []);
         } else if (verifyPilFlag && requiredBits2FieldSha256.Sha256F) {
             console.log(`WARNING: Namespace Sha256F isn't included, but there are ${requiredBits2FieldSha256.Sha256F.length} Sha256F operations`);
         }
 
         if (cmPols.Arith) {
-            console.log("Exec Arith...");
+            console.log("Executing Arith...");
             await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
         } else if (verifyPilFlag && requiredMain.Arith && requiredMain.Arith.length) {
             console.log(`WARNING: Namespace Arith isn't included, but there are ${requiredMain.Arith.length} Arith operations`);
         }
 
         if (cmPols.Binary) {
-            console.log("Exec Binary...");
+            console.log("Executing Binary...");
             await smBinary.execute(cmPols.Binary, requiredMain.Binary || []);
         } else if (verifyPilFlag && requiredMain.Binary && requiredMain.Binary.length) {
             console.log(`WARNING: Namespace Binary isn't included, but there are ${requiredMain.Binary.length} Binary operations`);
         }
 
         if (cmPols.ClimbKey) {
-            console.log("Exec ClimbKey...");
+            console.log("Executing ClimbKey...");
             await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey || []);
         } else if (verifyPilFlag && requiredStorage.ClimbKey && requiredStorage.ClimbKey.length) {
             console.log(`WARNING: Namespace ClimbKey isn't included, but there are ${requiredStorage.ClimbKey.length} ClimbKey operations`);
@@ -282,7 +277,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     }
 
     if (mainConfig && mainConfig.externalPilVerification) {
-        console.log(`call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
+        console.log(`Call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
     } else if (constPols !== false) {
         if (verifyPilConfig.publics) {
             if (!(verifyPilConfig.publics instanceof Object)) {
@@ -293,7 +288,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
 
         if (res.length != 0) {
-            console.log("Pil does not pass");
+            console.log("PIL does not pass");
             for (let i=0; i<res.length; i++) {
                 console.log(res[i]);
             }
