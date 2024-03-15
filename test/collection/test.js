@@ -1,8 +1,3 @@
-const chai = require("chai");
-const assert = chai.assert;
-const fs = require("fs");
-const path = require("path");
-
 const {verifyZkasm} = require("../verify_zkasm");
 
 describe("Large Zkasm Test", async function () {

@@ -52,13 +52,13 @@ start:
         -1          :MSTORE(lastHashPId)
         -1          :MSTORE(lastHashSId)
 
+INCLUDE "constants.zkasm"
 INCLUDE "lvalues.zkasm"
+
 INCLUDE "counters.zkasm"
 INCLUDE "arrays.zkasm"
 INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
-INCLUDE "fix.zkasm"
-INCLUDE "features.zkasm"
 
 end:
 

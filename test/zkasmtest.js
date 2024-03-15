@@ -1,9 +1,5 @@
-const chai = require("chai");
-const assert = chai.assert;
 const fs = require("fs");
 const path = require("path");
-const { compile } = require("pilcom");
-const { F1Field } = require("ffjavascript");
 const { verifyZkasm } = require("./verify_zkasm");
 const { cwd } = require("process");
 
@@ -29,7 +25,6 @@ const argv = require("yargs")
     .argv;
 
 async function main(){
-    let Fr = new F1Field("0xFFFFFFFF00000001");
     let zkasmFile = false;
 
     if (argv._.length == 0) {
@@ -43,7 +38,6 @@ async function main(){
     }
 
     let ns = argv.ns ? argv.ns : ['Global', 'Main'];
-    let namespaceDefined = argv.ns ? true : false;
 
     // rows
     const rowsDefined = typeof(argv.rows) !== 'undefined';
@@ -88,7 +82,7 @@ async function main(){
         color: true,
         disableUnusedError: true
     }
-    
+
     if (!all) {
         defaultPilConfig.namespaces = namespaces;
     }
@@ -167,7 +161,7 @@ async function main(){
         console.log("Debug and constants options are incompatible");
         process.exit(1);
     }
-    
+
     await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
     console.log('Done!');
 }
