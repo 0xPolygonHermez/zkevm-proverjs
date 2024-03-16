@@ -12,18 +12,17 @@ namespace Mem(%N);
 
     // The list is sorted by [addr, step]
 
-    lastAccess * (lastAccess - 1) = 0;
-    ISNOTLAST { lastAccess*(  addr' - addr - (step'-step) )  +   (step'-step) } in INCS;
+    lastAccess * (1 - lastAccess) = 0;
+    ISNOTLAST {lastAccess * (addr' - addr - (step'-step)) + (step'-step)} in INCS;
     (1 - lastAccess) * (addr' - addr) = 0;
 
-    mOp * (mOp -1) = 0;
-    mWr * (mWr -1) = 0;
+    mOp * (1 - mOp) = 0;
+    mWr * (1 - mWr) = 0;
     // mWr could be 1 only if mOp is 1
     (1 - mOp) * mWr = 0;
 
-    pol isWrite = mOp' * mWr';
-    pol rdSame = (1-isWrite) * (1-lastAccess);
-    pol rdDifferent = (1-isWrite) * lastAccess;
+    pol rdSame = (1-mWr') * (1-lastAccess);
+    pol rdDifferent = (1-mWr') *lastAccess;
 
     // lastAccess has to be 1 in the last evaluation. This is necessary to
     // validate [rdDifferent * (val[0]') = 0;] correctly (in a cyclic way)
