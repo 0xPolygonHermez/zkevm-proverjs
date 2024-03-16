@@ -1,9 +1,9 @@
 const {verifyZkasm} = require("../verify_zkasm");
 
-describe("Large Zkasm Test", async function () {
+describe("Collection tests", async function () {
     this.timeout(10000000);
 
-    it("Verify Large Zkasm Test", async () => {
+    it("Verifies the PIL associated with the collection zkasm", async () => {
         await verifyZkasm(__dirname + "/main.zkasm", true,
                 { // defines: {N: 2 ** 18},
                   // namespaces: ['Global', 'Main',],

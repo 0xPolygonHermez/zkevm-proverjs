@@ -1,0 +1,1437 @@
+
+        ; 1] Full bytes checks
+        ; 1 bytes
+	0xffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 2 bytes
+	0xffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 3 bytes
+	0xffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 4 bytes
+	0xffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 5 bytes
+	0xffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 6 bytes
+	0xffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 7 bytes
+	0xffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 8 bytes
+	0xffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 9 bytes
+	0xffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 10 bytes
+	0xffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 11 bytes
+	0xffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 12 bytes
+	0xffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 13 bytes
+	0xffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 14 bytes
+	0xffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 15 bytes
+	0xffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 16 bytes
+	0xffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 17 bytes
+	0xffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 18 bytes
+	0xffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 19 bytes
+	0xffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 20 bytes
+	0xffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 21 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 22 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 23 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 24 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 25 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 26 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 27 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 28 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 29 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 30 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 31 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+	; 32 bytes
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => B
+	$BYTE{B & 0xff} => A
+	0xffn  :ASSERT
+
+        ; 2] It works for all numbers from 0 to 255
+	; 0xfe
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffen => B
+	$BYTE{B & 0xff} => A
+	0xfe  :ASSERT
+
+	; 0xfd
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdn => B
+	$BYTE{B & 0xff} => A
+	0xfd  :ASSERT
+
+	; 0xfc
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcn => B
+	$BYTE{B & 0xff} => A
+	0xfc  :ASSERT
+
+	; 0xfb
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbn => B
+	$BYTE{B & 0xff} => A
+	0xfb  :ASSERT
+
+	; 0xfa
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffan => B
+	$BYTE{B & 0xff} => A
+	0xfa  :ASSERT
+
+	; 0xf9
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9n => B
+	$BYTE{B & 0xff} => A
+	0xf9  :ASSERT
+
+	; 0xf8
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8n => B
+	$BYTE{B & 0xff} => A
+	0xf8  :ASSERT
+
+	; 0xf7
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7n => B
+	$BYTE{B & 0xff} => A
+	0xf7  :ASSERT
+
+	; 0xf6
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6n => B
+	$BYTE{B & 0xff} => A
+	0xf6  :ASSERT
+
+	; 0xf5
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5n => B
+	$BYTE{B & 0xff} => A
+	0xf5  :ASSERT
+
+	; 0xf4
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4n => B
+	$BYTE{B & 0xff} => A
+	0xf4  :ASSERT
+
+	; 0xf3
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3n => B
+	$BYTE{B & 0xff} => A
+	0xf3  :ASSERT
+
+	; 0xf2
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2n => B
+	$BYTE{B & 0xff} => A
+	0xf2  :ASSERT
+
+	; 0xf1
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1n => B
+	$BYTE{B & 0xff} => A
+	0xf1  :ASSERT
+
+	; 0xf0
+	0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0n => B
+	$BYTE{B & 0xff} => A
+	0xf0  :ASSERT
+
+	; 0xef
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffefn => B
+	$BYTE{B & 0xff} => A
+	0xef  :ASSERT
+
+	; 0xee
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeen => B
+	$BYTE{B & 0xff} => A
+	0xee  :ASSERT
+
+	; 0xed
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedn => B
+	$BYTE{B & 0xff} => A
+	0xed  :ASSERT
+
+	; 0xec
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffecn => B
+	$BYTE{B & 0xff} => A
+	0xec  :ASSERT
+
+	; 0xeb
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffebn => B
+	$BYTE{B & 0xff} => A
+	0xeb  :ASSERT
+
+	; 0xea
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffean => B
+	$BYTE{B & 0xff} => A
+	0xea  :ASSERT
+
+	; 0xe9
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9n => B
+	$BYTE{B & 0xff} => A
+	0xe9  :ASSERT
+
+	; 0xe8
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe8n => B
+	$BYTE{B & 0xff} => A
+	0xe8  :ASSERT
+
+	; 0xe7
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe7n => B
+	$BYTE{B & 0xff} => A
+	0xe7  :ASSERT
+
+	; 0xe6
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe6n => B
+	$BYTE{B & 0xff} => A
+	0xe6  :ASSERT
+
+	; 0xe5
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe5n => B
+	$BYTE{B & 0xff} => A
+	0xe5  :ASSERT
+
+	; 0xe4
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe4n => B
+	$BYTE{B & 0xff} => A
+	0xe4  :ASSERT
+
+	; 0xe3
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe3n => B
+	$BYTE{B & 0xff} => A
+	0xe3  :ASSERT
+
+	; 0xe2
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe2n => B
+	$BYTE{B & 0xff} => A
+	0xe2  :ASSERT
+
+	; 0xe1
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe1n => B
+	$BYTE{B & 0xff} => A
+	0xe1  :ASSERT
+
+	; 0xe0
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0n => B
+	$BYTE{B & 0xff} => A
+	0xe0  :ASSERT
+
+	; 0xdf
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdfn => B
+	$BYTE{B & 0xff} => A
+	0xdf  :ASSERT
+
+	; 0xde
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffden => B
+	$BYTE{B & 0xff} => A
+	0xde  :ASSERT
+
+	; 0xdd
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffddn => B
+	$BYTE{B & 0xff} => A
+	0xdd  :ASSERT
+
+	; 0xdc
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdcn => B
+	$BYTE{B & 0xff} => A
+	0xdc  :ASSERT
+
+	; 0xdb
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdbn => B
+	$BYTE{B & 0xff} => A
+	0xdb  :ASSERT
+
+	; 0xda
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdan => B
+	$BYTE{B & 0xff} => A
+	0xda  :ASSERT
+
+	; 0xd9
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd9n => B
+	$BYTE{B & 0xff} => A
+	0xd9  :ASSERT
+
+	; 0xd8
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd8n => B
+	$BYTE{B & 0xff} => A
+	0xd8  :ASSERT
+
+	; 0xd7
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd7n => B
+	$BYTE{B & 0xff} => A
+	0xd7  :ASSERT
+
+	; 0xd6
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd6n => B
+	$BYTE{B & 0xff} => A
+	0xd6  :ASSERT
+
+	; 0xd5
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd5n => B
+	$BYTE{B & 0xff} => A
+	0xd5  :ASSERT
+
+	; 0xd4
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd4n => B
+	$BYTE{B & 0xff} => A
+	0xd4  :ASSERT
+
+	; 0xd3
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd3n => B
+	$BYTE{B & 0xff} => A
+	0xd3  :ASSERT
+
+	; 0xd2
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd2n => B
+	$BYTE{B & 0xff} => A
+	0xd2  :ASSERT
+
+	; 0xd1
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd1n => B
+	$BYTE{B & 0xff} => A
+	0xd1  :ASSERT
+
+	; 0xd0
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd0n => B
+	$BYTE{B & 0xff} => A
+	0xd0  :ASSERT
+
+	; 0xcf
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcfn => B
+	$BYTE{B & 0xff} => A
+	0xcf  :ASSERT
+
+	; 0xce
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcen => B
+	$BYTE{B & 0xff} => A
+	0xce  :ASSERT
+
+	; 0xcd
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcdn => B
+	$BYTE{B & 0xff} => A
+	0xcd  :ASSERT
+
+	; 0xcc
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffccn => B
+	$BYTE{B & 0xff} => A
+	0xcc  :ASSERT
+
+	; 0xcb
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcbn => B
+	$BYTE{B & 0xff} => A
+	0xcb  :ASSERT
+
+	; 0xca
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcan => B
+	$BYTE{B & 0xff} => A
+	0xca  :ASSERT
+
+	; 0xc9
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc9n => B
+	$BYTE{B & 0xff} => A
+	0xc9  :ASSERT
+
+	; 0xc8
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc8n => B
+	$BYTE{B & 0xff} => A
+	0xc8  :ASSERT
+
+	; 0xc7
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc7n => B
+	$BYTE{B & 0xff} => A
+	0xc7  :ASSERT
+
+	; 0xc6
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc6n => B
+	$BYTE{B & 0xff} => A
+	0xc6  :ASSERT
+
+	; 0xc5
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5n => B
+	$BYTE{B & 0xff} => A
+	0xc5  :ASSERT
+
+	; 0xc4
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc4n => B
+	$BYTE{B & 0xff} => A
+	0xc4  :ASSERT
+
+	; 0xc3
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc3n => B
+	$BYTE{B & 0xff} => A
+	0xc3  :ASSERT
+
+	; 0xc2
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc2n => B
+	$BYTE{B & 0xff} => A
+	0xc2  :ASSERT
+
+	; 0xc1
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc1n => B
+	$BYTE{B & 0xff} => A
+	0xc1  :ASSERT
+
+	; 0xc0
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc0n => B
+	$BYTE{B & 0xff} => A
+	0xc0  :ASSERT
+
+	; 0xbf
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbfn => B
+	$BYTE{B & 0xff} => A
+	0xbf  :ASSERT
+
+	; 0xbe
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffben => B
+	$BYTE{B & 0xff} => A
+	0xbe  :ASSERT
+
+	; 0xbd
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbdn => B
+	$BYTE{B & 0xff} => A
+	0xbd  :ASSERT
+
+	; 0xbc
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbcn => B
+	$BYTE{B & 0xff} => A
+	0xbc  :ASSERT
+
+	; 0xbb
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbbn => B
+	$BYTE{B & 0xff} => A
+	0xbb  :ASSERT
+
+	; 0xba
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffban => B
+	$BYTE{B & 0xff} => A
+	0xba  :ASSERT
+
+	; 0xb9
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb9n => B
+	$BYTE{B & 0xff} => A
+	0xb9  :ASSERT
+
+	; 0xb8
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb8n => B
+	$BYTE{B & 0xff} => A
+	0xb8  :ASSERT
+
+	; 0xb7
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb7n => B
+	$BYTE{B & 0xff} => A
+	0xb7  :ASSERT
+
+	; 0xb6
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb6n => B
+	$BYTE{B & 0xff} => A
+	0xb6  :ASSERT
+
+	; 0xb5
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb5n => B
+	$BYTE{B & 0xff} => A
+	0xb5  :ASSERT
+
+	; 0xb4
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb4n => B
+	$BYTE{B & 0xff} => A
+	0xb4  :ASSERT
+
+	; 0xb3
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb3n => B
+	$BYTE{B & 0xff} => A
+	0xb3  :ASSERT
+
+	; 0xb2
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb2n => B
+	$BYTE{B & 0xff} => A
+	0xb2  :ASSERT
+
+	; 0xb1
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb1n => B
+	$BYTE{B & 0xff} => A
+	0xb1  :ASSERT
+
+	; 0xb0
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb0n => B
+	$BYTE{B & 0xff} => A
+	0xb0  :ASSERT
+
+	; 0xaf
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffafn => B
+	$BYTE{B & 0xff} => A
+	0xaf  :ASSERT
+
+	; 0xae
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffaen => B
+	$BYTE{B & 0xff} => A
+	0xae  :ASSERT
+
+	; 0xad
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffadn => B
+	$BYTE{B & 0xff} => A
+	0xad  :ASSERT
+
+	; 0xac
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffacn => B
+	$BYTE{B & 0xff} => A
+	0xac  :ASSERT
+
+	; 0xab
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffabn => B
+	$BYTE{B & 0xff} => A
+	0xab  :ASSERT
+
+	; 0xaa
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffaan => B
+	$BYTE{B & 0xff} => A
+	0xaa  :ASSERT
+
+	; 0xa9
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa9n => B
+	$BYTE{B & 0xff} => A
+	0xa9  :ASSERT
+
+	; 0xa8
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa8n => B
+	$BYTE{B & 0xff} => A
+	0xa8  :ASSERT
+
+	; 0xa7
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa7n => B
+	$BYTE{B & 0xff} => A
+	0xa7  :ASSERT
+
+	; 0xa6
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa6n => B
+	$BYTE{B & 0xff} => A
+	0xa6  :ASSERT
+
+	; 0xa5
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa5n => B
+	$BYTE{B & 0xff} => A
+	0xa5  :ASSERT
+
+	; 0xa4
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa4n => B
+	$BYTE{B & 0xff} => A
+	0xa4  :ASSERT
+
+	; 0xa3
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa3n => B
+	$BYTE{B & 0xff} => A
+	0xa3  :ASSERT
+
+	; 0xa2
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa2n => B
+	$BYTE{B & 0xff} => A
+	0xa2  :ASSERT
+
+	; 0xa1
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa1n => B
+	$BYTE{B & 0xff} => A
+	0xa1  :ASSERT
+
+	; 0xa0
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa0n => B
+	$BYTE{B & 0xff} => A
+	0xa0  :ASSERT
+
+	; 0x9f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9fn => B
+	$BYTE{B & 0xff} => A
+	0x9f  :ASSERT
+
+	; 0x9e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9en => B
+	$BYTE{B & 0xff} => A
+	0x9e  :ASSERT
+
+	; 0x9d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9dn => B
+	$BYTE{B & 0xff} => A
+	0x9d  :ASSERT
+
+	; 0x9c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9cn => B
+	$BYTE{B & 0xff} => A
+	0x9c  :ASSERT
+
+	; 0x9b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9bn => B
+	$BYTE{B & 0xff} => A
+	0x9b  :ASSERT
+
+	; 0x9a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9an => B
+	$BYTE{B & 0xff} => A
+	0x9a  :ASSERT
+
+	; 0x99
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff99n => B
+	$BYTE{B & 0xff} => A
+	0x99  :ASSERT
+
+	; 0x98
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff98n => B
+	$BYTE{B & 0xff} => A
+	0x98  :ASSERT
+
+	; 0x97
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff97n => B
+	$BYTE{B & 0xff} => A
+	0x97  :ASSERT
+
+	; 0x96
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff96n => B
+	$BYTE{B & 0xff} => A
+	0x96  :ASSERT
+
+	; 0x95
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff95n => B
+	$BYTE{B & 0xff} => A
+	0x95  :ASSERT
+
+	; 0x94
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff94n => B
+	$BYTE{B & 0xff} => A
+	0x94  :ASSERT
+
+	; 0x93
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff93n => B
+	$BYTE{B & 0xff} => A
+	0x93  :ASSERT
+
+	; 0x92
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff92n => B
+	$BYTE{B & 0xff} => A
+	0x92  :ASSERT
+
+	; 0x91
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff91n => B
+	$BYTE{B & 0xff} => A
+	0x91  :ASSERT
+
+	; 0x90
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff90n => B
+	$BYTE{B & 0xff} => A
+	0x90  :ASSERT
+
+	; 0x8f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8fn => B
+	$BYTE{B & 0xff} => A
+	0x8f  :ASSERT
+
+	; 0x8e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8en => B
+	$BYTE{B & 0xff} => A
+	0x8e  :ASSERT
+
+	; 0x8d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8dn => B
+	$BYTE{B & 0xff} => A
+	0x8d  :ASSERT
+
+	; 0x8c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8cn => B
+	$BYTE{B & 0xff} => A
+	0x8c  :ASSERT
+
+	; 0x8b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8bn => B
+	$BYTE{B & 0xff} => A
+	0x8b  :ASSERT
+
+	; 0x8a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8an => B
+	$BYTE{B & 0xff} => A
+	0x8a  :ASSERT
+
+	; 0x89
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff89n => B
+	$BYTE{B & 0xff} => A
+	0x89  :ASSERT
+
+	; 0x88
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff88n => B
+	$BYTE{B & 0xff} => A
+	0x88  :ASSERT
+
+	; 0x87
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87n => B
+	$BYTE{B & 0xff} => A
+	0x87  :ASSERT
+
+	; 0x86
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff86n => B
+	$BYTE{B & 0xff} => A
+	0x86  :ASSERT
+
+	; 0x85
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff85n => B
+	$BYTE{B & 0xff} => A
+	0x85  :ASSERT
+
+	; 0x84
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff84n => B
+	$BYTE{B & 0xff} => A
+	0x84  :ASSERT
+
+	; 0x83
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff83n => B
+	$BYTE{B & 0xff} => A
+	0x83  :ASSERT
+
+	; 0x82
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff82n => B
+	$BYTE{B & 0xff} => A
+	0x82  :ASSERT
+
+	; 0x81
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff81n => B
+	$BYTE{B & 0xff} => A
+	0x81  :ASSERT
+
+	; 0x80
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80n => B
+	$BYTE{B & 0xff} => A
+	0x80  :ASSERT
+
+	; 0x7f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fn => B
+	$BYTE{B & 0xff} => A
+	0x7f  :ASSERT
+
+	; 0x7e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7en => B
+	$BYTE{B & 0xff} => A
+	0x7e  :ASSERT
+
+	; 0x7d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7dn => B
+	$BYTE{B & 0xff} => A
+	0x7d  :ASSERT
+
+	; 0x7c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7cn => B
+	$BYTE{B & 0xff} => A
+	0x7c  :ASSERT
+
+	; 0x7b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7bn => B
+	$BYTE{B & 0xff} => A
+	0x7b  :ASSERT
+
+	; 0x7a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7an => B
+	$BYTE{B & 0xff} => A
+	0x7a  :ASSERT
+
+	; 0x79
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff79n => B
+	$BYTE{B & 0xff} => A
+	0x79  :ASSERT
+
+	; 0x78
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff78n => B
+	$BYTE{B & 0xff} => A
+	0x78  :ASSERT
+
+	; 0x77
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff77n => B
+	$BYTE{B & 0xff} => A
+	0x77  :ASSERT
+
+	; 0x76
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff76n => B
+	$BYTE{B & 0xff} => A
+	0x76  :ASSERT
+
+	; 0x75
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff75n => B
+	$BYTE{B & 0xff} => A
+	0x75  :ASSERT
+
+	; 0x74
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff74n => B
+	$BYTE{B & 0xff} => A
+	0x74  :ASSERT
+
+	; 0x73
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff73n => B
+	$BYTE{B & 0xff} => A
+	0x73  :ASSERT
+
+	; 0x72
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff72n => B
+	$BYTE{B & 0xff} => A
+	0x72  :ASSERT
+
+	; 0x71
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff71n => B
+	$BYTE{B & 0xff} => A
+	0x71  :ASSERT
+
+	; 0x70
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff70n => B
+	$BYTE{B & 0xff} => A
+	0x70  :ASSERT
+
+	; 0x6f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6fn => B
+	$BYTE{B & 0xff} => A
+	0x6f  :ASSERT
+
+	; 0x6e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6en => B
+	$BYTE{B & 0xff} => A
+	0x6e  :ASSERT
+
+	; 0x6d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6dn => B
+	$BYTE{B & 0xff} => A
+	0x6d  :ASSERT
+
+	; 0x6c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6cn => B
+	$BYTE{B & 0xff} => A
+	0x6c  :ASSERT
+
+	; 0x6b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6bn => B
+	$BYTE{B & 0xff} => A
+	0x6b  :ASSERT
+
+	; 0x6a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6an => B
+	$BYTE{B & 0xff} => A
+	0x6a  :ASSERT
+
+	; 0x69
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff69n => B
+	$BYTE{B & 0xff} => A
+	0x69  :ASSERT
+
+	; 0x68
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff68n => B
+	$BYTE{B & 0xff} => A
+	0x68  :ASSERT
+
+	; 0x67
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff67n => B
+	$BYTE{B & 0xff} => A
+	0x67  :ASSERT
+
+	; 0x66
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff66n => B
+	$BYTE{B & 0xff} => A
+	0x66  :ASSERT
+
+	; 0x65
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff65n => B
+	$BYTE{B & 0xff} => A
+	0x65  :ASSERT
+
+	; 0x64
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff64n => B
+	$BYTE{B & 0xff} => A
+	0x64  :ASSERT
+
+	; 0x63
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff63n => B
+	$BYTE{B & 0xff} => A
+	0x63  :ASSERT
+
+	; 0x62
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff62n => B
+	$BYTE{B & 0xff} => A
+	0x62  :ASSERT
+
+	; 0x61
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff61n => B
+	$BYTE{B & 0xff} => A
+	0x61  :ASSERT
+
+	; 0x60
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60n => B
+	$BYTE{B & 0xff} => A
+	0x60  :ASSERT
+
+	; 0x5f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5fn => B
+	$BYTE{B & 0xff} => A
+	0x5f  :ASSERT
+
+	; 0x5e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5en => B
+	$BYTE{B & 0xff} => A
+	0x5e  :ASSERT
+
+	; 0x5d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5dn => B
+	$BYTE{B & 0xff} => A
+	0x5d  :ASSERT
+
+	; 0x5c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5cn => B
+	$BYTE{B & 0xff} => A
+	0x5c  :ASSERT
+
+	; 0x5b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5bn => B
+	$BYTE{B & 0xff} => A
+	0x5b  :ASSERT
+
+	; 0x5a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5an => B
+	$BYTE{B & 0xff} => A
+	0x5a  :ASSERT
+
+	; 0x59
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff59n => B
+	$BYTE{B & 0xff} => A
+	0x59  :ASSERT
+
+	; 0x58
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff58n => B
+	$BYTE{B & 0xff} => A
+	0x58  :ASSERT
+
+	; 0x57
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff57n => B
+	$BYTE{B & 0xff} => A
+	0x57  :ASSERT
+
+	; 0x56
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff56n => B
+	$BYTE{B & 0xff} => A
+	0x56  :ASSERT
+
+	; 0x55
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff55n => B
+	$BYTE{B & 0xff} => A
+	0x55  :ASSERT
+
+	; 0x54
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54n => B
+	$BYTE{B & 0xff} => A
+	0x54  :ASSERT
+
+	; 0x53
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff53n => B
+	$BYTE{B & 0xff} => A
+	0x53  :ASSERT
+
+	; 0x52
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff52n => B
+	$BYTE{B & 0xff} => A
+	0x52  :ASSERT
+
+	; 0x51
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff51n => B
+	$BYTE{B & 0xff} => A
+	0x51  :ASSERT
+
+	; 0x50
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff50n => B
+	$BYTE{B & 0xff} => A
+	0x50  :ASSERT
+
+	; 0x4f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4fn => B
+	$BYTE{B & 0xff} => A
+	0x4f  :ASSERT
+
+	; 0x4e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4en => B
+	$BYTE{B & 0xff} => A
+	0x4e  :ASSERT
+
+	; 0x4d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4dn => B
+	$BYTE{B & 0xff} => A
+	0x4d  :ASSERT
+
+	; 0x4c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4cn => B
+	$BYTE{B & 0xff} => A
+	0x4c  :ASSERT
+
+	; 0x4b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4bn => B
+	$BYTE{B & 0xff} => A
+	0x4b  :ASSERT
+
+	; 0x4a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4an => B
+	$BYTE{B & 0xff} => A
+	0x4a  :ASSERT
+
+	; 0x49
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff49n => B
+	$BYTE{B & 0xff} => A
+	0x49  :ASSERT
+
+	; 0x48
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff48n => B
+	$BYTE{B & 0xff} => A
+	0x48  :ASSERT
+
+	; 0x47
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff47n => B
+	$BYTE{B & 0xff} => A
+	0x47  :ASSERT
+
+	; 0x46
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff46n => B
+	$BYTE{B & 0xff} => A
+	0x46  :ASSERT
+
+	; 0x45
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff45n => B
+	$BYTE{B & 0xff} => A
+	0x45  :ASSERT
+
+	; 0x44
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44n => B
+	$BYTE{B & 0xff} => A
+	0x44  :ASSERT
+
+	; 0x43
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43n => B
+	$BYTE{B & 0xff} => A
+	0x43  :ASSERT
+
+	; 0x42
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff42n => B
+	$BYTE{B & 0xff} => A
+	0x42  :ASSERT
+
+	; 0x41
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff41n => B
+	$BYTE{B & 0xff} => A
+	0x41  :ASSERT
+
+	; 0x40
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff40n => B
+	$BYTE{B & 0xff} => A
+	0x40  :ASSERT
+
+	; 0x3f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3fn => B
+	$BYTE{B & 0xff} => A
+	0x3f  :ASSERT
+
+	; 0x3e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3en => B
+	$BYTE{B & 0xff} => A
+	0x3e  :ASSERT
+
+	; 0x3d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3dn => B
+	$BYTE{B & 0xff} => A
+	0x3d  :ASSERT
+
+	; 0x3c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3cn => B
+	$BYTE{B & 0xff} => A
+	0x3c  :ASSERT
+
+	; 0x3b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3bn => B
+	$BYTE{B & 0xff} => A
+	0x3b  :ASSERT
+
+	; 0x3a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3an => B
+	$BYTE{B & 0xff} => A
+	0x3a  :ASSERT
+
+	; 0x39
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff39n => B
+	$BYTE{B & 0xff} => A
+	0x39  :ASSERT
+
+	; 0x38
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff38n => B
+	$BYTE{B & 0xff} => A
+	0x38  :ASSERT
+
+	; 0x37
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff37n => B
+	$BYTE{B & 0xff} => A
+	0x37  :ASSERT
+
+	; 0x36
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff36n => B
+	$BYTE{B & 0xff} => A
+	0x36  :ASSERT
+
+	; 0x35
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff35n => B
+	$BYTE{B & 0xff} => A
+	0x35  :ASSERT
+
+	; 0x34
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff34n => B
+	$BYTE{B & 0xff} => A
+	0x34  :ASSERT
+
+	; 0x33
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff33n => B
+	$BYTE{B & 0xff} => A
+	0x33  :ASSERT
+
+	; 0x32
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff32n => B
+	$BYTE{B & 0xff} => A
+	0x32  :ASSERT
+
+	; 0x31
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff31n => B
+	$BYTE{B & 0xff} => A
+	0x31  :ASSERT
+
+	; 0x30
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff30n => B
+	$BYTE{B & 0xff} => A
+	0x30  :ASSERT
+
+	; 0x2f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2fn => B
+	$BYTE{B & 0xff} => A
+	0x2f  :ASSERT
+
+	; 0x2e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2en => B
+	$BYTE{B & 0xff} => A
+	0x2e  :ASSERT
+
+	; 0x2d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2dn => B
+	$BYTE{B & 0xff} => A
+	0x2d  :ASSERT
+
+	; 0x2c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2cn => B
+	$BYTE{B & 0xff} => A
+	0x2c  :ASSERT
+
+	; 0x2b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2bn => B
+	$BYTE{B & 0xff} => A
+	0x2b  :ASSERT
+
+	; 0x2a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2an => B
+	$BYTE{B & 0xff} => A
+	0x2a  :ASSERT
+
+	; 0x29
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff29n => B
+	$BYTE{B & 0xff} => A
+	0x29  :ASSERT
+
+	; 0x28
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff28n => B
+	$BYTE{B & 0xff} => A
+	0x28  :ASSERT
+
+	; 0x27
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff27n => B
+	$BYTE{B & 0xff} => A
+	0x27  :ASSERT
+
+	; 0x26
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff26n => B
+	$BYTE{B & 0xff} => A
+	0x26  :ASSERT
+
+	; 0x25
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff25n => B
+	$BYTE{B & 0xff} => A
+	0x25  :ASSERT
+
+	; 0x24
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff24n => B
+	$BYTE{B & 0xff} => A
+	0x24  :ASSERT
+
+	; 0x23
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff23n => B
+	$BYTE{B & 0xff} => A
+	0x23  :ASSERT
+
+	; 0x22
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff22n => B
+	$BYTE{B & 0xff} => A
+	0x22  :ASSERT
+
+	; 0x21
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff21n => B
+	$BYTE{B & 0xff} => A
+	0x21  :ASSERT
+
+	; 0x20
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff20n => B
+	$BYTE{B & 0xff} => A
+	0x20  :ASSERT
+
+	; 0x1f
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1fn => B
+	$BYTE{B & 0xff} => A
+	0x1f  :ASSERT
+
+	; 0x1e
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1en => B
+	$BYTE{B & 0xff} => A
+	0x1e  :ASSERT
+
+	; 0x1d
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1dn => B
+	$BYTE{B & 0xff} => A
+	0x1d  :ASSERT
+
+	; 0x1c
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1cn => B
+	$BYTE{B & 0xff} => A
+	0x1c  :ASSERT
+
+	; 0x1b
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1bn => B
+	$BYTE{B & 0xff} => A
+	0x1b  :ASSERT
+
+	; 0x1a
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1an => B
+	$BYTE{B & 0xff} => A
+	0x1a  :ASSERT
+
+	; 0x19
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff19n => B
+	$BYTE{B & 0xff} => A
+	0x19  :ASSERT
+
+	; 0x18
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff18n => B
+	$BYTE{B & 0xff} => A
+	0x18  :ASSERT
+
+	; 0x17
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff17n => B
+	$BYTE{B & 0xff} => A
+	0x17  :ASSERT
+
+	; 0x16
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff16n => B
+	$BYTE{B & 0xff} => A
+	0x16  :ASSERT
+
+	; 0x15
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff15n => B
+	$BYTE{B & 0xff} => A
+	0x15  :ASSERT
+
+	; 0x14
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff14n => B
+	$BYTE{B & 0xff} => A
+	0x14  :ASSERT
+
+	; 0x13
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff13n => B
+	$BYTE{B & 0xff} => A
+	0x13  :ASSERT
+
+	; 0x12
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff12n => B
+	$BYTE{B & 0xff} => A
+	0x12  :ASSERT
+
+	; 0x11
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff11n => B
+	$BYTE{B & 0xff} => A
+	0x11  :ASSERT
+
+	; 0x10
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff10n => B
+	$BYTE{B & 0xff} => A
+	0x10  :ASSERT
+
+	; 0xf
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0fn => B
+	$BYTE{B & 0xff} => A
+	0xf  :ASSERT
+
+	; 0xe
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0en => B
+	$BYTE{B & 0xff} => A
+	0xe  :ASSERT
+
+	; 0xd
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0dn => B
+	$BYTE{B & 0xff} => A
+	0xd  :ASSERT
+
+	; 0xc
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0cn => B
+	$BYTE{B & 0xff} => A
+	0xc  :ASSERT
+
+	; 0xb
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0bn => B
+	$BYTE{B & 0xff} => A
+	0xb  :ASSERT
+
+	; 0xa
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0an => B
+	$BYTE{B & 0xff} => A
+	0xa  :ASSERT
+
+	; 0x9
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff09n => B
+	$BYTE{B & 0xff} => A
+	0x9  :ASSERT
+
+	; 0x8
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff08n => B
+	$BYTE{B & 0xff} => A
+	0x8  :ASSERT
+
+	; 0x7
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff07n => B
+	$BYTE{B & 0xff} => A
+	0x7  :ASSERT
+
+	; 0x6
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff06n => B
+	$BYTE{B & 0xff} => A
+	0x6  :ASSERT
+
+	; 0x5
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff05n => B
+	$BYTE{B & 0xff} => A
+	0x5  :ASSERT
+
+	; 0x4
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff04n => B
+	$BYTE{B & 0xff} => A
+	0x4  :ASSERT
+
+	; 0x3
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff03n => B
+	$BYTE{B & 0xff} => A
+	0x3  :ASSERT
+
+	; 0x2
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff02n => B
+	$BYTE{B & 0xff} => A
+	0x2  :ASSERT
+
+	; 0x1
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff01n => B
+	$BYTE{B & 0xff} => A
+	0x1  :ASSERT
+
+	; 0x0
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00n => B
+	$BYTE{B & 0xff} => A
+	0x0  :ASSERT

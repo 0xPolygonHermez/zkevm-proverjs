@@ -1,0 +1,5 @@
+VAR GLOBAL assumef_var1
+
+        10              :MSTORE(assumef_var1)
+        $ + 3 => A      :F_MLOAD(assumef_var1)
+        13              :ASSERT

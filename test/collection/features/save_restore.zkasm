@@ -1,4 +1,5 @@
 
+        ; 1] A can be changed but B and C are saved and restored
         1 => A
         2 => B
         3 => C
@@ -8,13 +9,14 @@
         20 => B
         30 => C
         :RESTORE
-            
+
         10  :ASSERT
         B => A
         2   :ASSERT
         C => A
         3   :ASSERT
 
+        ; 2] A can also be saveda by using op
         1 => A
         A       :SAVE(B,C,D,E,RR,RCX)
         10 => A
@@ -28,9 +30,11 @@
         C => A
         3   :ASSERT
 
+        ; 3] Use of save/restores inside functions
         32 => A :CALL(f1)
         128 :ASSERT
 
+        ; 4] Factorial! Notice that B and C are never modified
         32 => A  :CALL(fact)
         263130836933693530167218012160000000n :ASSERT
 
@@ -49,7 +53,7 @@ f2:
         A + 32 => A
         :RESTORE,RETURN
 
-fact:   
+fact:
         :SAVE(B,C,D,E,RR,RCX)
 
         ; check if direct case (A == 1)
@@ -61,20 +65,21 @@ fact:
 
         ; call again to fact with A - 1
         $ => A        :SUB,CALL(fact)
-        
+
         ; A * fact(A - 1)
         C => B
         0 => D,C
         ${A * B} => A :ARITH
 
-fact_finish:        
+fact_finish:
         :RESTORE,RETURN
 
 continueSaveRestoreTest:
 
+        ; 5] Playing around with SAVEs and RESTOREs
         A        :SAVE(B,C,D,E,RR,RCX)
         HASHPOS  :SAVE(B,C,D,E,RR,RCX)
-        ; pending restores     
+        ; pending restores
 
 VAR GLOBAL tmpSaveRestoreB
         400 => B
@@ -86,7 +91,7 @@ VAR GLOBAL tmpSaveRestoreB
         B + 2 => A
         B + C => PC :RESTORE
 
-        402         :ASSERT 
+        402         :ASSERT
         PC => A
         415         :ASSERT
 
@@ -95,11 +100,11 @@ VAR GLOBAL tmpSaveRestoreB
         50 => C
 
         A           :SAVE(B,C,D,E,RR,RCX)
-        
+
         B * 2 => C
         $ + C => A  :RESTORE
 
-        2900        :ASSERT 
+        2900        :ASSERT
         B => A
         1400        :ASSERT
         C => A
@@ -112,7 +117,7 @@ VAR GLOBAL tmpSaveRestoreB
         %LVALUE_005 => E
         12345 => RR
         67890 => RCX
-        
+
         A :SAVE(B,C,D,E,RR,RCX)
 
         %LVALUE_006 => A
@@ -124,7 +129,7 @@ VAR GLOBAL tmpSaveRestoreB
         360800 => RCX
 
         $ => A :RESTORE
-            
+
         %LVALUE_001 :ASSERT
 
         B => A
@@ -135,7 +140,7 @@ VAR GLOBAL tmpSaveRestoreB
 
         D => A
         %LVALUE_004 :ASSERT
-        
+
         E => A
         %LVALUE_005 :ASSERT
 
