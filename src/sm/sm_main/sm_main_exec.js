@@ -2382,10 +2382,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.free0IsByte) {
-            if (ctx.FREE0 < 0n || ctx.FREE0 > 255n) {
-                throw new Error(`FREE0 must be a byte, but has value ${ctx.FREE0} at ${sourceRef}`);
+            let value = l.assumeFree ? ctx.FREE0 : op0;
+            if (value < 0n || value > 255n) {
+                throw new Error(`FREE0 must be a byte, but has value ${value} at ${sourceRef}`);
             }
-            let value = ctx.FREE0;
+
             for (let index = 0; index < 8; ++index) {
                 pols.hJmpnCondValueBit[index][i] = value & 0x01n;
                 value = value >> 1n;
