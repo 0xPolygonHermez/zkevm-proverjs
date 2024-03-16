@@ -89,7 +89,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const defaultHelperPaths = [__dirname  + '/helpers'];
     const customHelperPaths = (config && config.helperPaths) ? (Array.isArray(config.helperPaths) ? config.helperPaths : [config.helperPaths]) : [];
     const helperPaths =  [...defaultHelperPaths, ...customHelperPaths ];
-    
+
     const POSEIDONG_PERMUTATION1_ID = 1;
     const POSEIDONG_PERMUTATION2_ID = 2;
 
@@ -124,7 +124,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             // filter smt smart contract hashes
             if (key.length === 66) // "0x" + 32 bytes
                 await db.setProgram(stringToH4(key), hexString2byteArray(value));
-        }   
+        }
 
         // Load batchL2Data into DB
         batchHashData = await hashContractBytecode(input.batchL2Data);
@@ -646,10 +646,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.offset[i] = 0n;
         }
 
-        const anyHash = l.hashP || l.hashK || l.hashS || l.hashPDigest || l.hashKDigest || l.hashSDigest || l.hashPLen || l.hashKLen || l.hashSLen; 
+        const anyHash = l.hashP || l.hashK || l.hashS || l.hashPDigest || l.hashKDigest || l.hashSDigest || l.hashPLen || l.hashKLen || l.hashSLen;
         const memAddr = addr + (l.memUseAddrRel ? addrRel : 0);
         const hashAddr = anyHash ? (l.hashOffset ?? 0) + fe2n(Fr, ctx.E[0]) : 0;
-        
+
 
 //////
 // CALCULATE AND LOAD FREE INPUT
@@ -659,11 +659,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.restore) {
             const rid = ctx.RID;
             pols.restore[i] = 1n;
-            
+
             // check if exists saved data with current RID value
             if (!ctx.saved[rid]) {
                 throw new Error(`Not found saved data with RID ${rid} on ${sourceRef}`);
-            }                
+            }
             dataToRestore = ctx.saved[rid];
 
             // verify that saving wasn't restored previously
@@ -1021,7 +1021,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inFREE[i] = Fr.e(l.inFREE);
             pols.inFREE0[i] = Fr.e(l.inFREE0);
         } else {
-            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], 
+            [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i],
              pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = l.restore ? dataToRestore.op : Fr8zero;
             pols.inFREE[i] = Fr.zero;
             pols.inFREE0[i] = Fr.zero;
@@ -1075,7 +1075,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7,
                 });
             } else {
-                const value = l.assumeFree ? [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]:
+                const value = l.assumeFree ? [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]]:
                                              [op0, op1, op2, op3, op4, op5, op6, op7];
                 pols.mWR[i] = 0n;
                 required.Mem.push({
@@ -1333,7 +1333,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashK ${sourceRef}`);
-            const a = l.assumeFree ? safeFea2scalar(Fr, [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]):
+            const a = l.assumeFree ? safeFea2scalar(Fr, [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]]):
                                      safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -1412,7 +1412,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
                 const pos = fe2n(Fr, ctx.HASHPOS, ctx);
                 if ((size<0) || (size>32)) throw new Error(`Invalid size ${size} for hashS ${sourceRef}`);
-                const a = l.assumeFree ? safeFea2scalar(Fr, [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]):
+                const a = l.assumeFree ? safeFea2scalar(Fr, [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]]):
                                         safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 const maskByte = Scalar.e("0xFF");
                 for (let k=0; k<size; k++) {
@@ -1490,7 +1490,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
             const pos = fe2n(Fr, ctx.HASHPOS, ctx);
             if ((size<0) || (size>32)) throw new Error(`HashP(${hashAddr}) invalid size ${size} ${sourceRef}`);
-            const a = l.assumeFree ? safeFea2scalar(Fr, [ctx.FREE0, ctx.FREE1, ctx.FREE2, ctx.FREE3, ctx.FREE4, ctx.FREE5, ctx.FREE6, ctx.FREE7]):
+            const a = l.assumeFree ? safeFea2scalar(Fr, [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]]):
                                      safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
             const maskByte = Scalar.e("0xFF");
             for (let k=0; k<size; k++) {
@@ -1802,7 +1802,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.bin) {
-            // const carry = ctx.helpers.Binary.verify(l.binOpcode, safeFea2scalar(Fr, ctx.A),  safeFea2scalar(Fr, ctx.B), 
+            // const carry = ctx.helpers.Binary.verify(l.binOpcode, safeFea2scalar(Fr, ctx.A),  safeFea2scalar(Fr, ctx.B),
             //                                         safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]), required.Binary);
             // pols.binOpcode[i] = BigInt(l.binOpcode);
             // pols.carry[i] = carry;
@@ -2002,10 +2002,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 RR: ctx.RR,
                 RID: ctx.RID,
                 sourceRef,
-                row: i 
+                row: i
             }
             ctx.saved[nrid] = data;
-            pols.save[i] = 1n;            
+            pols.save[i] = 1n;
         } else {
             pols.save[i] = 0n;
         }
@@ -2087,7 +2087,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setB[i]=0n;
             if (l.restore) {
-                [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti], 
+                [pols.B0[nexti], pols.B1[nexti], pols.B2[nexti], pols.B3[nexti],
                  pols.B4[nexti], pols.B5[nexti], pols.B6[nexti], pols.B7[nexti]] = dataToRestore.B
             } else {
                 [pols.B0[nexti],
@@ -2125,7 +2125,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setC[i]=0n;
             if (l.restore) {
-                [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti], 
+                [pols.C0[nexti], pols.C1[nexti], pols.C2[nexti], pols.C3[nexti],
                  pols.C4[nexti], pols.C5[nexti], pols.C6[nexti], pols.C7[nexti]] = dataToRestore.C;
             } else {
                 [pols.C0[nexti],
@@ -2171,7 +2171,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
             }
         }
-    
+
         if (l.setD == 1) {
             pols.setD[i]=1n;
             [pols.D0[nexti],
@@ -2186,7 +2186,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setD[i]=0n;
             if (l.restore) {
-                [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti], 
+                [pols.D0[nexti], pols.D1[nexti], pols.D2[nexti], pols.D3[nexti],
                  pols.D4[nexti], pols.D5[nexti], pols.D6[nexti], pols.D7[nexti]] = dataToRestore.D;
             } else {
                 [pols.D0[nexti],
@@ -2224,7 +2224,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.setE[i]=0n;
             if (l.restore) {
-                [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti], 
+                [pols.E0[nexti], pols.E1[nexti], pols.E2[nexti], pols.E3[nexti],
                  pols.E4[nexti], pols.E5[nexti], pols.E6[nexti], pols.E7[nexti]] = dataToRestore.E;
             } else {
                 [pols.E0[nexti],
@@ -2382,7 +2382,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.free0IsByte) {
-            let value = l.assumeFree ? ctx.FREE0 : op0;
+            let value = l.assumeFree ? pols.FREE0[i] : op0;
             if (value < 0n || value > 255n) {
                 throw new Error(`FREE0 must be a byte, but has value ${value} at ${sourceRef}`);
             }
