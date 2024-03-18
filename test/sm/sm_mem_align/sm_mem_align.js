@@ -59,8 +59,6 @@ describe("test mem align operations", async function () {
         for (let i=0; i<constPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof constPols.$$array[i][j] !== "bigint") {
-                    console.log([constPols.$$array[i][j],constPols.$$array[i][j+1],
-                                 constPols.$$array[i][j+2],constPols.$$array[i][j+3]]);
                     throw new Error(`Polynomial not fited ${constPols.$$defArray[i].name} at ${j}` )
                 }
             }
@@ -114,7 +112,6 @@ describe("test mem align operations", async function () {
         for (let i=0; i<cmPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof cmPols.$$array[i][j] !== 'bigint') {
-                    console.log([cmPols.$$array[i][j-1], cmPols.$$array[i][j], cmPols.$$array[i][j+1]]);
                     throw new Error(`Polynomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
                 }
             }
@@ -132,10 +129,10 @@ describe("test mem align operations", async function () {
     }
 
     it("It should verify the mem_align operations pil", async () => {
-        executeWithInput(2**19, require('./sm_mem_align_test_data.js'));
+        await executeWithInput(2**19, require('./sm_mem_align_test_data.js'));
     });
 
     it("It should verify the mem_align operations pil", async () => {
-        executeWithInput(2**22, require('./sm_mem_align_test_huge_data.js'));
+        await executeWithInput(2**22, require('./sm_mem_align_test_huge_data.js'));
     });
 });

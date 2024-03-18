@@ -98,9 +98,6 @@ module.exports.buildConstants = async function (pols) {
         }
     });
     build_MODE_SELM1_SELM0_T_BYTE_POS(pols, N);
-    for (let index = 0; index < 128; ++index) {
-        console.log([index % 32, pols.MODE_SELM1_SELM0[index], pols.T_BYTE_POS[index]].join());
-    }
 }
 
 module.exports.execute = async function (pols, input) {
@@ -110,8 +107,6 @@ module.exports.execute = async function (pols, input) {
     // Initialization
     const factors = [ 2n**24n, 2n**16n, 2n**8n, 1n];
     for (let i = 0; i < input.length; i++) {
-        console.log(`#${i} M0: ${input[i].m0.toString(16).toUpperCase()} M1: ${input[i].m1.toString(16).toUpperCase()} `+
-                    `mode: ${input[i].mode.toString(16).toUpperCase()} V: ${input[i].v.toString(16).toUpperCase()}`);
         let m0v = BigInt(input[i].m0);
         let m1v = BigInt(input[i].m1);
         const v = BigInt(input[i].v);
@@ -121,7 +116,6 @@ module.exports.execute = async function (pols, input) {
         let len = _len === 0 ? 32:_len;
         const offset = MODE_TO_OFFSET(mode);
         const format = MODE_TO_FORMAT(mode);
-        console.log(['(#)', mode, _len, offset, format]);
         const _wr = BigInt(input[i].wr);
         const wr = _wr === 1n;
         const polIndex = i * 32;
@@ -205,7 +199,6 @@ module.exports.execute = async function (pols, input) {
 
             pols.w0[mIndex][curIndex] = pols.w0[mIndex][curIndex] + inW0 * factor;
             pols.w1[mIndex][curIndex] = pols.w1[mIndex][curIndex] + inW1 * factor;
-            console.log('i,bytePos,inV_V,inV_M,selM0,inM0,inW0,selM1,inM1,inW1,mode: '+([j,bytePos,inV_V,inV_M,selM0, inM0, inW0, selM1, inM1, inW1,_mode].map(x => x.toString(16)).join()));
         }
     }
     let i = input.length * 32;
@@ -238,18 +231,4 @@ module.exports.execute = async function (pols, input) {
 
 function getByte (value, index) {
     return (value >> (8n * BigInt(index))) & 0xFFn;
-}
-
-function transitions(label, values) {
-    let previous = values[0];
-    console.log(label);
-    console.log(`#0 ${values[0]}`);
-    for (let index = 1; index < values.length; ++index) {
-        if (values[index] !== previous) {
-            console.log(`#${index} ${previous} ==> ${values[index]}`);
-            previous = values[index];
-        }
-    }
-    console.log(`#${values.length-1} ${previous}`);
-    console.log('');
 }
