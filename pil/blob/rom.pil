@@ -12,7 +12,7 @@ namespace Rom(%N);
 
     pol constant inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR ,inRCX, inRID;
     pol constant hashBytes, hashOffset;
-    pol constant inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG, inCntSha256F;
+    pol constant inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG;
     pol constant incStack;
     pol constant binOpcode;
     pol constant jmpAddr, elseAddr;
@@ -24,7 +24,7 @@ namespace Rom(%N);
 
     /*
       comment generated with:
-      node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" 
+      node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" 
 
       operations =
               2**0  * arith            + 2**1  * arithSame12      + 2**2  * arithUseE        + 2**3  * assert
@@ -39,6 +39,5 @@ namespace Rom(%N);
             + 2**36 * useCTX           + 2**37 * JMPZ             + 2**38 * call             + 2**39 * return
             + 2**40 * save             + 2**41 * restore          + 2**42 * setRID           + 2**43 * hashBytesInD
             + 2**44 * assumeFree       + 2**45 * memUseAddrRel    + 2**46 * jmpUseAddrRel    + 2**47 * elseUseAddrRel
-            + 2**48 * free0IsByte      + 2**49 * hashS            + 2**50 * hashSDigest      + 2**51 * hashSLen;
-
+            + 2**48 * free0IsByte;
     */

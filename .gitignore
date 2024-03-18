@@ -8,7 +8,7 @@ logs-trace
 logs-full-trace
 logs-verbose
 logs-stats
-cache-main-pil.json
+cache-*.json
 testvectors/commit.bin
 testvectors/constants.bin
 tmp
@@ -18,4 +18,5 @@ verbose-config.json
 tracer-options.json
 *.stats
 main.pil.json
+main_blob.pil.json
 tools/full-tracer-tests/ft-traces/

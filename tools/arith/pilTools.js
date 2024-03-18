@@ -114,6 +114,30 @@ function equationPols(name, products, sums, constValues, config = {})
     let def;
     const chunkSize = config.chunkSize || 16;
     const chunkSize2 = chunkSize * 2;
+
+    // Check if shifted products
+    let shiftedProducts = [];
+    products.some((prod,indo) => {
+        if (prod.length >= 3 && prod[2] !== "-") {
+            products.splice(indo,1);
+            prod.some((x, ind) => {
+                if (Object.keys(constValues).includes(x)) {
+                    if (isPowOfChunk(constValues[x])) {
+                        const multiple = whichPowOfChunk(constValues[x]);
+                        if (i >= multiple) {
+                            prod.splice(ind,1);
+                            shiftedProducts.push({prod, multiple});
+                            return;
+                        }
+                    } else {
+                        throw new Error("Not implemented");
+                    }
+                }
+            });
+            return;
+        }
+    });
+
     for(i=0; i < chunkSize2; ++i) {
         def = (i ? lntab:'')+nameToIndex(name,i,config, 'def');
         // let upTo = Math.min(i, 15);
@@ -159,6 +183,51 @@ function equationPols(name, products, sums, constValues, config = {})
                 moreThanProduct = true;
             }
         }
+
+        // Process the shifted products
+        if (shiftedProducts.length) {
+            shiftedProducts.forEach((shifted,index) => {
+                if (i >= shifted.multiple) {
+                    let upTo = i - shifted.multiple;
+
+                    let count = 0;
+                    for (j=0; j<= upTo; ++j) {
+                        let _prods = '';
+                        let operation = '';
+                        if (shifted.prod[2]) operation = ` ${shifted.prod[2]} `;
+                        else if (index) operation += ' + ';
+                        // s += `${shifted.prod[0]}[${j}] * ${shifted.prod[1]}[${i-j}]`
+                        let op1 = resolveArrayIndex(shifted.prod[0], j, constValues, config);
+                        let op2 = resolveArrayIndex(shifted.prod[1], upTo-j, constValues, config);
+                        if ((op1.constant && op1.value === 0n) || (op2.constant && op2.value === 0n)) {
+                            // nothing to do
+                        }
+                        else if (op1.constant && op2.constant) {
+                            // _prods += operation + valueToString(op1.value * op2.value, config);
+                            oneProducts.push(operation + valueToString(op1.value * op2.value, config));
+                        }
+                        else if (op1.constant && op1.value === 1n) {
+                            oneProducts.push(operation + valueToString(op2.value, config));
+                            // s += operation + op2.value;
+                        }
+                        else if ((op2.constant && op2.value === 1n)) {
+                            oneProducts.push(operation + valueToString(op1.value, config));
+                            // s += operation + op1.value;
+                        }
+                        else {
+                            ++count;
+                            _prods += operation + valueToString(op1.value, config) + ' * ' + valueToString(op2.value, config);
+                        }
+                        if (_prods.length) {
+                            if (moreThanProduct) defbody += ' +';
+                            defbody += lntab+tab+'(' + _prods + ')';
+                            moreThanProduct = true;
+                        }
+                    }
+                }
+            });
+        }
+
         let _sums = '';
         count += oneProducts.length;
         oneProducts.forEach((sum) => {
@@ -189,6 +258,20 @@ function equationPols(name, products, sums, constValues, config = {})
         s += def + (defbody.length ? defbody : (lntab + tab + valueToString(0n, config))) + endEq;
     }
     return s;
+
+    function isPowOfChunk(value) {
+        return value % 2n**BigInt(chunkSize) === 0n;
+    }
+    function whichPowOfChunk(value) {
+        const base = 2n**BigInt(chunkSize);
+
+        let result = 0;
+        while (value % base === 0n) {
+            value /= base;
+            ++result;
+        }
+        return result;
+    }
 }
 
 function latch (values, clkname)
@@ -264,7 +347,11 @@ function decomposeStrEquation(equation)
     let sums = [];
     for(let i = 0; i<(tokens.length-1); ++i) {
         if (tokens[i+2] && tokens[i+2].op === '*') {
-            value = [tokens[i+1].id, tokens[i+3].id];
+            if (tokens[i+4] && tokens[i+4].op === '*') {
+                value = [tokens[i+1].id, tokens[i+3].id, tokens[i+5].id];
+            } else {
+                value = [tokens[i+1].id, tokens[i+3].id];
+            }
             if (tokens[i].op === '-') value.push(tokens[i].op);
             prods.push(value);
             i += 3;
