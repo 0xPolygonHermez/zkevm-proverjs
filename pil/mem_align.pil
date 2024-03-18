@@ -99,21 +99,23 @@ namespace MemAlign(%N);
     // RangeCheck
     // 2^16 * 2^6 = 2^22
     { inM[1], inM[0], inV[0] } in { Global.BYTE_2A, Global.BYTE, C2P16_0_63 };
-
-    pol constant INV1, INV2;
+    // reduced for develop: { inM[1], inM[0] } in { Global.BYTE_2A, Global.BYTE };
 
     // mode = offset (0-64) + 128 * len (0-32,0=>32) + 4096 * left/right + 8192 * le/be
 
     // 32 clocks * 65 offsets (0-64) * 33 lengths (0-32) * 2 left/right * 2 le/be = 274560 (2^19 = 524288)
     // 2^19 * 2^2 = 2^21
-    { Global.STEP32, mode*4 + selM1 * 2 + selM0, bytePos, inV[1] } in { Global.STEP32, MODE_SELM1_SELM0, T_BYTE_POS, INV2 };
+    { Global.STEP32, mode*4 + selM1 * 2 + selM0, bytePos, inV[1] } in { Global.STEP32, MODE_SELM1_SELM0, T_BYTE_POS, C274560_0_3 };
+    // reduced for develop: { Global.STEP32, mode*4 + selM1 * 2 + selM0, bytePos } in { Global.STEP32, MODE_SELM1_SELM0, T_BYTE_POS};
 
-    // { ID, bytePos, (selM0 + selM1) * inV_M } is { ID, Global.STEP32, inV_V };
     pol commit selV;
         
     (1 - selV) * selV = 0;
     
+    // if selM0 or selM1 is active then selV must be 1
     (selM0 + selM1) * (selV - 1) = 0;
+
+    // if selM0 and selM1 are zero, selV must be equal to wr.
     (1 - selM0 - selM1) * (selV - wr) = 0;
 
     // when reading selV must be zero because it's important than "non-selected"

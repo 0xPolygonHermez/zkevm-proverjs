@@ -1,4 +1,24 @@
 // function to map a value to array, if value == fromValue return first position of array mappings, if not return elseValue
+const {assert} = require('chai');
+
+const OFFSET_BITS = 6; // 0-63
+const OFFSET_MAX = 63;
+const OFFSET_MASK = (2**OFFSET_BITS) - 1;
+const LEN_FACTOR = 2**OFFSET_BITS;
+const LEN_BITS = 6; // 0-32 (33 values)
+const LEN_MASK = ((2**LEN_BITS) - 1) << OFFSET_BITS;
+const LEN_MAX = 32;
+const ALIGN_FACTOR = 2**(OFFSET_BITS + LEN_BITS);
+const LEFT_ALIGN_MASK = ALIGN_FACTOR;
+const ENDIAN_FACTOR = 2**(OFFSET_BITS + LEN_BITS+1);
+const LITTLE_ENDIAN_MASK = ENDIAN_FACTOR;
+const FORMAT_SHL_BITS = OFFSET_BITS + LEN_BITS;
+const FORMAT_MASK = 0x03 << FORMAT_SHL_BITS;
+
+const RIGHT_BE = 0b00; // default
+const LEFT_BE = 0b01;
+const RIGHT_LE = 0b10;
+const LEFT_LE = 0b11;
 
 mapRange = (value, fromValue, mappings, elseValue = 0) =>
           (value >= fromValue && value <= (fromValue + mappings.length - 1)) ? mappings[value - fromValue] : elseValue;
@@ -7,72 +27,73 @@ const CONST_F = {
     C2P16_0_63: (i) => (BigInt(i)/(2n**16n))%64n,
     C274560_0_3: (i) => (BigInt(i)/274560n)%4n,
     ID: (i) => (BigInt(i)/32n)+1n,
-    FACTOR: (index, i) => mapRange((i+1) % 32, 28 - 4 * index, [0x1000000, 0x10000, 0x100, 1], 0),
+    FACTOR: (index, i) => mapRange((i+1) % 32, 28 - 4 * index, [0x1000000, 0x10000, 0x100, 1], 0)
 }
 
 function generateBaseOffsetLen(offset, len) {
     let bytes = [];
     let selM0 = [];
     let selM1 = [];
+    let selV = [];
     for (let clock = 0; clock < 32; ++clock) {
         const value = (64 - offset + clock);
         const byte = value % 32;
         const isM0 = value >= 64 ? 1:0;
-        bytes.push(byte < len ? byte: -1);
+        bytes.push(byte);
         selM0.push(byte < len ? isM0 : 0);
         selM1.push(byte < len ? 1 - isM0 : 0);
+        selV.push(byte < len ? 1 : 0);
     }
-    return {bytes, selM0, selM1, offset, len};
+    return {bytes, selM0, selM1, selV, offset, len};
 }
 
 function generate(pols, irow, offset = 0, len = 0) {
     let _len = len == 0 ? 32:len;
     _len = offset + _len > 64 ? _len = 64 - offset : _len;
     let res = generateBaseOffsetLen(offset, _len);
+    let _tmp = [];
     for (let clock = 0; clock < 32; ++clock) {
-        if (res.bytes[clock] < 0) {
-            const mode = 4 * offset  + (128*4) * len + 2 * res.selM1[clock] + res.selM0[clock];
-            pols.MODE_SELM1_SELM0[irow] = mode;
-            pols.MODE_SELM1_SELM0[irow + 32] = mode + (4*4096);
-            pols.MODE_SELM1_SELM0[irow + 64] = mode + (8*4096);
-            pols.MODE_SELM1_SELM0[irow + 96] = mode + (4*4096) + (8*4096);
-            if (res.bytes[clock] === -1) {
-                pols.T_BYTE_POS[irow] = -1n;
-                pols.T_BYTE_POS[irow + 32] = -1n;
-                pols.T_BYTE_POS[irow + 64] = -1n;
-                pols.T_BYTE_POS[irow + 96] = -1n;
-            } else {
-                pols.T_BYTE_POS[irow] = res.bytes[clock] + (32 - _len);
-                pols.T_BYTE_POS[irow + 32] = res.bytes[clock];
-                pols.T_BYTE_POS[irow + 64] = 62 - res.bytes[clock] - _len;
-                pols.T_BYTE_POS[irow + 96] = 2 * _len - 33 - res.bytes[clock];
-                for (const index of [0,32,64,96]) {
-                    if (pols.T_BYTE_POS[irow + index] > 31 || pols.T_BYTE_POS[irow + index] < 0) {
-                        console.log(offset, _len);
-                        throw new Error(`Invalid T_BYTE_POS[${irow} + ${index}] = ${pols.T_BYTE_POS[irow + index]}`);
-                    }
-                }
-            }
-        }
-    }
+        const mode = BigInt(4 * offset  + (64*4) * len + 2 * res.selM1[clock] + res.selM0[clock]);
+        pols.MODE_SELM1_SELM0[irow] = mode;
+        pols.MODE_SELM1_SELM0[irow + 32] = mode + BigInt(ALIGN_FACTOR) * 4n
+        pols.MODE_SELM1_SELM0[irow + 64] = mode + BigInt(ENDIAN_FACTOR) * 4n;
+        pols.MODE_SELM1_SELM0[irow + 96] = mode + BigInt(ENDIAN_FACTOR + ALIGN_FACTOR) * 4n;
 /*
-    if (!left) {
-        for (let clock = 0; clock < 32; ++clock) {
-            if (res.bytes[clock] < 0) continue;
-            res.bytes[clock] = res.bytes[clock] + (32 - _len);
-        }
-    }
-    if (lendian) {
-        for (let clock = 0; clock < 32; ++clock) {
-            if (res.bytes[clock] < 0) continue;
-            res.bytes[clock] = left ? _len - 1 - res.bytes[clock] :  62 - res.bytes[clock] - _len;
-        }
-    }
-    const mode = offset + 64 * len + 128 * left + 256 * lendian;
-    return {...res, left, lendian};
-}
+const RIGHT_BE = 0b00; // default
+const LEFT_BE = 0b01;
+const RIGHT_LE = 0b10;
+const LEFT_LE = 0b11;
+            switch (format) {
+                case RIGHT_BE:  bytePos = (bytePos + 32 - len) % 32; break;
+                case LEFT_BE:   bytePos = bytePos;      break;
+                case RIGHT_LE:  bytePos = 31 - bytePos; break;
+                case LEFT_LE:   bytePos = (31 + len - bytePos) % 32; break;
+            }
 */
+        pols.T_BYTE_POS[irow] = BigInt((res.bytes[clock] + (32 - _len)) % 32);
+        pols.T_BYTE_POS[irow + 32] = BigInt(res.bytes[clock]);
+        pols.T_BYTE_POS[irow + 64] = BigInt(31 - res.bytes[clock]);
+        pols.T_BYTE_POS[irow + 96] = BigInt((31 + _len - res.bytes[clock]) % 32);
+        if (mode === 1024n || mode === 1025n) {
+            console.log(`## ${clock} ${pols.MODE_SELM1_SELM0[irow]} ${pols.T_BYTE_POS[irow]} len:${len} ${res.bytes[clock]} offset:${offset}`);
+        }
+        for (const index of [0,32,64,96]) {
+            const _bytePos = Number(pols.T_BYTE_POS[irow + index]);
+            if (_bytePos > 31 || _bytePos < 0) {
+                console.log(offset, _len);
+                throw new Error(`Invalid T_BYTE_POS[${irow} + ${index}] = ${_bytePos}`);
+            }
+            if (typeof _tmp[_bytePos + index] !== 'undefined') {
+                console.log(_tmp, offset, _len, index);
+                throw new Error(`Invalid T_BYTE_POS[${irow} + ${index}] = ${_bytePos} duplicated value on clock ${_tmp[_bytePos + index]}`);
+            }
+            _tmp[_bytePos + index] = clock;
+        }
+        ++irow;
+    }
+    
 }
+
 function build_MODE_SELM1_SELM0_T_BYTE_POS(pols, N) {
     let index = 0;
     for (let len = 0; len <= 32; ++len) {
@@ -87,11 +108,10 @@ function build_MODE_SELM1_SELM0_T_BYTE_POS(pols, N) {
         pols.T_BYTE_POS[index] = pols.T_BYTE_POS[index - count];
         ++index;
     }
-    console.log('INDEX', index);
 }
 
-module.exports.buildConstants = function (pols) {
-    const N = pols.OFFSET.length;
+module.exports.buildConstants = async function (pols) {
+    const N = pols.ID.length;
     Object.entries(CONST_F).forEach(([name, func]) => {
         if (typeof pols[name] === 'undefined') return;
 
@@ -106,147 +126,152 @@ module.exports.buildConstants = function (pols) {
         }
     });
     build_MODE_SELM1_SELM0_T_BYTE_POS(pols, N);
+    for (let index = 0; index < 128; ++index) {
+        console.log([index % 32, pols.MODE_SELM1_SELM0[index], pols.T_BYTE_POS[index]].join());
+    }
 }
 
-
-/*
-    pol commit inM[2];
-    pol commit inV[2];
-    pol inV_M = inV[0] + 64 * inV[1];
-    pol commit inV_V;
-    pol commit wr;
-    pol commit mode;
-
-    pol commit m0[8];
-    pol commit m1[8];
-    pol commit w0[8];
-    pol commit w1[8];
-    pol commit v[8];
-
-    // when m0 is "active", means aligned with inV an must be read/write from/to M0
-    pol commit selM0;
-
-    // when m1 is "active", means aligned with inV an must be read/write from/to M1
-    pol commit selM1;
-
-    // it's a free input verified by lookup to define byte-position inside V, of the 
-    // current inV_M byte.
-    pol commit bytePos;
-*/
 module.exports.execute = async function (pols, input) {
     // Get N from definitions
-    const N = pols.offset.length;
+    const N = pols.wr.length;
 
     // Initialization
-    for (let i = 0; i < N; i++) {
-        for (let j = 0; j < 8; j++) {
-            pols.m0[j][i] = 0n;
-            pols.m1[j][i] = 0n;
-            pols.w0[j][i] = 0n;
-            pols.w1[j][i] = 0n;
-            pols.v[j][i] = 0n;
-        }
-        pols.inV[0][i]= 0n;
-        pols.inV[1][i]= 0n;
-        pols.inV_V[i]= 0n;
-        pols.inM[0][i]= 0n;
-        pols.inM[1][i]= 0n;
-        pols.wr[i]= 0n;
-        pols.mode[i]= 0n;
-        pols.selM0[i]= 0n;
-        pols.selM1[i]= 0n;
-        pols.result[i] = 0n;
-        pols.bytePos[i] = 0n;
-    }
-
-    const factors = [ 1, 2 ** 8, 2 ** 16, 2 ** 24];
+    const factors = [ 2n**24n, 2n**16n, 2n**8n, 1n];
     for (let i = 0; i < input.length; i++) {
-        let m0v = BigInt(input[i]["m0"]);
-        let m1v = BigInt(input[i]["m1"]);
-        const _v = BigInt(input[i]["v"]);
-        const mode = Number(input[i]["mode"]);
-        const wr = Number(input[i]["wr"]);
+        console.log(`#${i} M0: ${input[i].m0.toString(16).toUpperCase()} M1: ${input[i].m1.toString(16).toUpperCase()} `+
+                    `mode: ${input[i].mode.toString(16).toUpperCase()} V: ${input[i].v.toString(16).toUpperCase()}`);
+        let m0v = BigInt(input[i].m0);
+        let m1v = BigInt(input[i].m1);
+        const v = BigInt(input[i].v);
+        const mode = Number(input[i].mode);
+        const _mode = BigInt(mode);
+        const _len = Number((mode & LEN_MASK) >> OFFSET_BITS);
+        let len = _len === 0 ? 32:_len;
+        const offset = Number(mode & OFFSET_MASK);
+        const format = Number((mode & FORMAT_MASK) >> FORMAT_SHL_BITS);
+        const little_endian = Number(mode & LITTLE_ENDIAN_MASK);
+        const _wr = BigInt(input[i].wr);
+        const wr = _wr === 1n;
         const polIndex = i * 32;
+        if ((len + offset) >= 64) {
+            len = 64 - offset;
+        } 
+        assert(len >= 0 && len <= 32, `len:${len} offset:${offset} _len:${_len}`);
 
         // setting index when result was ready
         const polResultIndex = (i * 32 + 31)%N;
         pols.result[polResultIndex] = 1n;
 
-        let vv = _v;
         for (let j = 0; j < 32; ++j) {
+            const pos = (64 - offset + j);
+            let bytePos = pos % 32;
 /*
-        const value = (64 - offset + clock);
-        const byte = value % 32;
-        const isM0 = value >= 64 ? 1:0;
-        bytes.push(byte < len ? byte: -1);
-        selM0.push(byte < len ? isM0 : 0);
-        selM1.push(byte < len ? 1 - isM0 : 0);
+const RIGHT_BE = 0b00; // default
+const LEFT_BE = 0b01;
+const RIGHT_LE = 0b10;
+const LEFT_LE = 0b11;
 */
-            const pos = (64 - offset + clock);
-            const bytePos = value % 32;
-            const _selV = bytePos < len;
-            const isM0 = pos >= 64 ? 1:0;
-            const _byte  = _selV ?  bytePos : -1;
-            const _selM0 = _selV && isM0 ? 1 : 0;
-            const _selM1 = _selV && !isM0 ? 1 : 0;
+            const selV = (bytePos < len) || wr;
+            const isM0 = pos >= 64;
+            const selM0 = (bytePos < len && isM0) ? 1n : 0n;
+            const selM1 = (bytePos < len && !isM0) ? 1n : 0n;
 
-            const _vByte = ((31 + (offset + wr8) - j) % 32);
-            const _inM0 = getByte(m0v, 31-j);
-            const _inM1 = getByte(m1v, 31-j);
-            const _inV = _selV ? getByte(vv, _vByte) : 0;
+            switch (format) {
+                case RIGHT_BE:  bytePos = (bytePos + 32 - len) % 32; break;
+                case LEFT_BE:   bytePos = bytePos;      break;
+                case RIGHT_LE:  bytePos = 31 - bytePos; break;
+                case LEFT_LE:   bytePos = (31 + len - bytePos) % 32; break;
+            }
+            assert(bytePos >= 0 && bytePos < 32, `format: ${format} bytePos:${bytePos} len:${len} offset:${offset} _len:${_len}`);
+    
+            const inM0 = getByte(m0v, 31-j);
+            const inM1 = getByte(m1v, 31-j);
+            const inV_M = selV ? getByte(v, 31-bytePos) : 0n;
+            const inV_V = getByte(v, 31-j);
 
             const prevIndex = polIndex + j - 1;
             const curIndex = polIndex + j;
+        
+            pols.result[curIndex] = j == 31 ? 1n : 0n;
+            pols.wr[curIndex] = _wr;
+            pols.mode[curIndex] = _mode;
+            pols.inM[0][curIndex] = inM0;
+            pols.inM[1][curIndex] = inM1;
+            pols.bytePos[curIndex] = BigInt(bytePos);
 
-            pols.wr[curIndex] = BigInt(wr);
-            pols.mode[curIndex] = BigInt(mode);
-            pols.inM[0][curIndex] = BigInt(_inM0);
-            pols.inM[1][curIndex] = BigInt(_inM1);
-            pols.inV[0][curIndex] = BigInt(_inV);
-            pols.inV[1][curIndex] = BigInt(_inV);
-            pols.inV_V[curIndex] = BigInt(_inV);
-            pols.selM0[curIndex] = BigInt(_selM0);
-            pols.selM1[curIndex] = BigInt(_selM1);
-            pols.factorV[_vByte >> 2][curIndex] = BigInt(factors[(_vByte % 4)]);
+            // divide inV in two part to do range check without extra lookup.
+            pols.inV[0][curIndex] = inV_M & 0x3Fn;
+            pols.inV[1][curIndex] = inV_M >> 6n;
 
-            const mIndex = 7 - (j >> 2);
+            pols.inV_V[curIndex] = inV_V;
 
-            const _inW0 = ((wr256 * (1 - _selM1)) || (wr8 * _selM1))? _inV : ((wr256 + wr8) * _inM0);
-            const _inW1 = (wr256 * _selM1) ? _inV : ((wr256 + wr8) * _inM1);
+            pols.selM0[curIndex] = selM0;
+            pols.selM1[curIndex] = selM1;
+            pols.selV[curIndex] = selV ? 1n:0n;
 
-            const factor = BigInt(factors[3 - (j % 4)]);
+            const mIndex = 7 - (j >> 2);            
+            const factor = factors[j % 4];
 
-            pols.m0[mIndex][curIndex] = (( j === 0 ) ? 0n : pols.m0[mIndex][prevIndex]) + BigInt(_inM0) * factor;
-            pols.m1[mIndex][curIndex] = (( j === 0 ) ? 0n : pols.m1[mIndex][prevIndex]) + BigInt(_inM1) * factor;
-
-            pols.w0[mIndex][curIndex] = (( j === 0 ) ? 0n : pols.w0[mIndex][prevIndex]) + BigInt(_inW0) * factor;
-            pols.w1[mIndex][curIndex] = (( j === 0 ) ? 0n : pols.w1[mIndex][prevIndex]) + BigInt(_inW1) * factor;
-        }
-        for (let j = 0; j < 32; ++j) {
-            for (let index = 0; index < 8; ++index) {
-                pols.v[index][polIndex + 1 + j] = (( j === 0 ) ? 0n : pols.v[index][polIndex + j]) + pols.inV[polIndex + j] * pols.factorV[index][polIndex + j];
+            if (j === 0) {
+                for (let index = 0; index < 8; ++index) {
+                    pols.m0[index][curIndex] = 0n;
+                    pols.m1[index][curIndex] = 0n;
+                    pols.w0[index][curIndex] = 0n;
+                    pols.w1[index][curIndex] = 0n;
+                    pols.v[index][curIndex] = 0n;
+                }
+            } else {
+                for (let index = 0; index < 8; ++index) {
+                    pols.m0[index][curIndex] = pols.m0[index][prevIndex];
+                    pols.m1[index][curIndex] = pols.m1[index][prevIndex];
+                    pols.w0[index][curIndex] = pols.w0[index][prevIndex];
+                    pols.w1[index][curIndex] = pols.w1[index][prevIndex];
+                    pols.v[index][curIndex]  = pols.v[index][prevIndex];
+                }
             }
-        }
 
-        for (let index = 0; index < 8; ++index) {
-            for (j = 32 - (index  * 4); j < 32; ++j) {
-                pols.m0[index][polIndex + j + 1] = pols.m0[index][polIndex + j];
-                pols.m1[index][polIndex + j + 1] = pols.m1[index][polIndex + j];
-                pols.w0[index][polIndex + j + 1] = pols.w0[index][polIndex + j];
-                pols.w1[index][polIndex + j + 1] = pols.w1[index][polIndex + j];
-            }
+            pols.m0[mIndex][curIndex] = pols.m0[mIndex][curIndex] + inM0 * factor;
+            pols.m1[mIndex][curIndex] = pols.m1[mIndex][curIndex] + inM1 * factor;
+            pols.v[mIndex][curIndex]  = pols.v[mIndex][curIndex] + inV_V * factor;
+
+            const inW0 = selM0 ? inV_M : inM0;
+            const inW1 = selM1 ? inV_M : inM1;
+
+            pols.w0[mIndex][curIndex] = pols.w0[mIndex][curIndex] + inW0 * factor;
+            pols.w1[mIndex][curIndex] = pols.w1[mIndex][curIndex] + inW1 * factor;
+            console.log('i,bytePos,inV_V,inV_M,selM0,inM0,inW0,selM1,inM1,inW1,mode: '+([j,bytePos,inV_V,inV_M,selM0, inM0, inW0, selM1, inM1, inW1,_mode].map(x => x.toString(16)).join()));
         }
     }
-    console.log(`Filling from w=${input.length * 32}.....`);
-    for (let i = (input.length * 32); i < N; i++) {
-        for (let index = 0; index < 8; ++index) {
-            pols.factorV[index][i] = BigInt(CONST_F.FACTORV(index, i % 32));
+    let i = input.length * 32;
+    while (i < N) {
+        for (let clock = 0; clock < 32; ++clock) {
+            for (let j = 0; j < 8; j++) {
+                pols.m0[j][i] = 0n;
+                pols.m1[j][i] = 0n;
+                pols.w0[j][i] = 0n;
+                pols.w1[j][i] = 0n;
+                pols.v[j][i] = 0n;
+            }
+            pols.inV[0][i] = 0n;
+            pols.inV[1][i] = 0n;
+            pols.inV_V[i] = 0n;
+            pols.inM[0][i] = 0n;
+            pols.inM[1][i] = 0n;
+            pols.result[i] = 0n;
+            pols.wr[i] = 0n;
+            pols.mode[i] = 0n;
+            pols.selM0[i] = 1n;
+            pols.selM1[i] = 0n;
+            pols.selV[i] = 1n;
+            pols.result[i] = 0n;
+            pols.bytePos[i] = BigInt(clock);
+            ++i;
         }
     }
 }
 
 function getByte (value, index) {
-    return Number((value >> (8n * BigInt(index))) & 0xFFn);
+    return (value >> (8n * BigInt(index))) & 0xFFn;
 }
 
 function transitions(label, values) {

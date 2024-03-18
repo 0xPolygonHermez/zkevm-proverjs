@@ -1,4 +1,4 @@
-const {verifyZkasm} = require("../verify_zkasm");
+const {verifyZkasm} = require("../../verify_zkasm");
 
 describe("Test MemAlign SM", async function () {
     this.timeout(10000000);
