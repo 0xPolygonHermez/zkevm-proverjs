@@ -318,10 +318,10 @@ module.exports = class Main extends Helper {
         }
 
 
-        if (!ctx.Fr.eq(ctx.RCX, ctx.Fr.e(ctx.input.lastL1InfoTreeIdx))){
-            let errorMsg = "Assert Error: lastL1InfoTreeIdx does not match\n";
-            errorMsg += `   lastL1InfoTreeIdx computed: ${Number(ctx.RCX)}\n`;
-            errorMsg += `   lastL1InfoTreeIdx expected: ${ctx.input.lastL1InfoTreeIdx}\n`;
+        if (!ctx.Fr.eq(ctx.RCX, ctx.Fr.e(ctx.input.lastL1InfoTreeIndex))){
+            let errorMsg = "Assert Error: lastL1InfoTreeIndex does not match\n";
+            errorMsg += `   lastL1InfoTreeIndex computed: ${Number(ctx.RCX)}\n`;
+            errorMsg += `   lastL1InfoTreeIndex expected: ${ctx.input.lastL1InfoTreeIndex}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
