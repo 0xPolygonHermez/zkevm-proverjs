@@ -1,24 +1,7 @@
 // function to map a value to array, if value == fromValue return first position of array mappings, if not return elseValue
 const {assert} = require('chai');
-
-const OFFSET_BITS = 6; // 0-63
-const OFFSET_MAX = 63;
-const OFFSET_MASK = (2**OFFSET_BITS) - 1;
-const LEN_FACTOR = 2**OFFSET_BITS;
-const LEN_BITS = 6; // 0-32 (33 values)
-const LEN_MASK = ((2**LEN_BITS) - 1) << OFFSET_BITS;
-const LEN_MAX = 32;
-const ALIGN_FACTOR = 2**(OFFSET_BITS + LEN_BITS);
-const LEFT_ALIGN_MASK = ALIGN_FACTOR;
-const ENDIAN_FACTOR = 2**(OFFSET_BITS + LEN_BITS+1);
-const LITTLE_ENDIAN_MASK = ENDIAN_FACTOR;
-const FORMAT_SHL_BITS = OFFSET_BITS + LEN_BITS;
-const FORMAT_MASK = 0x03 << FORMAT_SHL_BITS;
-
-const RIGHT_BE = 0b00; // default
-const LEFT_BE = 0b01;
-const RIGHT_LE = 0b10;
-const LEFT_LE = 0b11;
+const {LEFT_ALIGN_MASK, LITTLE_ENDIAN_MASK, MODE_TO_LEN, MODE_TO_OFFSET, MODE_TO_FORMAT, OFFSET_MAX, LEN_MAX,LEN_FACTOR,
+       RIGHT_BE, LEFT_BE, RIGHT_LE, LEFT_LE} = require('./sm_mem_align_constants.js');
 
 mapRange = (value, fromValue, mappings, elseValue = 0) =>
           (value >= fromValue && value <= (fromValue + mappings.length - 1)) ? mappings[value - fromValue] : elseValue;
@@ -53,30 +36,19 @@ function generate(pols, irow, offset = 0, len = 0) {
     let res = generateBaseOffsetLen(offset, _len);
     let _tmp = [];
     for (let clock = 0; clock < 32; ++clock) {
-        const mode = BigInt(4 * offset  + (64*4) * len + 2 * res.selM1[clock] + res.selM0[clock]);
+        const mode = BigInt(4 * offset  + (LEN_FACTOR*4) * len + 2 * res.selM1[clock] + res.selM0[clock]);
         pols.MODE_SELM1_SELM0[irow] = mode;
-        pols.MODE_SELM1_SELM0[irow + 32] = mode + BigInt(ALIGN_FACTOR) * 4n
-        pols.MODE_SELM1_SELM0[irow + 64] = mode + BigInt(ENDIAN_FACTOR) * 4n;
-        pols.MODE_SELM1_SELM0[irow + 96] = mode + BigInt(ENDIAN_FACTOR + ALIGN_FACTOR) * 4n;
-/*
-const RIGHT_BE = 0b00; // default
-const LEFT_BE = 0b01;
-const RIGHT_LE = 0b10;
-const LEFT_LE = 0b11;
-            switch (format) {
-                case RIGHT_BE:  bytePos = (bytePos + 32 - len) % 32; break;
-                case LEFT_BE:   bytePos = bytePos;      break;
-                case RIGHT_LE:  bytePos = 31 - bytePos; break;
-                case LEFT_LE:   bytePos = (31 + len - bytePos) % 32; break;
-            }
-*/
+        pols.MODE_SELM1_SELM0[irow + 32] = mode + BigInt(LEFT_ALIGN_MASK) * 4n
+        pols.MODE_SELM1_SELM0[irow + 64] = mode + BigInt(LITTLE_ENDIAN_MASK) * 4n;
+        pols.MODE_SELM1_SELM0[irow + 96] = mode + BigInt(LEFT_ALIGN_MASK + LITTLE_ENDIAN_MASK) * 4n;
+
         pols.T_BYTE_POS[irow] = BigInt((res.bytes[clock] + (32 - _len)) % 32);
         pols.T_BYTE_POS[irow + 32] = BigInt(res.bytes[clock]);
         pols.T_BYTE_POS[irow + 64] = BigInt(31 - res.bytes[clock]);
         pols.T_BYTE_POS[irow + 96] = BigInt((31 + _len - res.bytes[clock]) % 32);
-        if (mode === 1024n || mode === 1025n) {
-            console.log(`## ${clock} ${pols.MODE_SELM1_SELM0[irow]} ${pols.T_BYTE_POS[irow]} len:${len} ${res.bytes[clock]} offset:${offset}`);
-        }
+        // if (mode === 1024n || mode === 1025n) {
+        //     console.log(`## ${clock} ${pols.MODE_SELM1_SELM0[irow]} ${pols.T_BYTE_POS[irow]} len:${len} ${res.bytes[clock]} offset:${offset}`);
+        // }
         for (const index of [0,32,64,96]) {
             const _bytePos = Number(pols.T_BYTE_POS[irow + index]);
             if (_bytePos > 31 || _bytePos < 0) {
@@ -96,8 +68,8 @@ const LEFT_LE = 0b11;
 
 function build_MODE_SELM1_SELM0_T_BYTE_POS(pols, N) {
     let index = 0;
-    for (let len = 0; len <= 32; ++len) {
-        for (let offset = 0; offset <= 64; ++offset) {
+    for (let len = 0; len <= LEN_MAX; ++len) {
+        for (let offset = 0; offset <= OFFSET_MAX; ++offset) {
             res = generate(pols, index, offset, len);
             index += 128;
         }
@@ -145,11 +117,11 @@ module.exports.execute = async function (pols, input) {
         const v = BigInt(input[i].v);
         const mode = Number(input[i].mode);
         const _mode = BigInt(mode);
-        const _len = Number((mode & LEN_MASK) >> OFFSET_BITS);
+        const _len = MODE_TO_LEN(mode);
         let len = _len === 0 ? 32:_len;
-        const offset = Number(mode & OFFSET_MASK);
-        const format = Number((mode & FORMAT_MASK) >> FORMAT_SHL_BITS);
-        const little_endian = Number(mode & LITTLE_ENDIAN_MASK);
+        const offset = MODE_TO_OFFSET(mode);
+        const format = MODE_TO_FORMAT(mode);
+        console.log(['(#)', mode, _len, offset, format]);
         const _wr = BigInt(input[i].wr);
         const wr = _wr === 1n;
         const polIndex = i * 32;
@@ -165,12 +137,6 @@ module.exports.execute = async function (pols, input) {
         for (let j = 0; j < 32; ++j) {
             const pos = (64 - offset + j);
             let bytePos = pos % 32;
-/*
-const RIGHT_BE = 0b00; // default
-const LEFT_BE = 0b01;
-const RIGHT_LE = 0b10;
-const LEFT_LE = 0b11;
-*/
             const selV = (bytePos < len) || wr;
             const isM0 = pos >= 64;
             const selM0 = (bytePos < len && isM0) ? 1n : 0n;
@@ -180,7 +146,7 @@ const LEFT_LE = 0b11;
                 case RIGHT_BE:  bytePos = (bytePos + 32 - len) % 32; break;
                 case LEFT_BE:   bytePos = bytePos;      break;
                 case RIGHT_LE:  bytePos = 31 - bytePos; break;
-                case LEFT_LE:   bytePos = (31 + len - bytePos) % 32; break;
+                case LEFT_LE:   bytePos = (31 + len - bytePos) % 32; break;                
             }
             assert(bytePos >= 0 && bytePos < 32, `format: ${format} bytePos:${bytePos} len:${len} offset:${offset} _len:${_len}`);
     
@@ -287,28 +253,3 @@ function transitions(label, values) {
     console.log(`#${values.length-1} ${previous}`);
     console.log('');
 }
-
-const N = 2**23;
-const pols = {
-        FACTOR: [new Array (N),new Array (N),new Array (N),new Array (N),new Array (N),new Array (N),new Array (N),new Array (N)],
-        ID: new Array(N),
-        C2P16_0_63: new Array(N),
-        C274560_0_3: new Array(N),
-        OFFSET: new Array(N),
-        MODE_SELM1_SELM0: new Array(N),
-        T_BYTE_POS: new Array(N),
-    }
-
-// console.log(pols.OFFSET.length);
-
-module.exports.buildConstants(pols);
-const _pols = {
-        ID: pols.ID.slice(-10),
-        C2P16_0_63: pols.C2P16_0_63.slice(-10),
-        C274560_0_3: pols.C274560_0_3.slice(-10)
-    }
-/* console.log(pols);
-console.log(_pols);*/
-console.log(pols.OFFSET.length);
-// transitions("C2P16_0_63", pols.C2P16_0_63);
-// transitions("C274560_0_3", pols.C274560_0_3);
