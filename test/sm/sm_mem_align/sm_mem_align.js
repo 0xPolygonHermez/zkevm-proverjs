@@ -51,11 +51,11 @@ describe("test mem align operations", async function () {
         await buildConstants();
     }
     async function buildConstants() {
-        const N = constPols.ID.length;
         constPols = newConstantPolsArray(pil);
         await smGlobal.buildConstants(constPols.Global);
         await smMemAlign.buildConstants(constPols.MemAlign);
 
+        const N = constPols.ID.length;
         for (let i=0; i<constPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof constPols.$$array[i][j] !== "bigint") {
