@@ -72,9 +72,10 @@ module.exports = class MemAlign extends Helper {
     #calculateWR(a, b, c, op) {
         const params = this.modeToParams(c);
         const _m = a.toString(16).padStart(64, '0') + b.toString(16).padStart(64, '0');
-        let _value = this.prepareHexValue(op, params);
+        let _len = (params.offset + params.len) > 64 ? 64 - params.offset : params.len;
+        let _value = this.prepareHexValue(op, {...params, len: _len});
         let _w = (params.offset > 0 ? _m.slice(0, params.offset * 2) : '') + _value + 
-                 ((params.offset + params.len > 64) ? '': _m.slice((params.offset + params.len - 64)*2));
+                 ((params.offset + _len > 64) ? '': _m.slice((params.offset + _len - 64)*2));
         _w = _w.slice(0, 128);
         return [BigInt('0x'+_w.slice(0, 64)), BigInt('0x'+_w.slice(64, 128))];
     }

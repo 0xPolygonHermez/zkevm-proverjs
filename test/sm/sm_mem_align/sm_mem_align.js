@@ -55,7 +55,7 @@ describe("test mem align operations", async function () {
         await smGlobal.buildConstants(constPols.Global);
         await smMemAlign.buildConstants(constPols.MemAlign);
 
-        const N = constPols.ID.length;
+        const N = constPols.MemAlign.ID.length;
         for (let i=0; i<constPols.$$array.length; i++) {
             for (let j=0; j<N; j++) {
                 if (typeof constPols.$$array[i][j] !== "bigint") {
@@ -103,7 +103,7 @@ describe("test mem align operations", async function () {
     }
 
     async function executeWithInput(N, input) {
-        await preparePilFromString();
+        await preparePilFromString(N);
         cmPols = newCommitPolsArray(pil);
 
         const required = smMainExecute(cmPols, input);
@@ -129,7 +129,7 @@ describe("test mem align operations", async function () {
     }
 
     it("It should verify the mem_align operations pil", async () => {
-        await executeWithInput(2**19, require('./sm_mem_align_test_data.js'));
+        await executeWithInput(2**22, require('./sm_mem_align_test_data.js'));
     });
 
     it("It should verify the mem_align operations pil", async () => {

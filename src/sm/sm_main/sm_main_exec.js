@@ -982,18 +982,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
 
                 if (l.memAlignRD) {
-                    const m0 = safeFea2scalar(Fr, ctx.A);
-                    const m1 = safeFea2scalar(Fr, ctx.B);
-                    const P2_256 = 2n ** 256n;
-                    const MASK_256 = P2_256 - 1n;
-                    const offset = safeFea2scalar(Fr, ctx.C);
-                    if (offset < 0 || offset > 32) {
-                        throw new Error(`MemAlign out of range (${offset})  ${sourceRef}`);
-                    }
-                    const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
-                    const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
-                    const _V = Scalar.bor(leftV, rightV);
-                    fi = scalar2fea(Fr, _V);
+                    fi = scalar2fea(Fr, ctx.helpers.MemAlign.calculate(safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0])));
                     nHits ++;
                 }
 
@@ -1922,57 +1911,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.memAlignRD || l.memAlignWR) {
-            const m0 = safeFea2scalar(Fr, ctx.A);
-            const m1 = safeFea2scalar(Fr, ctx.B);
-            const v = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            const P2_256 = 2n ** 256n;
-            const MASK_256 = P2_256 - 1n;
-            const offset = safeFea2scalar(Fr, ctx.C);
-
-            const len = l.memAlignVarLen ? safeFea2scalar(Fr, ctx.CTX): 32n;
-            const lbes = l.memAlignLbes ? 1n : 0n;
-
-            if (offset < 0 || offset >= 32) {
-                throw new Error(`MemAlign offset out of range (${offset}) ${sourceRef}`);
-            }
-
-            if (len < 0 || len >= 32) {
-                throw new Error(`MemAlign length out of range (${len}) ${sourceRef}`);
-            }
-
-            if (!l.memAlignRD && l.memAlignWR) {
-                const w0 = safeFea2scalar(Fr, ctx.D);
-                const w1 = safeFea2scalar(Fr, ctx.E);
-                const _W0 = Scalar.bor(Scalar.band(m0, P2_256 - (2n ** (256n - (8n * offset)))), Scalar.shr(v, 8n * offset));
-                const _W1 = Scalar.bor(Scalar.band(m1, MASK_256 >> (offset * 8n)),
-                                       Scalar.band(Scalar.shl(v, (256n - (offset * 8n))), MASK_256));
-                if (!Scalar.eq(w0, _W0) || !Scalar.eq(w1, _W1) ) {
-                    throw new Error(`MemAlign w0,w1 invalid (0x${w0.toString(16)},0x${w1.toString(16)}) vs (0x${_W0.toString(16)},0x${_W1.toString(16)})`+
-                                    `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, v:${v.toString(16)}, offset:${offset}] ${sourceRef}`);
-                }
-                pols.memAlignRD[i] = 0n;
-                pols.memAlignWR[i] = 1n;
-                required.MemAlign.push({m0, m1, v, w0, w1, offset, wr: 1n, lbes, len});
-            } else if (l.memAlignRD && !l.memAlignWR) {
-                const leftV = Scalar.band(Scalar.shl(m0, offset * 8n), MASK_256);
-                const rightV = Scalar.band(Scalar.shr(m1, 256n - (offset * 8n)), MASK_256 >> (256n - (offset * 8n)));
-                const _V = Scalar.bor(leftV, rightV);
-                if (!Scalar.eq(v, _V)) {
-                    throw new Error(`MemAlign v invalid ${v.toString(16)} vs ${_V.toString(16)}:`+
-                                    `[m0:${m0.toString(16)}, m1:${m1.toString(16)}, offset:${offset}] ${sourceRef}`);
-                }
-                pols.memAlignRD[i] = 1n;
-                pols.memAlignWR[i] = 0n;
-                required.MemAlign.push({m0, m1, v, w0, w1, offset, wr: 0n, lbes, len});
-            } else {
-                throw new Error(`Invalid operation (rd: ${l.memAlignRD} wr: ${l.memAlignWR}, wr8: ${l.memAlignWR8}) ${sourceRef}`);
-            }
-            pols.memAlignAlignVarLen[i] = l.memAlignVarLen ? 1n : 0n;
-            pols.memAlignLbes[i] = l.memAlignLbes ? 1n : 0n;
+            const wr = l.memAlignWR ? true: false;
+            ctx.helpers.MemAlign.verify(wr, safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0]), 
+                                        safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]),
+                                        wr ? safeFea2scalar(Fr, ctx.D) : 0n, wr ? safeFea2scalar(Fr, ctx.E) : 0n,
+                                        required.MemAlign);
+            pols.memAlignRD[i] = wr ? 0n : 1n;
+            pols.memAlignWR[i] = wr ? 1n : 0n;
         } else {
             pols.memAlignRD[i] = 0n;
             pols.memAlignWR[i] = 0n;
-            pols.memAlignWR8[i] = 0n;
         }
 
         if (l.repeat) {
