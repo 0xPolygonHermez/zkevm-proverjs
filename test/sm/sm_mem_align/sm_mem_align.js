@@ -7,21 +7,15 @@ const F1Field = require("ffjavascript").F1Field;
 const { newConstantPolsArray, newCommitPolsArray, compile, verifyPil } = require("pilcom");
 const smGlobal = require("../../../src/sm/sm_global.js");
 const smMemAlign = require("../../../src/sm/sm_mem_align/sm_mem_align.js");
-const input = require('./sm_mem_align_test_data.js');
 
-const LEFT_ALIGN = 4096n
-const LITTLE_ENDIAN = 8192n;
-
-
-describe("test lookup operations", async function () {
+describe("test mem align operations", async function () {
 
     this.timeout(10000000);
     const Fr = new F1Field("0xFFFFFFFF00000001");
     let pil;
 
-    const N = 2**19;
     let constPols, cmPols;
-    async function preparePilFromString() {
+    async function preparePilFromString(N = 2**19) {
         pil = await compile(Fr, [`constant %N=${N};`,
             'include "pil/mem_align.pil";',
             'namespace Main(%N);',
@@ -57,6 +51,7 @@ describe("test lookup operations", async function () {
         await buildConstants();
     }
     async function buildConstants() {
+        const N = constPols.ID.length;
         constPols = newConstantPolsArray(pil);
         await smGlobal.buildConstants(constPols.Global);
         await smMemAlign.buildConstants(constPols.MemAlign);
@@ -109,8 +104,7 @@ describe("test lookup operations", async function () {
         return required;
     }
 
-    it("It should verify the mem_align operations pil", async () => {
-        // generateZkasmLt4Test(input.filter(x => x.opcode == 8));
+    async function executeWithInput(N, input) {
         await preparePilFromString();
         cmPols = newCommitPolsArray(pil);
 
@@ -135,11 +129,13 @@ describe("test lookup operations", async function () {
             }
             assert(0);
         }
+    }
+
+    it("It should verify the mem_align operations pil", async () => {
+        executeWithInput(2**19, require('./sm_mem_align_test_data.js'));
     });
 
-    function includes(res, value) {
-        const index = res.indexOf(value);
-        assert(index !== -1, "not found "+value);
-        res.splice(index, 1);
-    }
+    it("It should verify the mem_align operations pil", async () => {
+        executeWithInput(2**22, require('./sm_mem_align_test_huge_data.js'));
+    });
 });
