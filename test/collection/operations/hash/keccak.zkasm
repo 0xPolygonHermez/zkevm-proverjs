@@ -1,0 +1,1016 @@
+
+    $ => E                  :MLOAD(lastHashKId)
+
+    ; 1] Hash zero bytes
+    E + 1 => E          :MSTORE(lastHashKId)
+    0 => HASHPOS
+
+    HASHPOS             :HASHKLEN(E)
+    $                   :HASHKDIGEST(E)
+
+    ; 2] Check the consistency between HASHK and HASHKX
+	; HASHK1 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	1 => D
+	0x000000000000000000000000000000000000000000000000000000000000002fn :HASHK(E)
+	1                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000000000000000000000000000002fn :HASHK1(E)
+	1                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xfba9715e477e68952d3f1df7a185b3708aadad50ec10cc793973864023868527n :ASSERT
+
+	HASHPOS => A
+	1 :ASSERT
+
+	; HASHK2 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	2 => D
+	0x000000000000000000000000000000000000000000000000000000000000dc00n :HASHK(E)
+	2                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000000000000000000000000000dc00n :HASHK2(E)
+	2                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x25be9e427886f2320182464ef6c25edd7532dbba6ba8a6c1689a2e5f3c7d3344n :ASSERT
+
+	HASHPOS => A
+	2 :ASSERT
+
+	; HASHK3 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000007681e3n :HASHK(E)
+	3                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000000000000000000000000000000000000000000000007681e3n :HASHK3(E)
+	3                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x79994aaa84f723b29ac8c23cbf2a0a5725b0d5b3b835fd9b015ac2f26bcc467fn :ASSERT
+
+	HASHPOS => A
+	3 :ASSERT
+
+	; HASHK4 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	4 => D
+	0x0000000000000000000000000000000000000000000000000000000084bb850dn :HASHK(E)
+	4                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000000000000000000000000000000000000084bb850dn :HASHK4(E)
+	4                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xb239ede7d6f5ff16675155a3f2b56cafee3570f61849ea64feb1d62ef0d30e26n :ASSERT
+
+	HASHPOS => A
+	4 :ASSERT
+
+	; HASHK5 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000104b0de1c8n :HASHK(E)
+	5                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000000000000000000000104b0de1c8n :HASHK5(E)
+	5                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x964f72fb61af9d2345995a1bd5b4614cf0b6aae95c2fa23db52721c7b9b94ec2n :ASSERT
+
+	HASHPOS => A
+	5 :ASSERT
+
+	; HASHK6 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	6 => D
+	0x000000000000000000000000000000000000000000000000000081feeab3dd8bn :HASHK(E)
+	6                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000000000000000000081feeab3dd8bn :HASHK6(E)
+	6                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x8b4dc34fe679e474bd386d637cdc3b5490241c675452828996a24bc5dc8f2654n :ASSERT
+
+	HASHPOS => A
+	6 :ASSERT
+
+	; HASHK7 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000006924d6eb4b1482n :HASHK(E)
+	7                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000000000000000006924d6eb4b1482n :HASHK7(E)
+	7                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xf9ac3947f3781075437303511dd67671cc3ad732094c0139d92098194638c8fdn :ASSERT
+
+	HASHPOS => A
+	7 :ASSERT
+
+	; HASHK8 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	8 => D
+	0x0000000000000000000000000000000000000000000000002c3cb0c9c610eed8n :HASHK(E)
+	8                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000000000000000000000000000002c3cb0c9c610eed8n :HASHK8(E)
+	8                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xff736a9f721ef1adc414dddc656115bc2cc14d8be8ca63bfbbf0165f19b52bb6n :ASSERT
+
+	HASHPOS => A
+	8 :ASSERT
+
+	; HASHK9 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	9 => D
+	0x00000000000000000000000000000000000000000000002b4940f349743b6f33n :HASHK(E)
+	9                                                                   :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000000000000000000000000000000000002b4940f349743b6f33n :HASHK9(E)
+	9                                                                   :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x1d80ef63edac822e2b5ea275b2f3445faf73c03d2614f4bd770ef704f24c4bd0n :ASSERT
+
+	HASHPOS => A
+	9 :ASSERT
+
+	; HASHK10 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	10 => D
+	0x000000000000000000000000000000000000000000009510c064eb6503b4225en :HASHK(E)
+	10                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000000000009510c064eb6503b4225en :HASHK10(E)
+	10                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x60f351530e26765accea58082d83fddfe27e68dce6e1b531db76eaa47d08e80dn :ASSERT
+
+	HASHPOS => A
+	10 :ASSERT
+
+	; HASHK11 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	11 => D
+	0x0000000000000000000000000000000000000000000ae974ee01ad105376efe1n :HASHK(E)
+	11                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000000000000000000000000ae974ee01ad105376efe1n :HASHK11(E)
+	11                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x3dea2b794054365b0879f16ab952bd771f66605811c9ddffe31061c21b7a8c7cn :ASSERT
+
+	HASHPOS => A
+	11 :ASSERT
+
+	; HASHK12 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	12 => D
+	0x0000000000000000000000000000000000000000ef8b09ea97e296632d856aa8n :HASHK(E)
+	12                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000000000000000000000ef8b09ea97e296632d856aa8n :HASHK12(E)
+	12                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x21d9619da223e9780ace919fab53c9fa934c49e89fabb2c3f80a59865fa2f9cfn :ASSERT
+
+	HASHPOS => A
+	12 :ASSERT
+
+	; HASHK13 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	13 => D
+	0x00000000000000000000000000000000000000ae8934d4df79cb2d52a3cd158en :HASHK(E)
+	13                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000000000000000000000000000ae8934d4df79cb2d52a3cd158en :HASHK13(E)
+	13                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xf2ff0be65ab88d8174497f19cb568cd099858238ffbdf79b6a2dcee02355d59fn :ASSERT
+
+	HASHPOS => A
+	13 :ASSERT
+
+	; HASHK14 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	14 => D
+	0x000000000000000000000000000000000000523b0f72c438a82b16b9a9fe59b8n :HASHK(E)
+	14                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000000000000000523b0f72c438a82b16b9a9fe59b8n :HASHK14(E)
+	14                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xf774b693062ab20a804ec6e376b090d1f36bc67a4b42fdd1e72b192e51ca3b32n :ASSERT
+
+	HASHPOS => A
+	14 :ASSERT
+
+	; HASHK15 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	15 => D
+	0x0000000000000000000000000000000000d2101403da53b0edc6aeb773c906c2n :HASHK(E)
+	15                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000000000000000d2101403da53b0edc6aeb773c906c2n :HASHK15(E)
+	15                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x5b2cfca64f8ac4a0a122eb673d25be3fd83e29ccfbdc038a1bec74486ac0736fn :ASSERT
+
+	HASHPOS => A
+	15 :ASSERT
+
+	; HASHK16 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	16 => D
+	0x00000000000000000000000000000000ca8ac1451213bfda018b4a2928526f33n :HASHK(E)
+	16                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000000000000000000000ca8ac1451213bfda018b4a2928526f33n :HASHK16(E)
+	16                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x47b8cd09f1e07ed94674a177f6cc4905fc9bfd93bc19caa1118a5a7ac2bfb1f4n :ASSERT
+
+	HASHPOS => A
+	16 :ASSERT
+
+	; HASHK17 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	17 => D
+	0x00000000000000000000000000000071f37d3caa07edb3dc56d44c893441233cn :HASHK(E)
+	17                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000000000000000000071f37d3caa07edb3dc56d44c893441233cn :HASHK17(E)
+	17                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x9c4b541197f61020a49ce176efdb5ac86e12433398f2dd8d80a15f6f13f1b95en :ASSERT
+
+	HASHPOS => A
+	17 :ASSERT
+
+	; HASHK18 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	18 => D
+	0x00000000000000000000000000005c0f883b6697d24b7850ff5646605c2fbaebn :HASHK(E)
+	18                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000000000000000005c0f883b6697d24b7850ff5646605c2fbaebn :HASHK18(E)
+	18                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x88b7982332b1c23d0ace754b00956a63f4e199c425f25827cd0080b3e0a310an :ASSERT
+
+	HASHPOS => A
+	18 :ASSERT
+
+	; HASHK19 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	19 => D
+	0x0000000000000000000000000027ba3d7dee8be9c7062dd39021bec25aa36015n :HASHK(E)
+	19                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000000027ba3d7dee8be9c7062dd39021bec25aa36015n :HASHK19(E)
+	19                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xc87141d3e8e34afe85aa6e79ee48f624a3132ac2c94cf299434d07d7955385e8n :ASSERT
+
+	HASHPOS => A
+	19 :ASSERT
+
+	; HASHK20 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	20 => D
+	0x000000000000000000000000e33eba2c7f90fbf94a6b837657649438bedfa87en :HASHK(E)
+	20                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000000000e33eba2c7f90fbf94a6b837657649438bedfa87en :HASHK20(E)
+	20                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x728eb951efa35a9d16be987a93c6dd6c6854e90c59ae26f0daaec01428a4f23dn :ASSERT
+
+	HASHPOS => A
+	20 :ASSERT
+
+	; HASHK21 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	21 => D
+	0x0000000000000000000000f81c5a723a9a6544e52e3f228a9302f251195c84f4n :HASHK(E)
+	21                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000000f81c5a723a9a6544e52e3f228a9302f251195c84f4n :HASHK21(E)
+	21                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x5beb73d60ad32cffd5e3913849e3631f5d1bbe5c121babf4daffbec72284ac39n :ASSERT
+
+	HASHPOS => A
+	21 :ASSERT
+
+	; HASHK22 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	22 => D
+	0x0000000000000000000071b75e256a0d87f7412825cae7a78fb4e809353926fcn :HASHK(E)
+	22                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000000000000000000071b75e256a0d87f7412825cae7a78fb4e809353926fcn :HASHK22(E)
+	22                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xff479f465eee487ed3ed6b55da7d7824cbc718d2d724aad10ab8fb5fc420932dn :ASSERT
+
+	HASHPOS => A
+	22 :ASSERT
+
+	; HASHK23 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	23 => D
+	0x000000000000000000add0d954bb6b6c43057f6065e0dc8a37e5413fce51d358n :HASHK(E)
+	23                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000000000add0d954bb6b6c43057f6065e0dc8a37e5413fce51d358n :HASHK23(E)
+	23                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x64cf69ffed32ee6bcf4bdfafd1a33973f6f7c04fc723308832bd9308928767ebn :ASSERT
+
+	HASHPOS => A
+	23 :ASSERT
+
+	; HASHK24 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	24 => D
+	0x00000000000000004a29f1455c9d3973263b8c002b1a53bbf29be4ed3de4be1fn :HASHK(E)
+	24                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000004a29f1455c9d3973263b8c002b1a53bbf29be4ed3de4be1fn :HASHK24(E)
+	24                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xb585d05c1b6a246e2284ffba9bf732da881e6648b870625dd0b843e607d8cfaen :ASSERT
+
+	HASHPOS => A
+	24 :ASSERT
+
+	; HASHK25 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	25 => D
+	0x00000000000000137b0eed7f89f923f7af576baeef4f891eceeba0a1fe35356an :HASHK(E)
+	25                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000000137b0eed7f89f923f7af576baeef4f891eceeba0a1fe35356an :HASHK25(E)
+	25                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x42080b409cb90f580bb2e7a824447ce837099337ade7b7c9ce2b5deb0d144c38n :ASSERT
+
+	HASHPOS => A
+	25 :ASSERT
+
+	; HASHK26 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	26 => D
+	0x000000000000fbd8ff1d955aee5364d28a9e22f607ec7a089e1b25d1300554f2n :HASHK(E)
+	26                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000000000000fbd8ff1d955aee5364d28a9e22f607ec7a089e1b25d1300554f2n :HASHK26(E)
+	26                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x32c92eb321d3c0951a76c1d4d24e12e633e2a106d9bb45adf8a53b4fbde46456n :ASSERT
+
+	HASHPOS => A
+	26 :ASSERT
+
+	; HASHK27 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	27 => D
+	0x00000000000dcea1b5b0d34cbecd21435e3c2ffff75115be2e403cd0e5dd9483n :HASHK(E)
+	27                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000000dcea1b5b0d34cbecd21435e3c2ffff75115be2e403cd0e5dd9483n :HASHK27(E)
+	27                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x43606defc5cb95e2bd4951228bfc0d49e281ca8d5c9835e26d2ee546090a1f8en :ASSERT
+
+	HASHPOS => A
+	27 :ASSERT
+
+	; HASHK28 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	28 => D
+	0x00000000272a4499082162679aef5c16b0fad3ba73c0430cfcc626807200229an :HASHK(E)
+	28                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x00000000272a4499082162679aef5c16b0fad3ba73c0430cfcc626807200229an :HASHK28(E)
+	28                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x7eb26df5f2117a2c0dc66539d1806e2f9d4eb61c837d71fa663a1ae2f65e00f2n :ASSERT
+
+	HASHPOS => A
+	28 :ASSERT
+
+	; HASHK29 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	29 => D
+	0x0000005049d968004759b5ba3b8a4c2d8668af7498ee2ba327c2551e0050cb32n :HASHK(E)
+	29                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x0000005049d968004759b5ba3b8a4c2d8668af7498ee2ba327c2551e0050cb32n :HASHK29(E)
+	29                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x294a13392bba7ed858e5abc7b77d4f83514078f7eade46303ee96dd2129b26fen :ASSERT
+
+	HASHPOS => A
+	29 :ASSERT
+
+	; HASHK30 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	30 => D
+	0x000003a16d7f9313fa268e66d5c813d1712c3149d0ae70b72707ba3e51ca1427n :HASHK(E)
+	30                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x000003a16d7f9313fa268e66d5c813d1712c3149d0ae70b72707ba3e51ca1427n :HASHK30(E)
+	30                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x6b61412530f60a7e9c3c461c5b0596bda6e5865081b51ca3abb1ce5bb6a00f3dn :ASSERT
+
+	HASHPOS => A
+	30 :ASSERT
+
+	; HASHK31 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	31 => D
+	0x007da0bfa042ac9a9ee56d2241a6bf4275712a9f2a8b8418803df22b51ab8038n :HASHK(E)
+	31                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x007da0bfa042ac9a9ee56d2241a6bf4275712a9f2a8b8418803df22b51ab8038n :HASHK31(E)
+	31                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0xa9dadc6d144795b776b1b1bcc2fb3650373db7d3d8d62c180432231be76fe0ean :ASSERT
+
+	HASHPOS => A
+	31 :ASSERT
+
+	; HASHK32 Test
+	E + 1 => E              :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	32 => D
+	0x425ddde0fe00d42994e3f140ae2d309fc5afa58aa7e79510769e213b4db509b9n :HASHK(E)
+	32                                                                  :HASHKLEN(E)
+	$ => A                                                              :HASHKDIGEST(E)
+
+	E + 1 => E          :MSTORE(lastHashKId)
+	0 => HASHPOS
+
+	0x425ddde0fe00d42994e3f140ae2d309fc5afa58aa7e79510769e213b4db509b9n :HASHK32(E)
+	32                                                                  :HASHKLEN(E)
+	$ => B                                                              :HASHKDIGEST(E)
+
+	B :ASSERT
+	0x4e7bc866ce4ca61d5c93c55f27383300f0acffd481abb7b4137e55671fb7d4acn :ASSERT
+
+	HASHPOS => A
+	32 :ASSERT
+
+    ; 3] The address E can be auto-incremented by 1 for HASHKX
+	0 => HASHPOS
+	0x000000000000000000000000000000000000000000000000000000000000009dn :HASHK1(E+1)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000000000cd5an :HASHK2(E+1)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000000000b6ea14n :HASHK3(E+1)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000006c557a1cn :HASHK4(E+1)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000000000e8726aa02an :HASHK5(E+1)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000000000262c788e974fn :HASHK6(E+1)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000000000008f972b415c2000n :HASHK7(E+1)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000000000005bfb5aed729e31adn :HASHK8(E+1)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	0x00000000000000000000000000000000000000000000008fb0c0f97f92ca27d7n :HASHK9(E+1)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000004ff9289f8c114fd91105n :HASHK10(E+1)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000000000ca2a727ecf4966bf59d5cen :HASHK11(E+1)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	0x0000000000000000000000000000000000000000481baa0303257c425c822bd2n :HASHK12(E+1)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000006839e89b4a78b9e7b3147e75c3n :HASHK13(E+1)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	0x000000000000000000000000000000000000999bf51d53af79c9926e843b6b33n :HASHK14(E+1)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	0x0000000000000000000000000000000000f6bec5b2c0ca06b18102c9b7511c21n :HASHK15(E+1)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	0x0000000000000000000000000000000015e9297d34866bafc3972a12ea8523afn :HASHK16(E+1)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	0x0000000000000000000000000000001371b2b4e1a8ecb4ffb1fddaad30624954n :HASHK17(E+1)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	0x00000000000000000000000000008bef9e44b782cdb34e37834619b66380040en :HASHK18(E+1)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	0x000000000000000000000000001743a2149f7b82874e80e74fdddd933cf0dcc9n :HASHK19(E+1)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	0x000000000000000000000000c93b637331bc2bd3f905e976d27bfccf6513a6cbn :HASHK20(E+1)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	0x0000000000000000000000d439d7d0aa32b9211148351485ce4a952086b20f25n :HASHK21(E+1)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	0x000000000000000000005fd2445e6da1c31daecced7895d8204637ab13a617e6n :HASHK22(E+1)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	0x00000000000000000022acbbdaa3839e3f543fed0957f40bfb9766cb3046594cn :HASHK23(E+1)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	0x000000000000000003c7ec55134cee3a4c74d82c81d000edd18e3248d1d3bb03n :HASHK24(E+1)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	0x000000000000008a62294487fec407121ae93d94d15e350269b32982799997bfn :HASHK25(E+1)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	0x000000000000185e9fb40a3825030e04b45d766566ccab7b78e9e5fb99e64e11n :HASHK26(E+1)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	0x000000000038cb7b212a9d1b6b0229e42480812d843750e27a78298f2cc72cbcn :HASHK27(E+1)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	0x000000007e034d60b299ae9ae61f681bd8e1362450222d415a5942795c64cfc1n :HASHK28(E+1)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	0x000000498366c1f8fff26a668cd486dc5737141abb33dbbe6673314fa19a2b47n :HASHK29(E+1)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	0x0000e4a3f4b79a4fcc4656d8532877758e3108613b2069ef6bae1c489aca2cedn :HASHK30(E+1)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	0x0004d45ac483f5b90b53455aba1562ed670f7e0c2c71bd78c8a53c32c60f4de4n :HASHK31(E+1)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	0xe0a5c2535ba5a51b21e41eb29b1204770a4cfd0f7c68a0b769231d5bfb59f462n :HASHK32(E+1)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(E+1)
+	0xf8d69b024dadfe0ad77e96e89326e46f00cfe4f90c8ea961df2dd93c4110191an :HASHKDIGEST(E+1)
+
+
+    ; 4] The address E can be auto-incremented by 2 for HASHK
+	0 => HASHPOS
+	1 => D
+	0x000000000000000000000000000000000000000000000000000000000000009an :HASHK(E+2)
+	HASHPOS => A
+	1                                                                   :ASSERT
+
+	2 => D
+	0x00000000000000000000000000000000000000000000000000000000000099e8n :HASHK(E+2)
+	HASHPOS => A
+	3                                                                   :ASSERT
+
+	3 => D
+	0x00000000000000000000000000000000000000000000000000000000007cb70cn :HASHK(E+2)
+	HASHPOS => A
+	6                                                                   :ASSERT
+
+	4 => D
+	0x0000000000000000000000000000000000000000000000000000000096d00b44n :HASHK(E+2)
+	HASHPOS => A
+	10                                                                  :ASSERT
+
+	5 => D
+	0x000000000000000000000000000000000000000000000000000000f018895c31n :HASHK(E+2)
+	HASHPOS => A
+	15                                                                  :ASSERT
+
+	6 => D
+	0x00000000000000000000000000000000000000000000000000006732247eec31n :HASHK(E+2)
+	HASHPOS => A
+	21                                                                  :ASSERT
+
+	7 => D
+	0x000000000000000000000000000000000000000000000000008c2927fc2bdeb8n :HASHK(E+2)
+	HASHPOS => A
+	28                                                                  :ASSERT
+
+	8 => D
+	0x000000000000000000000000000000000000000000000000b47a231f26ca7cfdn :HASHK(E+2)
+	HASHPOS => A
+	36                                                                  :ASSERT
+
+	9 => D
+	0x000000000000000000000000000000000000000000000052675e3128f839daf4n :HASHK(E+2)
+	HASHPOS => A
+	45                                                                  :ASSERT
+
+	10 => D
+	0x0000000000000000000000000000000000000000000059d95c2db858979bdd4en :HASHK(E+2)
+	HASHPOS => A
+	55                                                                  :ASSERT
+
+	11 => D
+	0x000000000000000000000000000000000000000000b9bcfd2d59357b5330fac5n :HASHK(E+2)
+	HASHPOS => A
+	66                                                                  :ASSERT
+
+	12 => D
+	0x000000000000000000000000000000000000000058e9772c728c7a809d00c30fn :HASHK(E+2)
+	HASHPOS => A
+	78                                                                  :ASSERT
+
+	13 => D
+	0x0000000000000000000000000000000000000046290dc75044ff4285dae3f54cn :HASHK(E+2)
+	HASHPOS => A
+	91                                                                  :ASSERT
+
+	14 => D
+	0x00000000000000000000000000000000000078e336e5fffe477e96fa4f2e68b5n :HASHK(E+2)
+	HASHPOS => A
+	105                                                                 :ASSERT
+
+	15 => D
+	0x000000000000000000000000000000000033b45c89b00993f79dcd5ab6ea146cn :HASHK(E+2)
+	HASHPOS => A
+	120                                                                 :ASSERT
+
+	16 => D
+	0x00000000000000000000000000000000557a1ce8726aa02a262c788e974f8f97n :HASHK(E+2)
+	HASHPOS => A
+	136                                                                 :ASSERT
+
+	17 => D
+	0x0000000000000000000000000000002b415c20005bfb5aed729e31ad8fb0c0f9n :HASHK(E+2)
+	HASHPOS => A
+	153                                                                 :ASSERT
+
+	18 => D
+	0x00000000000000000000000000007f92ca27d74ff9289f8c114fd91105ca2a72n :HASHK(E+2)
+	HASHPOS => A
+	171                                                                 :ASSERT
+
+	19 => D
+	0x000000000000000000000000007ecf4966bf59d5ce481baa0303257c425c822bn :HASHK(E+2)
+	HASHPOS => A
+	190                                                                 :ASSERT
+
+	20 => D
+	0x000000000000000000000000d26839e89b4a78b9e7b3147e75c3999bf51d53afn :HASHK(E+2)
+	HASHPOS => A
+	210                                                                 :ASSERT
+
+	21 => D
+	0x000000000000000000000079c9926e843b6b33f6bec5b2c0ca06b18102c9b751n :HASHK(E+2)
+	HASHPOS => A
+	231                                                                 :ASSERT
+
+	22 => D
+	0x000000000000000000001c2115e9297d34866bafc3972a12ea8523af1371b2b4n :HASHK(E+2)
+	HASHPOS => A
+	253                                                                 :ASSERT
+
+	23 => D
+	0x000000000000000000e1a8ecb4ffb1fddaad306249548bef9e44b782cdb34e37n :HASHK(E+2)
+	HASHPOS => A
+	276                                                                 :ASSERT
+
+	24 => D
+	0x0000000000000000834619b66380040e1743a2149f7b82874e80e74fdddd933cn :HASHK(E+2)
+	HASHPOS => A
+	300                                                                 :ASSERT
+
+	25 => D
+	0x00000000000000f0dcc9c93b637331bc2bd3f905e976d27bfccf6513a6cbd439n :HASHK(E+2)
+	HASHPOS => A
+	325                                                                 :ASSERT
+
+	26 => D
+	0x000000000000d7d0aa32b9211148351485ce4a952086b20f255fd2445e6da1c3n :HASHK(E+2)
+	HASHPOS => A
+	351                                                                 :ASSERT
+
+	27 => D
+	0x00000000001daecced7895d8204637ab13a617e622acbbdaa3839e3f543fed09n :HASHK(E+2)
+	HASHPOS => A
+	378                                                                 :ASSERT
+
+	28 => D
+	0x0000000057f40bfb9766cb3046594c03c7ec55134cee3a4c74d82c81d000edd1n :HASHK(E+2)
+	HASHPOS => A
+	406                                                                 :ASSERT
+
+	29 => D
+	0x0000008e3248d1d3bb038a62294487fec407121ae93d94d15e350269b3298279n :HASHK(E+2)
+	HASHPOS => A
+	435                                                                 :ASSERT
+
+	30 => D
+	0x00009997bf185e9fb40a3825030e04b45d766566ccab7b78e9e5fb99e64e1138n :HASHK(E+2)
+	HASHPOS => A
+	465                                                                 :ASSERT
+
+	31 => D
+	0x00cb7b212a9d1b6b0229e42480812d843750e27a78298f2cc72cbc7e034d60b2n :HASHK(E+2)
+	HASHPOS => A
+	496                                                                 :ASSERT
+
+	32 => D
+	0x99ae9ae61f681bd8e1362450222d415a5942795c64cfc1498366c1f8fff26a66n :HASHK(E+2)
+	HASHPOS => A
+	528                                                                 :ASSERT
+
+	HASHPOS                                                             :HASHKLEN(E+2)
+	0x4585d484a6963606fdf408b07c2c70160119952ca18c3ec919fbf0a3299cc8acn :HASHKDIGEST(E+2)
+
+
+    E + 2             :MSTORE(lastHashKId)
