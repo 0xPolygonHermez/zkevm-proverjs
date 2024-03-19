@@ -131,11 +131,11 @@ module.exports = class MemAlign extends Helper {
             // no change w1, only w0
             return scalar2fea(ctx.Fr, m1);
         }
+        let _value = this.prepareHexValue(value, params);
         if (params.offset < 32) {
             _value = _value.slice((32 - params.offset) * 2);
         }
 
-        const _value = this.prepareHexValue(value, params);
         const w1 = '0x' + (params.offset > 32 ? _m1.slice(0, (32 - params.offset) * 2) : '') + _value 
                     + ((params.offset + params.len < 64) ? _m1.slice((params.offset + params.len - 64)*2) : '');
         
