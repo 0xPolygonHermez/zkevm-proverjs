@@ -267,7 +267,7 @@ module.exports = class Main extends Helper {
         (!ctx.Fr.eq(ctx.D[7], feaNewL1InfoTreeRoot[7]))
     ) {
         let errorMsg = "Assert Error: newL1InfoTreeRoot does not match\n";
-        errorMsg += `   newL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.C)}\n`;
+        errorMsg += `   newL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
         errorMsg += `   newL1InfoTreeRoot expected: ${ctx.input.newL1InfoTreeRoot}\n`;
         errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);

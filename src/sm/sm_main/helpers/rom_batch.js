@@ -36,6 +36,6 @@ module.exports = class Rom extends Helper {
     eval_getForcedGER(ctx, tag) {
         if (tag.params.length !== 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
-        return scalar2fea(ctx.Fr, Scalar.e(ctx.input.forcedData.GER));
+        return scalar2fea(ctx.Fr, Scalar.e(ctx.input.forcedData.globalExitRoot));
     }
 };
