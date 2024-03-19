@@ -1,5 +1,69 @@
-VAR GLOBAL assumef_var1
+; TODO
 
-        10              :MSTORE(assumef_var1)
-        $ + 3 => A      :F_MLOAD(assumef_var1)
-        13              :ASSERT
+VAR GLOBAL assumef_var1
+VAR GLOBAL assumef_var2
+VAR GLOBAL assumef_var3
+VAR GLOBAL assumef_var4
+VAR GLOBAL assumef_var5
+
+        ; 1] F_MLOAD
+        ; small test
+        10                      :MSTORE(assumef_var1)
+        $ + 3 => A              :F_MLOAD(assumef_var1)
+        13                      :ASSERT
+        assumef_var1 + 3 => A
+        13                      :ASSERT
+
+        ; 2^32-1 (maximum allowed value for freeinput computations)
+        0xfffffffen             :MSTORE(assumef_var1)
+        $ + 1 => A              :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+        assumef_var1 + 1 => A
+        0xffffffffn             :ASSERT
+
+        ; random value
+        0x9334b875              :MSTORE(assumef_var1)
+        $ + 0x6ccb478a => A     :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+        assumef_var1 + 0x6ccb478a => A
+        0xffffffffn             :ASSERT
+
+        ; 2] F_HASHP
+        $ => E                  :MLOAD(lastHashPId)
+        E + 1 => E              :MSTORE(lastHashPId)
+	0 => HASHPOS
+
+        1 => D
+	0x5cn                   :HASHP(E)
+	HASHPOS => A
+	1                       :ASSERT
+
+        ; 3] F_HASHK
+        ; 4] F_HASHS
+
+        ; 5] F_HASHP1,F_HASHP16,F_HASHP32
+        ; 6] F_HASHK1,F_HASHK16,F_HASHK32
+        ; 7] F_HASHS1,F_HASHS16,F_HASHS32
+
+
+
+        ; small test
+        10                      :MSTORE(assumef_var1)
+        $ + 3 => A              :F_MLOAD(assumef_var1)
+        13                      :ASSERT
+        assumef_var1 + 3 => A
+        13                      :ASSERT
+
+        ; 2^32-1 (maximum allowed value for freeinput computations)
+        0xfffffffen             :MSTORE(assumef_var1)
+        $ + 1 => A              :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+        assumef_var1 + 1 => A
+        0xffffffffn             :ASSERT
+
+        ; random value
+        0x9334b875              :MSTORE(assumef_var1)
+        $ + 0x6ccb478a => A     :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+        assumef_var1 + 0x6ccb478a => A
+        0xffffffffn             :ASSERT

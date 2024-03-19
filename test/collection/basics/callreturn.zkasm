@@ -4,7 +4,6 @@ VAR GLOBAL OpCallReturn_V2
         3 => A
         :CALL(OpCallReturn_MyFunc)
         9 :ASSERT
-        :JMP(OpCallReturn_End)
 
         49 :MSTORE(OpCallReturn_V1),CALL(OpCallReturn_MyFunc)
         21 :ASSERT
@@ -14,6 +13,7 @@ VAR GLOBAL OpCallReturn_V2
 
         $ => A :MLOAD(OpCallReturn_V2)
         101 :ASSERT
+        :JMP(OpCallReturn_End)
 
 OpCallReturn_MyFunc:
         A * 2 + 3 => A :MSTORE(OpCallReturn_V2),RETURN
