@@ -1,6 +1,6 @@
 const fs = require("fs")
 const { compile } = require("pilcom");
-const starkInfoGen = require("../../node_modules/pil-stark/src/stark/stark_info.js");
+const starkInfoGen = require("../../node_modules/pil2-stark-js/src/stark/stark_info.js");
 const { F1Field } = require("ffjavascript");
 const { title } = require("process");
 const F = new F1Field("0xFFFFFFFF00000001");

@@ -3,27 +3,28 @@ pragma custom_templates;
 
 include "c12a.verifier.circom";
 
-template Main() {
 
+
+template Main() {
     signal input publics[44];
     signal input rootC[4];
 
     signal input root1[4];
     signal input root2[4];
     signal input root3[4];
-    signal input root4[4];
+    signal input rootQ[4];
+
     signal input evals[146][3]; // Evaluations of the set polynomials at a challenge value z and gz
 
-    // Leaves values of the merkle tree used to check all the queries
-    signal input s0_vals1[64][18];
-    signal input s0_vals3[64][78];
-    signal input s0_vals4[64][12];
     signal input s0_valsC[64][52];
-
-    signal input s0_siblings1[64][22][4];
-    signal input s0_siblings3[64][22][4];
-    signal input s0_siblings4[64][22][4];
     signal input s0_siblingsC[64][22][4];
+
+    signal input s0_vals1[64][18];
+    signal input s0_siblings1[64][22][4];
+    signal input s0_vals3[64][78];
+    signal input s0_siblings3[64][22][4];
+    signal input s0_valsQ[64][12];
+    signal input s0_siblingsQ[64][22][4];
 
     signal input s1_root[4];
     signal input s2_root[4];
@@ -41,24 +42,24 @@ template Main() {
 
     signal input finalPol[64][3];
 
-
-
     component vA = StarkVerifier();
 
     vA.publics <== publics;
     vA.root1 <== root1;
     vA.root2 <== root2;
     vA.root3 <== root3;
-    vA.root4 <== root4;
+    vA.rootQ <== rootQ;
+
     vA.evals <== evals;
-    vA.s0_vals1 <== s0_vals1;
-    vA.s0_vals3 <== s0_vals3;
-    vA.s0_vals4 <== s0_vals4;
+
     vA.s0_valsC <== s0_valsC;
-    vA.s0_siblings1 <== s0_siblings1;
-    vA.s0_siblings3 <== s0_siblings3;
-    vA.s0_siblings4 <== s0_siblings4;
     vA.s0_siblingsC <== s0_siblingsC;
+    vA.s0_vals1 <== s0_vals1;
+    vA.s0_siblings1 <== s0_siblings1;
+    vA.s0_vals3 <== s0_vals3;
+    vA.s0_siblings3 <== s0_siblings3;
+    vA.s0_valsQ <== s0_valsQ;
+    vA.s0_siblingsQ <== s0_siblingsQ;
     vA.s1_root <== s1_root;
     vA.s2_root <== s2_root;
     vA.s3_root <== s3_root;

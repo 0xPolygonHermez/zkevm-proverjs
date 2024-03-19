@@ -157,6 +157,7 @@ if [ $CP_ZKEVM -eq 1 ]; then
     cpfile $BDIR/zkevm.consttree                               $FULLDST
     cpfile $BDIR/zkevm.starkinfo.json                          $FULLDST
     cpfile $BDIR/zkevm.verkey.json        		               $FULLDST
+    cpfile $BDIR/zkevm.chelpers.bin                            $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpdir $BDIR/zkevm.verifier_cpp                         $DST/c_files
         cpdir $BDIR/zkevm.chelpers                             $DST/c_files
@@ -173,6 +174,7 @@ if [ $CP_C12A -eq 1 ]; then
     cpfile $BDIR/c12a.consttree                $FULLDST
     cpfile $BDIR/c12a.verkey.json              $FULLDST
     cpfile $BDIR/c12a.starkinfo.json           $FULLDST
+    cpfile $BDIR/c12a.chelpers.bin             $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpfile $BDIR/c12a.pil                  $DST/pil
         cpdir $BDIR/c12a.chelpers              $DST/c_files
@@ -190,6 +192,7 @@ if [ $CP_RECURSIVE1 -eq 1 ]; then
     cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive1.starkstruct.json
     cpfile $BDIR/recursive1.starkinfo.json     $FULLDST
     cpfile $BDIR/recursive1.verkey.json        $FULLDST
+    cpfile $BDIR/recursive1.chelpers.bin       $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpfile $BDIR/recursive1.pil            $DST/pil
         cpdir $BDIR/recursive1_cpp             $DST/c_files
@@ -208,6 +211,7 @@ if [ $CP_RECURSIVE2 -eq 1 ]; then
     cpfile $BDIR/recursive2.verkey.json        $FULLDST
     cpfile $BDIR/recursive2.consttree          $FULLDST
     cpfile $BDIR/recursive2.const              $FULLDST
+    cpfile $BDIR/recursive2.chelpers.bin       $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpfile $BDIR/recursive2.pil            $DST/pil
         cpdir $BDIR/recursive2_cpp             $DST/c_files
@@ -225,6 +229,7 @@ if [ $CP_RECURSIVEF -eq 1 ]; then
     cpfile $BDIR/recursivef.exec               $FULLDST
     cpfile $BDIR/recursivef.const              $FULLDST
     cpfile $BDIR/recursivef_cpp/recursivef.dat $FULLDST/recursivef.verifier.dat
+    cpfile $BDIR/recursivef.chelpers.bin       $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpfile $BDIR/recursivef.pil            $DST/pil
         cpdir $BDIR/recursivef_cpp             $DST/c_files
