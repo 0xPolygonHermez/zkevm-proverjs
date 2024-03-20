@@ -631,12 +631,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.incStack[i] = 0n;
         }
         if (l.ind) {
-            pols.ind[i] = 1n;
+            pols.ind[i] = BigInt(l.ind);
         } else {
             pols.ind[i] = 0n;
         }
         if (l.indRR) {
-            pols.indRR[i] = 1n;
+            pols.indRR[i] = BigInt(l.indRR);
         } else {
             pols.indRR[i] = 0n;
         }
