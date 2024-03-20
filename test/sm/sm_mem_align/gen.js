@@ -34,7 +34,7 @@ function dump(p) {
         console.log(`\t{\n\t\t// #${p.index} w=[${p.index*32}-${p.index*32+31}]\n\t\tA:  ${_h.a}n,\n\t\t//    ${p.l1}\n\t\tD:  ${_h.d}n,\n\t\tC0: ${p.c0},\n\t\tOP: ${_h.op}n,\n\t\tB:  ${_h.b}n,\n\t\t//    ${p.l2}\n\t\tE:  ${_h.e}n,\n\t\tmemAlignRD: ${p.wr?0:1}n,\n\t\tmemAlignWR: ${p.wr?1:0}n\n\t},`);
     } else {
         if (!p.wr) {
-            console.log(`\t; #${p.index} w=[${p.index*32}-${p.index*32+31}]\n\t; ${p.l1}\n\t${_h.a}n => A\n\t; ${p.l2}\n\t${_h.b}n =>B\n\t${p.c0} => C\n\t$ => A :MEM_ALIGN_RD\n\t${_h.op}n :ASSERT\n`);
+            console.log(`\t; #${p.index} w=[${p.index*32}-${p.index*32+31}]\n\t; ${p.l1}\n\t${_h.a}n => A\n\t; ${p.l2}\n\t${_h.b}n => B\n\t${p.c0} => C\n\t$ => A :MEM_ALIGN_RD\n\t${_h.op}n :ASSERT\n`);
             return;
         }
         console.log(`\t; #${p.index} w=[${p.index*32}-${p.index*32+31}]\n\t${_h.a}n => A\n\t; ${p.l1}\n\t${_h.d}n => D\n\t${p.c0} => C\n\t${_h.b}n => B\n\t; ${p.l2}\n\t${_h.e}n => E\n\t${_h.op}n :MEM_ALIGN_WR\n`);
@@ -56,7 +56,7 @@ function generate(index, offset, len, config) {
     const [a,b] = split512to256(config.M);
     let d,e;
     const cpre = config.cpre ?? '';
-    const _c = `${offset}n + ${len}n * ${cpre}LEN_FACTOR`;
+    const _c = (config.output === 'js') ? `${offset}n + ${len}n * ${cpre}LEN_FACTOR` : `${offset} + ${len} * ${cpre}LEN_FACTOR`;
     let _len = len === 0n ? 32n : len;
     _len = ((offset + _len) > 64n) ? (64n - offset) : _len;
     const rule = ('·'+('-'.repeat(9))).repeat(13).slice(0, 128);
