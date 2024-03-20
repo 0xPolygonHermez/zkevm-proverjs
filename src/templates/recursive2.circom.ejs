@@ -204,7 +204,7 @@ template Main() {
 
 <%  if(isBatchRecursion) { -%>
 <%      if(isEip4844) { -%>
-    signal isOneBatchA <== 1 - b_isAggregatedCircuit;
+    signal isOneBatchB <== 1 - b_isAggregatedCircuit;
 <%      } else { -%>
     signal isOneBatchB <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
 <%      } -%>
