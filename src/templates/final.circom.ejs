@@ -8,10 +8,12 @@ include "<%- verifierNames[0] %>.verifier.circom";
 
 <% function getPositionBits(publics, currentPublic) {
     const publicsNames = Object.keys(publics).sort((a, b) => publics[a] - publics[b]);
-    if(publicsNames.includes(currentPublic) || currentPublic === "aggregatorAddr") throw new Error("Something went wrong!");
+    if(!publicsNames.includes(currentPublic) && currentPublic !== "aggregatorAddr") {
+        throw new Error("Something went wrong!");
+    }
 
-    let publicIndex = currentPublics === "aggregatorAddr" 
-        ? publicIndex = publicsNames.length
+    let publicIndex = currentPublic === "aggregatorAddr" 
+        ? publicsNames.length
         : publicsNames.findIndex((publicName) => publicName === currentPublic);
     let initialBits = 0;
     for(let i = 0; i < publicIndex; i++) {
@@ -22,6 +24,7 @@ include "<%- verifierNames[0] %>.verifier.circom";
             initialBits += 256;
         }
     }
+    return initialBits;
 } -%>
 
 <% let starkInfo = starkInfoVerifiers[0]; -%>
@@ -142,7 +145,7 @@ template Main() {
     signal newBlobStateRoot[8];
     signal n2bNewBlobStateRoot[8][32];
     var newBlobStateRootPos = <%- blobOuterPublics.newStateRootPos %>;
-    var newBlobStateRootBitsOffset = <%- getPositionBits(blobOuterPublics, "newStateRootPos") %>;
+    var newBlobStateRootBitsOffset = <%- getPositionBits(blobOuterPublics, "newBlobStateRootPos") %>;
 
     signal newBlobAccInputHash[8];
     signal n2bNewBlobAccInputHash[8][32];

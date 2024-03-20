@@ -1,3 +1,6 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
 include "<%- verifierNames[0] %>.verifier.circom";
 include "<%- verifierNames[1] %>.verifier.circom";
 
@@ -33,7 +36,7 @@ template Main() {
     //  Indexes Batch publics
     var oldBatchStatePos = <%- batchPublics.oldStateRootPos %>;
     var chainIdPos = <%- batchPublics.chainIdPos %>;
-    var forkIdPos = <%- batchPublics.chainIdPos %>;
+    var forkIdPos = <%- batchPublics.forkIdPos %>;
     var newBatchStateRootPos = <%- batchPublics.newStateRootPos %>;
     var newBatchAccInputHashPos = <%- batchPublics.newBatchAccInputHashPos %>;
     var currentL1InfoTreeRootPos = <%- batchPublics.currentL1InfoTreeRootPos %>;
@@ -70,12 +73,14 @@ template Main() {
     var blobOuter_newBlobStateRootPos = <%- blobOuterPublics.newBlobStateRootPos %>;
     var blobOuter_newBlobAccInputHashPos = <%- blobOuterPublics.newBlobAccInputHashPos %>;
     var blobOuter_newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
-    var blobOuter_newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos -%>
+    var blobOuter_newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos -%>;
 <%  let nPublicsBlobOuter = blobOuterPublics.newLocalExitRootPos + 8; -%>
 
 
     signal input publics[<%- nPublicsBlobOuter %>];
     signal input rootC[4];
+
+    signal input chainId;
 
     // Batch Proof Inputs
     signal input batch_publics[<%- nPublicsBatch %>];
@@ -187,13 +192,13 @@ template Main() {
     signal isOneBatch <== 1 - batch_isAggregatedCircuit;
     vBatch.rootC <== MultiMux1(4)([rootCRecursive2Batch, rootCRecursive1Batch], isOneBatch);
     
-    vBatch.isEnable <== isValidBlob; // Check isValid public
+    vBatch.enable <== isValidBlob; // Check isValid public
 
     for (var i=0; i<4; i++) {
         vBatch.publics[<%- nPublicsBatch %> + i] <== rootCRecursive2Batch[i];
     }
 
-    component vBlob = StarkVerifier();
+    component vBlob = StarkVerifier2();
 
     for (var i=0; i< <%- nPublicsBlobInner %>; i++) {
         vBlob.publics[i] <== blob_inner_publics[i];
@@ -241,7 +246,7 @@ template Main() {
     }
 
     // Check that batch new last timestamp is less than or equal than the blob timestamp limit
-    signal isValidTimestamp <== LessEqThan(62)(batch_publics[newLastTimestampPos], blob_inner_publics[blobInner_timestampLimitPos]);
+    signal isValidTimestamp <== LessEqThan(62)([batch_publics[newLastTimestampPos], blob_inner_publics[blobInner_timestampLimitPos]]);
 
     signal isValid <== IsZero()(isValidBlob + isValidL1InfoTreeIndex + isValidTimestamp - 4);
 

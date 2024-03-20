@@ -7,7 +7,9 @@ include "<%- verifierNames[0] %>.verifier.circom";
 
 template Main() {
     signal input publics[<%- starkInfo.nPublics  %>];
+<%  if(!isEip4844) { -%>
     signal input rootC[4];
+<%  } -%>
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
     signal input root<%- s %>[4];
@@ -67,4 +69,8 @@ template Main() {
 
 }
 
+<%  if(!isEip4844) { -%>
 component main {public [publics, rootC]}= Main();
+<%  } else { -%>
+component main {public [publics]}= Main();
+<%  } -%>

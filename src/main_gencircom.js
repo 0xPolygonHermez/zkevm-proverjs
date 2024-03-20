@@ -31,7 +31,7 @@ const batchPublicsEip4844 = {
     currentL1InfoTreeRootPos: 43,
     currentL1InfoTreeIndexPos: 51,
     newLocalExitRootPos: 52,
-    newLastTimestampPos: 59,
+    newLastTimestampPos: 60,
 };
 
 const batchPublics = {
@@ -98,7 +98,7 @@ async function run() {
     }
 
     let isBatchRecursion = argv.batch ? true : false;
-    let isEip4844 = argv.eip4844 ? true : false;
+    let isEip4844 = argv.eip4844 || template === "blob_outer" ? true : false;
 
     let vks = [];
 
