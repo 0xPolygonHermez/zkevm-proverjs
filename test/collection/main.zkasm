@@ -57,7 +57,9 @@ INCLUDE "lvalues.zkasm"
 
 INCLUDE "basics.zkasm"
 INCLUDE "counters.zkasm"
-INCLUDE "arrays.zkasm"
+INCLUDE "features.zkasm"
+INCLUDE "fix.zkasm"
+INCLUDE "helpers.zkasm"
 INCLUDE "operations.zkasm"
 INCLUDE "special.zkasm"
 

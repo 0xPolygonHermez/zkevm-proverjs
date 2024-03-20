@@ -20,4 +20,15 @@ module.exports = class myHelper {
         }
         return 0n;
     }
+    eval_dumpHexFe(ctx, tag) {
+        for (let index = 0; index < tag.params.length; ++index) {
+            const param = tag.params[index];
+            if (param.op !== 'getReg') {
+                console.log(`Ignore invalid operation ${param.op} on param #${index}`);
+                continue;
+            }
+            console.log(`${param.regName}: [${ctx[param.regName].map(x => "0x"+x.toString(16).padStart(16, '0')).join(',')}]`);
+        }
+        return 0n;
+    }
 }
