@@ -1027,10 +1027,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inFREE0[i] = Fr.zero;
         }
 
-        if (Fr.isZero(op0)) {
+        const op0condConst = Fr.e(op0 + BigInt(l.condConst ?? 0n));
+        if (Fr.isZero(op0condConst)) {
             pols.op0Inv[i] = 0n;
         } else {
-            pols.op0Inv[i] = Fr.inv(op0);
+            pols.op0Inv[i] = Fr.inv(op0condConst);
         }
 
 //////////
@@ -2456,7 +2457,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 pols.JMPC[i] = 1n;
             } else if (l.JMPZ) {
-                const op0cond = Fr.toObject(op0) + (l.condConst ? BigInt(l.condConst) : 0n);
+                const op0cond = Fr.e(Fr.toObject(op0) + (l.condConst ? BigInt(l.condConst) : 0n));
                 if (Fr.isZero(op0cond)) {
                     pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 } else {

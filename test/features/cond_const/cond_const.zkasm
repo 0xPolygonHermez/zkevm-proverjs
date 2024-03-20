@@ -1,20 +1,199 @@
+CONST %K1=230
+
 
 start:
 
         STEP => A
         0 :ASSERT
 
-        3 => A
         
-        A :JMP_NE(3,failAssert)
-        A+2 :JMP_EQ(5,l1,failAssert)
-l1:
-        A+3 => B :JMP_LT(6,failAssert);
-        A+3 => B :JMP_LE(6,l2);
-l2:
+        230 => A
+
+        A       :JMP_EQ(230, @next+1)
+                :JMP(failAssert)
+
+        A       :JMP_EQ(%K1, @next+1)
+                :JMP(failAssert)
+
+        A+10    :JMP_EQ(%K1+10, @next+1)
+                :JMP(failAssert)
+
+        2*A-10  :JMP_EQ(2*%K1-10, @next+1)
+                :JMP(failAssert)
+
+        2*A     :JMP_EQ(%K1 == 230 ? 460 : 2, @next+1)
+                :JMP(failAssert)
+
+        123457890 => B
+
+        ; JMP_EQ        
+
+        B       :JMP_EQ(123457890, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_EQ(123457890, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_EQ(123000000, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_NE
+
+        B       :JMP_NE(123000000, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_NE(123000000, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_NE(123457890, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_LT
+
+        B       :JMP_LT(123457890+1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LT(123457890+2, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_LT(123457890, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LT(123457890-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_LE
+
+        B       :JMP_LE(123457890, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LE(123457890+1, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_LE(123457890-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LE(123457890-2, failAssert, @next+1)
+                :JMP(failAssert)
+
+
+        ; JMP_GT
+
+        B       :JMP_GT(123457890-1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GT(123457890-2, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_GT(123457890, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GT(123457890+1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_GE
+
+        B       :JMP_GE(123457890, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GE(123457890-1, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_GE(123457890+1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GE(123457890+2, failAssert, @next+1)
+                :JMP(failAssert)
+
+
+        ; WITH NEGATIVE VALUES
+
+        -1 => B
+
+        ; JMP_EQ        
+
+        B + 1   :JMPZ(@next+1)
+                :JMP(failAssert)
+   
+        B       :JMP_EQ(-1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_EQ(-1, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_EQ(-2, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_NE
+
+        B       :JMP_NE(-2, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_NE(0, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_NE(-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_LT
+
+        B       :JMP_LT(-1+1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LT(-1+2, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_LT(-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LT(-1-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_LE
+
+        B       :JMP_LE(-1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LE(-1+1, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_LE(-1-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_LE(-1-2, failAssert, @next+1)
+                :JMP(failAssert)
+
+
+        ; JMP_GT
+
+        B       :JMP_GT(-1-1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GT(-1-2, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_GT(-1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GT(-1+1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        ; JMP_GE
+
+        B       :JMP_GE(-1, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GE(-1-1, @next+1, failAssert)
+                :JMP(failAssert)
+
+        B       :JMP_GE(-1+1, failAssert, @next+1)
+                :JMP(failAssert)
+
+        B       :JMP_GE(-1+2, failAssert, @next+1)
+                :JMP(failAssert)
 
 end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
+       0 => A,B,C,D,E, SP, PC, GAS, SR
 
 finalWait:
         ${beforeLast()}  : JMPN(finalWait)
