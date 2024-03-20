@@ -9,7 +9,37 @@ describe("Test PaddingPg Counter", async function () {
     this.timeout(10000000000);
 
     it("Verify PaddingPG Zkasm Test", async () => {
-        await verifyZkasm("../zkasm/counters/padding_pg.zkasm", {continueOnError: true},
+        const zkAsmCode = `
+            VAR GLOBAL lastHashPId
+
+            start:
+                STEP => A
+                0 :ASSERT
+
+                0 => A
+                CNT_ARITH       :ASSERT
+                CNT_BINARY      :ASSERT
+                CNT_KECCAK_F    :ASSERT
+                CNT_SHA256_F    :ASSERT
+                CNT_MEM_ALIGN   :ASSERT
+                CNT_POSEIDON_G  :ASSERT
+                CNT_PADDING_PG  :ASSERT
+
+                -1          :MSTORE(lastHashPId)
+
+            INCLUDE "test/collection/counters/utils.zkasm"
+            INCLUDE "test/collection/counters/padding_pg.zkasm"
+
+            end:
+                0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
+
+            finalWait:
+                    \${beforeLast()}  : JMPN(finalWait)
+                                      : JMP(start)
+            opINVALID:
+        `;
+
+        await verifyZkasm(zkAsmCode, {continueOnError: true},
                 {
                     defines: {N: 2 ** 23},
                     namespaces: ['Global', 'Binary', 'Main', 'Rom', 'PaddingPG', 'PoseidonG'],
@@ -22,6 +52,9 @@ describe("Test PaddingPg Counter", async function () {
                     commitFilename: 'build/commit.bin',
                     constFilename: 'build/const.bin',
                     pilJsonFilename: 'build/main.pil.json'
+                },
+                {
+                    compileFromString: true
                 });
     });
 });
