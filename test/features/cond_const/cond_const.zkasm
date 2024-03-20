@@ -192,6 +192,188 @@ start:
         B       :JMP_GE(-1+2, failAssert, @next+1)
                 :JMP(failAssert)
 
+        ; CALL TEST
+
+        A       :CALL_EQ(230, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        A       :CALL_EQ(%K1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        A+10    :CALL_EQ(%K1+10, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        2*A-10  :CALL_EQ(2*%K1-10, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        2*A     :CALL_EQ(%K1 == 230 ? 460 : 2, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        123457890 => B
+
+        ; CALL_EQ        
+
+        B       :CALL_EQ(123457890, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_EQ(123457890, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_EQ(123000000, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_NE
+
+        B       :CALL_NE(123000000, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_NE(123000000, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_NE(123457890, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_LT
+
+        B       :CALL_LT(123457890+1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LT(123457890+2, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_LT(123457890, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LT(123457890-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_LE
+
+        B       :CALL_LE(123457890, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LE(123457890+1, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_LE(123457890-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LE(123457890-2, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+
+        ; CALL_GT
+
+        B       :CALL_GT(123457890-1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GT(123457890-2, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_GT(123457890, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GT(123457890+1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_GE
+
+        B       :CALL_GE(123457890, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GE(123457890-1, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_GE(123457890+1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GE(123457890+2, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+
+        ; WITH NEGATIVE VALUES
+
+        -1 => B
+
+        ; CALL_EQ        
+
+        B       :CALL_EQ(-1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_EQ(-1, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_EQ(-2, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_NE
+
+        B       :CALL_NE(-2, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_NE(0, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_NE(-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_LT
+
+        B       :CALL_LT(-1+1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LT(-1+2, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_LT(-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LT(-1-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_LE
+
+        B       :CALL_LE(-1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LE(-1+1, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_LE(-1-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_LE(-1-2, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+
+        ; CALL_GT
+
+        B       :CALL_GT(-1-1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GT(-1-2, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_GT(-1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GT(-1+1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        ; CALL_GE
+
+        B       :CALL_GE(-1, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GE(-1-1, callOkReturnRRPlusTwo, failAssert)
+                :JMP(failAssert)
+
+        B       :CALL_GE(-1+1, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
+        B       :CALL_GE(-1+2, failAssert, callOkReturnRRPlusTwo)
+                :JMP(failAssert)
+
 end:
        0 => A,B,C,D,E, SP, PC, GAS, SR
 
@@ -199,6 +381,10 @@ finalWait:
         ${beforeLast()}  : JMPN(finalWait)
 
                          : JMP(start)
+
+callOkReturnRRPlusTwo:
+    RR + 1 => RR :RETURN
+    
 opINVALID:
 failAssert:
         A+1 :ASSERT
