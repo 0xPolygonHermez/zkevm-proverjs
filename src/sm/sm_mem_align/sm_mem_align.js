@@ -70,7 +70,7 @@ function build_MODE_SELM1_SELM0_T_BYTE_POS(pols, N) {
     let index = 0;
     for (let len = 0; len <= LEN_MAX; ++len) {
         for (let offset = 0; offset <= OFFSET_MAX; ++offset) {
-            res = generate(pols, index, offset, len);
+            generate(pols, index, offset, len);
             index += 128;
         }
     }
@@ -88,12 +88,16 @@ module.exports.buildConstants = async function (pols) {
         if (typeof pols[name] === 'undefined') return;
 
         if (func.length == 1) {
-            for (i = 0; i < N; ++i) pols[name][i] = BigInt(func(i));
+            for (let i = 0; i < N; ++i) {
+                pols[name][i] = BigInt(func(i));
+            }
         }
         else {
             const indexCount = name.startsWith('SEL') ? 2 : 8;
             for (let index = 0; index < indexCount; ++index) {
-                for (i = 0; i < N; ++i) pols[name][index][i] = BigInt(func(index,i));
+                for (let i = 0; i < N; ++i) {
+                    pols[name][index][i] = BigInt(func(index,i));
+                }
             }
         }
     });
@@ -136,9 +140,9 @@ module.exports.execute = async function (pols, input) {
             const selM0 = (bytePos < len && isM0) ? 1n : 0n;
             const selM1 = (bytePos < len && !isM0) ? 1n : 0n;
 
+            // if format is LEFT_BE bytePos no change.
             switch (format) {
                 case RIGHT_BE:  bytePos = (bytePos + 32 - len) % 32; break;
-                case LEFT_BE:   bytePos = bytePos;      break;
                 case RIGHT_LE:  bytePos = 31 - bytePos; break;
                 case LEFT_LE:   bytePos = (31 + len - bytePos) % 32; break;                
             }
