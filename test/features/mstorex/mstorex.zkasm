@@ -309,9 +309,7 @@ VAR GLOBAL tmpVarLength_mstore
 VAR GLOBAL tmpVarOffset_mstore
 VAR GLOBAL tmpVar32BytesToStore_mstore
 
-VAR GLOBAL MSTOREX_Addr32
-VAR GLOBAL MSTOREX_Offset32
-VAR GLOBAL __MSTOREX_Offset
+VAR GLOBAL __MSTOREX_len
 
 VAR GLOBAL bytesToStore
 
@@ -321,82 +319,53 @@ MSTORE32:
         %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
 
         A                           :SAVE(B,C,D,E,RR,RCX)
-        32 => C
-
-        E                           :MSTORE(MSTOREX_Offset)
-        ; $BYTE{E % 32}
-        ; $BITS5{E % 32}
-        $0{E % 32} => RCX           :MSTORE(MSTOREX_Offset32),JMPZ(__MSTORE32_offset32_zero, __MSTORE32_addr32)
-
-__MSTORE32_offset32_zero:
-        $0{E / 32} => RR            :MSTORE(MSTOREX_Addr32)
-        32 * RR                     :MLOAD(MSTOREX_Offset),JMPZ(__MSTORE_aligned)        
-        $ => C                      :MLOAD(bytesToStore)
-        C                           :MSTORE(MEM:RR)
-        $ => A                      :RESTORE
-        MSTOREX_Offset + 32 => E    :RETURN
+        32 => C                     :MSTORE(__MSTOREX_len), JMP(__MSTOREX_afterSave)
         
 MSTOREX:  
         ; check step counters
         %MAX_CNT_STEPS - STEP - 20              :JMPN(outOfCountersStep)
         %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
 
-        C                       :JMPZ(__MSTOREX_end)
-        ; really needed ? 
-        ; 32 - C                :JMPN(failAssert)      
+        C                           :MSTORE(__MSTOREX_len), JMPZ(__MSTOREX_end)
 
-        A                       :SAVE(B,C,D,E,RR,RCX)
+        ; TODO:
+        ; if C > 32 && C < 63 align detects, but if C > 63 could be a problem, but
+        ; C must be well calculated before call (check with Carlos)
 
-        ; $BYTE{E % 32}
+        A                           :SAVE(B,C,D,E,RR,RCX)
 
-        $0{E / 32} => RR          :JMPN(failAssert)
+__MSTOREX_afterSave:
+        $0{E / 32} => RR            :JMPN(failAssert)
         ; RR = 32 bits positive value
 
-    
-        31 - $0{E % 32} => RCX,A  :F_MSTORE(__MSTOREX_byteOffset),JMPN(failAssert)
-        ; A = 31 - byteOffset
-        ; byteOffset < 32 (if not failAssert)
+        ; $BYTE{E%32} => RCX,A      :JMP_GT(31,failAssert)
+        $BYTE{E%32} => RCX,A          
+        31 - RCX                    :JMPN(failAssert)
 
-__MSTORE32_addr32:
-        ; A = 31 - byteOffset
-        ; 31 - E + 32 * RR === 31 - byteOffset ==> 32 * RR + byteOffset === E
-        31 - E + 32 * RR        :ASSERT
+        ; E === 32 * RR + A (RCX)
+        ; E - 32 * RR === A
+        E - 32 * RR                 :ASSERT
 
-        __MSTOREX_byteOffset + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C
         
-        
+        ; RCX + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C     :JMP_EQ(%MA_LEN_FACTOR * 32 + %MA_LEFT_ALIGN, __MSTORE32_offset0_len32)
+        RCX + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C     
+        C - %MA_LEN_FACTOR * 32 - %MA_LEFT_ALIGN             :JMPZ(__MSTORE32_offset0_len32)
+
         $ => A                  :MLOAD(MEM:RR)
         $ => B                  :MLOAD(MEM:RR+1)
 
         ${memAlignWR_W0(A,mem.bytesToStore,C)} => D    :MSTORE(MEM:RR)      ; no trust calculate W0
         ${memAlignWR_W1(B,mem.bytesToStore,C)} => E    :MSTORE(MEM:RR + 1)  ; no trust calculate W1
 
-        $                       :MEM_ALIGN_WR,MLOAD(bytesToStore)
-        $ => A                  :RESTORE
-        E + C => E              :RETURN
+        $                       :MEM_ALIGN_WR,MLOAD(bytesToStore),JMP(__MSTORE32_restore)
 
-__MSTORE_offset32_zero:
-        $0{E / 32} => RR        :MSTORE(MSTOREX_Addr32)
-        32 * RR                 :MLOAD(MSTOREX_Offset)
-        C - 32                  :JMPZ(__MSTORE_aligned)        
-
-        
-        $ => A                  :MLOAD(MEM:RR)
-        0 => B,E                
-
-        C * %MA_LEN_FACTOR + %MA_LEFT_ALIGN => C
-        ${memAlignWR_W0(A,mem.bytesToStore,C)} => D    :MSTORE(MEM:RR) ; no trust calculate W0
-
-        $                       :MEM_ALIGN_WR,MLOAD(bytesToStore)
-        $ => A                  :RESTORE
-        MSTOREX_Offset + C => E :RETURN
-
-
-__MSTORE_aligned:
+__MSTORE32_offset0_len32:
         $ => C                  :MLOAD(bytesToStore)
         C                       :MSTORE(MEM:RR)
+
+__MSTORE32_restore:
         $ => A                  :RESTORE
-        MSTOREX_Offset + C => E :RETURN
+        __MSTOREX_len + E => E  :RETURN
 
         
 __MSTOREX_end:
