@@ -1,0 +1,30 @@
+VAR GLOBAL m1[10]
+VAR GLOBAL m2[16]
+VAR GLOBAL m3[2]
+VAR GLOBAL m4[10]
+
+CONST %IB_MAX_CNT_BINARY = 2000
+CONST %IB_MAX_CNT_STEPS = 4000
+CONST %IB_MAX_CNT_KECCAK_F = 1000
+
+start_index_bounds:
+        ; to verify that there are no correlations between counters
+        50 => A,E
+
+        %IB_MAX_CNT_BINARY - CNT_BINARY - 200              :JMPN(outOfCountersBinary)
+        %IB_MAX_CNT_STEPS - STEP - 500                     :JMPN(outOfCountersStep)
+        %IB_MAX_CNT_KECCAK_F - CNT_KECCAK_F - E - 330      :JMPN(outOfCountersKeccak)
+
+
+        0 => E
+        $ => A  :MLOAD(m1[E+9])
+        1 => E
+        $ => A  :MLOAD(m2[E+9])
+
+        1 => A
+outOfCountersBinary:
+        1        :ASSERT
+outOfCountersStep:
+        1        :ASSERT
+outOfCountersKeccak:
+        1        :ASSERT

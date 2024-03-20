@@ -1,0 +1,75 @@
+CONST %LEN1 = 100
+CONSTL %LEN2 = 300
+
+VAR GLOBAL a1[%LEN1]
+VAR GLOBAL a2[100]
+VAR GLOBAL b
+VAR GLOBAL c1[%LEN2]
+VAR GLOBAL c2[300]
+VAR GLOBAL d
+
+start_arrays:
+
+        1   :MSTORE(a1)
+        2   :MSTORE(b)
+        3   :MSTORE(c1)
+        4   :MSTORE(d)
+
+        13 => E
+        2 => RR
+        0                               :MLOAD(a1[23])
+        0                               :MLOAD(a1[E + 10])
+        0x1FE223                        :MSTORE(a1[23])
+        0x1FE223                        :MLOAD(a1[23])
+        0x1FE223                        :MLOAD(a1[E + 10])
+
+        ; Check values are stored and obtained correctly
+        0x1FE223 => A
+        ${mem.a1[23]}                   :ASSERT
+        ${mem.a1[E+10]}                 :ASSERT
+        ${mem.a1[E+RR+2]}               :ASSERT
+        ${getMemValue(addr.a1+E+10)}    :ASSERT
+        ${getMemValue(addr.a1+E+RR+2)}  :ASSERT
+
+        ; Check address is stored and obtained correctly
+        @a1 + 23 => A
+        ${addr.a1[E+10]}                :ASSERT
+        ${addr.a1[E+RR+2]}              :ASSERT
+        ${getMemAddr(addr.a1+E+10)}     :ASSERT
+        ${getMemAddr(addr.a1+E+RR+2)}   :ASSERT
+
+        0 => RCX,E
+loopA:
+        E + 1 => E :MSTORE(a1[E])
+        E - RCX - 100 :JMPN(loopA)
+setB:
+        E + 1 => E :MSTORE(b)
+
+        0 => RCX,E
+loopC:
+        E + 1 => E
+        E + 1000 :MSTORE(c1 + E)
+        E - RCX - 300 :JMPN(loopC)
+setD:
+        E + 1 => E :MSTORE(d)
+
+        1 => A
+        ${mem.a1} :ASSERT
+
+        1 => A
+        ${mem.a1[0]} :ASSERT
+
+        2 => A
+        ${mem.a1[1]} :ASSERT
+
+        3 => A
+        ${mem.a1[2]} :ASSERT
+
+        1001 => A
+        ${mem.c1[1]} :ASSERT
+
+        102 => A
+        ${addr.c1[1]} :ASSERT
+
+        401 => A
+        ${addr.d} :ASSERT

@@ -1,3 +1,5 @@
+INCLUDE "basics/arrays.zkasm"
 INCLUDE "basics/callreturn.zkasm"
+INCLUDE "basics/index_bounds.zkasm"
 INCLUDE "basics/jmpx.zkasm"
 INCLUDE "basics/repeat.zkasm"
