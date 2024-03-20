@@ -18,6 +18,7 @@ namespace Rom(%N);
     pol constant jmpAddr, elseAddr;
     pol constant ind, indRR;
     pol constant arithEquation;
+    pol constant condConst;
 
     pol constant line;
     pol constant operations;

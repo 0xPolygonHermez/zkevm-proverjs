@@ -1,0 +1,25 @@
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        3 => A
+        
+        A :JMP_NE(3,failAssert)
+        A+2 :JMP_EQ(5,l1,failAssert)
+l1:
+        A+3 => B :JMP_LT(6,failAssert);
+        A+3 => B :JMP_LE(6,l2);
+l2:
+
+end:
+       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
+failAssert:
+        A+1 :ASSERT
