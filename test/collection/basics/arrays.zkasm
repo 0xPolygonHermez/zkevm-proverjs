@@ -1,5 +1,6 @@
 CONST %LEN1 = 100
 CONSTL %LEN2 = 300
+CONST %LEN3 = 40
 
 VAR GLOBAL a1[%LEN1]
 VAR GLOBAL a2[100]
@@ -8,6 +9,8 @@ VAR GLOBAL c1[%LEN2]
 VAR GLOBAL c2[300]
 VAR GLOBAL d
 
+VAR CTX e[%LEN3]
+
 start_arrays:
 
         1   :MSTORE(a1)
@@ -15,6 +18,7 @@ start_arrays:
         3   :MSTORE(c1)
         4   :MSTORE(d)
 
+        ; 1] Test for globally-defined variables
         13 => E
         2 => RR
         0                               :MLOAD(a1[23])
@@ -25,23 +29,82 @@ start_arrays:
 
         ; Check values are stored and obtained correctly
         0x1FE223 => A
+        A                               :MLOAD(a1[23])
         ${mem.a1[23]}                   :ASSERT
         ${mem.a1[E+10]}                 :ASSERT
-        ${mem.a1[E+RR+2]}               :ASSERT
+        ${mem.a1[E+RR+8]}               :ASSERT
         ${getMemValue(addr.a1+E+10)}    :ASSERT
-        ${getMemValue(addr.a1+E+RR+2)}  :ASSERT
+        ${getMemValue(addr.a1+E+RR+8)}  :ASSERT
 
         ; Check address is stored and obtained correctly
         @a1 + 23 => A
         ${addr.a1[E+10]}                :ASSERT
-        ${addr.a1[E+RR+2]}              :ASSERT
+        ${addr.a1[E+RR+8]}              :ASSERT
         ${getMemAddr(addr.a1+E+10)}     :ASSERT
-        ${getMemAddr(addr.a1+E+RR+2)}   :ASSERT
+        ${getMemAddr(addr.a1+E+RR+8)}   :ASSERT
+
+        ; 2] Same tests, but for a CTX variable
+        1 => CTX
+        1   :MSTORE(e)
+        13 => E
+        2 => RR
+        0                               :MLOAD(e[23])
+        0                               :MLOAD(e[E + 10])
+        0xfe05bd2180d9n                 :MSTORE(e[23])
+        0xfe05bd2180d9n                 :MLOAD(e[23])
+        0xfe05bd2180d9n                 :MLOAD(e[E + 10])
+
+        ; Check values are stored and obtained correctly
+        0xfe05bd2180d9n => A
+        A                              :MLOAD(e[23])
+        ${mem.e[23]}                   :ASSERT
+        ${mem.e[E+10]}                 :ASSERT
+        ${mem.e[E+RR+8]}               :ASSERT
+        ${getMemValue(addr.e+E+10)}    :ASSERT
+        ${getMemValue(addr.e+E+RR+8)}  :ASSERT
+
+        ; Check address is stored and obtained correctly
+        @e + 23 + 0x40000*CTX => A
+        ${addr.e[E+10]}    :ASSERT
+        ${addr.e[E+RR+8]}              :ASSERT
+        ${getMemAddr(addr.e+E+10)}     :ASSERT
+        ${getMemAddr(addr.e+E+RR+8)}   :ASSERT
+
+        ; Change the context and repeat tests
+        2 => CTX
+        1   :MSTORE(e)
+        13 => E
+        2 => RR
+        0                               :MLOAD(e[23])
+        0                               :MLOAD(e[E + 10])
+        0xfe05bd2180d9n                 :MSTORE(e[23])
+        0xfe05bd2180d9n                 :MLOAD(e[23])
+        0xfe05bd2180d9n                 :MLOAD(e[E + 10])
+
+        ; Check values are stored and obtained correctly
+        0xfe05bd2180d9n => A
+        A                              :MLOAD(e[23])
+        ${mem.e[23]}                   :ASSERT
+        ${mem.e[E+10]}                 :ASSERT
+        ${mem.e[E+RR+8]}               :ASSERT
+        ${getMemValue(addr.e+E+10)}    :ASSERT
+        ${getMemValue(addr.e+E+RR+8)}  :ASSERT
+
+        ; Check address is stored and obtained correctly
+        @e + 23 + 0x40000*CTX => A
+        ${addr.e[E+10]}    :ASSERT
+        ${addr.e[E+RR+8]}              :ASSERT
+        ${getMemAddr(addr.e+E+10)}     :ASSERT
+        ${getMemAddr(addr.e+E+RR+8)}   :ASSERT
+
+        ; go back to the first context
+        0 => CTX
+
 
         0 => RCX,E
 loopA:
-        E + 1 => E :MSTORE(a1[E])
-        E - RCX - 100 :JMPN(loopA)
+        E + 1 => E      :MSTORE(a1[E])
+        E - RCX - 100   :JMPN(loopA)
 setB:
         E + 1 => E :MSTORE(b)
 
@@ -68,8 +131,8 @@ setD:
         1001 => A
         ${mem.c1[1]} :ASSERT
 
-        102 => A
-        ${addr.c1[1]} :ASSERT
+        1002 => A
+        ${mem.c1[2]} :ASSERT
 
-        401 => A
-        ${addr.d} :ASSERT
+        301 => A
+        ${mem.d} :ASSERT
