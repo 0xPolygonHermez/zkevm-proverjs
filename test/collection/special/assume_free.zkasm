@@ -1,5 +1,18 @@
 ; TODO
 
+VAR GLOBAL v0[8]
+VAR GLOBAL v1[12]
+VAR GLOBAL padding[7]
+VAR GLOBAL g7_8[8]
+VAR GLOBAL g15
+VAR CTX lpadding[10]
+VAR CTX l10_80[80]
+VAR CTX l90
+CONST %CS1 = 10
+CONST %CS2 = 2
+CONST %CS3 = 3
+CONSTL %CL1 = 100
+
 VAR GLOBAL assumef_var1
 VAR GLOBAL assumef_var2
 VAR GLOBAL assumef_var3
@@ -28,7 +41,191 @@ VAR GLOBAL assumef_var5
         assumef_var1 + 0x6ccb478a => A
         0xffffffffn             :ASSERT
 
-        ; 2] F_HASHP
+
+        ; 2] Syntactic Sugar for F_MLOAD, MLOAD, MSTORE
+        ; These following are equivalent
+        3 - 2 * B => A,C        :MSTORE(v1)
+        A                       :MLOAD(v1)
+        3 - 2 * B => v1,C
+        A                       :MLOAD(v1)
+
+        1 => v1,B
+        3 * $ - 2 * B => A,C    :F_MLOAD(v1)
+        1                       :MLOAD(v1)
+        3 * v1 - 2 * B => A,C
+        1                       :MLOAD(v1)
+
+        1                       :MSTORE(v1[6])
+        3 * $ - 2 * B => A,C    :F_MLOAD(v1+6)
+        1                       :MLOAD(v1[6])
+        3 * v1[6] - 2 * B => A,C
+        1                       :MLOAD(v1[6])
+
+        ; Playing with F_MLOAD and the associated syntactic sugar
+        0 => A,B
+        label1:
+        label2:
+        2 * B + 8 => A
+        2 * g15 + 8 => A
+        2 * l90 + 8 => A
+        2 * g7_8 + 8 => A
+        2 * l10_80 + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g15)
+        2 * $ + 8 => A    :F_MLOAD(l90)
+        2 * $ + 8 => A    :F_MLOAD(g7_8)
+        2 * $ + 8 => A    :F_MLOAD(l10_80)
+
+        ; ; ERROR Doing MLOAD when F_MLOAD is expected
+        ; 2 * $ + 8 => A    :MLOAD(g15)
+        ; 2 * $ + 8 => A    :MLOAD(l90)
+        ; 2 * $ + 8 => A    :MLOAD(g7_8)
+        ; 2 * $ + 8 => A    :MLOAD(l10_80)
+
+        ; ; ERROR
+        ; 2 * ${B} + 8 => A    :MLOAD(g15)
+        ; 2 * ${B} + 8 => A    :MLOAD(l90)
+        ; 2 * ${B} + 8 => A    :MLOAD(g7_8)
+        ; 2 * ${B} + 8 => A    :MLOAD(l10_80)
+
+        ; ; ERROR
+        ; 2 * ${B} + 8 => A    :MLOAD(g15+100)
+        ; 2 * ${B} + 8 => A    :MLOAD(l90+100)
+        ; 2 * ${B} + 8 => A    :MLOAD(g7_8+100)
+        ; 2 * ${B} + 8 => A    :MLOAD(l10_80+100)
+
+        ; ; ERROR
+        ; 2 * ${B} + 8 => A    :MLOAD(g15[%CL1])
+        ; 2 * ${B} + 8 => A    :MLOAD(l90[100])
+        ; 2 * ${B} + 8 => A    :MLOAD(g7_8[100])
+        ; 2 * ${B} + 8 => A    :MLOAD(l10_80[%CL1])
+
+        B => g15
+        2 * ${B} + 8 => A    :F_MLOAD(g15)
+        B => l90
+        2 * ${B} + 8 => A    :F_MLOAD(l90)
+        B => g7_8
+        2 * ${B} + 8 => A    :F_MLOAD(g7_8)
+        B => l10_80
+        2 * ${B} + 8 => A    :F_MLOAD(l10_80)
+
+        ; ; ERROR Out-of-bounds
+        ; 2 * ${B} + 8 => A    :F_MLOAD(g15+100)
+        ; 2 * ${B} + 8 => A    :F_MLOAD(l90+100)
+        ; 2 * ${B} + 8 => A    :F_MLOAD(g7_8+100)
+        ; 2 * ${B} + 8 => A    :F_MLOAD(l10_80+100)
+        ; 2 * ${B} + 8 => A    :F_MLOAD(g15[%CL1])
+        ; 2 * ${B} + 8 => A    :F_MLOAD(l90[100])
+        ; 2 * ${B} + 8 => A    :F_MLOAD(g7_8[100])
+        ; 2 * ${B} + 8 => A    :F_MLOAD(l10_80[%CL1])
+
+        ; ; ERROR out-of-bounds
+        ; 2 * g15[100] + 8 => A
+        ; 2 * l90[%CL1] + 8 => A
+        ; 2 * g7_8[100] + 8 => A
+        ; 2 * l10_80[%CL1] + 8 => A
+        ; 2 * g15[100] + 8 => A
+        ; 2 * l90[100] + 8 => A
+        ; 2 * g7_8[100] + 8 => A
+        ; 2 * l10_80[100] + 8 => A
+
+        2 * g15[E+2] + 8 => A
+        2 * l90[E+2] + 8 => A
+        2 * g7_8[E+2] + 8 => A
+        2 * l10_80[E+2] + 8 => A
+        2 * g7_8[5*E+2] + 8 => A
+        2 * l10_80[5*E+2] + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g7_8+E)
+        2 * $ + 8 => A    :F_MLOAD(l10_80+E)
+        2 * $ + 8 => A    :F_MLOAD(g7_8[5*E+2])
+        2 * $ + 8 => A    :F_MLOAD(l10_80[5*E+2])
+
+        ; ; ERROR Using MLOAD when F_MLOAD is expected
+        ; 2 * $ + 8 => A    :MLOAD(g7_8[5*E+2])
+        ; 2 * $ + 8 => A    :MLOAD(l10_80[5*E+2])
+
+        2 => E,RR
+        2 * g7_8[5*E+2-3*RR] + 8 => A
+        2 * l10_80[5*E+2-3*RR] + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g7_8[5*E+2-3*RR])
+        2 * $ + 8 => A    :F_MLOAD(l10_80[5*E+2-3*RR])
+
+        ; ; ERROR Using MLOAD when F_MLOAD is expected
+        ; 2 * $ + 8 => A    :MLOAD(g7_8[5*E+2-3*RR])
+        ; 2 * $ + 8 => A    :MLOAD(l10_80[5*E+2-3*RR])
+
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A
+        2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g7_8[5*E+%CS2-%CS3*RR])
+        2 * $ + 8 => A    :F_MLOAD(l10_80[5*E+%CS2-%CS3*RR])
+
+        ; ; ERROR Using MLOAD when F_MLOAD is expected
+        ; 2 * $ + 8 => A    :MLOAD(g7_8[5*E+%CS2-%CS3*RR])
+        ; 2 * $ + 8 => A    :MLOAD(l10_80[5*E+%CS2-%CS3*RR])
+
+        ; TODO: Make the following work
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(label2)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMP(label2)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMP(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPC(@label2+5*E-3*RR),EQ
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPC(@label2+5*E-3*RR),EQ
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPN(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPNC(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPNC(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPN(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPNC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPNC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; ; CALL
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(label2)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL(label2)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_C(@label2+5*E-3*RR),EQ
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_C(@label2+5*E-3*RR),EQ
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_N(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_N(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_Z(@label2+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_Z(@label2+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_NZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_NZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,CALL_NC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,CALL_NC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+
+        ; 3] F_HASHP
         $ => E                  :MLOAD(lastHashPId)
         E + 1 => E              :MSTORE(lastHashPId)
 	0 => HASHPOS
@@ -38,32 +235,9 @@ VAR GLOBAL assumef_var5
 	HASHPOS => A
 	1                       :ASSERT
 
-        ; 3] F_HASHK
-        ; 4] F_HASHS
+        ; 4] F_HASHK
+        ; 5] F_HASHS
 
-        ; 5] F_HASHP1,F_HASHP16,F_HASHP32
-        ; 6] F_HASHK1,F_HASHK16,F_HASHK32
-        ; 7] F_HASHS1,F_HASHS16,F_HASHS32
-
-
-
-        ; small test
-        10                      :MSTORE(assumef_var1)
-        $ + 3 => A              :F_MLOAD(assumef_var1)
-        13                      :ASSERT
-        assumef_var1 + 3 => A
-        13                      :ASSERT
-
-        ; 2^32-1 (maximum allowed value for freeinput computations)
-        0xfffffffen             :MSTORE(assumef_var1)
-        $ + 1 => A              :F_MLOAD(assumef_var1)
-        0xffffffffn             :ASSERT
-        assumef_var1 + 1 => A
-        0xffffffffn             :ASSERT
-
-        ; random value
-        0x9334b875              :MSTORE(assumef_var1)
-        $ + 0x6ccb478a => A     :F_MLOAD(assumef_var1)
-        0xffffffffn             :ASSERT
-        assumef_var1 + 0x6ccb478a => A
-        0xffffffffn             :ASSERT
+        ; 6] F_HASHP1,F_HASHP16,F_HASHP32
+        ; 7] F_HASHK1,F_HASHK16,F_HASHK32
+        ; 8] F_HASHS1,F_HASHS16,F_HASHS32
