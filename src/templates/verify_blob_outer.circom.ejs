@@ -78,7 +78,7 @@ template VerifyBlobOuter() {
 
     signal isInvalidFinalAccBatchHashData <== IsZero()(isFinalAccBatchDataZero[0] + isFinalAccBatchDataZero[1] + isFinalAccBatchDataZero[2] + isFinalAccBatchDataZero[3] + isFinalAccBatchDataZero[4] + isFinalAccBatchDataZero[5] + isFinalAccBatchDataZero[6] + isFinalAccBatchDataZero[7] - 8);
     
-    // Check if the blob is valid (which means either isInvalid equals 1 or final acc batch data equals 0)
+    // Check if the blob is valid (which means that isInvalid is zero and finalAccBatchData is different than zero)
     isValidBlob <== IsZero()(publicsBlobInner[blobInner_isInvalidPos] + isInvalidFinalAccBatchHashData);
 
     // Check that Blob and Batch are properly connected
@@ -93,7 +93,7 @@ template VerifyBlobOuter() {
 
     // Check that the L1 info tree root is correct
     signal checkL1InfoTreeRoot <== isValidBlob * isValidL1InfoTreeIndex;
-    for(var i=1; i<8; i++) {
+    for(var i=0; i<8; i++) {
         checkL1InfoTreeRoot * (publicsBatch[currentL1InfoTreeRootPos + i] - publicsBlobInner[blobInner_lastL1InfoTreeRootPos + i]) === 0;
     }
 
@@ -106,12 +106,12 @@ template VerifyBlobOuter() {
 
     //  Old roots
     for (var i=0; i<8; i++) {
-        publicsBlobOuter[blobOuter_oldStateRootPos + i] <== Mux1()([publicsBlobInner[blobInner_oldStateRootPos + i], publicsBatch[oldBatchStatePos + i]], isValid);
-
+        publicsBlobOuter[blobOuter_oldStateRootPos + i] <== publicsBlobInner[blobInner_oldStateRootPos + i];
+        publicsBlobInner[blobInner_oldStateRootPos + i] === publicsBatch[oldBatchStatePos + i];
+        
         publicsBlobOuter[blobOuter_oldBlobStateRootPos + i] <== publicsBlobInner[blobInner_oldBlobStateRootPos + i];
 
         publicsBlobOuter[blobOuter_oldBlobAccInputHashPos + i] <== publicsBlobInner[blobInner_oldBlobAccInputHashPos + i];
-
     }
 
     // Old Blob Num
