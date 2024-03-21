@@ -7,6 +7,7 @@ include "<%- verifierNames[1] %>.verifier.circom";
 include "mux1.circom";
 include "iszero.circom";
 include "bitify.circom";
+include "verify_blob_outer.circom";
 
 template LessEqThan(n) {
     signal input in[2];
@@ -33,57 +34,13 @@ template Main() {
     var rootCRecursive1Batch[4] = [<%- vks[0].join(",") %>];
     var rootCRecursive2Batch[4] = [<%- vks[1].join(",") %>];
 
-    //  Indexes Batch publics
-    var oldBatchStatePos = <%- batchPublics.oldStateRootPos %>;
-    var chainIdPos = <%- batchPublics.chainIdPos %>;
-    var forkIdPos = <%- batchPublics.forkIdPos %>;
-    var newBatchStateRootPos = <%- batchPublics.newStateRootPos %>;
-    var newBatchAccInputHashPos = <%- batchPublics.newBatchAccInputHashPos %>;
-    var currentL1InfoTreeRootPos = <%- batchPublics.currentL1InfoTreeRootPos %>;
-    var currentL1InfoTreeIndexPos = <%- batchPublics.currentL1InfoTreeIndexPos %>;
-    var newLocalExitRootPos = <%- batchPublics.newLocalExitRootPos %>;
-    var newLastTimestampPos = <%- batchPublics.newLastTimestampPos %>;
-<%  let nPublicsBatch = batchPublics.newLastTimestampPos + 1; -%>
-
-    // Indexes Blob Inner publics
-    var blobInner_oldBlobStateRootPos = <%- blobInnerPublics.oldBlobStateRootPos %>;
-    var blobInner_oldBlobAccInputHashPos = <%- blobInnerPublics.oldBlobAccInputHashPos %>;
-    var blobInner_oldBlobNumPos = <%- blobInnerPublics.oldBlobNumPos %>;
-    var blobInner_oldStateRootPos = <%- blobInnerPublics.oldStateRootPos %>;    
-    var blobInner_forkIdPos = <%- blobInnerPublics.forkIdPos %>;
-    var blobInner_newBlobStateRootPos = <%- blobInnerPublics.newBlobStateRootPos %>;
-    var blobInner_newBlobAccInputHashPos = <%- blobInnerPublics.newBlobAccInputHashPos %>;
-    var blobInner_newBlobNumPos = <%- blobInnerPublics.newBlobNumPos %>;
-    var blobInner_finalAccBatchHashDataPos = <%- blobInnerPublics.finalAccBatchHashDataPos %>;
-    var blobInner_localExitRootFromBlobPos = <%- blobInnerPublics.localExitRootFromBlobPos %>;
-    var blobInner_isInvalidPos = <%- blobInnerPublics.isInvalidPos %>;
-    var blobInner_timestampLimitPos = <%- blobInnerPublics.timestampLimitPos %>;
-    var blobInner_lastL1InfoTreeRootPos = <%- blobInnerPublics.lastL1InfoTreeRootPos %>;
-    var blobInner_lastL1InfoTreeIndexPos = <%- blobInnerPublics.lastL1InfoTreeIndexPos %>;
-<%  let nPublicsBlobInner = blobInnerPublics.lastL1InfoTreeIndexPos + 1; -%>
-
-    // Indexes Blob Outer publics
-    var blobOuter_oldStateRootPos = <%- blobOuterPublics.oldStateRootPos %>;
-    var blobOuter_oldBlobStateRootPos = <%- blobOuterPublics.oldBlobStateRootPos %>;
-    var blobOuter_oldBlobAccInputHashPos = <%- blobOuterPublics.oldBlobAccInputHashPos %>;
-    var blobOuter_oldBlobNumPos = <%- blobOuterPublics.oldBlobNumPos %>;
-    var blobOuter_chainIdPos = <%- blobOuterPublics.chainIdPos %>;
-    var blobOuter_forkIdPos = <%- blobOuterPublics.forkIdPos %>;
-    var blobOuter_newStateRootPos = <%- blobOuterPublics.newStateRootPos %>;
-    var blobOuter_newBlobStateRootPos = <%- blobOuterPublics.newBlobStateRootPos %>;
-    var blobOuter_newBlobAccInputHashPos = <%- blobOuterPublics.newBlobAccInputHashPos %>;
-    var blobOuter_newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
-    var blobOuter_newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos -%>;
-<%  let nPublicsBlobOuter = blobOuterPublics.newLocalExitRootPos + 8; -%>
-
-
-    signal input publics[<%- nPublicsBlobOuter %>];
+    signal input publics[60];
     signal input rootC[4];
 
     signal input chainId;
 
     // Batch Proof Inputs
-    signal input batch_publics[<%- nPublicsBatch %>];
+    signal input batch_publics[<%- starkInfo.nPublics %>];
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
     signal input batch_root<%- s %>[4];
@@ -115,7 +72,7 @@ template Main() {
     signal input batch_isAggregatedCircuit;
     
     // Blob Inner Proof Inputs
-    signal input blob_inner_publics[<%- nPublicsBlobInner %>];
+    signal input blob_inner_publics[<%- starkInfo2.nPublics %>];
  
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
     signal input blob_inner_root<%- s %>[4];
@@ -144,23 +101,11 @@ template Main() {
 
     signal input blob_inner_finalPol[<%- 1 << parseInt(starkInfo2.starkStruct.steps[starkInfo2.starkStruct.steps.length-1].nBits) %>][3];
 
-    // Check Invalid signal from blob inner
-    signal isInvalidBlob <== IsZero()(blob_inner_publics[blobInner_isInvalidPos] - 1);
-
-    // Check if the final acc batch hash data is invalid (i.e. is zero)
-    signal isFinalAccBatchDataZero[8];
-    for (var i=0; i<8; i++) {
-        isFinalAccBatchDataZero[i] <== IsZero()(blob_inner_publics[blobInner_finalAccBatchHashDataPos + i]);
-    }
-
-    signal isInvalidFinalAccBatchHashData <== IsZero()(isFinalAccBatchDataZero[0] + isFinalAccBatchDataZero[1] + isFinalAccBatchDataZero[2] + isFinalAccBatchDataZero[3] + isFinalAccBatchDataZero[4] + isFinalAccBatchDataZero[5] + isFinalAccBatchDataZero[6] + isFinalAccBatchDataZero[7] - 8);
-    
-    // Check if the blob is valid (which means either isInvalid equals 1 or final acc batch data equals 0)
-    signal isValidBlob <== IsZero()(isInvalidBlob + isInvalidFinalAccBatchHashData);
+    signal isValidBlob <== VerifyBlobOuter(starkInfo.nPublics, starkInfo2.nPublics, 60)(publics, batch_publics, blob_inner_publics);
 
     component vBatch = StarkVerifier();
 
-    for (var i=0; i< <%- nPublicsBatch %>; i++) {
+    for (var i=0; i< <%- starkInfo.nPublics %>; i++) {
         vBatch.publics[i] <== batch_publics[i];
     }
 
@@ -195,12 +140,12 @@ template Main() {
     vBatch.enable <== isValidBlob; // Check isValid public
 
     for (var i=0; i<4; i++) {
-        vBatch.publics[<%- nPublicsBatch %> + i] <== rootCRecursive2Batch[i];
+        vBatch.publics[<%- starkInfo.nPublics %> + i] <== rootCRecursive2Batch[i];
     }
 
     component vBlob = StarkVerifier2();
 
-    for (var i=0; i< <%- nPublicsBlobInner %>; i++) {
+    for (var i=0; i< <%- starkInfo2.nPublics %>; i++) {
         vBlob.publics[i] <== blob_inner_publics[i];
     }
 
@@ -229,73 +174,6 @@ template Main() {
 <% }                                                  -%>
     vBlob.finalPol <== blob_inner_finalPol;
 
-    // Check that Blob and Batch are properly connected
-
-    // Check that final acc batch data is the same as the new batch acc input hash
-    for(var i=0; i<8; i++) {
-        isValidBlob * (blob_inner_publics[blobInner_finalAccBatchHashDataPos + i] - batch_publics[newBatchAccInputHashPos + i]) === 0;
-    }
-
-    // Check that the L1 info tree index is correct
-    signal isValidL1InfoTreeIndex <== IsZero()(batch_publics[currentL1InfoTreeIndexPos] - blob_inner_publics[blobInner_lastL1InfoTreeIndexPos]);
-
-    // Check that the L1 info tree root is correct
-    signal checkL1InfoTreeRoot <== isValidBlob * isValidL1InfoTreeIndex;
-    for(var i=1; i<8; i++) {
-        checkL1InfoTreeRoot * (batch_publics[currentL1InfoTreeRootPos + i] - blob_inner_publics[blobInner_lastL1InfoTreeRootPos + i]) === 0;
-    }
-
-    // Check that batch new last timestamp is less than or equal than the blob timestamp limit
-    signal isValidTimestamp <== LessEqThan(62)([batch_publics[newLastTimestampPos], blob_inner_publics[blobInner_timestampLimitPos]]);
-
-    signal isValid <== IsZero()(isValidBlob + isValidL1InfoTreeIndex + isValidTimestamp - 4);
-
-    // Check publics
-
-    //  Old roots
-    signal oldStateRoot[8];
-    for (var i=0; i<8; i++) {
-        oldStateRoot[i] <== Mux1()([blob_inner_publics[blobInner_oldStateRootPos + i], batch_publics[oldBatchStatePos + i]], isValid);
-        publics[blobOuter_oldStateRootPos + i] === oldStateRoot[i];
-
-        publics[blobOuter_oldBlobStateRootPos + i] === blob_inner_publics[blobInner_oldBlobStateRootPos + i];
-
-        publics[blobOuter_oldBlobAccInputHashPos + i] === blob_inner_publics[blobInner_oldBlobAccInputHashPos + i];
-
-    }
-
-    // Old Blob Num
-    publics[blobOuter_oldBlobNumPos] === blob_inner_publics[blobInner_oldBlobNumPos];
-
-
-    // chainId 
-    signal currentChainId <== Mux1()([chainId, batch_publics[chainIdPos]], isValid);
-    publics[blobOuter_chainIdPos] === currentChainId;
-
-    // forkId
-    publics[blobOuter_forkIdPos] === blob_inner_publics[blobInner_forkIdPos];
-    blob_inner_publics[blobInner_forkIdPos] === batch_publics[forkIdPos];
-
-    // New roots
-    signal newStateRoot[8];
-    for (var i=0; i<8; i++) {
-        newStateRoot[i] <== Mux1()([blob_inner_publics[blobInner_oldStateRootPos + i], batch_publics[newBatchStateRootPos + i]], isValid);
-        publics[blobOuter_newStateRootPos + i] === newStateRoot[i];
-
-        publics[blobOuter_newBlobStateRootPos + i] === blob_inner_publics[blobInner_newBlobStateRootPos + i];
-
-        publics[blobOuter_newBlobAccInputHashPos + i] === blob_inner_publics[blobInner_newBlobAccInputHashPos + i];
-    }
-
-    // New Blob num
-    publics[blobOuter_newBlobNumPos] === blob_inner_publics[blobInner_newBlobNumPos];
-
-    // localExitRoot
-    signal localExitRoot[8];
-    for (var i=0; i < 8; i++) {
-        localExitRoot[i] <== Mux1()([blob_inner_publics[blobInner_localExitRootFromBlobPos + i], batch_publics[newLocalExitRootPos + i]], isValid);
-        publics[blobOuter_newLocalExitRootPos + i] === localExitRoot[i];
-    }
 }
 
 component main {public [publics, rootC]}= Main();

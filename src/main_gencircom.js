@@ -6,13 +6,11 @@ const ejs = require("ejs");
 const argv = require("yargs")
     .version(version)
     .usage("node main_gencircom.js -v <verification_keys.json> -s starkinfo.json -t starkstruct.json --cols=<12/18> --template=<compressor/recursive1/recursive2/recursivef>")
-    .array("v")
-    .alias("v", "verkey")
-    .array("s")
-    .alias("s", "starkinfo")
+    .array("v").alias("v", "verkey")
+    .array("s").alias("s", "starkinfo")
     .alias("b", "batch")
     .alias("e", "eip4844")
-    .alias("r", "recursivefile")
+    .array("r").alias("r", "recursivefile")
     .string("template")
     .string("verifiername")
     .string("verifiername2")
@@ -83,7 +81,8 @@ async function run() {
     if(!template) throw new Error("A template name must be provided!");
     if(!["blob_outer", "compressor", "recursive1", "recursive2", "recursivef", "final"].includes(template)) throw new Error("Invalid template name provided!");
 
-    const recursiveFile = argv.recursivefile;
+    const recursiveFiles = argv.recursivefile;
+    const recursiveFile = recursiveFiles[0];
     if(typeof (recursiveFile) !== "string") throw new Error("A recursive file must be provided!");
 
     const starkInfoVerifiers = [];
@@ -120,6 +119,19 @@ async function run() {
         if(typeof(verkeyArray[2]) !== "string") throw new Error("A third verification key file must be provided!");
         const verkey3 = JSONbig.parse(await fs.promises.readFile(verkeyArray[2].trim(), "utf8"));
         vks.push(verkey3.constRoot);
+
+        const verifyBlobOuterCircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", `verify_blob_outer.circom.ejs`), "utf8");
+        const optionsVerifyBlobOuterCircom = {
+            batchPublics: batchPublicsEip4844,
+            blobInnerPublics,
+            blobOuterPublics,
+        };
+
+        const verifyBlobOuterFile = recursiveFiles[1];
+        if(typeof (verifyBlobOuterFile) !== "string") throw new Error("A verify blob outer file must be provided!");
+
+        const verifyBlobOuterCircomFile = ejs.render(verifyBlobOuterCircomTemplate, optionsVerifyBlobOuterCircom);
+        await fs.promises.writeFile(verifyBlobOuterFile, verifyBlobOuterCircomFile, "utf8");
     }
     
     let verifierNames = [];
