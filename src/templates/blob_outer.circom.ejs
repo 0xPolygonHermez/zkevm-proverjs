@@ -86,7 +86,7 @@ template Main() {
 
     signal isValidBlob;
     signal publicsBlobOuter[<%- blobOuterPublics %>];
-    (isValidBlob, publicsBlobOuter) <== VerifyBlobOuter(<%- batchPublics %>, <%- blobInnerPublics %>, <%- blobOuterPublics %>)(batch_publics, blob_inner_publics, chainId);
+    (isValidBlob, publicsBlobOuter) <== VerifyBlobOuter()(batch_publics, blob_inner_publics, chainId);
 
     for(var i=0; i<<%- blobOuterPublics %>; i++) {
         publics[i] === publicsBlobOuter[i];

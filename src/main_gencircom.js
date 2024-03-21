@@ -63,7 +63,7 @@ async function run() {
         const verkey3 = JSONbig.parse(await fs.promises.readFile(verkeyArray[2].trim(), "utf8"));
         vks.push(verkey3.constRoot);
 
-        const verifyBlobOuterCircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", `verify_blob_outer.circom.ejs`), "utf8");
+        const verifyBlobOuterCircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "verify_blob_outer.circom.ejs"), "utf8");
         const optionsVerifyBlobOuterCircom = {
             batchPublics: batchPublicsEip4844,
             blobInnerPublics,
@@ -76,6 +76,22 @@ async function run() {
 
         const verifyBlobOuterCircomFile = ejs.render(verifyBlobOuterCircomTemplate, optionsVerifyBlobOuterCircom);
         await fs.promises.writeFile(verifyBlobOuterFile, verifyBlobOuterCircomFile, "utf8");
+    }
+
+    if(template === "final") {
+        const getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "get_sha256_inputs.circom.ejs"), "utf8");
+        const optionsGetSha256InputsCircom = {
+            batchPublics: isEip4844 ? batchPublicsEip4844 : batchPublics,
+            blobOuterPublics,
+            isEip4844,
+            isTest:false,
+        };
+
+        const getSha256InputsFile = recursiveFiles[1];
+        if(typeof (getSha256InputsFile) !== "string") throw new Error("A get sha256 inputs file must be provided!");
+
+        const getSha256InputsCircomFile = ejs.render(getSha256InputsTemplate, optionsGetSha256InputsCircom);
+        await fs.promises.writeFile(getSha256InputsFile, getSha256InputsCircomFile, "utf8");
     }
     
     let verifierNames = [];
