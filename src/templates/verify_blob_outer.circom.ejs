@@ -1,12 +1,34 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
+include "mux1.circom";
+include "iszero.circom";
+include "bitify.circom";
+
+template LessEqThan(n) {
+    signal input in[2];
+    signal output out;
+
+    assert(n <= 62);
+    
+    _ <== Num2Bits(n)(in[0]);
+    _ <== Num2Bits(n)(in[1]);
+
+    component n2b = Num2Bits(n + 1);
+    n2b.in <== in[0] + (1<<n) - (in[1] + 1);
+    out <== 1-n2b.out[n];    
+    for (var i = 0; i < n; i++){
+        _ <== n2b.out[i];
+    }
+}
+
 template VerifyBlobOuter(nPublicsBatch, nPublicsBlobInner, nPublicsBlobOuter) {
     signal input publicsBatch[nPublicsBatch];
     signal input publicsBlobInner[nPublicsBlobInner];
-    signal input publicsBlobOuter[nPublicsBlobOuter];
+    signal input chainId;
 
     signal output isValidBlob;
+    signal output publicsBlobOuter[nPublicsBlobOuter];
 
     //  Indexes Batch publics
     var oldBatchStatePos = <%- batchPublics.oldStateRootPos %>;
@@ -48,9 +70,6 @@ template VerifyBlobOuter(nPublicsBatch, nPublicsBlobInner, nPublicsBlobOuter) {
     var blobOuter_newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
     var blobOuter_newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos -%>;
 
-    // Check Invalid signal from blob inner
-    signal isInvalidBlob <== IsZero()(publicsBlobInner[blobInner_isInvalidPos] - 1);
-
     // Check if the final acc batch hash data is invalid (i.e. is zero)
     signal isFinalAccBatchDataZero[8];
     for (var i=0; i<8; i++) {
@@ -60,7 +79,7 @@ template VerifyBlobOuter(nPublicsBatch, nPublicsBlobInner, nPublicsBlobOuter) {
     signal isInvalidFinalAccBatchHashData <== IsZero()(isFinalAccBatchDataZero[0] + isFinalAccBatchDataZero[1] + isFinalAccBatchDataZero[2] + isFinalAccBatchDataZero[3] + isFinalAccBatchDataZero[4] + isFinalAccBatchDataZero[5] + isFinalAccBatchDataZero[6] + isFinalAccBatchDataZero[7] - 8);
     
     // Check if the blob is valid (which means either isInvalid equals 1 or final acc batch data equals 0)
-    isValidBlob <== IsZero()(isInvalidBlob + isInvalidFinalAccBatchHashData);
+    isValidBlob <== IsZero()(publicsBlobInner[blobInner_isInvalidPos] + isInvalidFinalAccBatchHashData);
 
     // Check that Blob and Batch are properly connected
 
@@ -81,53 +100,46 @@ template VerifyBlobOuter(nPublicsBatch, nPublicsBlobInner, nPublicsBlobOuter) {
     // Check that batch new last timestamp is less than or equal than the blob timestamp limit
     signal isValidTimestamp <== LessEqThan(62)([publicsBatch[newLastTimestampPos], publicsBlobInner[blobInner_timestampLimitPos]]);
 
-    signal isValid <== IsZero()(isValidBlob + isValidL1InfoTreeIndex + isValidTimestamp - 4);
+    signal isValid <== IsZero()(isValidBlob + isValidL1InfoTreeIndex + isValidTimestamp - 3);
 
-    // Check publics
+    // Build blob outer publics
 
     //  Old roots
-    signal oldStateRoot[8];
     for (var i=0; i<8; i++) {
-        oldStateRoot[i] <== Mux1()([publicsBlobInner[blobInner_oldStateRootPos + i], publicsBatch[oldBatchStatePos + i]], isValid);
-        publicsBlobOuter[blobOuter_oldStateRootPos + i] === oldStateRoot[i];
+        publicsBlobOuter[blobOuter_oldStateRootPos + i] <== Mux1()([publicsBlobInner[blobInner_oldStateRootPos + i], publicsBatch[oldBatchStatePos + i]], isValid);
 
-        publicsBlobOuter[blobOuter_oldBlobStateRootPos + i] === publicsBlobInner[blobInner_oldBlobStateRootPos + i];
+        publicsBlobOuter[blobOuter_oldBlobStateRootPos + i] <== publicsBlobInner[blobInner_oldBlobStateRootPos + i];
 
-        publicsBlobOuter[blobOuter_oldBlobAccInputHashPos + i] === publicsBlobInner[blobInner_oldBlobAccInputHashPos + i];
+        publicsBlobOuter[blobOuter_oldBlobAccInputHashPos + i] <== publicsBlobInner[blobInner_oldBlobAccInputHashPos + i];
 
     }
 
     // Old Blob Num
-    publicsBlobOuter[blobOuter_oldBlobNumPos] === publicsBlobInner[blobInner_oldBlobNumPos];
-
+    publicsBlobOuter[blobOuter_oldBlobNumPos] <== publicsBlobInner[blobInner_oldBlobNumPos];
 
     // chainId 
-    signal currentChainId <== Mux1()([chainId, publicsBatch[chainIdPos]], isValid);
-    publicsBlobOuter[blobOuter_chainIdPos] === currentChainId;
+    publicsBlobOuter[blobOuter_chainIdPos] <== Mux1()([chainId, publicsBatch[chainIdPos]], isValid);
 
     // forkId
-    publicsBlobOuter[blobOuter_forkIdPos] === publicsBlobInner[blobInner_forkIdPos];
+    publicsBlobOuter[blobOuter_forkIdPos] <== publicsBlobInner[blobInner_forkIdPos];
     publicsBlobInner[blobInner_forkIdPos] === publicsBatch[forkIdPos];
 
     // New roots
-    signal newStateRoot[8];
     for (var i=0; i<8; i++) {
-        newStateRoot[i] <== Mux1()([publicsBlobInner[blobInner_oldStateRootPos + i], publicsBatch[newBatchStateRootPos + i]], isValid);
-        publicsBlobOuter[blobOuter_newStateRootPos + i] === newStateRoot[i];
+        publicsBlobOuter[blobOuter_newStateRootPos + i] <== Mux1()([publicsBlobInner[blobInner_oldStateRootPos + i], publicsBatch[newBatchStateRootPos + i]], isValid);
 
-        publicsBlobOuter[blobOuter_newBlobStateRootPos + i] === publicsBlobInner[blobInner_newBlobStateRootPos + i];
+        publicsBlobOuter[blobOuter_newBlobStateRootPos + i] <== publicsBlobInner[blobInner_newBlobStateRootPos + i];
 
-        publicsBlobOuter[blobOuter_newBlobAccInputHashPos + i] === publicsBlobInner[blobInner_newBlobAccInputHashPos + i];
+        publicsBlobOuter[blobOuter_newBlobAccInputHashPos + i] <== publicsBlobInner[blobInner_newBlobAccInputHashPos + i];
+        
+        publicsBlobOuter[blobOuter_newLocalExitRootPos + i] <== Mux1()([publicsBlobInner[blobInner_localExitRootFromBlobPos + i], publicsBatch[newLocalExitRootPos + i]], isValid);
+
     }
 
     // New Blob num
-    publicsBlobOuter[blobOuter_newBlobNumPos] === publicsBlobInner[blobInner_newBlobNumPos];
-
-    // localExitRoot
-    signal localExitRoot[8];
-    for (var i=0; i < 8; i++) {
-        localExitRoot[i] <== Mux1()([publicsBlobInner[blobInner_localExitRootFromBlobPos + i], publicsBatch[newLocalExitRootPos + i]], isValid);
-        publicsBlobOuter[blobOuter_newLocalExitRootPos + i] === localExitRoot[i];
-    }
-
+    publicsBlobOuter[blobOuter_newBlobNumPos] <== publicsBlobInner[blobInner_newBlobNumPos];
 }
+
+<% if(isTest) { -%>
+component main = VerifyBlobOuter(<%- batchPublics.nPublics %>, <%- blobInnerPublics.nPublics %>, <%- blobOuterPublics.nPublics %>);
+<% } -%>
