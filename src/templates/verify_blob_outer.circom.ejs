@@ -22,13 +22,13 @@ template LessEqThan(n) {
     }
 }
 
-template VerifyBlobOuter(nPublicsBatch, nPublicsBlobInner, nPublicsBlobOuter) {
-    signal input publicsBatch[nPublicsBatch];
-    signal input publicsBlobInner[nPublicsBlobInner];
+template VerifyBlobOuter() {
+    signal input publicsBatch[<%- batchPublics.nPublics %>];
+    signal input publicsBlobInner[<%- blobInnerPublics.nPublics %>];
     signal input chainId;
 
     signal output isValidBlob;
-    signal output publicsBlobOuter[nPublicsBlobOuter];
+    signal output publicsBlobOuter[<%- blobOuterPublics.nPublics %>];
 
     //  Indexes Batch publics
     var oldBatchStatePos = <%- batchPublics.oldStateRootPos %>;
@@ -141,5 +141,5 @@ template VerifyBlobOuter(nPublicsBatch, nPublicsBlobInner, nPublicsBlobOuter) {
 }
 
 <% if(isTest) { -%>
-component main = VerifyBlobOuter(<%- batchPublics.nPublics %>, <%- blobInnerPublics.nPublics %>, <%- blobOuterPublics.nPublics %>);
+component main = VerifyBlobOuter();
 <% } -%>
