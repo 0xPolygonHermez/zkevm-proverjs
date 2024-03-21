@@ -169,6 +169,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         saved:{},
         batchHashData,
         blobL2HashData,
+        config,
     }
 
     if (config.stats) {
