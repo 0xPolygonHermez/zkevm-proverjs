@@ -1054,10 +1054,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inFREE0[i] = Fr.zero;
         }
 
-        if (Fr.isZero(op0)) {
+        const op0condConst = Fr.e(op0 + BigInt(l.condConst ?? 0n));
+        if (Fr.isZero(op0condConst)) {
             pols.op0Inv[i] = 0n;
         } else {
-            pols.op0Inv[i] = Fr.inv(op0);
+            pols.op0Inv[i] = Fr.inv(op0condConst);
         }
 
 //////////
@@ -2433,11 +2434,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.free0IsByte[i] = 0n;
         }
 
+        if (l.condConst) {
+            pols.condConst[i] = BigInt(l.condConst);
+        } else {
+            pols.condConst[i] = 0n;
+        }
+
         if (l.JMPN) {
             if (l.free0IsByte) {
                 throw new Error(`JMPN and F_BYTE must not be used in same row ${sourceRef}`);
             }
-            const o = Fr.toObject(op0);
+            const o = Fr.e(Fr.toObject(op0) + (l.condConst ? BigInt(l.condConst) : 0n));
             // Calculate reserved counters
             // ctx.helpers.CounterControls.checkLabel(l.jmpAddrLabel, o);
             const counterControl = counterControls[l.jmpAddrLabel] ?? false;
@@ -2458,6 +2465,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.isNeg[i]=0n;
                 pols.zkPC[nexti] = elseAddr;
             } else {
+                console.log([o,FrLast32Positive]);
                 throw new Error(`On JMPN value ${o} not a valid 32bit value ${sourceRef}`);
             }
             pols.lJmpnCondValue[i] = jmpnCondValue & 0x7FFFFFn;
@@ -2483,16 +2491,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 pols.JMPC[i] = 1n;
             } else if (l.JMPZ) {
-                if (Fr.isZero(op0)) {
+                const op0cond = Fr.e(Fr.toObject(op0) + (l.condConst ? BigInt(l.condConst) : 0n));
+                if (Fr.isZero(op0cond)) {
                     pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 } else {
                     pols.zkPC[nexti] = elseAddr;
                 }
                 pols.JMPZ[i] = 1n;
-                const o = Fr.toObject(op0);
-                if (o > 0 && o >= FrFirst32Negative) {
-                    // console.log(`WARNING: JMPZ with negative value ${sourceRef}`);
-                }
             } else if (l.JMP) {
                 pols.zkPC[nexti] = BigInt(finalJmpAddr);
                 pols.JMP[i] = 1n;

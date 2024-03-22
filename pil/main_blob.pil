@@ -240,8 +240,9 @@ namespace Main(%N);
 
     /////// isNeg
 
+    pol commit condConst;
     pol commit lJmpnCondValue;
-    pol jmpnCondValue = JMPN*(isNeg*2**32 + op0);
+    pol jmpnCondValue = JMPN*(isNeg*2**32 + op0 + condConst);
     isNeg * (1 - isNeg) = 0;
 
     lJmpnCondValue in Global.STEP;
@@ -276,8 +277,8 @@ namespace Main(%N);
 
     /// op0 check zero
     pol commit op0Inv;
-    pol op0IsZero = 1 - op0*op0Inv;
-    op0IsZero*op0 = 0;
+    pol op0IsZero = 1 - (op0 + condConst) *op0Inv;
+    op0IsZero*(op0 + condConst) = 0;
 
 ///////////
 // Calculate New State
@@ -630,13 +631,13 @@ namespace Main(%N);
     (1 - hashSLen) * hashSLen = 0;
 
     {
-        CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
+        CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7, condConst,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR, arithEquation, 
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID, hashBytes, hashOffset,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
-        Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
+        Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7, Rom.condConst,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR, Rom.arithEquation, 
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID, Rom.hashBytes, Rom.hashOffset,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
