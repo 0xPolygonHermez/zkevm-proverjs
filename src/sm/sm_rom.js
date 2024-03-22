@@ -86,7 +86,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
         /*
             code generated with:
-            node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" -b -B -e -p "rom.program[pIndex]."
+            node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" -B -e -p "rom.program[pIndex]."
         */
 
         pols.operations[i] =

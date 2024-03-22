@@ -61,7 +61,7 @@ namespace Main(%N);
     pol commit mOp, mWR;
     pol commit sWR, sRD;
     pol commit arith, arithEquation, arithSame12, arithUseE;
-    pol commit memAlignRD, memAlignWR, memAlignWR8;
+    pol commit memAlignRD, memAlignWR;
     pol commit hashK, hashKLen, hashKDigest;
     pol commit hashP, hashPLen, hashPDigest;
     pol commit hashS, hashSLen, hashSDigest;
@@ -594,7 +594,6 @@ namespace Main(%N);
     (1 - JMPN) * JMPN = 0;
     (1 - memAlignRD) * memAlignRD = 0;
     (1 - memAlignWR) * memAlignWR = 0;
-    (1 - memAlignWR8) * memAlignWR8 = 0;
     (1 - mOp) * mOp = 0;
     (1 - mWR) * mWR = 0;
     (1 - repeat) * repeat = 0;
@@ -1032,34 +1031,11 @@ namespace Main(%N);
 
 
 /////////
-// MemAlign Lookups
+// MemAlign
 /////////
 
-    // memAlign RD
-    memAlignRD {
-        0, 0,
-        A0, A1, A2, A3,
-        A4, A5, A6, A7,
-        B0, B1, B2, B3,
-        B4, B5, B6, B7,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7,
-        C0
-    } is
-    MemAlign.resultRd {
-        MemAlign.wr256,
-        MemAlign.wr8,
-        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
-        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
-        MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
-        MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
-        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
-        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset
-    };
-
-    memAlignWR {
-        1, 0,
+    memAlignRD + memAlignWR {
+        memAlignWR,
         A0, A1, A2, A3,
         A4, A5, A6, A7,
         B0, B1, B2, B3,
@@ -1067,48 +1043,25 @@ namespace Main(%N);
         op0, op1, op2, op3,
         op4, op5, op6, op7,
         C0,
-        D0, D1, D2, D3,
-        D4, D5, D6, D7,
-        E0, E1, E2, E3,
-        E4, E5, E6, E7
+        memAlignWR * D0, memAlignWR * D1, memAlignWR * D2, memAlignWR * D3,
+        memAlignWR * D4, memAlignWR * D5, memAlignWR * D6, memAlignWR * D7,
+        memAlignWR * E0, memAlignWR * E1, memAlignWR * E2, memAlignWR * E3,
+        memAlignWR * E4, memAlignWR * E5, memAlignWR * E6, memAlignWR * E7
     } is
-    MemAlign.resultWr256 {
-        MemAlign.wr256,
-        MemAlign.wr8,
+    MemAlign.result {
+        MemAlign.wr,
         MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
         MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
         MemAlign.m1[0], MemAlign.m1[1], MemAlign.m1[2], MemAlign.m1[3],
         MemAlign.m1[4], MemAlign.m1[5], MemAlign.m1[6], MemAlign.m1[7],
         MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
         MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset,
-        MemAlign.w0[0], MemAlign.w0[1], MemAlign.w0[2], MemAlign.w0[3],
-        MemAlign.w0[4], MemAlign.w0[5], MemAlign.w0[6], MemAlign.w0[7],
-        MemAlign.w1[0], MemAlign.w1[1], MemAlign.w1[2], MemAlign.w1[3],
-        MemAlign.w1[4], MemAlign.w1[5], MemAlign.w1[6], MemAlign.w1[7]
+        MemAlign.mode, 
+        MemAlign.wr * MemAlign.w0[0], MemAlign.wr * MemAlign.w0[1], MemAlign.wr * MemAlign.w0[2], MemAlign.wr * MemAlign.w0[3],
+        MemAlign.wr * MemAlign.w0[4], MemAlign.wr * MemAlign.w0[5], MemAlign.wr * MemAlign.w0[6], MemAlign.wr * MemAlign.w0[7],
+        MemAlign.wr * MemAlign.w1[0], MemAlign.wr * MemAlign.w1[1], MemAlign.wr * MemAlign.w1[2], MemAlign.wr * MemAlign.w1[3],
+        MemAlign.wr * MemAlign.w1[4], MemAlign.wr * MemAlign.w1[5], MemAlign.wr * MemAlign.w1[6], MemAlign.wr * MemAlign.w1[7]
     };
 
-    memAlignWR8 {
-        0, 1,
-        A0, A1, A2, A3,
-        A4, A5, A6, A7,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7,
-        C0,
-        D0, D1, D2, D3,
-        D4, D5, D6, D7
-    } is
-    MemAlign.resultWr8 {
-        MemAlign.wr256,
-        MemAlign.wr8,
-        MemAlign.m0[0], MemAlign.m0[1], MemAlign.m0[2], MemAlign.m0[3],
-        MemAlign.m0[4], MemAlign.m0[5], MemAlign.m0[6], MemAlign.m0[7],
-        MemAlign.v[0], MemAlign.v[1], MemAlign.v[2], MemAlign.v[3],
-        MemAlign.v[4], MemAlign.v[5], MemAlign.v[6], MemAlign.v[7],
-        MemAlign.offset,
-        MemAlign.w0[0], MemAlign.w0[1], MemAlign.w0[2], MemAlign.w0[3],
-        MemAlign.w0[4], MemAlign.w0[5], MemAlign.w0[6], MemAlign.w0[7]
-    };
-
-    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR + memAlignWR8;
+    cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR;
 

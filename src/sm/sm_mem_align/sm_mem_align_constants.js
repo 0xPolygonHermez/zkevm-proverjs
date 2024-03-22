@@ -1,0 +1,48 @@
+const OFFSET_BITS = 7; // 0-63
+const OFFSET_MAX = 64;
+const OFFSET_MASK = (2**OFFSET_BITS) - 1;
+const LEN_FACTOR = 2**OFFSET_BITS;
+const LEN_BITS = 6; // 0-32 (33 values)
+const LEN_MASK = ((2**LEN_BITS) - 1) << OFFSET_BITS;
+const LEN_MAX = 32;
+const ALIGN_FACTOR = 2**(OFFSET_BITS + LEN_BITS);
+const LEFT_ALIGN_MASK = ALIGN_FACTOR;
+const ENDIAN_FACTOR = 2**(OFFSET_BITS + LEN_BITS+1);
+const LITTLE_ENDIAN_MASK = ENDIAN_FACTOR;
+const FORMAT_SHL_BITS = OFFSET_BITS + LEN_BITS;
+const FORMAT_MASK = 0x03 << FORMAT_SHL_BITS;
+const RIGHT_BE = 0b00; // default
+const LEFT_BE = 0b01;
+const RIGHT_LE = 0b10;
+const LEFT_LE = 0b11;
+
+const MODE_TO_OFFSET = x => x & OFFSET_MASK;
+const MODE_TO_LEN = x => ((x & LEN_MASK) >> OFFSET_BITS);
+const MODE_TO_LEFT_ALIGN = x => (x & LEFT_ALIGN_MASK) ? true : false;
+const MODE_TO_LITTLE_ENDIAN = x => (x & LITTLE_ENDIAN_MASK) ? true : false;
+const MODE_TO_FORMAT = x => ((x & FORMAT_MASK) >> FORMAT_SHL_BITS);
+ 
+module.exports = {
+    OFFSET_BITS,
+    OFFSET_MAX,
+    OFFSET_MASK,
+    LEN_FACTOR,
+    LEN_BITS,
+    LEN_MASK,
+    LEN_MAX,
+    ALIGN_FACTOR,
+    LEFT_ALIGN_MASK,
+    ENDIAN_FACTOR,
+    LITTLE_ENDIAN_MASK,
+    FORMAT_SHL_BITS,
+    FORMAT_MASK,
+    RIGHT_BE,
+    LEFT_BE,
+    RIGHT_LE,
+    LEFT_LE,
+    MODE_TO_OFFSET,
+    MODE_TO_LEN,
+    MODE_TO_LEFT_ALIGN,
+    MODE_TO_LITTLE_ENDIAN,
+    MODE_TO_FORMAT
+}
