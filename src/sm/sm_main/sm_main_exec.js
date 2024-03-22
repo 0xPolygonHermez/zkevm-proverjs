@@ -884,17 +884,23 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         fi = scalar2fea(Fr, s);
                         nHits++;
                     }
-                    if (l.hashSDigest == 1) {
-                        if (typeof ctx.hashS[hashAddr] === "undefined") {
-                            throw new Error(`digest sha256(${hashAddr}) not defined ${sourceRef}`);
-                        }
-                        if (typeof ctx.hashS[hashAddr].digest === "undefined") {
-                            throw new Error(`digest sha256(${hashAddr}) not calculated. Call hashSlen to finish digest ${sourceRef}`);
-                        }
-                        fi = scalar2fea(Fr, ctx.hashS[hashAddr].digest);
-                        nHits++;
+                    fi = scalar2fea(Fr, s);
+                    nHits++;
+                }
+                if (l.hashKLen) {
+                    fi = scalar2fea(Fr, typeof ctx.hashK[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashK[hashAddr].data.length));
+                    nHits++;
+                }
+                if (l.hashSDigest == 1) {
+                    if (typeof ctx.hashS[hashAddr] === "undefined") {
+                        throw new Error(`digest sha256(${hashAddr}) not defined ${sourceRef}`);
                     }
                 }
+                if (l.hashSLen) {
+                    fi = scalar2fea(Fr, typeof ctx.hashS[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashS[hashAddr].data.length));
+                    nHits++;
+                }
+
                 if (l.hashP) {
                     if (typeof ctx.hashP[hashAddr] === "undefined") ctx.hashP[hashAddr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
@@ -918,6 +924,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         throw new Error(`digest(${hashAddr}) not calculated. Call hashPlen to finish digest ${sourceRef}`);
                     }
                     fi = scalar2fea(Fr, ctx.hashP[hashAddr].digest);
+                    nHits++;
+                }
+                if (l.hashPLen) {
+                    fi = scalar2fea(Fr, typeof ctx.hashP[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashP[hashAddr].data.length));
                     nHits++;
                 }
                 if (l.bin) {
@@ -3024,8 +3034,6 @@ function eval_functionCall(ctx, tag) {
         return eval_getL1InfoBlockHash(ctx, tag);
     } if (tag.funcName == 'getL1InfoMinTimestamp') {
         return eval_getL1InfoMinTimestamp(ctx, tag);
-    } else if (tag.funcName == "getTxsLen") {
-        return eval_getTxsLen(ctx, tag);
     } else if (tag.funcName == "getSmtProofPreviousIndex") {
         return eval_getSmtProofPreviousIndex(ctx, tag);
     } else if (tag.funcName == "eventLog") {
@@ -3091,11 +3099,6 @@ function eval_functionCall(ctx, tag) {
 function eval_getSequencerAddr(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
     return scalar2fea(ctx.Fr, Scalar.e(ctx.input.sequencerAddr));
-}
-
-function eval_getTxsLen(ctx, tag) {
-    if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    return [ctx.Fr.e((ctx.input.batchL2Data.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
 }
 
 function eval_getSmtProofPreviousIndex(ctx, tag) {
