@@ -2846,6 +2846,8 @@ function evalCommand(ctx, tag) {
         return eval_bit_operation(ctx, tag);
     } else if (tag.op == "if") {
         return eval_if(ctx, tag);
+    } else if (tag.op == "getMemAddr") {
+        return eval_getMemAddr(ctx, tag);
     } else if (tag.op == "getMemValue") {
         return eval_getMemValue(ctx, tag);
     } else {
@@ -3023,18 +3025,24 @@ function eval_logical_operation(ctx, tag)
     throw new Error(`logical operation ${tag.op} not defined ${ctx.sourceRef}`);
 }
 
-function eval_getMemValue(ctx, tag) {
-    let addr = tag.offset;
+function eval_getMemAddr(ctx, tag) {
+    let addr = BigInt(evalCommand(ctx,tag.params[0]));
 
     if (tag.useCTX === 1) {
-        addr += Number(ctx.CTX) * 0x40000;
+        addr += BigInt(ctx.CTX) * 0x40000n;
     }
+
+    return addr;
+}
+
+function eval_getMemValue(ctx, tag) {
+    const offset = eval_getMemAddr(ctx, tag);
 
     if (ctx.fullFe) {
-        return fea2scalar(ctx.Fr, ctx.mem[addr]);
+        return fea2scalar(ctx.Fr, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
     }
 
-    return safeFea2scalar(ctx.Fr, ctx.mem[addr]);
+    return safeFea2scalar(ctx.Fr, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
 }
 
 function eval_functionCall(ctx, tag) {
@@ -3111,6 +3119,10 @@ function eval_functionCall(ctx, tag) {
         return eval_ARITH_BN254_ADDFP2(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_SUBFP2") {
         return eval_ARITH_BN254_SUBFP2(ctx, tag);
+    } else if (tag.funcName == "getMemAddr") {
+        return eval_getMemAddr(ctx, tag);
+    } else if (tag.funcName == "getMemValue") {
+        return eval_getMemValue(ctx, tag);
     }
     throw new Error(`function ${tag.funcName} not defined ${ctx.sourceRef}`);
 }
