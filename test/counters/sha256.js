@@ -5,11 +5,13 @@ const path = require("path");
 
 const {verifyZkasm} = require("../verify_zkasm");
 
-describe("Test MemAlign Counter", async function () {
+describe("Test SHA256 Counter", async function () {
     this.timeout(10000000000);
 
-    it("Verify MemAlign Zkasm Test", async () => {
+    it("Verify SHA256 Zkasm Test", async () => {
         const zkAsmCode = `
+            VAR GLOBAL lastHashSId
+
             start:
                 STEP => A
                 0 :ASSERT
@@ -23,8 +25,10 @@ describe("Test MemAlign Counter", async function () {
                 CNT_POSEIDON_G  :ASSERT
                 CNT_PADDING_PG  :ASSERT
 
+                -1          :MSTORE(lastHashSId)
+
             INCLUDE "test/collection/counters/utils.zkasm"
-            INCLUDE "test/collection/counters/mem_align.zkasm"
+            INCLUDE "test/collection/counters/sha256.zkasm"
 
             end:
                 0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
@@ -37,19 +41,20 @@ describe("Test MemAlign Counter", async function () {
 
         await verifyZkasm(zkAsmCode, true,
                 {
-                    defines: {N: 2 ** 23},
-                    namespaces: ['Global', 'Main', 'Rom', 'MemAlign'],
-                    verbose: true,
-                    color: true,
-                    disableUnusedError: true
+                  defines: {N: 2 ** 18},
+                  namespaces: ['Global', 'Main', 'Rom', 'PaddingSha256' ,'Sha256F', 'PaddingSha256Bit', 'Bits2FieldSha256'],
+                  verbose: true,
+                  color: true,
+                  disableUnusedError: true
                 },
-                {
-                    romFilename: "tmp/rom.json",
-                    constFilename: "tmp/constFile.bin",
-                    commitFilename: "tmp/commitFile.bin",
-                    pilJsonFilename: "tmp/main.pil.json",
-                    externalPilVerification: true
-                },
+                {},
+                // TODO: Pass a proper main config
+                // {
+                //   commitFilename: '/mnt/data/zkronos73/build/test/commit.bin',
+                //   constFilename: '/mnt/data/zkronos73/build/test/const.bin',
+                //   pilJsonFilename: '/mnt/data/zkronos73/build/test/mail.pil.json',
+                //   externalPilVerification: true
+                // }
                 {
                     compileFromString: true
                 });

@@ -5,10 +5,10 @@ const path = require("path");
 
 const {verifyZkasm} = require("../verify_zkasm");
 
-describe("Test MemAlign Counter", async function () {
+describe("Test Repeat Instruction", async function () {
     this.timeout(10000000000);
 
-    it("Verify MemAlign Zkasm Test", async () => {
+    it("Test Repeat Instruction (basic test)", async () => {
         const zkAsmCode = `
             start:
                 STEP => A
@@ -23,8 +23,7 @@ describe("Test MemAlign Counter", async function () {
                 CNT_POSEIDON_G  :ASSERT
                 CNT_PADDING_PG  :ASSERT
 
-            INCLUDE "test/collection/counters/utils.zkasm"
-            INCLUDE "test/collection/counters/mem_align.zkasm"
+            INCLUDE "test/collection/basics/repeat.zkasm"
 
             end:
                 0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
@@ -37,19 +36,13 @@ describe("Test MemAlign Counter", async function () {
 
         await verifyZkasm(zkAsmCode, true,
                 {
-                    defines: {N: 2 ** 23},
-                    namespaces: ['Global', 'Main', 'Rom', 'MemAlign'],
+                    defines: {N: 2 ** 16},
+                    namespaces: ['Global', 'Main', 'Rom'],
                     verbose: true,
                     color: true,
                     disableUnusedError: true
                 },
-                {
-                    romFilename: "tmp/rom.json",
-                    constFilename: "tmp/constFile.bin",
-                    commitFilename: "tmp/commitFile.bin",
-                    pilJsonFilename: "tmp/main.pil.json",
-                    externalPilVerification: true
-                },
+                {},
                 {
                     compileFromString: true
                 });

@@ -1,0 +1,7 @@
+INCLUDE "arith/bn254_addfp2.zkasm"
+INCLUDE "arith/bn254_mulfp2.zkasm"
+INCLUDE "arith/bn254_subfp2.zkasm"
+INCLUDE "arith/ecadd_different.zkasm"
+INCLUDE "arith/ecadd_same.zkasm"
+INCLUDE "arith/modular.zkasm"
+INCLUDE "arith/standard.zkasm"

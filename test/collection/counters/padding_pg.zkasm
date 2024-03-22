@@ -1,5 +1,10 @@
+
+; NOTE: Very similar to poseidon.zkasm, but with the storage instructions removed, so tests only involve the poseidon-related SM
+
+    ; Save the initial counters
     :CALL(SaveCounters)
 
+    ; 1] TEST 56 bytes => counter increase 2 => total = 3
     $ => E              :MLOAD(lastHashPId)
     E + 1 => E          :MSTORE(lastHashPId)
 
@@ -18,7 +23,7 @@
     CNT_PADDING_PG - 1 :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 1     :MLOAD(v_cnt_binary)
 
-    ; TEST 56 bytes => counter increase 2 => total = 3
+    ; 2] TEST 56 bytes => counter increase 2 => total = 3
 
     E + 1 => E          :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -36,7 +41,7 @@
     CNT_PADDING_PG - 3 :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 2     :MLOAD(v_cnt_binary)
 
-    ; TEST 57 bytes => counter increase 2 => total = 5
+    ; 3] TEST 57 bytes => counter increase 2 => total = 5
 
     E + 1 => E          :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -54,7 +59,7 @@
     CNT_PADDING_PG - 5 :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 3     :MLOAD(v_cnt_binary)
 
-    ; TEST 111 bytes => counter increase 2 => total = 7
+    ; 4] TEST 111 bytes => counter increase 2 => total = 7
 
     E + 1 => E          :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -75,7 +80,7 @@
     CNT_PADDING_PG - 7  :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 4      :MLOAD(v_cnt_binary)
 
-    ; TEST 112 bytes => counter increase 3 => total = 10
+    ; 5] TEST 112 bytes => counter increase 3 => total = 10
 
     E + 1 => E          :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -96,7 +101,7 @@
     CNT_PADDING_PG - 10 :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 5      :MLOAD(v_cnt_binary)
 
-    ; TEST 113 bytes => counter increase 3 => total = 13
+    ; 6] TEST 113 bytes => counter increase 3 => total = 13
 
     E + 1 => E          :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -117,7 +122,7 @@
     CNT_PADDING_PG - 13 :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 6      :MLOAD(v_cnt_binary)
 
-    ; TEST 114 bytes => counter increase 3 => total = 16
+    ; 7] TEST 114 bytes => counter increase 3 => total = 16
 
     E + 1 => E          :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -133,8 +138,6 @@
 
     114            :HASHPLEN(E)
 
-    ${dump(E)}
-
     ; if HASHPDIGEST wasn't called, counter not increase
     ; $ => A         :HASHPDIGEST(E)
 
@@ -142,10 +145,8 @@
     CNT_PADDING_PG - 13 :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 6      :MLOAD(v_cnt_binary)
 
-    ; to verify that there are no correlations between counters
-
+    ; Check the other counters have not changed
     CNT_ARITH       :MLOAD(v_cnt_arith)
     CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
     CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
-
-CountersPaddingPgEnd:

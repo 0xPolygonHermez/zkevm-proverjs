@@ -16,6 +16,7 @@ CONST %_1101000 = 0  ; 1101000....0010 #0
 CONST %_1101010 = 2  ; 1101010....1001 #2
 CONST %_1111001 = 11 ; 1111001....0110 #11
 
+    ; Save the initial counters
     :CALL(SaveCounters)
 
     0 => SR
@@ -84,9 +85,8 @@ CONST %_1111001 = 11 ; 1111001....0110 #11
     CNT_POSEIDON_G - 73     :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 6          :MLOAD(v_cnt_binary)
 
-    ; to verify that there are no correlations between counters
-
-    CNT_ARITH               :MLOAD(v_cnt_arith)
-    CNT_KECCAK_F            :MLOAD(v_cnt_keccak_f)
-    CNT_MEM_ALIGN           :MLOAD(v_cnt_mem_align)
-    CNT_PADDING_PG          :MLOAD(v_cnt_padding_pg)
+    ; Check the other counters have not changed
+    CNT_ARITH       :MLOAD(v_cnt_arith)
+    CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
+    CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)

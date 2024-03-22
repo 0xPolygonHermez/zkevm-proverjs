@@ -1,5 +1,0 @@
-    $ => E              :MLOAD(lastHashSId)
-    E + 1 => E          :MSTORE(lastHashSId)
-
-    0            :HASHSLEN(E)
-    $            :HASHSDIGEST(E)

@@ -1,5 +1,5 @@
+    ; Save the initial counters
     :CALL(SaveCounters)
-
 
     0 => SR
 
@@ -146,9 +146,8 @@
     CNT_POSEIDON_G - 121    :MLOAD(v_cnt_poseidon_g)
     CNT_BINARY - 8          :MLOAD(v_cnt_binary)
 
-    ; to verify that there are no correlations between counters
-
-    CNT_ARITH               :MLOAD(v_cnt_arith)
-    CNT_KECCAK_F            :MLOAD(v_cnt_keccak_f)
-    CNT_MEM_ALIGN           :MLOAD(v_cnt_mem_align)
-    CNT_PADDING_PG          :MLOAD(v_cnt_padding_pg)
+    ; Check the other counters have not changed
+    CNT_ARITH       :MLOAD(v_cnt_arith)
+    CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
+    CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
