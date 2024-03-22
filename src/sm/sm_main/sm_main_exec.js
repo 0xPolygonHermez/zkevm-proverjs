@@ -82,10 +82,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const blob = config.blob ? true : false;
 
     // const defaultHelpers = ['arith', 'batch', 'debug', 'helper', 'mem_align', 'operations', 'save_restore', 'binary', 'command', 'counter_controls'];
-    const defaultHelpers = [...(blob ? ['main_blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
+    const defaultHelpers = [...(blob ? ['main_blob', 'ft-blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
     const customHelpers = (config && config.helpers) ? (Array.isArray(config.helpers) ? config.helpers : [config.helpers]) : [];
     const helpers = [...defaultHelpers, ...customHelpers ];
-    
+
     const defaultHelperPaths = [__dirname  + '/helpers'];
     const customHelperPaths = (config && config.helperPaths) ? (Array.isArray(config.helperPaths) ? config.helperPaths : [config.helperPaths]) : [];
     const helperPaths =  [...defaultHelperPaths, ...customHelperPaths ];
@@ -171,7 +171,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         blobL2HashData,
         config,
     }
-
+    
     if (config.stats) {
         metadata.stats = {
             trace:[],
@@ -3177,9 +3177,11 @@ function eval_getForcedBlockHashL1(ctx, tag) {
 
 function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    if (fullTracer){
+    if (fullTracer && !ctx.config.blob) {
         // handle full-tracer events
         fullTracer.handleEvent(ctx, tag);
+    } else if (fullTracer && ctx.config.blob) {
+        ctx.helpers.FtBlob.handleEvent(ctx,tag)
     }
     if (debug && tag.params[0].varName == 'onError') {
         nameRomErrors.push(tag.params[1].varName);
