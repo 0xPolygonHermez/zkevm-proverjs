@@ -609,6 +609,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 addrRel += fe2n(Fr, Fr.mul(Fr.e(l.indRR), ctx.RR), ctx);
             }
             addr = 0;
+            if (typeof l.maxAddrRel !== 'undefined' && addrRel > l.maxAddrRel) {
+                throw new Error(`Address out of bounds accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
+            }   
+            if (typeof l.minAddrRel !== 'undefined' && addrRel < l.minAddrRel) {
+                throw new Error(`Address out of bounds (negative index) accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
+            }   
             if (l.offset) addr += l.offset;
             if (l.isStack == 1) addr += Number(ctx.SP);
             if (!skipAddrRelControl) {
