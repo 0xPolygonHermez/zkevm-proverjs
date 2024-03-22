@@ -190,7 +190,7 @@
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
-    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#feature/multipleVerifier",
+    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#feature/new_parser",
     "pilcom": "0.0.24",
     "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
