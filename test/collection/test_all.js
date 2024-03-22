@@ -1,7 +1,7 @@
 const path = require("path");
 const {verifyZkasm} = require("../verify_zkasm");
 
-describe("Collection tests", async function () {
+describe("All collection tests", async function () {
     this.timeout(10000000);
 
     it("Verifies the PIL associated with the collection zkasm", async () => {

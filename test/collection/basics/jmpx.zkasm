@@ -1,42 +1,42 @@
-VAR GLOBAL OpJmpx_V1;VAR
+VAR GLOBAL Jmpx_V1;VAR
 
     STEP => RR
 
 ; ============== JMP Tests ==================
 
-; Direct Jump
+; Direct JMP
 
     3 => A
-            :JMP(OpJmpx_DirectJmpOk)
+            :JMP(Jmpx_DirectJmpOk)
     0       :ASSERT ; FAIL
-OpJmpx_DirectJmpOk:
+Jmpx_DirectJmpOk:
     3       :ASSERT ; OK
 
-; Jump with static indirection
+; JMP with static indirection
 
     3 => A
-            :JMP(@OpJmpx_staticIndJmpOk + 2)
+            :JMP(@Jmpx_staticIndJmpOk + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpOk:
+Jmpx_staticIndJmpOk:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
-; Jump with dynamic indirection
+; JMP with dynamic indirection
 
     3 => A,RR
-            :JMP(@OpJmpx_dynIndJmpOk1 + RR)
+            :JMP(@Jmpx_dynIndJmpOk1 + RR)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpOk1:
+Jmpx_dynIndJmpOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,E
-            :JMP(@OpJmpx_dynIndJmpOk2 + E)
+            :JMP(@Jmpx_dynIndJmpOk2 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpOk2:
+Jmpx_dynIndJmpOk2:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -44,9 +44,9 @@ OpJmpx_dynIndJmpOk2:
 
     1 => E
     3 => A
-            :JMP(@OpJmpx_dynIndJmpOk3 + 2*E)
+            :JMP(@Jmpx_dynIndJmpOk3 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpOk3:
+Jmpx_dynIndJmpOk3:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
@@ -56,24 +56,24 @@ OpJmpx_dynIndJmpOk3:
 
     12 => A
     12      :ASSERT ; OK
-    365423847278443895435n :MSTORE(OpJmpx_V1),JMP(OpJmpx_JmpWithMStoreOk)
+    365423847278443895435n :MSTORE(Jmpx_V1),JMP(Jmpx_JmpWithMStoreOk)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpWithMStoreOk:
+Jmpx_JmpWithMStoreOk:
 
     12      :ASSERT ; OK
-    $ => A  :MLOAD(OpJmpx_V1)
+    $ => A  :MLOAD(Jmpx_V1)
     365423847278443895435n :ASSERT
 
     13 => A
     13      :ASSERT ; OK
-    99363847278443895435n :MSTORE(OpJmpx_V1),JMP(OpJmpx_JmpWithMStore2Ok)
+    99363847278443895435n :MSTORE(Jmpx_V1),JMP(Jmpx_JmpWithMStore2Ok)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpWithMStore2Ok:
+Jmpx_JmpWithMStore2Ok:
 
     13      :ASSERT ; OK
-    $ => A  :MLOAD(OpJmpx_V1)
+    $ => A  :MLOAD(Jmpx_V1)
     99363847278443895435n :ASSERT
 
 ; ============== JMPN Tests ==================
@@ -81,26 +81,26 @@ OpJmpx_JmpWithMStore2Ok:
 ; JMPN condition values
 
     0 => A
-    A      :JMPN(OpJmpx_JMPN_cond1_FAIL1)
-    A + 1  :JMPN(OpJmpx_JMPN_cond1_FAIL1)
-    A - 1  :JMPN(OpJmpx_JMPN_cond1_OK1)
+    A      :JMPN(Jmpx_JMPN_cond1_FAIL1)
+    A + 1  :JMPN(Jmpx_JMPN_cond1_FAIL1)
+    A - 1  :JMPN(Jmpx_JMPN_cond1_OK1)
 
-OpJmpx_JMPN_cond1_FAIL1:
+Jmpx_JMPN_cond1_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPN_cond1_OK1:
+Jmpx_JMPN_cond1_OK1:
 
 
 ; JMPN Limit test
 
     0xFFFFFFFFn => A
-    A      :JMPN(OpJmpx_JMPN_cond1_FAIL2)
-           :JMP(OpJmpx_JMPN_cond1_OK2)
+    A      :JMPN(Jmpx_JMPN_cond1_FAIL2)
+           :JMP(Jmpx_JMPN_cond1_OK2)
 
-OpJmpx_JMPN_cond1_FAIL2:
+Jmpx_JMPN_cond1_FAIL2:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPN_cond1_OK2:
+Jmpx_JMPN_cond1_OK2:
 
     0x100000000n => A   ; A0 = 0 (-1)
                         ; A1 = 1
@@ -110,139 +110,139 @@ OpJmpx_JMPN_cond1_OK2:
                         ; B1 = 1
                         ; B2..7 = 0
 
-    B      :JMPN(OpJmpx_JMPN_cond1_OK3)
+    B      :JMPN(Jmpx_JMPN_cond1_OK3)
 
-OpJmpx_JMPN_cond1_FAIL3:
+Jmpx_JMPN_cond1_FAIL3:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPN_cond1_OK3:
+Jmpx_JMPN_cond1_OK3:
 
 
 ; JMPN without ELSE label
 
     4 => A
-    A - 5   :JMPN(OpJmpx_JmpNegativeWithoutElse_OK1)
+    A - 5   :JMPN(Jmpx_JmpNegativeWithoutElse_OK1)
 
-OpJmpx_JmpNegativeWithoutElse_FAIL1:
+Jmpx_JmpNegativeWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNegativeWithoutElse_OK1:
+Jmpx_JmpNegativeWithoutElse_OK1:
 
     5 => A
-    A - 2   :JMPN(OpJmpx_JmpElseNegativeWithoutElse_FAIL1)
-            :JMP(OpJmpx_JmpElseNegativeWithoutElse_OK2)
+    A - 2   :JMPN(Jmpx_JmpElseNegativeWithoutElse_FAIL1)
+            :JMP(Jmpx_JmpElseNegativeWithoutElse_OK2)
 
-OpJmpx_JmpElseNegativeWithoutElse_FAIL1:
+Jmpx_JmpElseNegativeWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNegativeWithoutElse_OK2:
+Jmpx_JmpElseNegativeWithoutElse_OK2:
 
 
 ; JMPN with ELSE label
 
     6 => A
-    A - 7   :JMPN(OpJmpx_JmpNegative_OK1, OpJmpx_JmpNegative_FAIL1)
+    A - 7   :JMPN(Jmpx_JmpNegative_OK1, Jmpx_JmpNegative_FAIL1)
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNegative_FAIL1:
+Jmpx_JmpNegative_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNegative_OK1:
+Jmpx_JmpNegative_OK1:
 
 
     7 => A
-    A - 2    :JMPN(OpJmpx_JmpElseNegative_FAIL2, OpJmpx_JmpElseNegative_OK2)
+    A - 2    :JMPN(Jmpx_JmpElseNegative_FAIL2, Jmpx_JmpElseNegative_OK2)
     A + 1   :ASSERT ; ******* FAIL *******
-OpJmpx_JmpElseNegative_FAIL2:
+Jmpx_JmpElseNegative_FAIL2:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNegative_OK2:
+Jmpx_JmpElseNegative_OK2:
 
-; JUMPN with static indirection
+; JMPN with static indirection
 
     3 => A
-    A - 4   :JMPN(@OpJmpx_staticIndJmpnOk1 + 2)
+    A - 4   :JMPN(@Jmpx_staticIndJmpnOk1 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk1:
+Jmpx_staticIndJmpnOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 4   :JMPN(@OpJmpx_staticIndJmpnOk2 + 1, OpJmpx_staticIndJmpnFail2)
+    A - 4   :JMPN(@Jmpx_staticIndJmpnOk2 + 1, Jmpx_staticIndJmpnFail2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnFail2:
+Jmpx_staticIndJmpnFail2:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk2:
+Jmpx_staticIndJmpnOk2:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 4   :JMPN(@OpJmpx_staticIndJmpnOk3 + 1, @OpJmpx_staticIndJmpnFail3 + 2)
+    A - 4   :JMPN(@Jmpx_staticIndJmpnOk3 + 1, @Jmpx_staticIndJmpnFail3 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnFail3:
+Jmpx_staticIndJmpnFail3:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk3:
+Jmpx_staticIndJmpnOk3:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 4   :JMPN(OpJmpx_staticIndJmpnOk4, @OpJmpx_staticIndJmpnFail4 + 2)
+    A - 4   :JMPN(Jmpx_staticIndJmpnOk4, @Jmpx_staticIndJmpnFail4 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnFail4:
+Jmpx_staticIndJmpnFail4:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk4:
+Jmpx_staticIndJmpnOk4:
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPN(OpJmpx_staticIndJmpnFail5, @OpJmpx_staticIndJmpnOk5 + 1)
+    A - 2   :JMPN(Jmpx_staticIndJmpnFail5, @Jmpx_staticIndJmpnOk5 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnFail5:
+Jmpx_staticIndJmpnFail5:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk5:
+Jmpx_staticIndJmpnOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPN(@OpJmpx_staticIndJmpnFail6 + 2, @OpJmpx_staticIndJmpnOk6 + 1)
+    A - 2   :JMPN(@Jmpx_staticIndJmpnFail6 + 2, @Jmpx_staticIndJmpnOk6 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnFail6:
+Jmpx_staticIndJmpnFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk6:
+Jmpx_staticIndJmpnOk6:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPN(@OpJmpx_staticIndJmpnFail7 + 2, OpJmpx_staticIndJmpnOk7)
+    A - 2   :JMPN(@Jmpx_staticIndJmpnFail7 + 2, Jmpx_staticIndJmpnOk7)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnFail7:
+Jmpx_staticIndJmpnFail7:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnOk7:
+Jmpx_staticIndJmpnOk7:
     3       :ASSERT ; OK
 
-; JUMPN with dynamic indirection
+; JMPN with dynamic indirection
 
     3 => A,RR
-    A - 4   :JMPN(@OpJmpx_dynIndJmpnOk1 + RR)
+    A - 4   :JMPN(@Jmpx_dynIndJmpnOk1 + RR)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk1:
+Jmpx_dynIndJmpnOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,E
-    A - 4   :JMPN(@OpJmpx_dynIndJmpnOk2 + E)
+    A - 4   :JMPN(@Jmpx_dynIndJmpnOk2 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk2:
+Jmpx_dynIndJmpnOk2:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -250,104 +250,104 @@ OpJmpx_dynIndJmpnOk2:
 
     1 => E
     3 => A
-    A - 4   :JMPN(@OpJmpx_dynIndJmpnOk3 + 2*E)
+    A - 4   :JMPN(@Jmpx_dynIndJmpnOk3 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk3:
+Jmpx_dynIndJmpnOk3:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 4   :JMPN(@OpJmpx_dynIndJmpnOk4 + E, OpJmpx_dynIndJmpnFail4)
+    A - 4   :JMPN(@Jmpx_dynIndJmpnOk4 + E, Jmpx_dynIndJmpnFail4)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnFail4:
+Jmpx_dynIndJmpnFail4:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk4:
+Jmpx_dynIndJmpnOk4:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 4   :JMPN(@OpJmpx_dynIndJmpnOk5 + E, @OpJmpx_dynIndJmpnFail5 + 2)
+    A - 4   :JMPN(@Jmpx_dynIndJmpnOk5 + E, @Jmpx_dynIndJmpnFail5 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnFail5:
+Jmpx_dynIndJmpnFail5:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk5:
+Jmpx_dynIndJmpnOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 4   :JMPN(OpJmpx_dynIndJmpnOk6, @OpJmpx_dynIndJmpnFail6 + 2*E)
+    A - 4   :JMPN(Jmpx_dynIndJmpnOk6, @Jmpx_dynIndJmpnFail6 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnFail6:
+Jmpx_dynIndJmpnFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk6:
+Jmpx_dynIndJmpnOk6:
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPN(OpJmpx_dynIndJmpnFail7, @OpJmpx_dynIndJmpnOk7 + E)
+    A - 2   :JMPN(Jmpx_dynIndJmpnFail7, @Jmpx_dynIndJmpnOk7 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnFail7:
+Jmpx_dynIndJmpnFail7:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk7:
+Jmpx_dynIndJmpnOk7:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPN(@OpJmpx_dynIndJmpnFail8 + 2, @OpJmpx_dynIndJmpnOk8 + E)
+    A - 2   :JMPN(@Jmpx_dynIndJmpnFail8 + 2, @Jmpx_dynIndJmpnOk8 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnFail8:
+Jmpx_dynIndJmpnFail8:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk8:
+Jmpx_dynIndJmpnOk8:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPN(@OpJmpx_dynIndJmpnFail9 + 2*E, OpJmpx_dynIndJmpnOk9)
+    A - 2   :JMPN(@Jmpx_dynIndJmpnFail9 + 2*E, Jmpx_dynIndJmpnOk9)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnFail9:
+Jmpx_dynIndJmpnFail9:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnOk9:
+Jmpx_dynIndJmpnOk9:
     3       :ASSERT ; OK
 
 ; JMPN with other address instructions
 
     14 => A
     14      :ASSERT ; OK
-    -3      :MSTORE(OpJmpx_V1),JMPN(OpJmpx_JmpnWithMemOk,OpJmpx_JmpnWithMemFail)
+    -3      :MSTORE(Jmpx_V1),JMPN(Jmpx_JmpnWithMemOk,Jmpx_JmpnWithMemFail)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnWithMemFail:
+Jmpx_JmpnWithMemFail:
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnWithMemOk:
+Jmpx_JmpnWithMemOk:
     14      :ASSERT ; OK
-    -3      :MLOAD(OpJmpx_V1)
+    -3      :MLOAD(Jmpx_V1)
 
     15 => A
     15      :ASSERT ; OK
-    3       :MSTORE(OpJmpx_V1),JMPN(OpJmpx_JmpnWithMem2Fail,OpJmpx_JmpnWithMem2Ok)
+    3       :MSTORE(Jmpx_V1),JMPN(Jmpx_JmpnWithMem2Fail,Jmpx_JmpnWithMem2Ok)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnWithMem2Fail:
+Jmpx_JmpnWithMem2Fail:
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnWithMem2Ok:
+Jmpx_JmpnWithMem2Ok:
     15      :ASSERT ; OK
-    3       :MLOAD(OpJmpx_V1)
+    3       :MLOAD(Jmpx_V1)
 
 
 ; ============== JMPZ Tests ==================
@@ -355,14 +355,14 @@ OpJmpx_JmpnWithMem2Ok:
 ; JMPZ condition values
 
     0 => A
-    A + 1  :JMPZ(OpJmpx_JMPZ_cond1_FAIL1)
-    A - 1  :JMPZ(OpJmpx_JMPZ_cond1_FAIL1)
-    A      :JMPZ(OpJmpx_JMPZ_cond1_OK1)
+    A + 1  :JMPZ(Jmpx_JMPZ_cond1_FAIL1)
+    A - 1  :JMPZ(Jmpx_JMPZ_cond1_FAIL1)
+    A      :JMPZ(Jmpx_JMPZ_cond1_OK1)
 
-OpJmpx_JMPZ_cond1_FAIL1:
+Jmpx_JMPZ_cond1_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPZ_cond1_OK1:
+Jmpx_JMPZ_cond1_OK1:
 
 
 ; JMPZ Limit test
@@ -371,140 +371,140 @@ OpJmpx_JMPZ_cond1_OK1:
                         ; A1 = 1
                         ; A2..7 = 0
 
-    A      :JMPZ(OpJmpx_JMPZ_cond2_OK1)
+    A      :JMPZ(Jmpx_JMPZ_cond2_OK1)
 
-OpJmpx_JMPZ_cond2_FAIL1:
+Jmpx_JMPZ_cond2_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPZ_cond2_OK1:
+Jmpx_JMPZ_cond2_OK1:
 
 
 ; JMPZ without ELSE label
 
     4 => A
-    A - 4   :JMPZ(OpJmpx_JmpZeroWithoutElse_OK1)
+    A - 4   :JMPZ(Jmpx_JmpZeroWithoutElse_OK1)
 
-OpJmpx_JmpZeroWithoutElse_FAIL1:
+Jmpx_JmpZeroWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpZeroWithoutElse_OK1:
+Jmpx_JmpZeroWithoutElse_OK1:
 
     5 => A
-    A - 2   :JMPZ(OpJmpx_JmpElseZeroWithoutElse_FAIL1)
-            :JMP(OpJmpx_JmpElseZeroWithoutElse_OK2)
+    A - 2   :JMPZ(Jmpx_JmpElseZeroWithoutElse_FAIL1)
+            :JMP(Jmpx_JmpElseZeroWithoutElse_OK2)
 
-OpJmpx_JmpElseZeroWithoutElse_FAIL1:
+Jmpx_JmpElseZeroWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseZeroWithoutElse_OK2:
+Jmpx_JmpElseZeroWithoutElse_OK2:
 
 
 ; JMPZ with ELSE label
 
     6 => A
-    A - 6   :JMPZ(OpJmpx_JmpZero_OK1, OpJmpx_JmpZero_FAIL1)
+    A - 6   :JMPZ(Jmpx_JmpZero_OK1, Jmpx_JmpZero_FAIL1)
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpZero_FAIL1:
+Jmpx_JmpZero_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpZero_OK1:
+Jmpx_JmpZero_OK1:
 
 
     7 => A
-    A - 2    :JMPZ(OpJmpx_JmpElseZero_FAIL2, OpJmpx_JmpElseZero_OK2)
+    A - 2    :JMPZ(Jmpx_JmpElseZero_FAIL2, Jmpx_JmpElseZero_OK2)
     A + 1    :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseZero_FAIL2:
+Jmpx_JmpElseZero_FAIL2:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseZero_OK2:
+Jmpx_JmpElseZero_OK2:
 
 ; JMPZ with static indirection
 
     3 => A
-    A - 3   :JMPZ(@OpJmpx_staticIndJmpzOk1 + 2)
+    A - 3   :JMPZ(@Jmpx_staticIndJmpzOk1 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk1:
+Jmpx_staticIndJmpzOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 3   :JMPZ(@OpJmpx_staticIndJmpzOk2 + 1, OpJmpx_staticIndJmpzFail2)
+    A - 3   :JMPZ(@Jmpx_staticIndJmpzOk2 + 1, Jmpx_staticIndJmpzFail2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzFail2:
+Jmpx_staticIndJmpzFail2:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk2:
+Jmpx_staticIndJmpzOk2:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 3   :JMPZ(@OpJmpx_staticIndJmpzOk3 + 1, @OpJmpx_staticIndJmpzFail3 + 2)
+    A - 3   :JMPZ(@Jmpx_staticIndJmpzOk3 + 1, @Jmpx_staticIndJmpzFail3 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzFail3:
+Jmpx_staticIndJmpzFail3:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk3:
+Jmpx_staticIndJmpzOk3:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 3   :JMPZ(OpJmpx_staticIndJmpzOk4, @OpJmpx_staticIndJmpzFail4 + 2)
+    A - 3   :JMPZ(Jmpx_staticIndJmpzOk4, @Jmpx_staticIndJmpzFail4 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzFail4:
+Jmpx_staticIndJmpzFail4:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk4:
+Jmpx_staticIndJmpzOk4:
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPZ(OpJmpx_staticIndJmpzFail5, @OpJmpx_staticIndJmpzOk5 + 1)
+    A - 2   :JMPZ(Jmpx_staticIndJmpzFail5, @Jmpx_staticIndJmpzOk5 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzFail5:
+Jmpx_staticIndJmpzFail5:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk5:
+Jmpx_staticIndJmpzOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPZ(@OpJmpx_staticIndJmpzFail6 + 2, @OpJmpx_staticIndJmpzOk6 + 1)
+    A - 2   :JMPZ(@Jmpx_staticIndJmpzFail6 + 2, @Jmpx_staticIndJmpzOk6 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzFail6:
+Jmpx_staticIndJmpzFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk6:
+Jmpx_staticIndJmpzOk6:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPZ(@OpJmpx_staticIndJmpzFail7 + 2, OpJmpx_staticIndJmpzOk7)
+    A - 2   :JMPZ(@Jmpx_staticIndJmpzFail7 + 2, Jmpx_staticIndJmpzOk7)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzFail7:
+Jmpx_staticIndJmpzFail7:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpzOk7:
+Jmpx_staticIndJmpzOk7:
     3       :ASSERT ; OK
 
-; JUMPN with dynamic indirection
+; JMPZ with dynamic indirection
 
     3 => A,RR
-    A - 3   :JMPZ(@OpJmpx_dynIndJmpzOk1 + RR)
+    A - 3   :JMPZ(@Jmpx_dynIndJmpzOk1 + RR)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk1:
+Jmpx_dynIndJmpzOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,E
-    A - 3   :JMPZ(@OpJmpx_dynIndJmpzOk2 + E)
+    A - 3   :JMPZ(@Jmpx_dynIndJmpzOk2 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk2:
+Jmpx_dynIndJmpzOk2:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -512,103 +512,103 @@ OpJmpx_dynIndJmpzOk2:
 
     1 => E
     3 => A
-    A - 3   :JMPZ(@OpJmpx_dynIndJmpzOk3 + 2*E)
+    A - 3   :JMPZ(@Jmpx_dynIndJmpzOk3 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk3:
+Jmpx_dynIndJmpzOk3:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 3   :JMPZ(@OpJmpx_dynIndJmpzOk4 + E, OpJmpx_dynIndJmpzFail4)
+    A - 3   :JMPZ(@Jmpx_dynIndJmpzOk4 + E, Jmpx_dynIndJmpzFail4)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzFail4:
+Jmpx_dynIndJmpzFail4:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk4:
+Jmpx_dynIndJmpzOk4:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 3   :JMPZ(@OpJmpx_dynIndJmpzOk5 + E, @OpJmpx_dynIndJmpzFail5 + 2)
+    A - 3   :JMPZ(@Jmpx_dynIndJmpzOk5 + E, @Jmpx_dynIndJmpzFail5 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzFail5:
+Jmpx_dynIndJmpzFail5:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk5:
+Jmpx_dynIndJmpzOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 3   :JMPZ(OpJmpx_dynIndJmpzOk6, @OpJmpx_dynIndJmpzFail6 + 2*E)
+    A - 3   :JMPZ(Jmpx_dynIndJmpzOk6, @Jmpx_dynIndJmpzFail6 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzFail6:
+Jmpx_dynIndJmpzFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk6:
+Jmpx_dynIndJmpzOk6:
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPZ(OpJmpx_dynIndJmpzFail7, @OpJmpx_dynIndJmpzOk7 + E)
+    A - 2   :JMPZ(Jmpx_dynIndJmpzFail7, @Jmpx_dynIndJmpzOk7 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzFail7:
+Jmpx_dynIndJmpzFail7:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk7:
+Jmpx_dynIndJmpzOk7:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPZ(@OpJmpx_dynIndJmpzFail8 + 2, @OpJmpx_dynIndJmpzOk8 + E)
+    A - 2   :JMPZ(@Jmpx_dynIndJmpzFail8 + 2, @Jmpx_dynIndJmpzOk8 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzFail8:
+Jmpx_dynIndJmpzFail8:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk8:
+Jmpx_dynIndJmpzOk8:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPZ(@OpJmpx_dynIndJmpzFail9 + 2*E, OpJmpx_dynIndJmpzOk9)
+    A - 2   :JMPZ(@Jmpx_dynIndJmpzFail9 + 2*E, Jmpx_dynIndJmpzOk9)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzFail9:
+Jmpx_dynIndJmpzFail9:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpzOk9:
+Jmpx_dynIndJmpzOk9:
     3       :ASSERT ; OK
 
 ; JMPZ with other address instructions
 
-    0n      :MSTORE(OpJmpx_V1)
+    0n      :MSTORE(Jmpx_V1)
     14 => A
     14      :ASSERT ; OK
-    $       :MLOAD(OpJmpx_V1),JMPZ(OpJmpx_JmpzWithMemOk,OpJmpx_JmpzWithMemFail)
+    $       :MLOAD(Jmpx_V1),JMPZ(Jmpx_JmpzWithMemOk,Jmpx_JmpzWithMemFail)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpzWithMemFail:
+Jmpx_JmpzWithMemFail:
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpzWithMemOk:
+Jmpx_JmpzWithMemOk:
     14      :ASSERT ; OK
 
-    255n    :MSTORE(OpJmpx_V1)
+    255n    :MSTORE(Jmpx_V1)
     15 => A
     15      :ASSERT ; OK
-    $       :MLOAD(OpJmpx_V1),JMPZ(OpJmpx_JmpzWithMem2Fail,OpJmpx_JmpzWithMem2Ok)
+    $       :MLOAD(Jmpx_V1),JMPZ(Jmpx_JmpzWithMem2Fail,Jmpx_JmpzWithMem2Ok)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpzWithMem2Fail:
+Jmpx_JmpzWithMem2Fail:
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpzWithMem2Ok:
+Jmpx_JmpzWithMem2Ok:
     15      :ASSERT ; OK
 
 
@@ -617,19 +617,19 @@ OpJmpx_JmpzWithMem2Ok:
 ; JMPNZ condition values
 
     0 => A
-    A      :JMPNZ(OpJmpx_JMPNZ_cond1_FAIL1)
-    A + 1  :JMPNZ(OpJmpx_JMPNZ_cond1_OK1)
+    A      :JMPNZ(Jmpx_JMPNZ_cond1_FAIL1)
+    A + 1  :JMPNZ(Jmpx_JMPNZ_cond1_OK1)
 
-OpJmpx_JMPNZ_cond1_FAIL1:
+Jmpx_JMPNZ_cond1_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPNZ_cond1_OK1:
-    A - 1  :JMPNZ(OpJmpx_JMPNZ_cond1_OK2)
+Jmpx_JMPNZ_cond1_OK1:
+    A - 1  :JMPNZ(Jmpx_JMPNZ_cond1_OK2)
 
-OpJmpx_JMPNZ_cond1_FAIL2:
+Jmpx_JMPNZ_cond1_FAIL2:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPNZ_cond1_OK2:
+Jmpx_JMPNZ_cond1_OK2:
 
 
 ; JMPNZ Limit test
@@ -638,141 +638,141 @@ OpJmpx_JMPNZ_cond1_OK2:
                         ; A1 = 1
                         ; A2..7 = 0
 
-    A      :JMPNZ(OpJmpx_JMPNZ_cond2_FAIL1)
-           :JMP(OpJmpx_JMPNZ_cond2_OK1)
+    A      :JMPNZ(Jmpx_JMPNZ_cond2_FAIL1)
+           :JMP(Jmpx_JMPNZ_cond2_OK1)
 
-OpJmpx_JMPNZ_cond2_FAIL1:
+Jmpx_JMPNZ_cond2_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPNZ_cond2_OK1:
+Jmpx_JMPNZ_cond2_OK1:
 
 
 ; JMPNZ without ELSE label
 
     4 => A
-    A - 3   :JMPNZ(OpJmpx_JmpNoZeroWithoutElse_OK1)
+    A - 3   :JMPNZ(Jmpx_JmpNoZeroWithoutElse_OK1)
 
-OpJmpx_JmpNoZeroWithoutElse_FAIL1:
+Jmpx_JmpNoZeroWithoutElse_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNoZeroWithoutElse_OK1:
+Jmpx_JmpNoZeroWithoutElse_OK1:
 
     5 => A
-    A - 5   :JMPNZ(OpJmpx_JmpElseNoZeroWithoutElse_FAIL1)
-            :JMP(OpJmpx_JmpElseNoZeroWithoutElse_OK2)
+    A - 5   :JMPNZ(Jmpx_JmpElseNoZeroWithoutElse_FAIL1)
+            :JMP(Jmpx_JmpElseNoZeroWithoutElse_OK2)
 
-OpJmpx_JmpElseNoZeroWithoutElse_FAIL1:
+Jmpx_JmpElseNoZeroWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNoZeroWithoutElse_OK2:
+Jmpx_JmpElseNoZeroWithoutElse_OK2:
 
 
 ; JMPNZ with ELSE label
 
     6 => A
-    A - 5   :JMPNZ(OpJmpx_JmpNoZero_OK1, OpJmpx_JmpNoZero_FAIL1)
+    A - 5   :JMPNZ(Jmpx_JmpNoZero_OK1, Jmpx_JmpNoZero_FAIL1)
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNoZero_FAIL1:
+Jmpx_JmpNoZero_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNoZero_OK1:
+Jmpx_JmpNoZero_OK1:
 
 
     7 => A
-    A - 7    :JMPNZ(OpJmpx_JmpElseNoZero_FAIL2, OpJmpx_JmpElseNoZero_OK2)
+    A - 7    :JMPNZ(Jmpx_JmpElseNoZero_FAIL2, Jmpx_JmpElseNoZero_OK2)
     A + 1    :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNoZero_FAIL2:
+Jmpx_JmpElseNoZero_FAIL2:
     A + 1    :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNoZero_OK2:
+Jmpx_JmpElseNoZero_OK2:
 
 ; JMPNZ with static indirection
 
     3 => A
-    A - 2   :JMPNZ(@OpJmpx_staticIndJmpnzOk1 + 2)
+    A - 2   :JMPNZ(@Jmpx_staticIndJmpnzOk1 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk1:
+Jmpx_staticIndJmpnzOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPNZ(@OpJmpx_staticIndJmpnzOk2 + 1, OpJmpx_staticIndJmpnzFail2)
+    A - 2   :JMPNZ(@Jmpx_staticIndJmpnzOk2 + 1, Jmpx_staticIndJmpnzFail2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzFail2:
+Jmpx_staticIndJmpnzFail2:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk2:
+Jmpx_staticIndJmpnzOk2:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPNZ(@OpJmpx_staticIndJmpnzOk3 + 1, @OpJmpx_staticIndJmpnzFail3 + 2)
+    A - 2   :JMPNZ(@Jmpx_staticIndJmpnzOk3 + 1, @Jmpx_staticIndJmpnzFail3 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzFail3:
+Jmpx_staticIndJmpnzFail3:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk3:
+Jmpx_staticIndJmpnzOk3:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 2   :JMPNZ(OpJmpx_staticIndJmpnzOk4, @OpJmpx_staticIndJmpnzFail4 + 2)
+    A - 2   :JMPNZ(Jmpx_staticIndJmpnzOk4, @Jmpx_staticIndJmpnzFail4 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzFail4:
+Jmpx_staticIndJmpnzFail4:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk4:
+Jmpx_staticIndJmpnzOk4:
     3       :ASSERT ; OK
 
     3 => A
-    A - 3   :JMPNZ(OpJmpx_staticIndJmpnzFail5, @OpJmpx_staticIndJmpnzOk5 + 1)
+    A - 3   :JMPNZ(Jmpx_staticIndJmpnzFail5, @Jmpx_staticIndJmpnzOk5 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzFail5:
+Jmpx_staticIndJmpnzFail5:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk5:
+Jmpx_staticIndJmpnzOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 3   :JMPNZ(@OpJmpx_staticIndJmpnzFail6 + 2, @OpJmpx_staticIndJmpnzOk6 + 1)
+    A - 3   :JMPNZ(@Jmpx_staticIndJmpnzFail6 + 2, @Jmpx_staticIndJmpnzOk6 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzFail6:
+Jmpx_staticIndJmpnzFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk6:
+Jmpx_staticIndJmpnzOk6:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
-    A - 3   :JMPNZ(@OpJmpx_staticIndJmpnzFail7 + 2, OpJmpx_staticIndJmpnzOk7)
+    A - 3   :JMPNZ(@Jmpx_staticIndJmpnzFail7 + 2, Jmpx_staticIndJmpnzOk7)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzFail7:
+Jmpx_staticIndJmpnzFail7:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpnzOk7:
+Jmpx_staticIndJmpnzOk7:
     3       :ASSERT ; OK
 
-; JUMPN with dynamic indirection
+; JMPNZ with dynamic indirection
 
     3 => A,RR
-    A - 2   :JMPNZ(@OpJmpx_dynIndJmpnzOk1 + RR)
+    A - 2   :JMPNZ(@Jmpx_dynIndJmpnzOk1 + RR)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk1:
+Jmpx_dynIndJmpnzOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,E
-    A - 2   :JMPNZ(@OpJmpx_dynIndJmpnzOk2 + E)
+    A - 2   :JMPNZ(@Jmpx_dynIndJmpnzOk2 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk2:
+Jmpx_dynIndJmpnzOk2:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -780,103 +780,103 @@ OpJmpx_dynIndJmpnzOk2:
 
     1 => E
     3 => A
-    A - 2   :JMPNZ(@OpJmpx_dynIndJmpnzOk3 + 2*E)
+    A - 2   :JMPNZ(@Jmpx_dynIndJmpnzOk3 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk3:
+Jmpx_dynIndJmpnzOk3:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPNZ(@OpJmpx_dynIndJmpnzOk4 + E, OpJmpx_dynIndJmpnzFail4)
+    A - 2   :JMPNZ(@Jmpx_dynIndJmpnzOk4 + E, Jmpx_dynIndJmpnzFail4)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzFail4:
+Jmpx_dynIndJmpnzFail4:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk4:
+Jmpx_dynIndJmpnzOk4:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPNZ(@OpJmpx_dynIndJmpnzOk5 + E, @OpJmpx_dynIndJmpnzFail5 + 2)
+    A - 2   :JMPNZ(@Jmpx_dynIndJmpnzOk5 + E, @Jmpx_dynIndJmpnzFail5 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzFail5:
+Jmpx_dynIndJmpnzFail5:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk5:
+Jmpx_dynIndJmpnzOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 2   :JMPNZ(OpJmpx_dynIndJmpnzOk6, @OpJmpx_dynIndJmpnzFail6 + 2*E)
+    A - 2   :JMPNZ(Jmpx_dynIndJmpnzOk6, @Jmpx_dynIndJmpnzFail6 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzFail6:
+Jmpx_dynIndJmpnzFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk6:
+Jmpx_dynIndJmpnzOk6:
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 3   :JMPNZ(OpJmpx_dynIndJmpnzFail7, @OpJmpx_dynIndJmpnzOk7 + E)
+    A - 3   :JMPNZ(Jmpx_dynIndJmpnzFail7, @Jmpx_dynIndJmpnzOk7 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzFail7:
+Jmpx_dynIndJmpnzFail7:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk7:
+Jmpx_dynIndJmpnzOk7:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 3   :JMPNZ(@OpJmpx_dynIndJmpnzFail8 + 2, @OpJmpx_dynIndJmpnzOk8 + E)
+    A - 3   :JMPNZ(@Jmpx_dynIndJmpnzFail8 + 2, @Jmpx_dynIndJmpnzOk8 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzFail8:
+Jmpx_dynIndJmpnzFail8:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk8:
+Jmpx_dynIndJmpnzOk8:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
-    A - 3   :JMPNZ(@OpJmpx_dynIndJmpnzFail9 + 2*E, OpJmpx_dynIndJmpnzOk9)
+    A - 3   :JMPNZ(@Jmpx_dynIndJmpnzFail9 + 2*E, Jmpx_dynIndJmpnzOk9)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzFail9:
+Jmpx_dynIndJmpnzFail9:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpnzOk9:
+Jmpx_dynIndJmpnzOk9:
     3       :ASSERT ; OK
 
 ; JMPNZ with other address instructions
 
-    255n    :MSTORE(OpJmpx_V1)
+    255n    :MSTORE(Jmpx_V1)
     14 => A
     14      :ASSERT ; OK
-    $       :MLOAD(OpJmpx_V1),JMPNZ(OpJmpx_JmpnzWithMemOk,OpJmpx_JmpnzWithMemFail)
+    $       :MLOAD(Jmpx_V1),JMPNZ(Jmpx_JmpnzWithMemOk,Jmpx_JmpnzWithMemFail)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnzWithMemFail:
+Jmpx_JmpnzWithMemFail:
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnzWithMemOk:
+Jmpx_JmpnzWithMemOk:
     14      :ASSERT ; OK
 
-    0n      :MSTORE(OpJmpx_V1)
+    0n      :MSTORE(Jmpx_V1)
     15 => A
     15      :ASSERT ; OK
-    $       :MLOAD(OpJmpx_V1),JMPNZ(OpJmpx_JmpnzWithMem2Fail,OpJmpx_JmpnzWithMem2Ok)
+    $       :MLOAD(Jmpx_V1),JMPNZ(Jmpx_JmpnzWithMem2Fail,Jmpx_JmpnzWithMem2Ok)
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnzWithMem2Fail:
+Jmpx_JmpnzWithMem2Fail:
     0       :ASSERT ; FAIL
 
-OpJmpx_JmpnzWithMem2Ok:
+Jmpx_JmpnzWithMem2Ok:
     15      :ASSERT ; OK
 
 
@@ -887,142 +887,142 @@ OpJmpx_JmpnzWithMem2Ok:
 
     0 => A
     1 => B
-    $      :EQ,JMPC(OpJmpx_JMPC_cond1_FAIL1)
+    $      :EQ,JMPC(Jmpx_JMPC_cond1_FAIL1)
     0 => B
-    $      :EQ,JMPC(OpJmpx_JMPC_cond1_OK1)
-           :JMP(OpJmpx_JMPC_cond1_FAIL1)
-OpJmpx_JMPC_cond1_FAIL1:
+    $      :EQ,JMPC(Jmpx_JMPC_cond1_OK1)
+           :JMP(Jmpx_JMPC_cond1_FAIL1)
+Jmpx_JMPC_cond1_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPC_cond1_OK1:
+Jmpx_JMPC_cond1_OK1:
 
 
 ; JMPC without ELSE label
 
     4 => A,B
-    $       :EQ,JMPC(OpJmpx_JmpCarryWithoutElse_OK1)
+    $       :EQ,JMPC(Jmpx_JmpCarryWithoutElse_OK1)
 
-OpJmpx_JmpCarryWithoutElse_FAIL1:
+Jmpx_JmpCarryWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpCarryWithoutElse_OK1:
+Jmpx_JmpCarryWithoutElse_OK1:
 
     5 => A
-    $       :EQ,JMPC(OpJmpx_JmpElseCarryWithoutElse_FAIL1)
-            :JMP(OpJmpx_JmpElseCarryWithoutElse_OK2)
+    $       :EQ,JMPC(Jmpx_JmpElseCarryWithoutElse_FAIL1)
+            :JMP(Jmpx_JmpElseCarryWithoutElse_OK2)
 
-OpJmpx_JmpElseCarryWithoutElse_FAIL1:
+Jmpx_JmpElseCarryWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseCarryWithoutElse_OK2:
+Jmpx_JmpElseCarryWithoutElse_OK2:
 
 
 ; JMPC with ELSE label
 
     6 => A,B
-    $       :EQ,JMPC(OpJmpx_JmpCarry_OK1, OpJmpx_JmpCarry_FAIL1)
+    $       :EQ,JMPC(Jmpx_JmpCarry_OK1, Jmpx_JmpCarry_FAIL1)
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpCarry_FAIL1:
+Jmpx_JmpCarry_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpCarry_OK1:
+Jmpx_JmpCarry_OK1:
 
 
     7 => A
-    $        :EQ,JMPC(OpJmpx_JmpElseCarry_FAIL2, OpJmpx_JmpElseCarry_OK2)
+    $        :EQ,JMPC(Jmpx_JmpElseCarry_FAIL2, Jmpx_JmpElseCarry_OK2)
     A + 1    :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseCarry_FAIL2:
+Jmpx_JmpElseCarry_FAIL2:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseCarry_OK2:
+Jmpx_JmpElseCarry_OK2:
 
 ; JMPC with static indirection
 
     3 => A,B
-    $       :EQ,JMPC(@OpJmpx_staticIndJmpcOk1 + 2)
+    $       :EQ,JMPC(@Jmpx_staticIndJmpcOk1 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk1:
+Jmpx_staticIndJmpcOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,B
-    $       :EQ,JMPC(@OpJmpx_staticIndJmpcOk2 + 1, OpJmpx_staticIndJmpcFail2)
+    $       :EQ,JMPC(@Jmpx_staticIndJmpcOk2 + 1, Jmpx_staticIndJmpcFail2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcFail2:
+Jmpx_staticIndJmpcFail2:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk2:
+Jmpx_staticIndJmpcOk2:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,B
-    $       :EQ,JMPC(@OpJmpx_staticIndJmpcOk3 + 1, @OpJmpx_staticIndJmpcFail3 + 2)
+    $       :EQ,JMPC(@Jmpx_staticIndJmpcOk3 + 1, @Jmpx_staticIndJmpcFail3 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcFail3:
+Jmpx_staticIndJmpcFail3:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk3:
+Jmpx_staticIndJmpcOk3:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,B
-    $       :EQ,JMPC(OpJmpx_staticIndJmpcOk4, @OpJmpx_staticIndJmpcFail4 + 2)
+    $       :EQ,JMPC(Jmpx_staticIndJmpcOk4, @Jmpx_staticIndJmpcFail4 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcFail4:
+Jmpx_staticIndJmpcFail4:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk4:
+Jmpx_staticIndJmpcOk4:
     3       :ASSERT ; OK
 
     2 => A
-    $       :EQ,JMPC(OpJmpx_staticIndJmpcFail5, @OpJmpx_staticIndJmpcOk5 + 1)
+    $       :EQ,JMPC(Jmpx_staticIndJmpcFail5, @Jmpx_staticIndJmpcOk5 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcFail5:
+Jmpx_staticIndJmpcFail5:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk5:
+Jmpx_staticIndJmpcOk5:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     2 => A
-    $       :EQ,JMPC(@OpJmpx_staticIndJmpcFail6 + 2, @OpJmpx_staticIndJmpcOk6 + 1)
+    $       :EQ,JMPC(@Jmpx_staticIndJmpcFail6 + 2, @Jmpx_staticIndJmpcOk6 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcFail6:
+Jmpx_staticIndJmpcFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk6:
+Jmpx_staticIndJmpcOk6:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     2 => A
-    $       :EQ,JMPC(@OpJmpx_staticIndJmpcFail7 + 2, OpJmpx_staticIndJmpcOk7)
+    $       :EQ,JMPC(@Jmpx_staticIndJmpcFail7 + 2, Jmpx_staticIndJmpcOk7)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcFail7:
+Jmpx_staticIndJmpcFail7:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpcOk7:
+Jmpx_staticIndJmpcOk7:
     2       :ASSERT ; OK
 
-; JUMPN with dynamic indirection
+; JMPC with dynamic indirection
 
     3 => A,B,RR
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcOk1 + RR)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcOk1 + RR)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk1:
+Jmpx_dynIndJmpcOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A,B,E
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcOk2 + E)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcOk2 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk2:
+Jmpx_dynIndJmpcOk2:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -1030,77 +1030,77 @@ OpJmpx_dynIndJmpcOk2:
 
     1 => E
     3 => A,B
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcOk3 + 2*E)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcOk3 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk3:
+Jmpx_dynIndJmpcOk3:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A,B
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcOk4 + E, OpJmpx_dynIndJmpcFail4)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcOk4 + E, Jmpx_dynIndJmpcFail4)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcFail4:
+Jmpx_dynIndJmpcFail4:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk4:
+Jmpx_dynIndJmpcOk4:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A,B
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcOk5 + E, @OpJmpx_dynIndJmpcFail5 + 2)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcOk5 + E, @Jmpx_dynIndJmpcFail5 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcFail5:
+Jmpx_dynIndJmpcFail5:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk5:
+Jmpx_dynIndJmpcOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A,B
-    $       :EQ,JMPC(OpJmpx_dynIndJmpcOk6, @OpJmpx_dynIndJmpcFail6 + 2*E)
+    $       :EQ,JMPC(Jmpx_dynIndJmpcOk6, @Jmpx_dynIndJmpcFail6 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcFail6:
+Jmpx_dynIndJmpcFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk6:
+Jmpx_dynIndJmpcOk6:
     3       :ASSERT ; OK
 
     1 => E
     2 => A
-    $       :EQ,JMPC(OpJmpx_dynIndJmpcFail7, @OpJmpx_dynIndJmpcOk7 + E)
+    $       :EQ,JMPC(Jmpx_dynIndJmpcFail7, @Jmpx_dynIndJmpcOk7 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcFail7:
+Jmpx_dynIndJmpcFail7:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk7:
+Jmpx_dynIndJmpcOk7:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     1 => E
     2 => A
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcFail8 + 2, @OpJmpx_dynIndJmpcOk8 + E)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcFail8 + 2, @Jmpx_dynIndJmpcOk8 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcFail8:
+Jmpx_dynIndJmpcFail8:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk8:
+Jmpx_dynIndJmpcOk8:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     1 => E
     2 => A
-    $       :EQ,JMPC(@OpJmpx_dynIndJmpcFail9 + 2*E, OpJmpx_dynIndJmpcOk9)
+    $       :EQ,JMPC(@Jmpx_dynIndJmpcFail9 + 2*E, Jmpx_dynIndJmpcOk9)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcFail9:
+Jmpx_dynIndJmpcFail9:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpcOk9:
+Jmpx_dynIndJmpcOk9:
     2       :ASSERT ; OK
 
 
@@ -1109,135 +1109,135 @@ OpJmpx_dynIndJmpcOk9:
 ; JMPNC condition values
 
     0 => A,B
-    $      :EQ,JMPNC(OpJmpx_JMPNC_cond1_FAIL1)
-    $      :LT,JMPNC(OpJmpx_JMPNC_cond1_OK1)
+    $      :EQ,JMPNC(Jmpx_JMPNC_cond1_FAIL1)
+    $      :LT,JMPNC(Jmpx_JMPNC_cond1_OK1)
 
-OpJmpx_JMPNC_cond1_FAIL1:
+Jmpx_JMPNC_cond1_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JMPNC_cond1_OK1:
+Jmpx_JMPNC_cond1_OK1:
 
 ; JMPNC without ELSE label
 
     4 => A,B
-    $       :LT,JMPNC(OpJmpx_JmpNoCarryWithoutElse_OK1)
+    $       :LT,JMPNC(Jmpx_JmpNoCarryWithoutElse_OK1)
 
-OpJmpx_JmpNoCarryWithoutElse_FAIL1:
+Jmpx_JmpNoCarryWithoutElse_FAIL1:
     A + 1  :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNoCarryWithoutElse_OK1:
+Jmpx_JmpNoCarryWithoutElse_OK1:
 
-    $       :EQ,JMPNC(OpJmpx_JmpElseNoCarryWithoutElse_FAIL1)
-            :JMP(OpJmpx_JmpElseNoCarryWithoutElse_OK2)
+    $       :EQ,JMPNC(Jmpx_JmpElseNoCarryWithoutElse_FAIL1)
+            :JMP(Jmpx_JmpElseNoCarryWithoutElse_OK2)
 
-OpJmpx_JmpElseNoCarryWithoutElse_FAIL1:
+Jmpx_JmpElseNoCarryWithoutElse_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNoCarryWithoutElse_OK2:
+Jmpx_JmpElseNoCarryWithoutElse_OK2:
 
 
 ; JMPNC with ELSE label
 
     6 => A,B
-    $       :LT,JMPNC(OpJmpx_JmpNoCarry_OK1, OpJmpx_JmpNoCarry_FAIL1)
+    $       :LT,JMPNC(Jmpx_JmpNoCarry_OK1, Jmpx_JmpNoCarry_FAIL1)
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNoCarry_FAIL1:
+Jmpx_JmpNoCarry_FAIL1:
     A + 1   :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpNoCarry_OK1:
+Jmpx_JmpNoCarry_OK1:
 
 
     7 => A,B
-    $        :EQ,JMPNC(OpJmpx_JmpElseNoCarry_FAIL2, OpJmpx_JmpElseNoCarry_OK2)
+    $        :EQ,JMPNC(Jmpx_JmpElseNoCarry_FAIL2, Jmpx_JmpElseNoCarry_OK2)
     A + 1    :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNoCarry_FAIL2:
+Jmpx_JmpElseNoCarry_FAIL2:
     A + 1    :ASSERT ; ******* FAIL *******
 
-OpJmpx_JmpElseNoCarry_OK2:
+Jmpx_JmpElseNoCarry_OK2:
 
 ; JMPNC with static indirection
 
     3 => A
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_staticIndJmpncOk1 + 2)
+    $       :EQ,JMPNC(@Jmpx_staticIndJmpncOk1 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk1:
+Jmpx_staticIndJmpncOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_staticIndJmpncOk2 + 1, OpJmpx_staticIndJmpncFail2)
+    $       :EQ,JMPNC(@Jmpx_staticIndJmpncOk2 + 1, Jmpx_staticIndJmpncFail2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncFail2:
+Jmpx_staticIndJmpncFail2:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk2:
+Jmpx_staticIndJmpncOk2:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_staticIndJmpncOk3 + 1, @OpJmpx_staticIndJmpncFail3 + 2)
+    $       :EQ,JMPNC(@Jmpx_staticIndJmpncOk3 + 1, @Jmpx_staticIndJmpncFail3 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncFail3:
+Jmpx_staticIndJmpncFail3:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk3:
+Jmpx_staticIndJmpncOk3:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     3 => A
     2 => B
-    $       :EQ,JMPNC(OpJmpx_staticIndJmpncOk4, @OpJmpx_staticIndJmpncFail4 + 2)
+    $       :EQ,JMPNC(Jmpx_staticIndJmpncOk4, @Jmpx_staticIndJmpncFail4 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncFail4:
+Jmpx_staticIndJmpncFail4:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk4:
+Jmpx_staticIndJmpncOk4:
     3       :ASSERT ; OK
 
     2 => A
-    $       :EQ,JMPNC(OpJmpx_staticIndJmpncFail5, @OpJmpx_staticIndJmpncOk5 + 1)
+    $       :EQ,JMPNC(Jmpx_staticIndJmpncFail5, @Jmpx_staticIndJmpncOk5 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncFail5:
+Jmpx_staticIndJmpncFail5:
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk5:
+Jmpx_staticIndJmpncOk5:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     2 => A
-    $       :EQ,JMPNC(@OpJmpx_staticIndJmpncFail6 + 2, @OpJmpx_staticIndJmpncOk6 + 1)
+    $       :EQ,JMPNC(@Jmpx_staticIndJmpncFail6 + 2, @Jmpx_staticIndJmpncOk6 + 1)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncFail6:
+Jmpx_staticIndJmpncFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk6:
+Jmpx_staticIndJmpncOk6:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     2 => A
-    $       :EQ,JMPNC(@OpJmpx_staticIndJmpncFail7 + 2, OpJmpx_staticIndJmpncOk7)
+    $       :EQ,JMPNC(@Jmpx_staticIndJmpncFail7 + 2, Jmpx_staticIndJmpncOk7)
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncFail7:
+Jmpx_staticIndJmpncFail7:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_staticIndJmpncOk7:
+Jmpx_staticIndJmpncOk7:
     2       :ASSERT ; OK
 
-; JUMPN with dynamic indirection
+; JMPNC with dynamic indirection
 
     3 => A,RR
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncOk1 + RR)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncOk1 + RR)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk1:
+Jmpx_dynIndJmpncOk1:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -1245,9 +1245,9 @@ OpJmpx_dynIndJmpncOk1:
 
     3 => A,E
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncOk2 + E)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncOk2 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk2:
+Jmpx_dynIndJmpncOk2:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
@@ -1256,9 +1256,9 @@ OpJmpx_dynIndJmpncOk2:
     1 => E
     3 => A
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncOk3 + 2*E)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncOk3 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk3:
+Jmpx_dynIndJmpncOk3:
     2       :ASSERT ; FAIL
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
@@ -1266,68 +1266,68 @@ OpJmpx_dynIndJmpncOk3:
     1 => E
     3 => A
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncOk4 + E, OpJmpx_dynIndJmpncFail4)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncOk4 + E, Jmpx_dynIndJmpncFail4)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncFail4:
+Jmpx_dynIndJmpncFail4:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk4:
+Jmpx_dynIndJmpncOk4:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
     2 => B
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncOk5 + E, @OpJmpx_dynIndJmpncFail5 + 2)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncOk5 + E, @Jmpx_dynIndJmpncFail5 + 2)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncFail5:
+Jmpx_dynIndJmpncFail5:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk5:
+Jmpx_dynIndJmpncOk5:
     2       :ASSERT ; FAIL
     3       :ASSERT ; OK
 
     1 => E
     3 => A
     2 => B
-    $       :EQ,JMPNC(OpJmpx_dynIndJmpncOk6, @OpJmpx_dynIndJmpncFail6 + 2*E)
+    $       :EQ,JMPNC(Jmpx_dynIndJmpncOk6, @Jmpx_dynIndJmpncFail6 + 2*E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncFail6:
+Jmpx_dynIndJmpncFail6:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk6:
+Jmpx_dynIndJmpncOk6:
     3       :ASSERT ; OK
 
     1 => E
     2 => A
-    $       :EQ,JMPNC(OpJmpx_dynIndJmpncFail7, @OpJmpx_dynIndJmpncOk7 + E)
+    $       :EQ,JMPNC(Jmpx_dynIndJmpncFail7, @Jmpx_dynIndJmpncOk7 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncFail7:
+Jmpx_dynIndJmpncFail7:
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk7:
+Jmpx_dynIndJmpncOk7:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     1 => E
     2 => A
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncFail8 + 2, @OpJmpx_dynIndJmpncOk8 + E)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncFail8 + 2, @Jmpx_dynIndJmpncOk8 + E)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncFail8:
+Jmpx_dynIndJmpncFail8:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk8:
+Jmpx_dynIndJmpncOk8:
     2       :ASSERT ; FAIL
     2       :ASSERT ; OK
 
     1 => E
     2 => A
-    $       :EQ,JMPNC(@OpJmpx_dynIndJmpncFail9 + 2*E, OpJmpx_dynIndJmpncOk9)
+    $       :EQ,JMPNC(@Jmpx_dynIndJmpncFail9 + 2*E, Jmpx_dynIndJmpncOk9)
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncFail9:
+Jmpx_dynIndJmpncFail9:
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
     0       :ASSERT ; FAIL
-OpJmpx_dynIndJmpncOk9:
+Jmpx_dynIndJmpncOk9:
     2       :ASSERT ; OK

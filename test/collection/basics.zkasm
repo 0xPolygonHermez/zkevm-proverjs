@@ -1,3 +1,4 @@
+INCLUDE "basics/after_cmds.zkasm"
 INCLUDE "basics/arrays.zkasm"
 INCLUDE "basics/callreturn.zkasm"
 INCLUDE "basics/constants.zkasm"
