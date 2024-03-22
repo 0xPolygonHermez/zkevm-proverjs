@@ -82,7 +82,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const blob = config.blob ? true : false;
 
     // const defaultHelpers = ['arith', 'batch', 'debug', 'helper', 'mem_align', 'operations', 'save_restore', 'binary', 'command', 'counter_controls'];
-    const defaultHelpers = [...(blob ? ['main_blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
+    const defaultHelpers = [...(blob ? ['main_blob', 'ft-blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
     const customHelpers = (config && config.helpers) ? (Array.isArray(config.helpers) ? config.helpers : [config.helpers]) : [];
     const helpers = [...defaultHelpers, ...customHelpers ];
 
@@ -119,6 +119,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     // load programs into DB
     let batchHashData;
+    let blobL2HashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -131,6 +132,16 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(batchHashData), hexString2byteArray(input.batchL2Data));
     }
 
+    if(blob) {
+        // Load poseidonBlobData into DB
+        const z = await hashContractBytecode(input.blobData);
+        await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
+    
+        // Load keccak256BlobData into DB
+        blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
+    
+    }
     // load smt
     const smt = new SMT(db, poseidon, Fr);
 
@@ -156,9 +167,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         final: false,
         helpers: new Helpers(helpers, {paths: helperPaths}),
         saved:{},
-        batchHashData: blob ? '' : batchHashData
+        batchHashData,
+        blobL2HashData,
+        config,
     }
-
+    
     if (config.stats) {
         metadata.stats = {
             trace:[],
@@ -261,6 +274,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.line = l.line;
         sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
+
 
         if (verboseOptions.zkPC) {
             console.log(sourceRef);
@@ -1397,8 +1411,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.hashKDigest) {
             pols.hashKDigest[i] = 1n;
             const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            if (typeof ctx.hashK[hashAddr].digest === "undefined") {
-                throw new Error(`HASHKDIGEST(${hashAddr}) cannot load keccak from DB ${sourceRef}`);
+            if (typeof ctx.hashK[hashAddr] === "undefined") {
+                const k = scalar2h4(dg);
+                const data = await smt.db.getProgram(k);
+
+                ctx.hashK[hashAddr] = {
+                    data: data,
+                    digest: dg,
+                    lenCalled: false,
+                    sourceRef,
+                    reads: {}
+                }
             }
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashK[hashAddr].digest))) {
                 throw new Error(`HashKDigest(${hashAddr}) doesn't match ${sourceRef}`);
@@ -3137,9 +3160,11 @@ function eval_getForcedBlockHashL1(ctx, tag) {
 
 function eval_eventLog(ctx, tag) {
     if (tag.params.length < 1) throw new Error(`Invalid number of parameters (1 > ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    if (fullTracer){
+    if (fullTracer && !ctx.config.blob) {
         // handle full-tracer events
         fullTracer.handleEvent(ctx, tag);
+    } else if (fullTracer && ctx.config.blob) {
+        ctx.helpers.FtBlob.handleEvent(ctx,tag)
     }
     if (debug && tag.params[0].varName == 'onError') {
         nameRomErrors.push(tag.params[1].varName);

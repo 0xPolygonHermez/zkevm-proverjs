@@ -41,14 +41,14 @@ module.exports = class Main extends Helper {
 
         // Set oldStateRoot to register SR
         [
-            pols.SR0[0],
-            pols.SR1[0],
-            pols.SR2[0],
-            pols.SR3[0],
-            pols.SR4[0],
-            pols.SR5[0],
-            pols.SR6[0],
-            pols.SR7[0]
+            pols.D0[0],
+            pols.D1[0],
+            pols.D2[0],
+            pols.D3[0],
+            pols.D4[0],
+            pols.D5[0],
+            pols.D6[0],
+            pols.D7[0],
         ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
 
         // Set forkID to RCX register
@@ -62,14 +62,6 @@ module.exports = class Main extends Helper {
         pols.A5[0] = Fr.zero;
         pols.A6[0] = Fr.zero;
         pols.A7[0] = Fr.zero;
-        pols.D0[0] = Fr.zero;
-        pols.D1[0] = Fr.zero;
-        pols.D2[0] = Fr.zero;
-        pols.D3[0] = Fr.zero;
-        pols.D4[0] = Fr.zero;
-        pols.D5[0] = Fr.zero;
-        pols.D6[0] = Fr.zero;
-        pols.D7[0] = Fr.zero;
         pols.E0[0] = Fr.zero;
         pols.E1[0] = Fr.zero;
         pols.E2[0] = Fr.zero;
@@ -78,6 +70,14 @@ module.exports = class Main extends Helper {
         pols.E5[0] = Fr.zero;
         pols.E6[0] = Fr.zero;
         pols.E7[0] = Fr.zero;
+        pols.SR0[0] = Fr.zero;
+        pols.SR1[0] = Fr.zero;
+        pols.SR2[0] = Fr.zero;
+        pols.SR3[0] = Fr.zero;
+        pols.SR4[0] = Fr.zero;
+        pols.SR5[0] = Fr.zero;
+        pols.SR6[0] = Fr.zero;
+        pols.SR7[0] = Fr.zero;
         pols.CTX[0] = 0n;
         pols.SP[0] = 0n;
         pols.PC[0] = 0n;
@@ -318,10 +318,10 @@ module.exports = class Main extends Helper {
         }
 
 
-        if (!ctx.Fr.eq(ctx.RCX, ctx.Fr.e(ctx.input.lastL1InfoTreeIdx))){
-            let errorMsg = "Assert Error: lastL1InfoTreeIdx does not match\n";
-            errorMsg += `   lastL1InfoTreeIdx computed: ${Number(ctx.RCX)}\n`;
-            errorMsg += `   lastL1InfoTreeIdx expected: ${ctx.input.lastL1InfoTreeIdx}\n`;
+        if (!ctx.Fr.eq(ctx.RCX, ctx.Fr.e(ctx.input.lastL1InfoTreeIndex))){
+            let errorMsg = "Assert Error: lastL1InfoTreeIndex does not match\n";
+            errorMsg += `   lastL1InfoTreeIndex computed: ${Number(ctx.RCX)}\n`;
+            errorMsg += `   lastL1InfoTreeIndex expected: ${ctx.input.lastL1InfoTreeIndex}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
