@@ -1,21 +1,15 @@
-start:
 
-        STEP => A
-        0 :ASSERT
-        1000 => A,B,C,D
-
-        ; to verify that there are no correlations between counters
         3 => A
         $${var total = total + A}
         15 => B
         $${total = total + B}
         10000000000000000000000n => C
         $${total = total + C}
-        26 => D :JMP(label1)
+        26 => D :JMP(label1_cmds)
         $${total = total + D}
         8 => A
 
-label1:
+label1_cmds:
         ${total} => A
         10000000000000000000018n :ASSERT
         28 => D :JMPN(label2_never)
@@ -37,12 +31,3 @@ label3:
 label4:
         ${total} => A
         10000000000000000000046n :ASSERT
-
-end:
-       0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
-
-finalWait:
-        ${beforeLast()}  : JMPN(finalWait)
-
-                         : JMP(start)
-opINVALID:
