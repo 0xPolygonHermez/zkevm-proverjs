@@ -1,6 +1,6 @@
 include "config.pil";
 include "global.pil";
-include "blob/rom.pil";
+include "rom.pil";
 include "mem_align.pil";
 include "arith.pil";
 include "binary.pil";
@@ -9,6 +9,7 @@ include "padding_pg.pil";
 include "storage.pil";
 include "padding_kk.pil";
 include "mem.pil";
+include "padding_sha256.pil";
 
 namespace Main(%N);
 
@@ -33,7 +34,6 @@ namespace Main(%N);
     pol commit E0;
 
     pol commit SR7, SR6, SR5, SR4, SR3, SR2, SR1, SR0;          // State Root
-
     pol commit CTX;                    // Call Cntext
     pol commit SP;                     // Stack Pointer
     pol commit PC;                     // EVM Program counter
@@ -64,6 +64,7 @@ namespace Main(%N);
     pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashKLen, hashKDigest;
     pol commit hashP, hashPLen, hashPDigest;
+    pol commit hashS, hashSLen, hashSDigest;
     pol commit hashBytesInD, hashBytes, hashOffset;
     pol commit bin;
     pol commit binOpcode;
@@ -74,8 +75,8 @@ namespace Main(%N);
     pol commit isNeg;
 
     /// Counters
-    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntPoseidonG, cntPaddingPG;
-    pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntPoseidonG, inCntPaddingPG;
+    pol commit cntArith, cntBinary, cntMemAlign, cntKeccakF, cntSha256F, cntPoseidonG, cntPaddingPG;
+    pol commit inCntArith, inCntBinary, inCntMemAlign, inCntKeccakF, inCntSha256F, inCntPoseidonG, inCntPaddingPG;
     pol commit incCounter;
 
     pol commit inRID;
@@ -128,6 +129,7 @@ namespace Main(%N);
         cntBinary * inCntBinary +
         cntMemAlign * inCntMemAlign +
         cntKeccakF * inCntKeccakF +
+        cntSha256F * inCntSha256F +
         cntPoseidonG * inCntPoseidonG +
         cntPaddingPG * inCntPaddingPG +
         RCX * inRCX +
@@ -551,9 +553,10 @@ namespace Main(%N);
 // ROM Lookups
 /////////
 
+
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte" -b
+       node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,JMPZ,call,return,save,restore,setRID,hashBytesInD,assumeFree,memUseAddrRel,jmpUseAddrRel,elseUseAddrRel,free0IsByte,hashS,hashSDigest,hashSLen" -b
     */
 
     pol operations =
@@ -569,7 +572,8 @@ namespace Main(%N);
         + 2**36 * sWR              + 2**37 * useCTX           + 2**38 * JMPZ             + 2**39 * call
         + 2**40 * return           + 2**41 * save             + 2**42 * restore          + 2**43 * setRID
         + 2**44 * hashBytesInD     + 2**45 * assumeFree       + 2**46 * memUseAddrRel    + 2**47 * jmpUseAddrRel
-        + 2**48 * elseUseAddrRel   + 2**49 * free0IsByte;
+        + 2**48 * elseUseAddrRel   + 2**49 * free0IsByte      + 2**50 * hashS            + 2**51 * hashSDigest
+        + 2**52 * hashSLen;
 
     (1 - arith) * arith = 0;
     (1 - arithSame12) * arithSame12 = 0;
@@ -621,18 +625,21 @@ namespace Main(%N);
     (1 - jmpUseAddrRel) * jmpUseAddrRel = 0;
     (1 - elseUseAddrRel) * elseUseAddrRel = 0;
     (1 - free0IsByte) * free0IsByte = 0;
+    (1 - hashS) * hashS = 0;
+    (1 - hashSDigest) * hashSDigest = 0;
+    (1 - hashSLen) * hashSLen = 0;
 
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
-        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR, 
+        inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0, ind, indRR, arithEquation, 
         inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, inRID, hashBytes, hashOffset,
-        inCntArith, inCntBinary, inCntKeccakF, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
+        inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
-        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR, 
+        Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0, Rom.ind, Rom.indRR, Rom.arithEquation, 
         Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.inRID, Rom.hashBytes, Rom.hashOffset,
-        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
+        Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
 
@@ -822,7 +829,52 @@ namespace Main(%N);
     cntKeccakF' = cntKeccakF*(1-Global.L1) + incCounter*hashKDigest;
 
 /////////
-// HASHP Lookpups
+// HASHS Lookups (Sha256)
+/////////
+
+    hashS {
+        hashOffset + E0,
+        HASHPOS,
+        hashBytesInD * (D0 - hashBytes) + hashBytes,
+        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
+        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
+    } in
+    PaddingSha256.crLatch * PaddingSha256.r8valid {
+        PaddingSha256.addr,
+        PaddingSha256.len - PaddingSha256.rem - PaddingSha256.crLen + 1,
+        PaddingSha256.crLen,
+        PaddingSha256.crV0C, PaddingSha256.crV1C, PaddingSha256.crV2C, PaddingSha256.crV3C,
+        PaddingSha256.crV4C, PaddingSha256.crV5C, PaddingSha256.crV6C, PaddingSha256.crV7C
+    };
+
+    hashSLen {
+        hashOffset + E0,
+        op0
+    } is
+    PaddingSha256.lastHashLen {
+        PaddingSha256.addr,
+        PaddingSha256.len
+    };
+
+    // The Sha digest's chunks are ordered from most to least significant.
+    // (hash0 => op7, hash1 => op6, ..)
+    hashSDigest {
+        hashOffset + E0,
+        op0, op1, op2, op3,
+        op4, op5, op6, op7,
+        incCounter
+    } is
+    PaddingSha256.lastHashDigest {
+        PaddingSha256.addr,
+        PaddingSha256.hash7, PaddingSha256.hash6, PaddingSha256.hash5, PaddingSha256.hash4,
+        PaddingSha256.hash3, PaddingSha256.hash2, PaddingSha256.hash1, PaddingSha256.hash0,
+        PaddingSha256.incCounter
+    };
+
+    cntSha256F' = cntSha256F*(1-Global.L1) + incCounter*hashSDigest;
+
+/////////
+// HASHP Lookups
 /////////
     hashP {
         hashOffset + E0,
