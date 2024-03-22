@@ -4,7 +4,7 @@ const { verifyZkasm } = require("./verify_zkasm");
 const { cwd } = require("process");
 
 const argv = require("yargs")
-    .usage("node zkasmtest filename [-p <pil>] [-P <pilconfig>]")
+    .usage("node zkasmtest [headerfile] filename1 [filename2] ... [footerfile] [-p <pil>] [-P <pilconfig>]")
     .help('h')
     .alias("b", "blob")
     .alias("A", "all")
@@ -25,17 +25,32 @@ const argv = require("yargs")
     .argv;
 
 async function main(){
-    let zkasmFile = false;
+    let zkasmFile = "";
+    switch (argv._.length) {
+        case 0:
+            console.log("You need to specify at least one zkasm source file");
+            process.exit(1);
+        case 1:
+            zkasmFile = argv._[0];
+            break;
+        case 2:
+            console.log("You need to specify the header file, at least one zkasm source file and the footer file");
+            process.exit(1);
+        default:
+            const files = argv._;
+            const findIncludes = /INCLUDE\s+"([^"]+)"/g
+            for (let i = 0; i < files.length; i++) {
+                let filei = fs.readFileSync(files[i], "utf8");
+                filei = filei.replace(findIncludes, (match) => {
+                    let newInclude = path.resolve(path.dirname(files[i]),match.match(/"([^"]+)"/)[1]);
+                    return `INCLUDE "${newInclude}"`;
+                });
 
-    if (argv._.length == 0) {
-        console.log("You need to specify an zkasm source file");
-        process.exit(1);
-    } else if (argv._.length == 1) {
-        zkasmFile = argv._[0];
-    } else  {
-        console.log("Only one source file at a time is permitted");
-        process.exit(1);
+                zkasmFile += filei + "\n\n";
+            }
     }
+
+    const oneZkasmFile = (argv._.length == 1);
 
     let ns = argv.ns ? argv.ns : ['Global', 'Main'];
 
@@ -98,7 +113,7 @@ async function main(){
     }
 
     if (stats) {
-        defaultConfig.debugInfo.inputName = path.basename(zkasmFile);
+        defaultConfig.debugInfo.inputName = oneZkasmFile ? path.basename(zkasmFile) : 'main.zkasm';
     }
 
     if (typeof argv.stepsN !== 'undefined') {
@@ -124,7 +139,9 @@ async function main(){
         outputPath = '.';
     }
     if (outputPath) {
-        const zkasm = path.basename(zkasmFile).split('.')[0];
+        const zkasmName = oneZkasmFile ? path.basename(zkasmFile) : 'main.zkasm';
+
+        const zkasm = zkasmName.split('.')[0];
 
         config = {
             romFilename: path.join(outputPath, zkasm + '.' + 'rom.json'),
@@ -134,10 +151,14 @@ async function main(){
             ...config};
     }
 
-    const fullPathZkasmFile = zkasmFile.startsWith('/') ? zkasmFile : path.join(cwd(), zkasmFile);
-    const zkasmPath = path.dirname(fullPathZkasmFile);
+    let fullPathZkasmFile = false;
+    let zkasmPath = false;
+    if (oneZkasmFile) {
+        fullPathZkasmFile = zkasmFile.startsWith('/') ? zkasmFile : path.join(cwd(), zkasmFile);
+        zkasmPath = path.dirname(fullPathZkasmFile);
 
-    console.log(`Verifying ${fullPathZkasmFile}...`);
+        console.log(`Verifying ${fullPathZkasmFile}...`);
+    }
 
     let helpers = argv.helper ?? [];
     if (!Array.isArray(helpers)) {
@@ -146,7 +167,12 @@ async function main(){
     if (helpers.length) {
         config.helpers = [];
         for (const helper of helpers) {
-            const helperFile = fs.existsSync(helper) ? helper : zkasmPath + '/' + helper;
+            let helperFile = false;
+            if (oneZkasmFile) {
+                helperFile = fs.existsSync(helper) ? helper : zkasmPath + '/' + helper;
+            } else {
+                helperFile = helper;
+            }
             if (!fs.existsSync(helperFile)) {
                 throw new Error(`Not found helper on ${helper} or ${helperFile}`);
             }
@@ -162,7 +188,11 @@ async function main(){
         process.exit(1);
     }
 
-    await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
+    if (oneZkasmFile) {
+        await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
+    } else {
+        await verifyZkasm(zkasmFile, {pilFile}, pilConfig, config, {compileFromString: true});
+    }
     console.log('Done!');
 }
 
