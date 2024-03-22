@@ -41,14 +41,14 @@ module.exports = class Main extends Helper {
 
         // Set oldStateRoot to register SR
         [
-            pols.SR0[0],
-            pols.SR1[0],
-            pols.SR2[0],
-            pols.SR3[0],
-            pols.SR4[0],
-            pols.SR5[0],
-            pols.SR6[0],
-            pols.SR7[0]
+            pols.D0[0],
+            pols.D1[0],
+            pols.D2[0],
+            pols.D3[0],
+            pols.D4[0],
+            pols.D5[0],
+            pols.D6[0],
+            pols.D7[0],
         ] = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
 
         // Set forkID to RCX register
