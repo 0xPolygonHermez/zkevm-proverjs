@@ -877,6 +877,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, s);
                     nHits++;
                 }
+                if (l.hashKLen) {
+                    fi = scalar2fea(Fr, typeof ctx.hashK[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashK[hashAddr].data.length));
+                    nHits++;
+                }
                 if (l.hashSDigest == 1) {
                     if (typeof ctx.hashS[hashAddr] === "undefined") {
                         throw new Error(`digest sha256(${hashAddr}) not defined ${sourceRef}`);
@@ -887,6 +891,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fi = scalar2fea(Fr, ctx.hashS[hashAddr].digest);
                     nHits++;
                 }
+                if (l.hashSLen) {
+                    fi = scalar2fea(Fr, typeof ctx.hashS[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashS[hashAddr].data.length));
+                    nHits++;
+                }
+
                 if (l.hashP) {
                     if (typeof ctx.hashP[hashAddr] === "undefined") ctx.hashP[hashAddr] = { data: [], reads: {}, digestCalled: false, lenCalled: false, sourceRef };
                     const size = l.hashBytesInD ? fe2n(Fr, ctx.D[0], ctx): l.hashBytes;
@@ -910,6 +919,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         throw new Error(`digest(${hashAddr}) not calculated. Call hashPlen to finish digest ${sourceRef}`);
                     }
                     fi = scalar2fea(Fr, ctx.hashP[hashAddr].digest);
+                    nHits++;
+                }
+                if (l.hashPLen) {
+                    fi = scalar2fea(Fr, typeof ctx.hashP[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashP[hashAddr].data.length));
                     nHits++;
                 }
                 if (l.bin) {
