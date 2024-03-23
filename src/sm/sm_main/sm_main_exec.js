@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
@@ -2730,6 +2731,9 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
     const txs = encodedStringToArray(batchL2Data);
     console.log('Number of transactions: ', txs.length);
     console.log('--------------------------');
+
+    const printTxs = [];
+
     for (let i = 0; i < txs.length; i++) {
         const rawTx = txs[i];
 
@@ -2737,6 +2741,13 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
             console.log(`Tx ${i} --> new Block L2`);
             const txDecoded = await decodeChangeL2BlockTx(rawTx);
             console.log(txDecoded);
+            const txToSave = {
+                type: txDecoded.type,
+                deltaTimestamp: Number(txDecoded.deltaTimestamp),
+                indexL1InfoTree: txDecoded.indexL1InfoTree,
+            };
+
+            printTxs.push(txToSave);
         } else {
             const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
@@ -2754,10 +2765,15 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
             }
             console.log(`Tx ${i} --> new Tx`);
             console.log(infoTx.txDecoded);
+
+            printTxs.push(infoTx.txDecoded);
         }
         console.log('--------------------------');
     }
 
+    if (verboseOptions.saveBatchL2Data) {
+        fs.writeFileSync('batch-l2-data.json', JSON.stringify(printTxs, null, 2));
+    }
     console.log('/////////////////////////////');
     console.log('/////////////////////////////\n');
 }

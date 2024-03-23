@@ -11,6 +11,7 @@
     },
     "zkPC": false,
     "batchL2Data": false,
+    "saveBatchL2Data": false,
     "getNameSelector": "https://api.openchain.xyz/signature-database/v1/lookup?filter=false&function=",
     "step": 1000000,
     "enableExternalLogs": false,
