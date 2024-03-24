@@ -29,7 +29,6 @@ const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
-const stopOnFailure = true;
 const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json', 'pre-revert.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
@@ -37,6 +36,9 @@ const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exe
 const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
 let forceRegen = false;
+// CONFIG FLAGS
+const stopOnFailure = true;
+const forceRegenArg = false;
 const regen = false;
 const errorsMap = {
     OOG: 'out of gas',
@@ -91,13 +93,17 @@ async function main() {
                 let gethTraces = [];
                 files.forEach((file) => {
                     const parts = file.split('_');
-                    if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
+                    if (!isEthereumTest) {
+                        if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
+                            gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
+                        }
+                    } else if (file.includes(`${test.testName}_${String(test.id)}_${traceMethod}`)) {
                         gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
                     }
                 });
                 // Get num of non changeL2Block txs
                 const ethTxs = isEthereumTest ? test.blocks[0].transactions.length : test.txs.filter((tx) => typeof tx.type === 'undefined').length;
-                if (regen || forceRegen || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
+                if (regen || (forceRegen && forceRegenArg) || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
                     // Configure genesis for test
                     const isGethSupported = await configureGenesis(test, isEthereumTest);
                     if (!isGethSupported) {
@@ -131,7 +137,7 @@ async function main() {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
-                        if (!forceRegen) {
+                        if (!forceRegen && forceRegenArg) {
                             forceRegen = true;
                             j--;
                             break;
@@ -249,11 +255,21 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 if (value.network !== 'Berlin') {
                     continue;
                 }
-                const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                const ethPath = folderName.split('/');
+                let inputTestPath;
+                if (ethPath.length === 2) {
+                    inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${file.split('.')[0]}_${j}.json`);
+                } else {
+                    inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                }
                 // Check input exists
                 if (!fs.existsSync(inputTestPath)) {
-                    console.log(`Input not found: ${inputTestPath}`);
-                    continue;
+                    inputTestPath = inputTestPath.replace('_0', '');
+                    if (j !== 0 && !fs.existsSync(inputTestPath)) {
+                    // Check file exists without num
+                        console.log(`Input not found: ${inputTestPath}`);
+                        continue;
+                    }
                 }
                 Object.assign(value, {
                     testName: file.split('.')[0], folderName, inputTestPath, testToDebug: j, id: j,
