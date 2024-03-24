@@ -3052,12 +3052,6 @@ function eval_functionCall(ctx, tag) {
         return eval_precompiled(ctx, tag);
     } else if (tag.funcName == "break") {
         return eval_breakPoint(ctx, tag);
-    } else if (tag.funcName == "memAlignWR_W0") {
-        return eval_memAlignWR_W0(ctx, tag);
-    } else if (tag.funcName == "memAlignWR_W1") {
-        return eval_memAlignWR_W1(ctx, tag);
-    } else if (tag.funcName == "memAlignWR8_W0") {
-        return eval_memAlignWR8_W0(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_MULFP2_X") {
         return eval_ARITH_BN254_MULFP2_X(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_MULFP2_Y") {
@@ -3263,39 +3257,6 @@ function eval_log(ctx, tag) {
 function eval_breakPoint(ctx, tag) {
     console.log(`Breakpoint: ${ctx.sourceRef}`);
     return scalar2fea(ctx.Fr, Scalar.e(0));
-}
-
-// Helpers MemAlign
-
-function eval_memAlignWR_W0(ctx, tag) {
-    // parameters: M0, value, offset
-    const m0 = evalCommand(ctx, tag.params[0]);
-    const value = evalCommand(ctx, tag.params[1]);
-    const offset = evalCommand(ctx, tag.params[2]);
-
-    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.shl(Mask256, (32n - offset) * 8n)),
-                        Scalar.band(Mask256, Scalar.shr(value, offset * 8n))));
-}
-
-function eval_memAlignWR_W1(ctx, tag) {
-    // parameters: M1, value, offset
-    const m1 = evalCommand(ctx, tag.params[0]);
-    const value = evalCommand(ctx, tag.params[1]);
-    const offset = evalCommand(ctx, tag.params[2]);
-
-    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m1, Scalar.shr(Mask256, offset * 8n)),
-                        Scalar.band(Mask256, Scalar.shl(value, (32n - offset) * 8n))));
-}
-
-function eval_memAlignWR8_W0(ctx, tag) {
-    // parameters: M0, value, offset
-    const m0 = evalCommand(ctx, tag.params[0]);
-    const value = evalCommand(ctx, tag.params[1]);
-    const offset = evalCommand(ctx, tag.params[2]);
-    const bits = (31n - offset) * 8n;
-
-    return scalar2fea(ctx.Fr, Scalar.bor(  Scalar.band(m0, Scalar.sub(Mask256, Scalar.shl(0xFFn, bits))),
-                        Scalar.shl(Scalar.band(0xFFn, value), bits)));
 }
 
 function checkParams(ctx, tag, expectedParams){
