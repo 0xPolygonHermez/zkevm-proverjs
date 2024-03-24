@@ -31,14 +31,15 @@ const responseErrors = [
     'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance',
     'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_L1_info_tree_index',
     'invalid_change_l2_block_min_timestamp', 'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
+    'invalid_l1_info_tree_index',
 ];
 
 const invalidBatchErrors = ['OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'OOCSH',
-    'invalid_L1_info_tree_index', 'invalid_change_l2_block_min_timestamp',
-    'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
+    'invalid_change_l2_block_limit_timestamp', 'invalid_change_l2_block_min_timestamp',
+    'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block', 'invalid_l1_info_tree_index',
 ];
 
-const changeBlockErrors = ['invalid_L1_info_tree_index', 'invalid_change_l2_block_min_timestamp'];
+const changeBlockErrors = ['invalid_change_l2_block_limit_timestamp', 'invalid_change_l2_block_min_timestamp', 'invalid_l1_info_tree_index'];
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
