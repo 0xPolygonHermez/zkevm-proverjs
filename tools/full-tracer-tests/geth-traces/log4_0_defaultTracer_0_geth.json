@@ -1,0 +1,288 @@
+{
+  "gas": 30717,
+  "failed": false,
+  "returnValue": "",
+  "structLogs": [
+    {
+      "pc": 0,
+      "op": "PUSH1",
+      "gas": 79978808,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [],
+      "memory": []
+    },
+    {
+      "pc": 2,
+      "op": "PUSH1",
+      "gas": 79978805,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 4,
+      "op": "PUSH1",
+      "gas": 79978802,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 6,
+      "op": "PUSH1",
+      "gas": 79978799,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 8,
+      "op": "PUSH1",
+      "gas": 79978796,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 10,
+      "op": "CALLDATALOAD",
+      "gas": 79978793,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x4"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 11,
+      "op": "PUSH2",
+      "gas": 79978790,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 14,
+      "op": "ADD",
+      "gas": 79978787,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x100"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 15,
+      "op": "GAS",
+      "gas": 79978784,
+      "gasCost": 2,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x100"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 16,
+      "op": "DELEGATECALL",
+      "gas": 79978782,
+      "gasCost": 78729155,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x100",
+        "0x4c4611e"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 0,
+      "op": "PUSH1",
+      "gas": 78726555,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [],
+      "memory": []
+    },
+    {
+      "pc": 2,
+      "op": "PUSH1",
+      "gas": 78726552,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 4,
+      "op": "PUSH1",
+      "gas": 78726549,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 6,
+      "op": "PUSH1",
+      "gas": 78726546,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 8,
+      "op": "PUSH1",
+      "gas": 78726543,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 10,
+      "op": "PUSH1",
+      "gas": 78726540,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 12,
+      "op": "LOG4",
+      "gas": 78726537,
+      "gasCost": 1875,
+      "depth": 2,
+      "stack": [
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 13,
+      "op": "PUSH2",
+      "gas": 78724662,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [],
+      "memory": []
+    },
+    {
+      "pc": 16,
+      "op": "PUSH1",
+      "gas": 78724659,
+      "gasCost": 3,
+      "depth": 2,
+      "stack": [
+        "0x600d"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 18,
+      "op": "SSTORE",
+      "gas": 78724656,
+      "gasCost": 5000,
+      "depth": 2,
+      "stack": [
+        "0x600d",
+        "0x0"
+      ],
+      "memory": [],
+      "storage": {
+        "0000000000000000000000000000000000000000000000000000000000000000": "000000000000000000000000000000000000000000000000000000000000600d"
+      }
+    },
+    {
+      "pc": 19,
+      "op": "STOP",
+      "gas": 78719656,
+      "gasCost": 0,
+      "depth": 2,
+      "stack": [],
+      "memory": []
+    },
+    {
+      "pc": 17,
+      "op": "STOP",
+      "gas": 79969283,
+      "gasCost": 0,
+      "depth": 1,
+      "stack": [
+        "0x1"
+      ],
+      "memory": []
+    }
+  ]
+}

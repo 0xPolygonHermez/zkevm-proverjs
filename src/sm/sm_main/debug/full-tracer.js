@@ -232,7 +232,7 @@ class FullTracer {
             // Data always should be 32 or less but limit to 32 for safety
             const size = regC > 32 ? 32 : Number(regC);
             // Convert data to hex string and append zeros, left zeros are stored in logs, for example if data = 0x01c8 and size=32, data is 0x00000000000000000000000000000000000000000000000000000000000001c8
-            data = data.toString(16).padStart(size * 2, '0');
+            data = data.toString(16).padStart(64, '0');
             // Get only left size length from bytes, example if size=1 and data= 0xaa00000000000000000000000000000000000000000000000000000000000000, we get 0xaa
             data = data.substring(0, size * 2);
             this.logs[ctx.CTX][indexLog].data.push(data);
@@ -525,7 +525,7 @@ class FullTracer {
         }
 
         // Check tx status
-        if ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1)) {
+        if (!responseErrors.includes(response.error) && ((response.error === '' && response.status === 0) || (response.error !== '' && response.status === 1))) {
             throw new Error(`Invalid tx status error is "${response.error}" and status is "${response.status}"`);
         }
 
