@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable multiline-comment-style */
 /* eslint-disable no-undef */
 /* eslint-disable max-len */
@@ -199,9 +200,26 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
             test = [test[keysTests[testToDebug]]];
         }
-        const inputTestPath = isEthereumTest ? path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
-        const tn = isEthereumTest ? testName.split('/')[1] : testName;
-        const fn = isEthereumTest ? testName.split('/')[0] : testName;
+        let inputTestPath;
+        let tn;
+        let fn;
+        if (isEthereumTest) {
+            const ethPath = testName.split('/');
+            if (ethPath.length === 3) {
+                inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${ethPath[2]}_${testToDebug}.json`);
+                tn = ethPath[2];
+                fn = `${ethPath[0]}/${ethPath[1]}`;
+            } else {
+                inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`);
+                tn = ethPath[1];
+                fn = ethPath[0];
+            }
+        } else {
+            inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
+            tn = testName;
+            fn = testName;
+        }
+
         Object.assign(test[0], {
             testName: tn, inputTestPath, testToDebug, id: testToDebug, folderName: fn,
         });

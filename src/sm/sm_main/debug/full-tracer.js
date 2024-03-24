@@ -218,7 +218,7 @@ class FullTracer {
     onStoreLog(ctx, tag) {
         const indexLog = getRegFromCtx(ctx, tag.params[0].regName);
         const isTopic = Scalar.e(tag.params[1].num);
-        const data = getRegFromCtx(ctx, tag.params[2].regName);
+        let data = getRegFromCtx(ctx, tag.params[2].regName);
 
         if (!this.logs[ctx.CTX]) {
             this.logs[ctx.CTX] = {};
@@ -235,8 +235,13 @@ class FullTracer {
         } else {
             // Data length is stored in C
             const regC = getRegFromCtx(ctx, 'C');
+            // Data always should be 32 or less but limit to 32 for safety
             const size = regC > 32 ? 32 : Number(regC);
-            this.logs[ctx.CTX][indexLog].data.push(data.toString(16).padStart(size * 2, '0'));
+            // Convert data to hex string and append zeros, left zeros are stored in logs, for example if data = 0x01c8 and size=32, data is 0x00000000000000000000000000000000000000000000000000000000000001c8
+            data = data.toString(16).padStart(size * 2, '0');
+            // Get only left size length from bytes, example if size=1 and data= 0xaa00000000000000000000000000000000000000000000000000000000000000, we get 0xaa
+            data = data.substring(0, size * 2);
+            this.logs[ctx.CTX][indexLog].data.push(data);
         }
         // Add log info
         this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
