@@ -91,6 +91,10 @@ class FullTracer {
 
         this.verbose = new Verbose(options.verbose, smt, logFileName);
         this.reservedCounters = reservedCounters;
+
+        if (!fs.existsSync(this.folderLogs)) {
+            fs.mkdirSync(this.folderLogs);
+        }
     }
 
     /**
@@ -190,7 +194,9 @@ class FullTracer {
         // Intrinsic error should be set at tx level (not opcode)
         // Error triggered with no previous opcode set at tx level
         if ((responseErrors.includes(errorName) || this.full_trace.length === 0)) {
-            this.currentBlock.responses[this.txIndex].error = errorName;
+            if (this.currentBlock.responses.length > 0) {
+                this.currentBlock.responses[this.currentBlock.responses.length - 1].error = errorName;
+            }
 
             return;
         }
@@ -241,8 +247,8 @@ class FullTracer {
         // Add log info
         this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
         this.logs[ctx.CTX][indexLog].block_number = Number(getVarFromCtx(ctx, true, 'blockNum'));
-        this.logs[ctx.CTX][indexLog].tx_hash = this.currentBlock.responses[this.txIndex].tx_hash;
-        this.logs[ctx.CTX][indexLog].tx_hash_l2 = this.currentBlock.responses[this.txIndex].tx_hash_l2;
+        this.logs[ctx.CTX][indexLog].tx_hash = this.currentBlock.responses[this.currentBlock.responses.length - 1].tx_hash;
+        this.logs[ctx.CTX][indexLog].tx_hash_l2 = this.currentBlock.responses[this.currentBlock.responses.length - 1].tx_hash_l2;
         this.logs[ctx.CTX][indexLog].tx_index = this.txIndex;
         this.logs[ctx.CTX][indexLog].index = Number(indexLog);
     }
@@ -320,6 +326,7 @@ class FullTracer {
         this.currentBlock.logs.sort((a, b) => a.index - b.index);
 
         this.verbose.printBlock(`${'finish'.padEnd(10)} ${this.currentBlock.block_number}`);
+        fs.writeFileSync(`${this.pathLogFile}_BLOCK_${this.currentBlock.block_number}.json`, JSON.stringify(this.currentBlock, null, 2));
     }
 
     /**
@@ -453,7 +460,7 @@ class FullTracer {
             return;
         }
 
-        const response = this.currentBlock.responses[this.txIndex];
+        const response = this.currentBlock.responses[this.currentBlock.responses.length - 1];
 
         response.full_trace.context.from = bnToPaddedHex(getVarFromCtx(ctx, true, 'txSrcOriginAddr'), 40);
         response.effective_gas_price = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'txGasPrice'));
@@ -554,6 +561,8 @@ class FullTracer {
 
         // verbose
         this.verbose.printTx(`${'finish'.padEnd(10)} ${this.txIndex}`);
+
+        fs.writeFileSync(`${this.pathLogFile}_TX_${this.currentBlock.block_number}_${this.currentBlock.responses.length - 1}.json`, JSON.stringify(response, null, 2));
 
         // Clean aux array for next iteration
         this.full_trace = [];
@@ -692,8 +701,8 @@ class FullTracer {
             // Add log info
             this.logs[ctx.CTX][indexLog].address = bnToPaddedHex(getVarFromCtx(ctx, false, 'storageAddr'), 40);
             this.logs[ctx.CTX][indexLog].block_number = Number(getVarFromCtx(ctx, true, 'blockNum'));
-            this.logs[ctx.CTX][indexLog].tx_hash = this.currentBlock.responses[this.txIndex].tx_hash;
-            this.logs[ctx.CTX][indexLog].tx_hash_l2 = this.currentBlock.responses[this.txIndex].tx_hash_l2;
+            this.logs[ctx.CTX][indexLog].tx_hash = this.currentBlock.responses[this.currentBlock.responses.length - 1].tx_hash;
+            this.logs[ctx.CTX][indexLog].tx_hash_l2 = this.currentBlock.responses[this.currentBlock.responses.length - 1].tx_hash_l2;
             this.logs[ctx.CTX][indexLog].tx_index = this.txIndex;
             this.logs[ctx.CTX][indexLog].index = Number(indexLog);
         }
@@ -1000,14 +1009,8 @@ class FullTracer {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }
-        for (let i = 0; i < this.finalTrace.block_responses.length; i++) {
-            for (let j = 0; j < this.finalTrace.block_responses[i].responses.length; j++) {
-                // print tx trace
-                fs.writeFileSync(`${this.pathLogFile}_${i + 1}_${j}.json`, JSON.stringify(this.finalTrace.block_responses[i].responses[j], null, 2));
-            }
-        }
-        // Print batch trace
-        fs.writeFileSync(`${this.pathLogFile}.json`, JSON.stringify(this.finalTrace, null, 2));
+
+        fs.writeFileSync(`${this.pathLogFile}_FULL_BATCH.json`, JSON.stringify(this.finalTrace, null, 2));
     }
 
     /**
