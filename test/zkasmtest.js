@@ -4,24 +4,86 @@ const { verifyZkasm } = require("./verify_zkasm");
 const { cwd } = require("process");
 
 const argv = require("yargs")
-    .usage("node zkasmtest [headerfile] filename1 [filename2] ... [footerfile] [-p <pil>] [-P <pilconfig>]")
+    .usage("node zkasmtest [FLAGS] [OPTIONS] input")
+    .options({
+        "a": {
+            alias: "all",
+            describe: "Use all namespaces",
+        },
+        "n": {
+            alias: "ns",
+            describe: "Namespaces to use",
+            default: ['Global', 'Main'],
+        },
+        "b": {
+            alias: "blob",
+            describe: "Use the blob executor",
+        },
+        "N": {
+            alias: "stepsN",
+            describe: "Steps to execute",
+            default: "As defined by PIL",
+        },
+        "R": {
+            alias: "rows",
+            describe: "Number of rows for the PIL file",
+            default: "2**17",
+        },
+        "p": {
+            alias: "pil",
+            describe: "Path to the PIL file",
+            default: "pil/main.pil",
+        },
+        "P": {
+            alias: "pilconfig",
+            describe: "PIL config file",
+        },
+        "e": {
+            alias: "externalpil",
+            describe: "Use external PIL verification",
+        },
+        "o": {
+            alias: "outputpath",
+            describe: "Output path for the generated files",
+        },
+        "C": {
+            alias: "constants",
+            describe: "Generate constant pols",
+        },
+        "c": {
+            alias: "config",
+            describe: "Main executor config file",
+        },
+        "d": {
+            alias: "debug",
+            describe: "Debug mode",
+        },
+        "v": {
+            alias: "verbose",
+            describe: "Be verbose",
+        },
+        "s": {
+            alias: "stats",
+            describe: "Generate stats",
+        },
+        "E": {
+            alias: "reserved",
+            describe: "Controls reserved counters",
+        },
+        "H": {
+            alias: "helper",
+            describe: "Path to the helper file",
+        }
+    })
+    .group(["a","b","d","C","e","s","E","v","h","version"], "FLAGS:")
+    .group(["c","N","p","P","n","R","o","H"], "OPTIONS:")
     .help('h')
-    .alias("b", "blob")
-    .alias("A", "all")
-    .alias("p", "pil")
-    .alias("P", "pilconfig")
-    .alias("c", "config")
-    .alias("N", "stepsN")
-    .alias("R", "rows")
-    .alias("n", "ns")
-    .alias("v", "verbose")
-    .alias("e", "externalpil")
-    .alias("o", "outputpath")
-    .alias("C", "constants")
-    .alias("d", "debug")
-    .alias("s", "stats")
-    .alias("H", "helper")
-    .alias("E", "reserved")
+    .alias('h', 'help')
+    .epilogue("ARGS:\n  <input>   Path to a complete zkasm file or multiple zkasm files where the first file refers to the header file and the last file refers to the footer file")
+    .example([
+        ['node test/zkasmtest.js test/collection/main.zkasm'],
+        ['node test/zkasmtest.js -dEs -N "2**23" -R "2**23" test/collection/header.zkasm test/collection/constants.zkasm test/collection/counters.zkasm test/collection/footer.zkasm']
+      ])
     .argv;
 
 async function main(){
@@ -102,7 +164,7 @@ async function main(){
         defaultPilConfig.namespaces = namespaces;
     }
 
-    let defaultConfig = {
+    let defaultMainConfig = {
         constants,
         debug,
         blob,
@@ -113,7 +175,7 @@ async function main(){
     }
 
     if (stats) {
-        defaultConfig.debugInfo.inputName = oneZkasmFile ? path.basename(zkasmFile) : 'main.zkasm';
+        defaultMainConfig.debugInfo.inputName = oneZkasmFile ? path.basename(zkasmFile) : 'main.zkasm';
     }
 
     if (typeof argv.stepsN !== 'undefined') {
@@ -121,8 +183,8 @@ async function main(){
         if (typeof steps === 'string' && steps.startsWith('2**')) {
             steps = 2 ** Number(steps.substring(3).trim());
         }
-        defaultConfig.stepsN = steps;
-        defaultConfig.debug = true;
+        defaultMainConfig.stepsN = steps;
+        defaultMainConfig.debug = true;
         defaultPilConfig.defines.N = 2 ** 16;
         console.log(`Setting steps upto ${steps} vs rows upto ${rows} (debug: active)`);
     }
@@ -130,9 +192,9 @@ async function main(){
     const defaultPilFile = __dirname + `/../pil/main${targetSuffix}.pil`;
     const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : defaultPilFile;
     let pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : defaultPilConfig;
-    let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultConfig;
+    let mainConfig = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultMainConfig;
     if (argv.reserved === true) {
-        config = {...config, reserved: true}
+        mainConfig = {...mainConfig, reserved: true}
     }
 
     if (externalPilVerification && !outputPath) {
@@ -143,12 +205,12 @@ async function main(){
 
         const zkasm = zkasmName.split('.')[0];
 
-        config = {
+        mainConfig = {
             romFilename: path.join(outputPath, zkasm + '.' + 'rom.json'),
             constFilename: path.join(outputPath, zkasm + '.' + 'constFile.bin'),
             commitFilename: path.join(outputPath, zkasm + '.' + 'commitFile.bin'),
             pilJsonFilename: path.join(outputPath, zkasm + '.' + 'main.pil.json'),
-            ...config};
+            ...mainConfig};
     }
 
     let fullPathZkasmFile = false;
@@ -165,7 +227,7 @@ async function main(){
         helpers = [helpers];
     }
     if (helpers.length) {
-        config.helpers = [];
+        mainConfig.helpers = [];
         for (const helper of helpers) {
             let helperFile = false;
             if (oneZkasmFile) {
@@ -179,19 +241,23 @@ async function main(){
             const fullPathHelper = path.resolve(helperFile);
             console.log(`Using helper ${helperFile} on ${fullPathHelper}`);
             const clhelper = require(fullPathHelper);
-            config.helpers.push(new clhelper());
+            mainConfig.helpers.push(new clhelper());
         }
     }
 
-    if (config && config.debug && config.constants) {
+    if (mainConfig && mainConfig.debug && mainConfig.constants) {
         console.log("Debug and constants options are incompatible");
         process.exit(1);
     }
 
     if (oneZkasmFile) {
-        await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
+        await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, mainConfig);
     } else {
-        await verifyZkasm(zkasmFile, {pilFile}, pilConfig, config, {compileFromString: true});
+        const zkasmConfig = {
+            compileFromString: true
+        }
+
+        await verifyZkasm(zkasmFile, {pilFile}, pilConfig, mainConfig, zkasmConfig);
     }
     console.log('Done!');
 }
