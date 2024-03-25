@@ -13,7 +13,7 @@ const { initBlockHeader, fillReceiptTree, setBlockGasUsed } = blockUtils;
 const { computeL2TxHash } = processorUtils;
 
 async function checkBlockInfoRootsFromTrace(testName) {
-    const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${testName}__full_trace.json`), 'utf8'));
+    const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${testName}__full_trace_FULL_BATCH.json`), 'utf8'));
     const poseidon = await buildPoseidon();
     const { F } = poseidon;
     // Generate block info tree from trace for each block

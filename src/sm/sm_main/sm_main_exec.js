@@ -30,7 +30,7 @@ const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
 const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
-const MyHelperClass = require("./helpers/helpers");
+const Helpers = require("../../helpers.js");
 const Constants = require('./const-sm-main-exec');
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
