@@ -338,18 +338,15 @@ __MSTOREX_afterSave:
         $0{E / 32} => RR            :JMPN(failAssert)
         ; RR = 32 bits positive value
 
-        ; $BYTE{E%32} => RCX,A      :JMP_GT(31,failAssert)
         $BYTE{E%32} => RCX,A          
-        31 - RCX                    :JMPN(failAssert)
+        RCX                         :JMP_GT(31, failAssert)
 
         ; E === 32 * RR + A (RCX)
         ; E - 32 * RR === A
         E - 32 * RR                 :ASSERT
 
         
-        ; RCX + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C     :JMP_EQ(%MA_LEN_FACTOR * 32 + %MA_LEFT_ALIGN, __MSTORE32_offset0_len32)
-        RCX + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C     
-        C - %MA_LEN_FACTOR * 32 - %MA_LEFT_ALIGN             :JMPZ(__MSTORE32_offset0_len32)
+        RCX + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C     :JMP_EQ(%MA_LEN_FACTOR * 32 + %MA_LEFT_ALIGN, __MSTORE32_offset0_len32)
 
         $ => A                  :MLOAD(MEM:RR)
         $ => B                  :MLOAD(MEM:RR+1)
