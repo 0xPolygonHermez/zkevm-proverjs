@@ -8,7 +8,7 @@ on:
     branches:
       - main
       - develop
-      - develop-eldelberry
+      - develop-feijoa
   push:
     branches:
       - main
@@ -31,7 +31,7 @@ jobs:
       - name: Clone repos
         run: |
           cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch feature/log0-tests
+          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch feature/forkid-10
           cd zkevm-testvectors/tools-inputs/tools-eth
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests

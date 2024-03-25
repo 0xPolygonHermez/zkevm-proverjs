@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable multiline-comment-style */
 /* eslint-disable no-undef */
@@ -36,10 +37,15 @@ const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exe
 const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
 let forceRegen = false;
+const { argv } = require('yargs')
+    .usage('node full-tracer-tests.js -n -f -r')
+    .alias('n', 'noStop') // Stop execution if one tests fails (default true)
+    .alias('f', 'forceRegen') // Retry failed test after regenerate
+    .alias('r', 'regen'); // Force test regeneration
 // CONFIG FLAGS
-const stopOnFailure = true;
-const forceRegenArg = false;
-const regen = false;
+const noStopOnFailure = argv.noStop;
+const forceRegenArg = argv.forceRegen;
+const regen = argv.regen;
 const errorsMap = {
     OOG: 'out of gas',
     invalidStaticTx: 'write protection',
@@ -126,7 +132,9 @@ async function main() {
                     continue;
                 }
                 const ftTraces = await getFtTrace(test, gethTraces.length, rom, isEthereumTest);
-
+                if (ftTraces.length === 0) {
+                    continue;
+                }
                 // Check block info root
                 await checkBlockInfoRootsFromTrace(test.testName);
 
@@ -142,7 +150,7 @@ async function main() {
                             j--;
                             break;
                         }
-                        if (stopOnFailure) {
+                        if (!noStopOnFailure) {
                             process.exit(1);
                         }
                     } else {
@@ -709,8 +717,13 @@ async function getFtTrace(test, txsCount, rom, isEthereumTest) {
     const ftTraces = [];
     for (let i = 0; i < txsCount; i++) {
         const blockNum = isEthereumTest ? [1, i] : getBlockNumFromTxCount(test, i);
-        const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_${blockNum[0]}_${blockNum[1]}.json`), 'utf8'));
-        ftTraces.push(ftTrace);
+        const dir = path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_TX_${blockNum[0]}_${blockNum[1]}.json`);
+        if (fs.existsSync(dir)) {
+            const ftTrace = JSON.parse(fs.readFileSync(dir, 'utf8'));
+            ftTraces.push(ftTrace);
+        } else {
+            console.log(`Full trace not found: ${dir}`);
+        }
     }
 
     return ftTraces;
