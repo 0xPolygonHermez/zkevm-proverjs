@@ -1,6 +1,6 @@
 {
   "name": "@0xpolygonhermez/zkevm-proverjs",
-  "version": "4.0.0",
+  "version": "6.0.0",
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "config": {
@@ -121,10 +121,10 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#v5.0.0-fork.8",
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v5.0.0-fork.8",
-    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#v5.0.0-fork.8",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.0-fork.9",
+    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#v6.0.0-fork.9",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
-    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#feature/logs-tests",
+    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v6.0.1-fork.9",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
