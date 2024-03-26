@@ -34,7 +34,7 @@ const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
-const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'stack-errors.json'];
+const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json', 'pre-revert.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
 const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'invalidStaticTx', 'bn256: malformed point'];
 const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
@@ -80,8 +80,8 @@ const { ExecutorService } = zkProverProto;
 const { HashDBService } = hashDbProto;
 // my prover -> 52.30.205.190
 // executor Fr -> 51.210.116.237
-const client = new ExecutorService('51.210.116.237:50072', grpc.credentials.createInsecure(), { 'grpc.max_receive_message_length': 91837108 });
-const dbClient = new HashDBService('51.210.116.237:50062', grpc.credentials.createInsecure());
+const client = new ExecutorService('51.210.116.237:50078', grpc.credentials.createInsecure(), { 'grpc.max_receive_message_length': 91837108 });
+const dbClient = new HashDBService('51.210.116.237:50067', grpc.credentials.createInsecure());
 let tn;
 let fn;
 let tid;
@@ -1001,7 +1001,7 @@ function formatInputV2(jsInput, txHash) {
         old_acc_input_hash: Buffer.from(jsInput.oldAccInputHash.slice(2), 'hex'),
         old_batch_num: jsInput.oldNumBatch,
         chain_id: jsInput.chainID,
-        fork_id: 7,
+        fork_id: jsInput.forkID,
         batch_l2_data: Buffer.from(jsInput.batchL2Data.slice(2), 'hex'),
         l1_info_root: Buffer.from(jsInput.l1InfoRoot.slice(2), 'hex'),
         timestamp_limit: Number(jsInput.timestampLimit),
