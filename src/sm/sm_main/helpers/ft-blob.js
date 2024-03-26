@@ -24,7 +24,8 @@ module.exports = class FtBlob extends Helper {
         this.logFileName = config.debugInfo.inputName;
         // Logs path
         this.folderLogs = path.join(__dirname, '../logs-ft-blob');
-        this.pathLogFile = `${this.folderLogs}/${this.logFileName.split('.')[0]}__ft`;
+        // this.pathLogFile = `${this.folderLogs}/${this.logFileName.split('.')[0]}__ft`;
+        this.pathLogFile = `${this.folderLogs}/pepe__ft`;
         // Final trace
         this.finalTrace = {
             batch_data: []

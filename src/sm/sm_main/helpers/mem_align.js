@@ -96,6 +96,14 @@ module.exports = class MemAlign extends Helper {
         }
         return valueLe;
     }
+    eval_memAlignRD(ctx, tag) {
+        // parameters: M0, value, offset
+        const a = this.evalCommand(ctx, tag.params[0]);
+        const b = this.evalCommand(ctx, tag.params[1]);
+        const mode = this.evalCommand(ctx, tag.params[2]);
+        return(this.#calculateRD(a,b,mode));
+    }
+
     eval_memAlignWR_W0(ctx, tag) {
         // parameters: M0, value, offset
         const m0 = this.evalCommand(ctx, tag.params[0]);

@@ -134,11 +134,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     if(blob) {
         // Load poseidonBlobData into DB
-        const z = await hashContractBytecode(input.blobData);
-        await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
+        /* const z = await hashContractBytecode(input.blobData);
+        await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));*/
     
         // Load keccak256BlobData into DB
         blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        console.log(blobL2HashData);
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
     
     }
@@ -274,6 +275,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.line = l.line;
         sourceRef = `[w:${step} zkPC:${ctx.ln} ${ctx.fileName}:${ctx.line}]`;
         ctx.sourceRef = sourceRef;
+        console.log(sourceRef);
 
 
         if (verboseOptions.zkPC) {
@@ -923,7 +925,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     const pos = fe2n(Fr, ctx.HASHPOS, ctx);
 
                     if ((size<0) || (size>32)) throw new Error(`Invalid size for hash ${sourceRef}`);
-                    if (pos+size > ctx.hashP[hashAddr].data.length) throw new Error(`Accessing hashP(${hashAddr}) out of bounds ${sourceRef}`);
+                    if (pos+size > ctx.hashP[hashAddr].data.length) throw new Error(`Accessing hashP(${hashAddr}) out of bounds [pos(${pos})+size(${size}) > ${ctx.hashP[hashAddr].data.length}] ${sourceRef}`);
                     let s = Scalar.zero;
                     for (let k=0; k<size; k++) {
                         if (typeof ctx.hashP[hashAddr].data[pos + k] === "undefined") throw new Error(`Accessing hashP(${hashAddr}) not defined place ${pos+k} ${sourceRef}`);

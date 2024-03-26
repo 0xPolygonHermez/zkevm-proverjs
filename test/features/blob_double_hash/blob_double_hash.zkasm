@@ -1,0 +1,180 @@
+CONST %MAX_CNT_MEM_ALIGN = 1000
+CONST %MAX_CNT_STEPS = 64000
+
+VAR GLOBAL tmpA
+VAR GLOBAL tmpB
+VAR GLOBAL tmpC
+VAR GLOBAL tmpD
+VAR GLOBAL tmpE
+VAR GLOBAL tmpSR
+VAR GLOBAL tmpRR
+VAR GLOBAL tmpRCX
+VAR GLOBAL tmpHASHPOS
+VAR GLOBAL tmpSP
+VAR GLOBAL tmpPC
+VAR GLOBAL tmpSTEP
+VAR GLOBAL totSTEPS
+VAR GLOBAL polEvalFrBLS12381_pol_eval[4096]
+VAR GLOBAL batchDataLen
+VAR GLOBAL isBlobInvalid
+VAR GLOBAL totalBatchData
+VAR GLOBAL batchDataProcessed
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+        0 => E
+
+        0 => A
+
+        ; collisio entre dos hashs a la DB
+        ; 2**8 * 2**12 = 2**20 < 2**32
+        0x5734d55855b48b16066ac51fdcb6cc447487ccbc4d287d064b5af5e7a57a48a5n :HASHKDIGEST(E)
+        131072 :HASHKLEN(E)
+
+        ; blobData?
+
+        0 => A,B,E
+        4096 => RR
+
+blobLoopP31:
+        $ => A          :HASHK1(E),JMPNZ(invalidBlobData)
+        $               :HASHK31(E),MSTORE(polEvalFrBLS12381_pol_eval[4096-RR])
+        RR - 1 => RR    :JMPNZ(blobLoopP31,blobLoopEnd)
+
+
+invalidBlobData:
+        1               :MSTORE(isBlobInvalid)
+        ; offset = 1 byte + len = 1 byte + left_alignment
+        ; store in 31th byte, 0th byte of A
+        1 + 128 * 1 + 8192  => C
+        $ => A          :MEM_ALIGN_RD
+        ; read pending 31 bytes and adding whit
+        $ + A => A      :F_HASHK31(E)
+        A               :MSTORE(polEvalFrBLS12381_pol_eval[4096-RR])
+        RR - 1 => RR    :JMPZ(blobLoopEnd)
+
+; continue reading 32 bytes, because it's an invalid Blob.        
+blobLoopP32:
+        $               :HASHK32(E),MSTORE(polEvalFrBLS12381_pol_eval[4096-RR])
+        RR - 1 => RR    :JMPNZ(blobLoopP32)
+
+blobLoopEnd:
+
+        0 => B,RR
+        31 - 1 - 4 => RCX
+        ; reading type
+        $ => A                  :MLOAD(polEvalFrBLS12381_pol_eval[RR])
+        ${dumphex(A)}
+        1 + 128 * 1 => C
+        $ => C                  :MEM_ALIGN_RD
+        ${dump(C)}
+
+        ; getting totalBatchData
+        2 + 128 * 4 => C
+        $                       :MEM_ALIGN_RD,MSTORE(totalBatchData)
+        ${dump(mem.totalBatchData)}
+
+        ; A = current 31 bits value
+        ; RR = current index array 31 bits value
+        ; RCX = remaining bytes on A
+        ; D = batch data len
+
+readBatchDataLen:
+        0 => HASHPOS
+        32 - RCX + 128 * 4  => C   :JMP_EQ(32+128*4,readBytesBatchDataLenOnTop)
+
+        ; read 4 bytes, if there are not enought bytes it's filled with zero of m1(B)
+        $ => D                  :MEM_ALIGN_RD
+        ${dump(D)}
+        RCX - 4 => RCX          :JMP_LE(0, readRemainingBatchDataLen,readBatchData)
+                
+; all batchlen it's at begining of memory
+readBytesBatchDataLenOnTop:
+        RR + 1 => RR
+        $ => A                  :MLOAD(polEvalFrBLS12381_pol_eval[RR])
+        ; offset = 1, len = 4 bytes
+        1 + 128 * 4 => C
+        $ => D                  :MEM_ALIGN_RD
+        31 - 4 => RCX           :JMP(readBatchData)
+    
+; read rest of bytes of batchDataLen
+readRemainingBatchDataLen:
+        RR + 1 => RR
+        RCX + 31 => RCX        :JMP_EQ(31, readBatchData)
+        $ => A                 :MLOAD(polEvalFrBLS12381_pol_eval[RR])
+        1 - 128 * RCX + 31 * 128  => C   
+        $ => C                 :MEM_ALIGN_RD
+        D + C => D
+
+; check if A has pending bytes, this bytes belongs to current BatchData
+; three posibilities:
+;   batchDataLen (D) === 0
+;   pending bytes (RCX) <= batchDataLen (D)  ==> hash this RCX bytes
+;   pending bytes (RCX) > batchDataLen (D) ==> hash only D bytes
+
+readBatchData:
+        D                               :JMP_EQ(0,hashBatchDataEnd), MSTORE(batchDataLen)
+        4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidBatchData)
+        
+        RCX                             :JMP_EQ(0, loopHash31BytesOfBatchData)
+        D - RCX                         :JMPN(allBatchDataInRemainingBytes)
+
+allRemainingBytesBelongsBatchData:
+        RCX => D
+        32 - RCX + 128 * D => C
+        $ => C                      :MEM_ALIGN_RD
+        C                           :HASHP(E)
+        batchDataLen - RCX => D     :JMP_GE(31, loopHash31BytesOfBatchData, hashLastBytesOfBatchData)
+        
+allBatchDataInRemainingBytes:
+        32 - SP + 128 * D => C
+        $                           :MEM_ALIGN_RD,HASHP(E)
+        SP - D => SP                :JMP(hashBatchDataEnd)
+
+; hash speed up 31 bytes
+loopHash31BytesOfBatchData:
+        RR + 1 => RR
+        ${mem.polEvalFrBLS12381_pol_eval[RR]}     :HASHP31(E),MLOAD(polEvalFrBLS12381_pol_eval[RR])
+        D - 31 => D                               :JMP_GE(31, loopHash31BytesOfBatchData)
+
+; hash the last bytes of batch
+hashLastBytesOfBatchData:
+        1 + 128 * D  => C       :JMP_EQ(1, hashBatchDataEnd)
+        RR + 1 => RR
+        $ => A                  :MLOAD(polEvalFrBLS12381_pol_eval[RR])
+        ; $ => C                :MEM_ALIGN_RD
+        ; C                     :HASHP(E)
+        ${memAlignRD(A,B,C)}    :MEM_ALIGN_RD,HASHP(E)
+
+hashBatchDataEnd:
+        ${dump(D)}
+        HASHPOS         :HASHPLEN(E)
+        $ => C          :HASHPDIGEST(E)
+        E + 1 => E
+        ; add batchDataLen to batchDataProcessed and verify if there are more batchData
+        batchDataLen => C          
+        batchDataProcessed + C + 4 => C
+        C => batchDataProcessed    
+        C - totalBatchData :JMPN(readBatchDataLen,end)
+
+
+invalidBlobWith31thNonZero:
+invalidBatchData:
+        ${dump(RR, RCX, D, 4095 * 31 - RR * 31 + RCX - D)}
+    A + 1 :ASSERT
+   
+end:
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, SR
+
+finalWait:
+        ${beforeLast()}  : JMPN(finalWait)
+
+                         : JMP(start)
+opINVALID:
+outOfCountersStep:
+outOfCountersMemalign:
+failAssert:
+        A + 1 :ASSERT
