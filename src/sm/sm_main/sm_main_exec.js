@@ -177,7 +177,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let auxNewStateRoot;
 
     if (verboseOptions.batchL2Data) {
-        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
+        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector, verboseOptions);
     }
 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
@@ -2849,7 +2849,7 @@ async function eventsAsyncTracer(ctx, cmds) {
     }
 }
 
-async function printBatchL2Data(batchL2Data, getNameSelector) {
+async function printBatchL2Data(batchL2Data, getNameSelector, verboseOptions) {
     console.log('/////////////////////////////');
     console.log('/////// BATCH L2 DATA ///////');
     console.log('/////////////////////////////\n');
