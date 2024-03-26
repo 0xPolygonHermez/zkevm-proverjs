@@ -19,3 +19,4 @@ tracer-options.json
 *.stats
 main.pil.json
 tools/full-tracer-tests/ft-traces/
+batch-l2-data.json
