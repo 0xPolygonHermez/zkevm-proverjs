@@ -2,7 +2,7 @@ const version = require("../package").version;
 const fs = require("fs");
 const path = require("path");
 const JSONbig = require('json-bigint')({ useNativeBigInt: true, alwaysParseAsBig: true });
-const { batchPublics, batchPublicsEip4844, blobInnerPublics, blobOuterPublics } = require("./templates/publics");
+const { batchPublics, batchPublicsEip4844, blobInnerPublics, blobOuterPublics } = require("./templates/helpers/publics");
 const ejs = require("ejs");
 const argv = require("yargs")
     .version(version)
@@ -10,7 +10,6 @@ const argv = require("yargs")
     .array("v").alias("v", "verkey")
     .array("s").alias("s", "starkinfo")
     .alias("b", "batch")
-    .alias("e", "eip4844")
     .array("r").alias("r", "recursivefile")
     .string("template")
     .string("verifiername")
@@ -20,9 +19,18 @@ const argv = require("yargs")
 
 
 async function run() {
-    const template = argv.template;
-    if(!template) throw new Error("A template name must be provided!");
-    if(!["blob_outer", "compressor", "recursive1", "recursive2", "recursivef", "final"].includes(template)) throw new Error("Invalid template name provided!");
+    const templateName = argv.template;
+    if(!templateName) throw new Error("A template name must be provided!");
+    if(!["blob_outer", "compressor", "recursive1", "recursive2", "recursive2_batch", "recursive2_blob", "recursivef", "final", "final_blob"].includes(templateName)) throw new Error("Invalid template name provided!");
+
+    let template;
+    if(templateName.includes("final")) {
+        template = "final";
+    } else if(templateName.includes("recursive2")) {
+        template = "recursive2";
+    } else {
+        template = templateName;
+    }
 
     const recursiveFiles = argv.recursivefile;
     const recursiveFile = recursiveFiles[0];
@@ -39,9 +47,11 @@ async function run() {
         starkInfoVerifiers.push(JSON.parse(await fs.promises.readFile(starkInfos[1].trim(), "utf8")));
     }
 
-    let isBatchRecursion = argv.batch ? true : false;
-    let isEip4844 = argv.eip4844 || template === "blob_outer" ? true : false;
-
+    const options = {
+        setEnableInput: argv.setenable || false,
+        setAggregatedKey: argv.aggkey || false,
+        isAggregatedInput: argv.isagg || false,
+    }
     let vks = [];
 
     if(!argv.verkey) throw new Error("A verification key file must be provided!");
@@ -52,23 +62,67 @@ async function run() {
     const verkey = JSONbig.parse(await fs.promises.readFile(verkeyArray[0].trim(), "utf8"));
     vks.push(verkey.constRoot);
     
-    if(template === "recursivef" || template === "blob_outer") {
+    let verifierNames = [];
+
+    let verifierName = argv.verifiername;
+    if(!verifierName) throw new Error("A verifier name must be provided!")
+    verifierNames.push(verifierName);
+
+    const optionsCircom = {
+        nStages: 3,
+        starkInfoVerifiers,
+        vks,
+        options,
+        verifierNames,
+    };
+
+    if(template === "recursive2") {
+        let verifyRecursive2CircomTemplate;
+        let verifyRecursive2InputsCircom = { isTest: false };
+        
+        if(templateName === "recursive2") {
+            verifyRecursive2CircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "recursive2", "recursive2_checks_batch.circom.ejs"), "utf8");
+            verifyRecursive2InputsCircom.publics = batchPublics;
+        } else if(template === "recursive2_batch") {
+            verifyRecursive2CircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "recursive2", "recursive2_checks_batch_eip4844.circom.ejs"), "utf8");
+            verifyRecursive2InputsCircom.publics = batchPublicsEip4844;
+        } else if(template === "recursive2_blob") {
+            verifyRecursive2CircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "recursive2", "recursive2_checks_blob.circom.ejs"), "utf8");
+            verifyRecursive2InputsCircom.publics = blobOuterPublics;
+        }
+
+        const verifyRecursive2File = recursiveFiles[1];
+        if(typeof (verifyRecursive2File) !== "string") throw new Error("A verify recursive2 file must be provided!");
+
+        const verifyRecursive2CircomFile = ejs.render(verifyRecursive2CircomTemplate, verifyRecursive2InputsCircom);
+        await fs.promises.writeFile(verifyRecursive2File, verifyRecursive2CircomFile, "utf8");
+
+    } 
+    
+    if(template === "blob_outer") {
+        if(template === "blob_outer") throw new Error("EIP-4844 must be provided for blob outer template!");
+
         if(typeof(verkeyArray[1]) !== "string") throw new Error("A second verification key file must be provided!");
         const verkey2 = JSONbig.parse(await fs.promises.readFile(verkeyArray[1].trim(), "utf8"));
         vks.push(verkey2.constRoot);
-    }
 
-    if(template === "blob_outer") {
         if(typeof(verkeyArray[2]) !== "string") throw new Error("A third verification key file must be provided!");
         const verkey3 = JSONbig.parse(await fs.promises.readFile(verkeyArray[2].trim(), "utf8"));
         vks.push(verkey3.constRoot);
+
+        let verifierName2 = argv.verifiername2;
+        if(!verifierName2) throw new Error("A verifier name for blob inner must be provided!")
+        verifierNames.push(verifierName2);
+
+        if(verifierNames.length < 2) throw new Error("Invalid number of verifier names provided!");
+        if(starkInfoVerifiers.length < 2) throw new Error("Invalid number of stark infos provided!");
 
         const verifyBlobOuterCircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "verify_blob_outer.circom.ejs"), "utf8");
         const optionsVerifyBlobOuterCircom = {
             batchPublics: batchPublicsEip4844,
             blobInnerPublics,
             blobOuterPublics,
-            isTest:false,
+            isTest: false,
         };
 
         const verifyBlobOuterFile = recursiveFiles[1];
@@ -78,60 +132,36 @@ async function run() {
         await fs.promises.writeFile(verifyBlobOuterFile, verifyBlobOuterCircomFile, "utf8");
     }
 
-    if(template === "final") {
-        const getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "get_sha256_inputs.circom.ejs"), "utf8");
-        const optionsGetSha256InputsCircom = {
-            batchPublics: isEip4844 ? batchPublicsEip4844 : batchPublics,
-            blobOuterPublics,
-            isEip4844,
-            isTest:false,
-        };
+    if(template === "recursivef") {
+        if(typeof(verkeyArray[1]) !== "string") throw new Error("A second verification key file must be provided!");
+        const verkey2 = JSONbig.parse(await fs.promises.readFile(verkeyArray[1].trim(), "utf8"));
+        vks.push(verkey2.constRoot);
+    }
 
+    if(template === "final") {
+        let getSha256InputsTemplate;
+        let optionsGetSha256InputsCircom = { isTest: false };
+        
+        if(templateName === "final_blob") {
+            getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs.circom_blob.ejs"), "utf8");
+            optionsGetSha256InputsCircom.publics = blobOuterPublics;
+        } else {
+            getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs.circom_batch.ejs"), "utf8");
+            optionsGetSha256InputsCircom.publics = blobOuterPublics;
+        }
+       
         const getSha256InputsFile = recursiveFiles[1];
         if(typeof (getSha256InputsFile) !== "string") throw new Error("A get sha256 inputs file must be provided!");
 
         const getSha256InputsCircomFile = ejs.render(getSha256InputsTemplate, optionsGetSha256InputsCircom);
         await fs.promises.writeFile(getSha256InputsFile, getSha256InputsCircomFile, "utf8");
-    }
-    
-    let verifierNames = [];
 
-    let verifierName = argv.verifiername;
-    if(!verifierName) throw new Error("A verifier name must be provided!")
-    verifierNames.push(verifierName);
-
-    if(template === "blob_outer") {
-        let verifierName2 = argv.verifiername2;
-        if(!verifierName2) throw new Error("A verifier name for blob inner must be provided!")
-        verifierNames.push(verifierName2);
-    }
-    
-    if(template === "blob_outer") {
-        if(verifierNames.length !== 2) throw new Error("Invalid number of verifier names provided!");
-        if(starkInfoVerifiers.length !== 2) throw new Error("Invalid number of stark infos provided!");
-    } else {
-        if(verifierNames.length !== 1) throw new Error("Invalid number of verifier names provided!");
-        if(starkInfoVerifiers.length !== 1) throw new Error("Invalid number of stark infos provided!");
+        options.arity = starkInfoVerifiers[0].merkleTreeArity;
     }
 
-    const arity = argv.arity ? parseInt(argv.arity) : 16;
-
-    const nStages = 3; // This will be obtained from the starkInfo when moving to Vadcops
 
     const circomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", `${template}.circom.ejs`), "utf8");
 
-    const optionsCircom = {
-        nStages,
-        starkInfoVerifiers,
-        vks,
-        isBatchRecursion,
-        verifierNames,
-        isEip4844,
-        arity,
-        batchPublics: isEip4844 ? batchPublicsEip4844 : batchPublics,
-        blobInnerPublics,
-        blobOuterPublics,
-    };
     const circomVerifier = ejs.render(circomTemplate, optionsCircom);
     await fs.promises.writeFile(recursiveFile, circomVerifier, "utf8");
 

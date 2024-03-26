@@ -68,7 +68,7 @@ template Main() {
 <% }                                                  -%>
     sv.finalPol <== finalPol;
     
-<%  if(isBatchRecursion) { -%>
+<%  if(options.setEnableInput) { -%>
     sv.enable <== 1;
 <%  } -%>
 

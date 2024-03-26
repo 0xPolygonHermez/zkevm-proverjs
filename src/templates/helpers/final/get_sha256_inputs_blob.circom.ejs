@@ -1,0 +1,189 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+include "sha256/sha256.circom";
+include "bitify.circom";
+
+<% function getPositionBits(publics, currentPublic) {
+    const publicsNames = Object.keys(publics).filter(p => p !== "nPublics").sort((a, b) => publics[a] - publics[b]);
+    if(!publicsNames.includes(currentPublic) && currentPublic !== "aggregatorAddr") {
+        throw new Error("Something went wrong!");
+    }
+
+    let publicIndex = currentPublic === "aggregatorAddr" 
+        ? publicsNames.length
+        : publicsNames.findIndex((publicName) => publicName === currentPublic);
+    let initialBits = 0;
+    for(let i = 0; i < publicIndex; i++) {
+        const public = publicsNames[i];
+        if(public.includes("NumPos") || public === "forkIdPos" || public === "chainIdPos") {
+            initialBits += 64;
+        } else {
+            initialBits += 256;
+        }
+    }
+    return initialBits;
+} -%>
+
+template getSha256Inputs() {
+    signal input aggregatorAddr;
+    signal input publics[<%- publics.nPublics %>];
+
+    signal output publicsHash;
+
+    signal n2bOldStateRoot[8][32];
+    var oldStateRootPos = <%- publics.oldStateRootPos %>;
+    var oldStateRootBitsOffset = <%- getPositionBits(publics, "oldStateRootPos") %>;
+
+    signal n2bOldBlobStateRoot[8][32];
+    var oldBlobStateRootPos = <%- publics.oldBlobStateRootPos %>;
+    var oldBlobStateRootBitsOffset = <%- getPositionBits(publics, "oldBlobStateRootPos") %>;
+
+    signal oldBlobAccInputHash[8];
+    signal n2bOldBlobAccInputHash[8][32];
+    var oldBlobAccInputHashPos = <%- publics.oldBlobAccInputHashPos %>;
+    var oldBlobAccInputHashBitsOffset = <%- getPositionBits(publics, "oldBlobAccInputHashPos") %>;
+
+    signal oldBlobNum;
+    signal n2bOldBlobNum[63];
+    var oldBlobNumPos = <%- publics.oldBlobNumPos %>;
+    var oldBlobNumBitsOffset = <%- getPositionBits(publics, "oldBlobNumPos") %>;
+
+    signal chainId;
+    signal n2bChainId[63];
+    var chainIdPos = <%- publics.chainIdPos %>;
+    var chainIdBitsOffset = <%- getPositionBits(publics, "chainIdPos") %>;
+
+    signal forkId;
+    signal n2bForkId[63];
+    var forkIdPos = <%- publics.forkIdPos %>;
+    var forkIdBitsOffset = <%- getPositionBits(publics, "forkIdPos") %>;
+
+    signal n2bNewStateRoot[8][32];
+    var newStateRootPos = <%- publics.newStateRootPos %>;
+    var newStateRootBitsOffset = <%- getPositionBits(publics, "newStateRootPos") %>;
+
+    signal n2bNewBlobStateRoot[8][32];
+    var newBlobStateRootPos = <%- publics.newBlobStateRootPos %>;
+    var newBlobStateRootBitsOffset = <%- getPositionBits(publics, "newBlobStateRootPos") %>;
+
+    signal newBlobAccInputHash[8];
+    signal n2bNewBlobAccInputHash[8][32];
+    var newBlobAccInputHashPos = <%- publics.newBlobAccInputHashPos %>;
+    var newBlobAccInputHashBitsOffset = <%- getPositionBits(publics, "newBlobAccInputHashPos") %>;
+
+    signal newBlobNum;
+    signal n2bNewBlobNum[63];
+    var newBlobNumPos = <%- publics.newBlobNumPos %>;
+    var newBlobNumBitsOffset = <%- getPositionBits(publics, "newBlobNumPos") %>;
+   
+    signal newLocalExitRoot[8];
+    signal n2bNewLocalExitRoot[8][32];
+    var newLocalExitRootPos = <%- publics.newLocalExitRootPos %>;
+    var newLocalExitRootBitsOffset = <%- getPositionBits(publics, "newLocalExitRootPos") %>;
+
+
+<%  let aggregatorAddressOffset = getPositionBits(publics, "aggregatorAddr"); -%>
+    var aggregatorAddrBitsOffset = <%- aggregatorAddressOffset %>;
+
+    var totalBits = <%- aggregatorAddressOffset + 160 %>;
+
+    for(var i=0; i<8; i++) {
+        // State Root
+        oldStateRoot[i] <== publics[oldStateRootPos + i];
+        n2bOldStateRoot[i] <== Num2Bits(32)(oldStateRoot[i]);
+
+        newStateRoot[i] <== publics[newStateRootPos + i];
+        n2bNewStateRoot[i] <== Num2Bits(32)(newStateRoot[i]);
+
+        // Blob Acc Input Hash
+        oldBlobAccInputHash[i] <== publics[oldBlobAccInputHashPos + i];
+        n2bOldBlobAccInputHash[i] <== Num2Bits(32)(oldBlobAccInputHash[i]);
+
+        newBlobAccInputHash[i] <== publics[newBlobAccInputHashPos + i];
+        n2bNewBlobAccInputHash[i] <== Num2Bits(32)(newBlobAccInputHash[i]);
+
+        // Blob State Root        
+        oldBlobStateRoot[i] <== publics[oldBlobStateRootPos + i];
+        n2bOldBlobStateRoot[i] <== Num2Bits(32)(oldBlobStateRoot[i]);
+
+        newBlobStateRoot[i] <== publics[newBlobStateRootPos + i];
+        n2bNewBlobStateRoot[i] <== Num2Bits(32)(newBlobStateRoot[i]);
+
+        // Local Exit Root
+        newLocalExitRoot[i] <== publics[newLocalExitRootPos + i];
+        n2bNewLocalExitRoot[i] <== Num2Bits(32)(newLocalExitRoot[i]);
+    }
+
+    // Blob Num
+    oldBlobNum <== publics[oldBlobNumPos];
+    n2bOldBlobNum <== Num2Bits(63)(oldBlobNum);
+
+    newBlobNum <== publics[newBlobNumPos];
+    n2bNewBlobNum <== Num2Bits(63)(newBlobNum);
+
+    chainId <== publics[chainIdPos];
+    n2bChainId <== Num2Bits(63)(chainId);
+
+    forkId <== publics[forkIdPos];
+    n2bForkId <== Num2Bits(63)(forkId);
+    
+    signal n2bAggregatorAddr[160] <== Num2Bits(160)(aggregatorAddr);
+
+    // Check that state roots are lower than GL
+    for (var i = 0; i < 4; i++) {
+        _<== LessThanGoldilocks()(oldStateRoot[2*i] + (1 << 32) * oldStateRoot[2*i + 1]);
+        _<== LessThanGoldilocks()(newStateRoot[2*i] + (1 << 32) * newStateRoot[2*i + 1]);
+        _<== LessThanGoldilocks()(oldBlobStateRoot[2*i] + (1 << 32) * oldBlobStateRoot[2*i + 1]);
+        _<== LessThanGoldilocks()(newBlobStateRoot[2*i] + (1 << 32) * newBlobStateRoot[2*i + 1]);
+    }
+
+    component publicsHasher = Sha256(totalBits);
+
+    for (var i=0; i<8; i++) {
+        for (var j=0; j<32; j++) {
+            publicsHasher.in[oldStateRootBitsOffset + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i][j];
+            publicsHasher.in[newStateRootBitsOffset + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i][j];
+            
+            publicsHasher.in[oldBlobStateRootBitsOffset + 32*(8-i) - 1 -j] <== n2bOldBlobStateRoot[i][j];
+            publicsHasher.in[newBlobStateRootBitsOffset + 32*(8-i) - 1 -j] <== n2bNewBlobStateRoot[i][j];
+            
+            publicsHasher.in[oldBlobAccInputHashBitsOffset + 32*(8-i) - 1 -j] <== n2bOldBlobAccInputHash[i][j];
+            publicsHasher.in[newBlobAccInputHashBitsOffset + 32*(8-i) - 1 -j] <== n2bNewBlobAccInputHash[i][j];
+            
+            publicsHasher.in[newLocalExitRootBitsOffset + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i][j];
+        }
+    }
+
+    // Do 63 bits to avoid aliasing
+    for (var i=0; i<63; i++) {
+        publicsHasher.in[oldBlobNumBitsOffset + 64 - 1 -i] <== n2bOldBlobNum[i];
+        publicsHasher.in[newBlobNumBitsOffset + 64 - 1 -i] <== n2bNewBlobNum[i];
+
+        publicsHasher.in[chainIdBitsOffset + 64 - 1 -i] <== n2bChainId[i];
+        
+        publicsHasher.in[forkIdBitsOffset + 64 - 1 -i] <== n2bForkId[i];
+    }
+    
+    publicsHasher.in[oldBlobNumBitsOffset] <== 0;
+    publicsHasher.in[newBlobNumBitsOffset] <== 0;
+
+    publicsHasher.in[chainIdBitsOffset] <== 0;
+
+    publicsHasher.in[forkIdBitsOffset] <== 0;
+
+    for (var i=0; i<160; i++) {
+        publicsHasher.in[aggregatorAddrBitsOffset + 160 - 1 -i] <== n2bAggregatorAddr[i];
+    }
+    
+    component b2nPublicsHash = Bits2Num(256);
+    for (var i = 0; i < 256; i++) {
+        b2nPublicsHash.in[i] <== publicsHasher.out[255-i];
+    }
+    
+    publicsHash <== b2nPublicsHash.out;
+}
+
+<% if(isTest) { -%>
+component main = getSha256Inputs();
+<% } -%>
