@@ -13,7 +13,7 @@ describe("Test Arith Counter", async function () {
 
     it("Verify Arith Zkasm fail Test", async () => {
         await expect(
-            verifyZkasm("../zkasm/tools/stepsN.zkasm", false,
+            verifyZkasm("stepsN.zkasm", false,
                 { defines: {N: 2 ** 16},
                   namespaces: ['Global', 'Main'],
                   verbose: true,

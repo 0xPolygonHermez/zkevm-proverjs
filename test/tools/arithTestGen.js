@@ -1,12 +1,18 @@
-const two256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn;
+const two256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935n; // 2^256-1
+const P_BN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
 
-const eqs = ['ARITH','ARITH_MOD'];
+const eqs = ['ARITH','ARITH_MOD','ARITH_BN254_ADDFP2','ARITH_BN254_SUBFP2','ARITH_BN254_MULFP2'];
 
 let values = [
     {
         A: 0n,
         B: 0n,
         C: 0n,
+        D: 0n,
+    },{
+        A: 0n,
+        B: 0n,
+        C: 1n,
         D: 0n,
     },{
         A: 2132730398305190967668080390814n,
@@ -104,10 +110,30 @@ let values = [
         C: 0n,
         D: 9186799348640615165090642464739742804207214968625748747967213089636966092042n,
     },{
-        A: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        B: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        C: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
-        D: 21888242871839275222246405745257275088696311157297823662689037894645226208582n,
+        A: 20530596605376994910007569173016238557447322979422639258302340622059080394453n,
+        B: 13817132582425877466415083224775808689552025130277905327859870628768938090276n,
+        C: 17997268041396051959441677056635319964274407682764321547780102319863176442806n,
+        D: 0n,
+    },{
+        A: P_BN254 - 1n,
+        B: P_BN254 - 1n,
+        C: P_BN254 - 1n,
+        D: P_BN254 - 1n,
+    },{
+        A: two256,
+        B: two256,
+        C: two256,
+        D: two256,
+    },{
+        A: two256,
+        B: two256,
+        C: 0n,
+        D: 0n,
+    },{
+        A: two256,
+        B: 0n,
+        C: two256,
+        D: 0n,
     },
 ]
 
@@ -119,8 +145,19 @@ class ArithEqs {
 
     ARITH_MOD(A,B,C,D) {
         const val = A*B + C;
-
         return [D, D === 0n ? val : val % D];
+    }
+
+    ARITH_BN254_ADDFP2(A,B,C,D) {
+        return [(A + C) % P_BN254, (B + D) % P_BN254];
+    }
+
+    ARITH_BN254_SUBFP2(A,B,C,D) {
+        return [(A + (P_BN254 - C)) % P_BN254, (B + (P_BN254 - D)) % P_BN254];
+    }
+
+    ARITH_BN254_MULFP2(A,B,C,D) {
+        return [(A*C-((B*D) %P_BN254)+P_BN254) % P_BN254, (A*D+B*C) % P_BN254];
     }
 }
 
@@ -141,24 +178,50 @@ for (const eq of eqs) {
         selEq4: 0n,
         selEq5: 0n,
         selEq6: 0n,
-        selEq7: 0n,
     };
     console.log(eq.toLowerCase() + "_tests:");
-    if (eq === 'ARITH') {
-        input.selEq0 = 1n;
-    } else if (eq === 'ARITH_MOD') {
-        input.selEq7 = 1n;
+    switch (eq) {
+        case 'ARITH':
+            input.selEq0 = 1n;
+            break;
+        case 'ARITH_BN254_MULFP2':
+            input.selEq3 = 1n;
+            break;
+        case 'ARITH_BN254_ADDFP2':
+            input.selEq4 = 1n;
+            break;
+        case 'ARITH_BN254_SUBFP2':
+            input.selEq5 = 1n;
+            break;
+        case 'ARITH_MOD':
+            input.selEq6 = 1n;
+            break;
+        default:
+            throw new Error('Unknown equation');
     }
     for (const value of values) {
         input.x1 = value.A;
         input.y1 = value.B;
         input.x2 = value.C;
-        const [D, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
-        input.y2 = D;
-        input.x3 = 0n; // E register is not used
+
+        let E = 0n;
+        let D = 0n;
+        let op = 0n;
+        let regs = {A: value.A, B: value.B, C: value.C};
+        if (eq.startsWith('ARITH_BN254')) {
+            input.y2 = value.D;
+            [E, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
+            input.x3 = E;
+            regs.D = value.D;
+            regs.E = E;
+        } else {
+            [D, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
+            input.y2 = D;
+            input.x3 = 0n; // E register is not used
+            regs.D = D;
+        }
         input.y3 = op;
         // console.log(input,","); // This is for the arithmetic tests
-        const regs = {A: value.A, B: value.B, C: value.C, D: D};
         for (const reg in regs) {
             console.log(`\t${regs[reg]}n => ${reg}`);
         }
