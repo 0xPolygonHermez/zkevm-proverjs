@@ -1,0 +1,61 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+<% let starkInfo = starkInfoVerifiers[0]; %>
+
+template VerifyRecursive2() {
+    var oldStateRootPos = <%- blobOuterPublics.oldStateRootPos %>;
+    var oldBlobStateRootPos = <%- blobOuterPublics.oldBlobStateRootPos %>;
+    var oldBlobAccInputHashPos = <%- blobOuterPublics.oldBlobAccInputHashPos %>;
+    var oldBlobNumPos = <%- blobOuterPublics.oldBlobNumPos %>;
+    var chainIdPos = <%- blobOuterPublics.chainIdPos %>;
+    var forkIdPos = <%- blobOuterPublics.forkIdPos %>;
+    var newStateRootPos = <%- blobOuterPublics.newStateRootPos %>;
+    var newBlobStateRootPos = <%- blobOuterPublics.newBlobStateRootPos %>;
+    var newBlobAccInputHashPos = <%- blobOuterPublics.newBlobAccInputHashPos %>;
+    var newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
+    var newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos %>;
+
+    signal input a_publics[<%- publics.nPublics %>];
+    signal input b_publics[<%- publics.nPublics %>];
+
+    signal output publics[<%- publics.nPublics %>];
+    signal output a_isOneBatch;
+    signal output b_isOneBatch;
+
+    // Check recursive 2 publics
+    
+    for (var i=0; i<8; i++) {
+        a_publics[newStateRootPos + i] === b_publics[oldStateRootPos + i]; // Check State Root
+        publics[oldStateRootPos + i] <== a_publics[oldStateRootPos + i]; // Old State Root
+        publics[newStateRootPos + i] <== b_publics[newStateRootPos + i]; // New State Root
+
+        a_publics[newBlobStateRootPos + i] === b_publics[oldBlobStateRootPos + i]; // Check Blob State Root
+        publics[oldBlobStateRootPos + i] <== a_publics[oldBlobStateRootPos + i]; // Old Blob State Root
+        publics[newBlobStateRootPos + i] <== b_publics[newBlobStateRootPos + i]; // New Blob State Root
+
+        a_publics[newBlobAccInputHashPos + i] === b_publics[oldBlobAccInputHashPos + i]; // Check accumulated input hash
+        publics[oldBlobAccInputHashPos + i] <== a_publics[oldBlobAccInputHashPos + i]; // Old accumulated input hash
+        publics[newBlobAccInputHashPos + i] <== b_publics[newBlobAccInputHashPos + i]; // New accumulated input hash
+
+        publics[newLocalExitRootPos+i] <== b_publics[newLocalExitRootPos+i]; // Local exit root
+    }
+
+    a_publics[chainIdPos] === b_publics[chainIdPos]; // Check that chain ID matches between chains
+    publics[chainIdPos] <== a_publics[chainIdPos]; // Chain ID
+
+    a_publics[forkIdPos] === b_publics[forkIdPos]; // Check that fork ID matches between chains
+    publics[forkIdPos] <== a_publics[forkIdPos]; // Fork ID
+
+    a_publics[newBlobNumPos] === b_publics[oldBlobNumPos]; // Check blob number
+    publics[oldBlobNumPos] <== a_publics[oldBlobNumPos]; // Old blob number
+    publics[newBlobNumPos] <== b_publics[newBlobNumPos]; // New blob number
+
+    a_isOneBatch <== IsZero()(a_publics[newBlobNumPos] - a_publics[oldBlobNumPos] - 1);
+    b_isOneBatch <== IsZero()(b_publics[newBlobNumPos] - b_publics[oldBlobNumPos] - 1);
+
+}
+
+<% if(isTest) { -%>
+    component main = VerifyRecursive2();
+<% } -%>

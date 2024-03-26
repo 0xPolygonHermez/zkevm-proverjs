@@ -68,30 +68,8 @@ template Main() {
 
     sv.finalPol <== finalPol;
 
-    signal oldStateRoot[8];
-    signal newStateRoot[8];
+    publicsHash <== getSha256Inputs()(aggregatorAddr, publics);
 
-<%  if(isEip4844) { -%>
-    signal oldBlobStateRoot[8];
-    signal newBlobStateRoot[8];
-    (publicsHash, oldStateRoot, newStateRoot, oldBlobStateRoot, newBlobStateRoot) <== getSha256Inputs()(aggregatorAddr, publics);
-    
-    // Check that state roots are lower than GL
-    for (var i = 0; i < 4; i++) {
-        _<== LessThanGoldilocks()(oldStateRoot[2*i] + (1 << 32) * oldStateRoot[2*i + 1]);
-        _<== LessThanGoldilocks()(newStateRoot[2*i] + (1 << 32) * newStateRoot[2*i + 1]);
-        _<== LessThanGoldilocks()(oldBlobStateRoot[2*i] + (1 << 32) * oldBlobStateRoot[2*i + 1]);
-        _<== LessThanGoldilocks()(newBlobStateRoot[2*i] + (1 << 32) * newBlobStateRoot[2*i + 1]);
-    }
-<%  } else { -%>
-    (publicsHash, oldStateRoot, newStateRoot) <== getSha256Inputs()(aggregatorAddr, publics);
-
-    // Check that state roots are lower than GL
-    for (var i = 0; i < 4; i++) {
-        _<== LessThanGoldilocks()(oldStateRoot[2*i] + (1 << 32) * oldStateRoot[2*i + 1]);
-        _<== LessThanGoldilocks()(newStateRoot[2*i] + (1 << 32) * newStateRoot[2*i + 1]);
-    }
-<%  } -%>
 }
 
 component main = Main();

@@ -2,7 +2,7 @@ const path = require("path");
 const tmp = require('temporary');
 const fs = require("fs");
 const ejs = require("ejs");
-const { batchPublics, blobOuterPublics } = require("../../src/templates/publics");
+const { batchPublics, blobOuterPublics } = require("../../src/templates/helpers/publics");
 const { scalar2fea } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
 const { FrSNARK } = require("@0xpolygonhermez/zkevm-commonjs/src/constants");
 const { F1Field, Scalar } = require("ffjavascript");
@@ -100,44 +100,43 @@ describe("Get Sha256 Inputs Circuit Test", function () {
     this.timeout(10000000);
 
     before( async() => {
-        const template = await fs.promises.readFile(path.join(__dirname, "../../src/templates", "get_sha256_inputs.circom.ejs"), "utf8");
+        const templateEip4844 = await fs.promises.readFile(path.join(__dirname, "../../src/templates", "helpers", "finalSha256Inputs", "get_sha256_inputs_blob.circom.ejs"), "utf8");
         
-        const optionsEip4844 = { batchPublics, blobOuterPublics, isEip4844: true, isTest: true}
-        const content4844 = ejs.render(template, optionsEip4844);
+        const optionsEip4844 = { publics: blobOuterPublics, isTest: true }
+        const content4844 = ejs.render(templateEip4844, optionsEip4844);
         const circuitEip4844File = path.join(new tmp.Dir().path, "circuitEip4844.circom");
         await fs.promises.writeFile(circuitEip4844File, content4844);
         circuitEip4844 = await wasm_tester(circuitEip4844File, {O:1, include: "node_modules/circomlib/circuits"});
     
-        const optionsEip = { batchPublics, blobOuterPublics, isEip4844: false, isTest: true}
-        const content = ejs.render(template, optionsEip);
+        const template = await fs.promises.readFile(path.join(__dirname, "../../src/templates", "helpers", "finalSha256Inputs", "get_sha256_inputs_batch.circom.ejs"), "utf8");
+
+        const options = { publics: batchPublics, isTest: true}
+        const content = ejs.render(template, options);
         const circuitFile = path.join(new tmp.Dir().path, "circuit.circom");
         await fs.promises.writeFile(circuitFile, content);
         circuit = await wasm_tester(circuitFile, {O:1, include: "node_modules/circomlib/circuits"});
     });
 
-    it("Test that solidity hash matches circom hash if isEip4844 is false", async () => {
+    it("Test that solidity hash matches circom hash if is elderberry final circuit", async () => {
         const { publicsBatchCircom, publicsBatchSolidity, publicsBatchHashTypesSolidity } = generatePublicsBatch(aggregatorAddress);
 
         const sha256Solidity = Scalar.mod(Scalar.fromString(solidityPackedSha256(publicsBatchHashTypesSolidity, publicsBatchSolidity), 16), FrSNARK);
 
         const witness = await circuit.calculateWitness({aggregatorAddr: aggregatorAddress, publics: publicsBatchCircom}, true);
         
-        const sha256Circom = witness[1];
-
-        assert(sha256Solidity == sha256Circom);
+        await circuit.assertOut(witness, { publicsHash: sha256Solidity });
     
     });
 
-    it("Test that solidity hash matches circom hash if isEip4844 is true", async () => {
+    it("Test that solidity hash matches circom hash if is feijoa final circuit", async () => {
         const { publicsBlobOuterCircom, publicsBlobOuterSolidity, publicsBlobOuterHashTypesSolidity } = generatePublicsBlobOuter(aggregatorAddress);
 
         const sha256Solidity = Scalar.mod(Scalar.fromString(solidityPackedSha256(publicsBlobOuterHashTypesSolidity, publicsBlobOuterSolidity), 16), FrSNARK);
 
         const witness = await circuitEip4844.calculateWitness({aggregatorAddr: aggregatorAddress, publics: publicsBlobOuterCircom}, true);
 
-        const sha256Circom = witness[1];
+        await circuitEip4844.assertOut(witness, { publicsHash: sha256Solidity });
 
-        assert(sha256Solidity == sha256Circom);
 
 
     });

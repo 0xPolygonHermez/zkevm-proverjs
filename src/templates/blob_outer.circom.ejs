@@ -17,7 +17,7 @@ template Main() {
     var rootCRecursive1Batch[4] = [<%- vks[0].join(",") %>];
     var rootCRecursive2Batch[4] = [<%- vks[1].join(",") %>];
 
-    signal input publics[<%- blobOuterPublics %>];
+    signal input publics[<%- blobOuterPublics.nPublics %>];
     signal input rootC[4];
 
     signal input chainId;
@@ -85,10 +85,10 @@ template Main() {
     signal input blob_inner_finalPol[<%- 1 << parseInt(starkInfo2.starkStruct.steps[starkInfo2.starkStruct.steps.length-1].nBits) %>][3];
 
     signal isValidBlob;
-    signal publicsBlobOuter[<%- blobOuterPublics %>];
+    signal publicsBlobOuter[<%- blobOuterPublics.nPublics %>];
     (isValidBlob, publicsBlobOuter) <== VerifyBlobOuter()(batch_publics, blob_inner_publics, chainId);
 
-    for(var i=0; i<<%- blobOuterPublics %>; i++) {
+    for(var i=0; i<<%- blobOuterPublics.nPublics %>; i++) {
         publics[i] === publicsBlobOuter[i];
     }
 

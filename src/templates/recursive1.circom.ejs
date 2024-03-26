@@ -7,7 +7,7 @@ include "<%- verifierNames[0] %>.verifier.circom";
 
 template Main() {
     signal input publics[<%- starkInfo.nPublics  %>];
-<%  if(!isEip4844) { -%>
+<%  if(options.setAggregatedKey) { -%>
     signal input rootC[4];
 <%  } -%>
 
@@ -63,13 +63,13 @@ template Main() {
     vA.s<%- s %>_siblings <== s<%- s %>_siblings;
 <% }                                                  -%>
     vA.finalPol <== finalPol;
-<%  if(isBatchRecursion) { -%>
+<%  if(options.setEnableInput) { -%>
     vA.enable <== 1;
 <%  } -%>
 
 }
 
-<%  if(!isEip4844) { -%>
+<%  if(!options.setAggregatedKey) { -%>
 component main {public [publics, rootC]}= Main();
 <%  } else { -%>
 component main {public [publics]}= Main();

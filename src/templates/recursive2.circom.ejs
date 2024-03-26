@@ -4,55 +4,17 @@ pragma custom_templates;
 include "<%- verifierNames[0] %>.verifier.circom";
 include "mux1.circom";
 include "iszero.circom";
+include "verify_recursive2.circom";
 
 <% let starkInfo = starkInfoVerifiers[0]; %>
 
 template Main() {
     var rootCSingle[4] = [<%- vks[0].join(",") %>];
 
-<% if(isBatchRecursion) { -%>
-    var oldStateRootPos = <%- batchPublics.oldStateRootPos %>;
-    var oldBatchAccInputHashPos = <%- batchPublics.oldBatchAccInputHashPos %>;
-<%  if(isEip4844) { -%>
-    var previousL1InfoTreeRootPos = <%- batchPublics.previousL1InfoTreeRootPos %>;
-    var previousL1InfoTreeIndexPos = <%- batchPublics.previousL1InfoTreeIndexPos %>;
-<%  } else { -%>
-    var oldBatchNumPos = <%- batchPublics.oldBatchNumPos %>;
-<%  } -%>
-    var chainIdPos = <%- batchPublics.chainIdPos %>;
-    var forkIdPos = <%- batchPublics.forkIdPos %>;
-    var newStateRootPos = <%- batchPublics.newStateRootPos %>;
-    var newBatchAccInputHashPos = <%- batchPublics.newBatchAccInputHashPos %>;
-<%  if(isEip4844) { -%>
-    var currentL1InfoTreeRootPos = <%- batchPublics.currentL1InfoTreeRootPos %>;
-    var currentL1InfoTreeIndexPos = <%- batchPublics.currentL1InfoTreeIndexPos %>;
-    var newLocalExitRootPos = <%- batchPublics.newLocalExitRootPos %>;
-    var newLastTimestampPos = <%- batchPublics.newLastTimestampPos %>;
-<%      nPublics = batchPublics.newLastTimestampPos + 1; -%>
-<%  } else { -%> 
-    var newLocalExitRootPos = <%- batchPublics.newLocalExitRootPos %>;
-    var newBatchNumPos = <%- batchPublics.newBatchNumPos %>;
-<%      nPublics = batchPublics.newBatchNumPos + 1; -%>
-<%  } -%>
-<% } else { -%>
-    var blobOuter_oldStateRootPos = <%- blobOuterPublics.oldStateRootPos %>;
-    var blobOuter_oldBlobStateRootPos = <%- blobOuterPublics.oldBlobStateRootPos %>;
-    var blobOuter_oldBlobAccInputHashPos = <%- blobOuterPublics.oldBlobAccInputHashPos %>;
-    var blobOuter_oldBlobNumPos = <%- blobOuterPublics.oldBlobNumPos %>;
-    var blobOuter_chainIdPos = <%- blobOuterPublics.chainIdPos %>;
-    var blobOuter_forkIdPos = <%- blobOuterPublics.forkIdPos %>;
-    var blobOuter_newStateRootPos = <%- blobOuterPublics.newStateRootPos %>;
-    var blobOuter_newBlobStateRootPos = <%- blobOuterPublics.newBlobStateRootPos %>;
-    var blobOuter_newBlobAccInputHashPos = <%- blobOuterPublics.newBlobAccInputHashPos %>;
-    var blobOuter_newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
-    var blobOuter_newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos %>;
-<%  nPublics = blobOuterPublics.newLocalExitRootPos + 8; -%>
-<% } -%>
-
-    signal input publics[<%- nPublics %>];
+    signal input publics[<%- publics.nPublics %>];
     signal input rootC[4];
 
-    signal input a_publics[<%- nPublics %>];
+    signal input a_publics[<%- publics.nPublics %>];
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
     signal input a_root<%- s %>[4];
@@ -81,11 +43,7 @@ template Main() {
    
     signal input a_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
-<%  if(isBatchRecursion && isEip4844) { -%>
-    signal input a_isAggregatedCircuit;
-<%  } -%>
-
-    signal input b_publics[<%- nPublics %>];
+    signal input b_publics[<%- publics.nPublics %>];
  
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
     signal input b_root<%- s %>[4];
@@ -114,13 +72,24 @@ template Main() {
 
     signal input b_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
-<%  if(isBatchRecursion && isEip4844) { -%>
+<%  if(options.aggregatedInput) { -%>
+    signal input a_isAggregatedCircuit;
     signal input b_isAggregatedCircuit;
 <%  } -%>
 
+    signal publicsAggregated[<%- publics.nPublics %>];
+    signal a_isOneBatch;
+    signal b_isOneBatch;
+
+    (publicsAggregated, a_isOneBatch, b_isOneBatch) <== VerifyRecursive2()(a_publics, b_publics);
+
+    for(var i=0; i<<%- publics.nPublics %>; i++) {
+        publics[i] === publicsAggregated[i];
+    }
+
     component vA = StarkVerifier();
 
-    for (var i=0; i< <%- nPublics %>; i++) {
+    for (var i=0; i< <%- publics.nPublics %>; i++) {
         vA.publics[i] <== a_publics[i];
     }
 
@@ -148,29 +117,19 @@ template Main() {
     vA.s<%- s %>_siblings <== a_s<%- s %>_siblings;
 <% }                                                  -%>
     vA.finalPol <== a_finalPol;
-<%  if(isBatchRecursion) { -%>
+<%  if(options.setEnableInput) { -%>
     vA.enable <== 1;
 <%  } -%>
 
-<%  if(isBatchRecursion) { -%>
-<%      if(isEip4844) { -%>
-    signal isOneBatchA <== 1 - a_isAggregatedCircuit;
-<%      } else { -%>
-    signal isOneBatchA <== IsZero()(a_publics[newBatchNumPos] - a_publics[oldBatchNumPos] - 1);
-<%      } -%>
-<%  } else { -%>
-    signal isOneBatchA <== IsZero()(a_publics[blobOuter_newBlobNumPos] - a_publics[blobOuter_oldBlobNumPos] - 1);
-<%  } -%>
-
-    vA.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchA);
+    vA.rootC <== MultiMux1(4)([rootC, rootCSingle], a_isOneBatch);
     
     for (var i=0; i<4; i++) {
-        vA.publics[<%- nPublics %> + i] <== rootC[i];
+        vA.publics[<%- publics.nPublics %> + i] <== rootC[i];
     }
 
     component vB = StarkVerifier();
 
-    for (var i=0; i< <%- nPublics %>; i++) {
+    for (var i=0; i< <%- publics.nPublics %>; i++) {
         vB.publics[i] <== b_publics[i];
     }
 
@@ -198,116 +157,15 @@ template Main() {
     vB.s<%- s %>_siblings <== b_s<%- s %>_siblings;
 <% }                                                  -%>
     vB.finalPol <== b_finalPol;
-<%  if(isBatchRecursion) { -%>
+<%  if(options.setEnableInput) { -%>
     vB.enable <== 1;
 <%  } -%>
 
-<%  if(isBatchRecursion) { -%>
-<%      if(isEip4844) { -%>
-    signal isOneBatchB <== 1 - b_isAggregatedCircuit;
-<%      } else { -%>
-    signal isOneBatchB <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
-<%      } -%>
-<%  } else { -%>
-    signal isOneBatchB <== IsZero()(b_publics[blobOuter_newBlobNumPos] - b_publics[blobOuter_oldBlobNumPos] - 1);
-<%  } -%>
-
-    vB.rootC <== MultiMux1(4)([rootC, rootCSingle], isOneBatchB);
+    vB.rootC <== MultiMux1(4)([rootC, rootCSingle], b_isOneBatch);
 
     for (var i=0; i<4; i++) {
-        vB.publics[<%- nPublics %> +i] <== rootC[i];
+        vB.publics[<%- publics.nPublics %> +i] <== rootC[i];
     }
-
-<%  if(isBatchRecursion) { -%>
-
-    // Batch State Root
-    for (var i=0; i<8; i++) {
-        a_publics[oldStateRootPos + i] === publics[oldStateRootPos + i]; // Old
-        a_publics[newStateRootPos + i] === b_publics[oldStateRootPos + i]; // Mid
-        publics[newStateRootPos + i] === b_publics[newStateRootPos + i]; // New
-    }
-
-    // Batch Accumulated Input Hash
-    for (var i=0; i<8; i++) {
-        a_publics[oldBatchAccInputHashPos + i] === publics[oldBatchAccInputHashPos + i]; // Old
-        a_publics[newBatchAccInputHashPos + i] === b_publics[oldBatchAccInputHashPos + i]; // Mid
-        publics[newBatchAccInputHashPos + i] === b_publics[newBatchAccInputHashPos + i]; // New
-    }
-
-    // chainId
-    a_publics[chainIdPos] === publics[chainIdPos];
-    a_publics[chainIdPos] === b_publics[chainIdPos];
-
-    // forkId
-    a_publics[forkIdPos] === publics[forkIdPos];
-    a_publics[forkIdPos] === b_publics[forkIdPos];
-
-    // localExitRoot
-    for (var i=0; i<8; i++) {
-        publics[newLocalExitRootPos+i] === b_publics[newLocalExitRootPos+i];
-    }
-
-<%      if(isEip4844) { -%>
-    //  L1 Info Tree Root
-    for (var i=0; i<8; i++) {
-        a_publics[previousL1InfoTreeRootPos+i] === publics[previousL1InfoTreeRootPos+i]; // Old
-        a_publics[currentL1InfoTreeRootPos+i] === b_publics[previousL1InfoTreeRootPos+i]; // Mid
-        publics[currentL1InfoTreeRootPos+i] === b_publics[currentL1InfoTreeRootPos+i]; // New
-    }
-
-    // L1 Info Tree Index
-    a_publics[previousL1InfoTreeIndexPos] === publics[previousL1InfoTreeIndexPos]; // Old
-    a_publics[currentL1InfoTreeIndexPos] === b_publics[previousL1InfoTreeIndexPos]; // Mid
-    publics[currentL1InfoTreeIndexPos] === b_publics[currentL1InfoTreeIndexPos]; // New
-
-    // Last timestamp
-    publics[newLastTimestampPos] === b_publics[newLastTimestampPos];
-<%      } else { -%>
-    // Batch Number
-    a_publics[oldBatchNumPos] === publics[oldBatchNumPos]; // Old
-    a_publics[newBatchNumPos] === b_publics[oldBatchNumPos]; // Mid
-    publics[newBatchNumPos] === b_publics[newBatchNumPos]; // New
-<%      } -%>
-<%  } else { -%>
-    // State Root
-    for (var i=0; i<8; i++) {
-        a_publics[blobOuter_oldStateRootPos + i] === publics[blobOuter_oldStateRootPos + i]; // Old
-        a_publics[blobOuter_newStateRootPos + i] === b_publics[blobOuter_oldStateRootPos + i]; // Mid
-        publics[blobOuter_newStateRootPos + i] === b_publics[blobOuter_newStateRootPos + i]; // New
-    }
-
-    // Blob State Root
-    for (var i=0; i<8; i++) {
-        a_publics[blobOuter_oldBlobStateRootPos + i] === publics[blobOuter_oldBlobStateRootPos + i]; // Old
-        a_publics[blobOuter_newBlobStateRootPos + i] === b_publics[blobOuter_oldBlobStateRootPos + i]; // Mid
-        publics[blobOuter_newBlobStateRootPos + i] === b_publics[blobOuter_newBlobStateRootPos + i]; // New
-    }
-
-    // Blob Accumulated Input Hash
-    for (var i=0; i<8; i++) {
-        a_publics[blobOuter_oldBlobAccInputHashPos + i] === publics[blobOuter_oldBlobAccInputHashPos + i]; // Old
-        a_publics[blobOuter_newBlobAccInputHashPos + i] === b_publics[blobOuter_oldBlobAccInputHashPos + i]; // Mid
-        publics[blobOuter_newBlobAccInputHashPos + i] === b_publics[blobOuter_newBlobAccInputHashPos + i]; // New
-    }
-
-    // Blob number
-    a_publics[blobOuter_oldBlobNumPos] === publics[blobOuter_oldBlobNumPos]; // Old
-    a_publics[blobOuter_newBlobNumPos] === b_publics[blobOuter_oldBlobNumPos]; // Mid
-    publics[blobOuter_newBlobNumPos] === b_publics[blobOuter_newBlobNumPos]; // New
-
-    // chainId
-    a_publics[blobOuter_chainIdPos] === publics[blobOuter_chainIdPos];
-    a_publics[blobOuter_chainIdPos] === b_publics[blobOuter_chainIdPos];
-
-    // forkId
-    a_publics[blobOuter_forkIdPos] === publics[blobOuter_forkIdPos];
-    a_publics[blobOuter_forkIdPos] === b_publics[blobOuter_forkIdPos];
-
-    // localExitRoot
-    for (var i=0; i<8; i++) {
-        publics[blobOuter_newLocalExitRootPos+i] === b_publics[blobOuter_newLocalExitRootPos+i];
-    }
-<%  } -%> 
 }
 
 component main {public [publics, rootC]}= Main();
