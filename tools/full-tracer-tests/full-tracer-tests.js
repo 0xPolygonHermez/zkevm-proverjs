@@ -867,12 +867,14 @@ async function runTxsFromEthTest(test) {
     const jsonFile = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/tools-eth/tests/GeneralStateTests/${test.folderName}/${test.testName}.json`)))[test.testName];
     const pvtKey = jsonFile.transaction.secretKey;
     const wallet = (new ethers.Wallet(pvtKey)).connect(provider);
+    // Limit gas limit to rom max gas limit per tx
+    const gasLimit = Math.min(Number(txTest.gasLimit), Constants.TX_GAS_LIMIT);
     const tx = {
         to: txTest.to,
         nonce: Number(txTest.nonce),
         value: ethers.utils.parseUnits(String(Number(txTest.value)), 'wei'),
         data: txTest.data,
-        gasLimit: Number(txTest.gasLimit),
+        gasLimit,
         gasPrice: Number(txTest.gasPrice),
         chainId: CHAIN_ID,
     };
@@ -928,7 +930,7 @@ async function configureGenesis(test, isEthereumTest) {
             },
         },
         difficulty: '1',
-        gasLimit: '100000000',
+        gasLimit: '300000000',
         extradata: '0x000000000000000000000000000000000000000000000000000000000000000067d13ABa5613169Ea7C692712d14A69e068558F80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
         alloc: {
             '67d13ABa5613169Ea7C692712d14A69e068558F8': { balance: '100000000000000000000' },
