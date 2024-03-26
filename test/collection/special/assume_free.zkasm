@@ -1,5 +1,3 @@
-; TODO
-
 VAR GLOBAL v0[8]
 VAR GLOBAL v1[12]
 VAR GLOBAL padding[7]
@@ -19,6 +17,18 @@ VAR GLOBAL assumef_var3
 VAR GLOBAL assumef_var4
 VAR GLOBAL assumef_var5
 
+        :JMP(assume_free_start)
+        ; This is used for calls
+        assume_free_label_call:
+        1 => A
+        1 => A
+        1 => A
+        :RETURN
+
+        assume_free_label_no_call:
+        :RETURN
+
+assume_free_start:
         ; 1] F_MLOAD
         ; small test
         10                      :MSTORE(assumef_var1)
@@ -63,8 +73,6 @@ VAR GLOBAL assumef_var5
 
         ; Playing with F_MLOAD and the associated syntactic sugar
         0 => A,B
-        label1:
-        label2:
         2 * B + 8 => A
         2 * g15 + 8 => A
         2 * l90 + 8 => A
@@ -166,64 +174,122 @@ VAR GLOBAL assumef_var5
         ; 2 * $ + 8 => A    :MLOAD(g7_8[5*E+%CS2-%CS3*RR])
         ; 2 * $ + 8 => A    :MLOAD(l10_80[5*E+%CS2-%CS3*RR])
 
-        ; TODO: Make the following work
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(label2)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMP(label2)
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(assume_free_label_comb1)
+        assume_free_label_comb1:
+        2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMP(assume_free_label_comb2)
+        assume_free_label_comb2:
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMP(@label2+5*E-3*RR)
+        assume_free_label_jmp:
+        1 => E,RR ; 5*E-3*RR = 2, 6*E-3*RR = 3
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(@assume_free_label_jmp+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMP(@assume_free_label_jmp+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPC(@label2+5*E-3*RR),EQ
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPC(@label2+5*E-3*RR),EQ
+        ; assume_free_label_jmpc_eq:
+        ; 1 => E,RR
+        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPC(@assume_free_label_jmpc_eq+5*E-3*RR),EQ
+        ; 2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPC(@assume_free_label_jmpc_eq+6*E-3*RR),EQ
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPN(@label2+5*E-3*RR)
+        assume_free_label_jmpn:
+        1 => E,RR
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@assume_free_label_jmpn+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPN(@assume_free_label_jmpn+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@label2+5*E-3*RR)
+        assume_free_label_jmpz:
+        1 => E,RR
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@assume_free_label_jmpz+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@assume_free_label_jmpz+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPNC(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPNC(@label2+5*E-3*RR)
+	; assume_free_label_jmpnc:
+	; 1 => E,RR
+	; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPNC(@assume_free_label_jmpnc+5*E-3*RR)
+        ; 2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPNC(@assume_free_label_jmpnc+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@label2+5*E-3*RR)
+	assume_free_label_jmpnz:
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@assume_free_label_jmpnz+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@assume_free_label_jmpnz+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@assume_free_label_jmpz1+5*E-3*RR,@assume_free_label_jmpz2+5*E-3*RR)
+        assume_free_label_jmpz1:
+        assume_free_label_jmpz2:
+        1 => A
+        1       :ASSERT
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@assume_free_label_jmpz3+6*E-3*RR,@assume_free_label_jmpz4+6*E-3*RR)
+        assume_free_label_jmpz3:
+        assume_free_label_jmpz4:
+        1 => A
+        1       :ASSERT
+        1       :ASSERT
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPC(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	; 1 => E,RR
+	; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPC(@assume_free_label_jmpc1+5*E-3*RR,@assume_free_label_jmpc2+5*E-3*RR)
+        ; 2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPC(@assume_free_label_jmpc1+6*E-3*RR,@assume_free_label_jmpc2+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPN(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@assume_free_label_jmpn1+5*E-3*RR,@assume_free_label_jmpn2+5*E-3*RR)
+        assume_free_label_jmpn1:
+        assume_free_label_jmpn2:
+        1 => A
+        1       :ASSERT
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPN(@assume_free_label_jmpn3+6*E-3*RR,@assume_free_label_jmpn4+6*E-3*RR)
+        assume_free_label_jmpn3:
+        assume_free_label_jmpn4:
+        1 => A
+        1       :ASSERT
+        1       :ASSERT
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@assume_free_label_jmpnz1+5*E-3*RR,@assume_free_label_jmpn2+5*E-3*RR)
+        assume_free_label_jmpnz1:
+        assume_free_label_jmpnz2:
+        1 => A
+        1       :ASSERT
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@assume_free_label_jmpnz3+6*E-3*RR,@assume_free_label_jmpn4+6*E-3*RR)
+        assume_free_label_jmpnz3:
+        assume_free_label_jmpnz4:
+        1 => A
+        1       :ASSERT
+        1       :ASSERT
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPNC(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPNC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	; 1 => E,RR
+	; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,JMPNC(@assume_free_label_jmpnc1+5*E-3*RR,@assume_free_label_jmpnc2+5*E-3*RR)
+        ; 2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :EQ,JMPNC(@assume_free_label_jmpnc1+6*E-3*RR,@assume_free_label_jmpnc2+6*E-3*RR)
 
-        ; ; CALL
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(label2)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL(label2)
+        ; CALL
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(assume_free_label_call)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL(assume_free_label_call)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL(@label2+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(@assume_free_label_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL(@assume_free_label_call+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_C(@label2+5*E-3*RR),EQ
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_C(@label2+5*E-3*RR),EQ
+	; 1 => E,RR
+	; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_C(@label2+5*E-3*RR),EQ
+        ; 2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_C(@label2+6*E-3*RR),EQ
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_N(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_N(@label2+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_N(@assume_free_label_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_N(@assume_free_label_call+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_Z(@label2+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_Z(@label2+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_Z(@assume_free_label_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_Z(@assume_free_label_call+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_NZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :CALL_NZ(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_NZ(@assume_free_label_call+5*E-3*RR,@assume_free_label_no_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_NZ(@assume_free_label_call+6*E-3*RR,@assume_free_label_no_call+6*E-3*RR)
 
-        ; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,CALL_NC(@label2+5*E-3*RR,@label1+5*E-3*RR)
-        ; 2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :EQ,CALL_NC(@label2+5*E-3*RR,@label1+5*E-3*RR)
+	; 1 => E,RR
+	; 2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :EQ,CALL_NC(@assume_free_label_call+5*E-3*RR,@assume_free_label_no_call+5*E-3*RR)
+        ; 1 => E,RR
+        ; 2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :EQ,CALL_NC(@assume_free_label_call+6*E-3*RR,@assume_free_label_no_call+6*E-3*RR)
 
         ; 3] F_HASHP
         $ => E                  :MLOAD(lastHashPId)
