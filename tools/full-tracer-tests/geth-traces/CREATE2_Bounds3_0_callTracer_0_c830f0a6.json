@@ -1,0 +1,10 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x249f0",
+  "gasUsed": "0x249f0",
+  "to": "0x1000000000000000000000000000000000000000",
+  "input": "0x",
+  "error": "gas uint64 overflow",
+  "value": "0x0",
+  "type": "CALL"
+}

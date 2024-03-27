@@ -1,0 +1,31 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x927c0",
+  "gasUsed": "0x8eac3",
+  "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x0000000000000000000000004000000000000000000000000000000000000000",
+  "calls": [
+    {
+      "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x8a7c2",
+      "gasUsed": "0x88df0",
+      "to": "0x4000000000000000000000000000000000000000",
+      "input": "0x",
+      "calls": [
+        {
+          "from": "0x4000000000000000000000000000000000000000",
+          "gas": "0x87afc",
+          "gasUsed": "0x87afc",
+          "to": "0xf200000000000000000000000000000000000000",
+          "input": "0x",
+          "error": "write protection",
+          "type": "STATICCALL"
+        }
+      ],
+      "value": "0x0",
+      "type": "CALL"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}

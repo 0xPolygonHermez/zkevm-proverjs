@@ -1,0 +1,31 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x927c0",
+  "gasUsed": "0x102d1",
+  "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+  "input": "0x626001ff60005260006003601d6000f500",
+  "calls": [
+    {
+      "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "gas": "0x7bb50",
+      "gasUsed": "0x138b",
+      "to": "0xadf52aafb61364f699f9b15ee605ef82dca7f53d",
+      "input": "0x6001ff",
+      "calls": [
+        {
+          "from": "0xadf52aafb61364f699f9b15ee605ef82dca7f53d",
+          "gas": "0x0",
+          "gasUsed": "0x0",
+          "to": "0x0000000000000000000000000000000000000001",
+          "input": "0x",
+          "value": "0x0",
+          "type": "SELFDESTRUCT"
+        }
+      ],
+      "value": "0x0",
+      "type": "CREATE2"
+    }
+  ],
+  "value": "0xa",
+  "type": "CREATE"
+}

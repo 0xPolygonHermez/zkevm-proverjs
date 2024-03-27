@@ -1,0 +1,123 @@
+{
+  "gas": 23520,
+  "failed": false,
+  "returnValue": "",
+  "structLogs": [
+    {
+      "pc": 0,
+      "op": "PUSH20",
+      "gas": 379000,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [],
+      "memory": []
+    },
+    {
+      "pc": 21,
+      "op": "BALANCE",
+      "gas": 378997,
+      "gasCost": 100,
+      "depth": 1,
+      "stack": [
+        "0x95e7baea6a6c7c4c2dfeb977efac326af552d87"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 22,
+      "op": "PUSH20",
+      "gas": 378897,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x1"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 43,
+      "op": "BALANCE",
+      "gas": 378894,
+      "gasCost": 100,
+      "depth": 1,
+      "stack": [
+        "0x1",
+        "0x95e7baea6a6c7c4c2dfeb977efac326af552d87"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 44,
+      "op": "PUSH20",
+      "gas": 378794,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x1",
+        "0x1"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 65,
+      "op": "BALANCE",
+      "gas": 378791,
+      "gasCost": 100,
+      "depth": 1,
+      "stack": [
+        "0x1",
+        "0x1",
+        "0x95e7baea6a6c7c4c2dfeb977efac326af552d87"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 66,
+      "op": "ADDMOD",
+      "gas": 378691,
+      "gasCost": 8,
+      "depth": 1,
+      "stack": [
+        "0x1",
+        "0x1",
+        "0x1"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 67,
+      "op": "PUSH1",
+      "gas": 378683,
+      "gasCost": 3,
+      "depth": 1,
+      "stack": [
+        "0x0"
+      ],
+      "memory": []
+    },
+    {
+      "pc": 69,
+      "op": "SSTORE",
+      "gas": 378680,
+      "gasCost": 2200,
+      "depth": 1,
+      "stack": [
+        "0x0",
+        "0x0"
+      ],
+      "memory": [],
+      "storage": {
+        "0000000000000000000000000000000000000000000000000000000000000000": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "pc": 70,
+      "op": "STOP",
+      "gas": 376480,
+      "gasCost": 0,
+      "depth": 1,
+      "stack": [],
+      "memory": []
+    }
+  ]
+}

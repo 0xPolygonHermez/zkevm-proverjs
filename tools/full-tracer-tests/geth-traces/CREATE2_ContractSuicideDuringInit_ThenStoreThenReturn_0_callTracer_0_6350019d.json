@@ -1,0 +1,43 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x927c0",
+  "gasUsed": "0x1b7d2",
+  "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x",
+  "calls": [
+    {
+      "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x252ec",
+      "gasUsed": "0x148bf",
+      "to": "0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "input": "0x",
+      "output": "0x6000526005601bf36000526001ff",
+      "calls": [
+        {
+          "from": "0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "gas": "0x1ce77",
+          "gasUsed": "0x753f",
+          "to": "0xdbf7a512519a1c412338057a651dbf3880eea0da",
+          "input": "0x6d64600c6000556000526005601bf36000526001ff",
+          "calls": [
+            {
+              "from": "0xdbf7a512519a1c412338057a651dbf3880eea0da",
+              "gas": "0x0",
+              "gasUsed": "0x0",
+              "to": "0x0000000000000000000000000000000000000001",
+              "input": "0x",
+              "value": "0x1",
+              "type": "SELFDESTRUCT"
+            }
+          ],
+          "value": "0x1",
+          "type": "CREATE2"
+        }
+      ],
+      "value": "0x1",
+      "type": "CALL"
+    }
+  ],
+  "value": "0xa",
+  "type": "CALL"
+}

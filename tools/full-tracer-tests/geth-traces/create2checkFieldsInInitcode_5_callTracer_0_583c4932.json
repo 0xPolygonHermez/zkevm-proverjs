@@ -1,0 +1,53 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x927c0",
+  "gasUsed": "0x32b6d",
+  "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x0000000000000000000000002200000000000000000000000000000000000000",
+  "calls": [
+    {
+      "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x8a7c2",
+      "gasUsed": "0x2ce9a",
+      "to": "0x2200000000000000000000000000000000000000",
+      "input": "0x",
+      "calls": [
+        {
+          "from": "0x2200000000000000000000000000000000000000",
+          "gas": "0x809e8",
+          "gasUsed": "0x25168",
+          "to": "0x9d25fbabdeb081b9ecd0645b9b6aba8c7eb3821d",
+          "input": "0x6000600060006000600073f0000000000000000000000000000000000000005af2500000",
+          "calls": [
+            {
+              "from": "0x9d25fbabdeb081b9ecd0645b9b6aba8c7eb3821d",
+              "gas": "0x7dfae",
+              "gasUsed": "0x2472a",
+              "to": "0xf000000000000000000000000000000000000000",
+              "input": "0x",
+              "calls": [
+                {
+                  "from": "0x9d25fbabdeb081b9ecd0645b9b6aba8c7eb3821d",
+                  "gas": "0x744f5",
+                  "gasUsed": "0x1c9f8",
+                  "to": "0x7ce21e3c16d63738cbbb697c919555c910504278",
+                  "input": "0x30600055303160015532600255336003553460045536600555386006553a6007550000",
+                  "value": "0x0",
+                  "type": "CREATE2"
+                }
+              ],
+              "value": "0x0",
+              "type": "CALLCODE"
+            }
+          ],
+          "value": "0x0",
+          "type": "CREATE2"
+        }
+      ],
+      "value": "0x0",
+      "type": "CALL"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}

@@ -1,0 +1,20 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0xc3500",
+  "gasUsed": "0xc11fb",
+  "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+  "input": "0x60566000536000600160006000f560005500",
+  "calls": [
+    {
+      "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "gas": "0xabc62",
+      "gasUsed": "0xabc62",
+      "input": "0x56",
+      "error": "stack underflow (0 <=> 1)",
+      "value": "0x0",
+      "type": "CREATE2"
+    }
+  ],
+  "value": "0x1",
+  "type": "CREATE"
+}

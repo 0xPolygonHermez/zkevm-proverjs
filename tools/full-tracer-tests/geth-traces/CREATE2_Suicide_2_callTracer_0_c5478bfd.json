@@ -1,0 +1,30 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x927c0",
+  "gasUsed": "0x39b90",
+  "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+  "input": "0x6a6130ff6000526002601ef36000526000600b60156001f5506000600060006000736cd0e5133771823da00d4cb545ec8cdab0e38203620249f0fa00",
+  "calls": [
+    {
+      "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "gas": "0x7b8da",
+      "gasUsed": "0x1a2",
+      "to": "0x6cd0e5133771823da00d4cb545ec8cdab0e38203",
+      "input": "0x6130ff6000526002601ef3",
+      "output": "0x30ff",
+      "value": "0x1",
+      "type": "CREATE2"
+    },
+    {
+      "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "gas": "0x249f0",
+      "gasUsed": "0x249f0",
+      "to": "0x6cd0e5133771823da00d4cb545ec8cdab0e38203",
+      "input": "0x",
+      "error": "write protection",
+      "type": "STATICCALL"
+    }
+  ],
+  "value": "0xa",
+  "type": "CREATE"
+}

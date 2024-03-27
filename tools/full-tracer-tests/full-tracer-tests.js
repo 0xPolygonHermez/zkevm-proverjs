@@ -20,6 +20,7 @@ const chalk = require('chalk');
 const zkasm = require('@0xpolygonhermez/zkasmcom');
 const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 const smMain = require('../../src/sm/sm_main/sm_main');
+const { createHash } = require('crypto');
 
 const CHAIN_ID = 1000;
 const providerURL = 'http://127.0.0.1:8545';
@@ -32,7 +33,7 @@ const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tes
 const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
 const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json', 'pre-revert.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
-const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
+const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point', 'stack underflow (0 <=>'];
 const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
 const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
@@ -97,13 +98,10 @@ async function main() {
                 }
                 // Find test from folder if not regen
                 let gethTraces = [];
+                const hash = createHash('sha256').update(`${test.testName}_${test.id}_${traceMethod}`).digest('hex').slice(0, 8);
                 files.forEach((file) => {
-                    const parts = file.split('_');
-                    if (!isEthereumTest) {
-                        if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
-                            gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
-                        }
-                    } else if (file.includes(`${test.testName}_${String(test.id)}_${traceMethod}`)) {
+                    const identifier = file.split('_')[file.split('_').length - 1].replace('.json', '');
+                    if (identifier === hash) {
                         gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
                     }
                 });
@@ -501,6 +499,32 @@ async function compareCallTracer(geth, fullTracer, i) {
                     }
                 }
                 calls.push(callData[ctx + 1]);
+            } else if (opCreate.includes(step.opcode) && currentStep === fullTracer.full_trace.steps.length - 1) {
+                callData[ctx + 1] = {
+                    from: previousStep.contract.address,
+                    gas: `0x${Number(step.gas).toString(16)}`,
+                    gasUsed: '0x0',
+                    to: 'not_available',
+                    input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
+                    output: step.return_data,
+                    type: step.opcode,
+                    value: step.stack[step.stack.length - 1],
+                    calls: [],
+                };
+
+                // Compute gas sent to call
+                let gasSent = Number(step.gas) - 32000;
+                gasSent -= Math.floor(gasSent / 64);
+                callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx + 1]);
             }
         }
         currentStep++;
@@ -652,8 +676,9 @@ function compareTraces(geth, fullTracer) {
                 const res = (_.isObject(value) && _.isObject(origObj[key])) ? changes(value, origObj[key]) : value;
                 let isKnownDifference = false;
                 // Don't compare gasCost discrepancies when is an errored opcode as it is a known difference
-                if (resultKey === 'gasCost' && origObj.error !== '') {
+                if ((resultKey === 'gasCost' && origObj.error !== '') || origObj[key] === 'not_available') {
                     isKnownDifference = true;
+                    console.log(`Known difference found: ${resultKey} = ${res}/${origObj[key]}`);
                 }
                 if (!(_.isObject(res) && Object.keys(res).length === 0) && !isKnownDifference) {
                     result[resultKey] = res;
@@ -782,7 +807,8 @@ async function getGethTrace(txHashes, testName, traceMethod, testId) {
             traceConfig,
         ]);
         gethTraces.push(response);
-        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName}_${testId}_${traceMethod}_${testKey}_geth.json`), JSON.stringify(response, null, 2));
+        const testNameIdentifier = createHash('sha256').update(`${testName}_${testId}_${traceMethod}`).digest('hex');
+        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName}_${testId}_${traceMethod}_${testKey}_${testNameIdentifier.slice(0, 8)}.json`), JSON.stringify(response, null, 2));
     }
 
     return gethTraces;

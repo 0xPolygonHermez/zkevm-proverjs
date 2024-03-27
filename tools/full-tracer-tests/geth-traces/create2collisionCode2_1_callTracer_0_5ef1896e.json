@@ -1,0 +1,9 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x61a80",
+  "gasUsed": "0x6074d",
+  "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+  "input": "0x6b620102036000526003601df36000526000600c60146001f500",
+  "value": "0x1",
+  "type": "CREATE"
+}

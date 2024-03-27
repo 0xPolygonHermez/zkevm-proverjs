@@ -777,10 +777,9 @@ class FullTracer {
             if (zeroCostOp.includes(prevTraceCall.opcode)) {
                 prevTraceCall.gas_cost = String(0);
             } else if (opCreate.includes(prevTraceCall.opcode)) {
-                // In case of error at create, we can't get the gas cost from next opcodes, so we have to use rom variables
+                // In case of error at create, all gas is consumed
                 if (prevTraceCall.error !== '') {
-                    const gasCall = getVarFromCtx(ctx, true, 'gasCall');
-                    prevTraceCall.gas_cost = String(gasCost - Number(gasCall) + Number(ctx.GAS));
+                    prevTraceCall.gas_cost = prevTraceCall.gas;
                 } else {
                     // If is a create opcode, set gas cost as currentGas - gasCall
                     const ctxTmp = {
@@ -917,9 +916,11 @@ class FullTracer {
         // save output traces
         this.full_trace.push(singleCallTrace);
 
-        if (prevStep && opIncContext.includes(prevStep.opcode) && prevStep.depth !== singleInfo.depth) {
+        if (prevStep && opIncContext.includes(prevStep.opcode) && prevStep.depth < singleInfo.depth) {
+            if (prevStep.error === '') {
             // Create new call data entry
-            this.callData[ctx.CTX] = { type: prevStep.opcode };
+                this.callData[ctx.CTX] = { type: prevStep.opcode };
+            }
             // Set 'gasCall' when depth has changed
             this.txGAS[this.depth] = getVarFromCtx(ctx, true, 'gasCall').toString();
             singleInfo.contract.gas = this.txGAS[this.depth]; // execute_trace does not have contracts property
