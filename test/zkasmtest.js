@@ -12,8 +12,7 @@ const argv = require("yargs")
         },
         "n": {
             alias: "ns",
-            describe: "Namespaces to use",
-            default: ['Global', 'Main'],
+            describe: "Namespaces to use [default: ['Global', 'Main']]",
         },
         "b": {
             alias: "blob",
@@ -21,18 +20,15 @@ const argv = require("yargs")
         },
         "N": {
             alias: "stepsN",
-            describe: "Steps to execute",
-            default: "As defined by PIL",
+            describe: "Steps to execute [default: As defined by PIL]",
         },
         "R": {
             alias: "rows",
-            describe: "Number of rows for the PIL file",
-            default: "2**17",
+            describe: "Number of rows for the PIL file [default: 2**17]",
         },
         "p": {
             alias: "pil",
-            describe: "Path to the PIL file",
-            default: "pil/main.pil",
+            describe: "Path to the PIL file [default: pil/main.pil]",
         },
         "P": {
             alias: "pilconfig",
@@ -209,7 +205,7 @@ async function main(){
             romFilename: path.join(outputPath, zkasm + '.' + 'rom.json'),
             constFilename: path.join(outputPath, zkasm + '.' + 'constFile.bin'),
             commitFilename: path.join(outputPath, zkasm + '.' + 'commitFile.bin'),
-            pilJsonFilename: path.join(outputPath, zkasm + '.' + 'main.pil.json'),
+            pilJsonFilename: path.join(outputPath, zkasm + '.' + 'pil.json'),
             ...mainConfig};
     }
 

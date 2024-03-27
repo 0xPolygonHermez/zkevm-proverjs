@@ -64,6 +64,7 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
     if (mainConfig && mainConfig.romFilename) {
         await fs.promises.writeFile(mainConfig.romFilename, JSON.stringify(rom, null, 1) + "\n");
+        console.log(`ROM successfully written to file: ${mainConfig.romFilename}`);
     }
 
     if (constPols.Global) {
@@ -266,14 +267,17 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
         if (mainConfig && mainConfig.constFilename && constPols !== false) {
             await constPols.saveToFile(mainConfig.constFilename);
+            console.log(`Constant polynomials successfully written to file: ${mainConfig.constFilename}`);
         }
 
         if (mainConfig && mainConfig.commitFilename) {
             await cmPols.saveToFile(mainConfig.commitFilename);
+            console.log(`Committed polynomials successfully written to file: ${mainConfig.commitFilename}`);
         }
 
         if (mainConfig && mainConfig.pilJsonFilename) {
             fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+            console.log(`PIL successfully written to file: ${mainConfig.pilJsonFilename}`);
         }
     }
 
