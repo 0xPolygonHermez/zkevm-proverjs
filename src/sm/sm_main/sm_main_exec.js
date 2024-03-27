@@ -120,7 +120,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     // load programs into DB
     let batchHashData;
-    let blobL2HashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -137,15 +136,24 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
     }
 
-    if(blob) {
+    if(blob && input.blobType == 1) {
         // Load poseidonBlobData into DB
-        const z = await hashContractBytecode(input.blobData);
+        let z = await hashContractBytecode(input.blobData);
+        if(typeof input.z === 'undefined') {
+            input.z = z;
+        } else if(input.z !== z) {
+            throw new Error("input.z != poseidon(input.blobData)");
+        }
         await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
-    
+    } else if (blob) {
         // Load keccak256BlobData into DB
-        blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        let blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        if(typeof input.blobL2HashData === 'undefined') {
+            input.blobL2HashData = blobL2HashData;
+        } else if(input.blobL2HashData !== blobL2HashData) {
+            throw new Error("input.blobL2HashData != keccak(input.blobData)");
+        }
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
-    
     }
     // load smt
     const smt = new SMT(db, poseidon, Fr);
@@ -172,7 +180,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         final: false,
         helpers: new Helpers(helpers, {paths: helperPaths}),
         saved:{},
-        blobL2HashData,
+        batchHashData,
         config,
     }
     
