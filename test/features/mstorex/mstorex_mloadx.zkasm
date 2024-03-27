@@ -1,0 +1,158 @@
+CONST %MA_LEN_FACTOR = 128
+CONST %MA_LEFT_ALIGN = 8192
+
+VAR GLOBAL __MSTOREX_len
+VAR GLOBAL __MLOADX_res
+
+VAR GLOBAL bytesToStore
+
+; @info save value to memory 32 bytes with offset
+; @in bytesToStore => bytes to store in memory
+; @in E => offset
+; @out E => new offset
+
+MSTORE32:
+        ; check step counters
+        %MAX_CNT_STEPS - STEP - 20              :JMPN(outOfCountersStep)
+        %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+
+        A                           :SAVE(B,C,D,E,RR,RCX)
+        32 => C                     :MSTORE(__MSTOREX_len), JMP(__MSTOREX_afterSave)
+        
+; @info save value to memory < 32 bytes with offset
+; @in bytesToStore => bytes to store in memory
+; @in E => offset 
+; @in C => length
+; @out E => new offset
+        
+MSTOREX:  
+        ; check step counters
+        %MAX_CNT_STEPS - STEP - 20              :JMPN(outOfCountersStep)
+        %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+
+        C           :MSTORE(__MSTOREX_len), JMPZ(__MSTOREX_end)
+
+        A           :SAVE(B,C,D,E,RR,RCX)
+        C           :JMP_GT(32, errorMLOADMSTORE)
+
+__MSTOREX_afterSave:
+
+        ; verification without binary, required in non trust if E > 2**32, after that will verify two paths
+        ; path E < 2**32: 
+        ;   A0 < 2**32 => JMPN fails (if A0 < 0 then path __errorEmore32bits)
+        ;   A7..A1 == 0 because use $0
+        ;   A < 2**32
+        ;   E == A if not ASSERT fails => E < 2**32
+        ;   E >= MAX_MEM_EXPANSION_BYTES ==> errorMLOADMSTORE
+
+        $0{E > 0xFFFFFFFF ? -1:E} => A  :JMPN(__errorEmore32bits)
+        E                               :ASSERT,JMP_GE(%MAX_MEM_EXPANSION_BYTES, errorMLOADMSTORE)
+
+        $0{E / 32} => RR                :JMPN(failAssert)
+        ; RR = 32 bits positive value
+
+        $BYTE{E%32} => RCX,A          
+        RCX                             :JMP_GT(31, failAssert)
+
+        ; E === 32 * RR + A (RCX)
+        ; E - 32 * RR === A
+        ; secure: E < MAX_MEM_EXPASION_BYTES < 32 bits, RR < 32 bits, 32*RR < 37 bits, all < 38 bits
+        E - 32 * RR                 :ASSERT
+        
+        RCX + %MA_LEN_FACTOR * C + %MA_LEFT_ALIGN => C     :JMP_EQ(%MA_LEN_FACTOR * 32 + %MA_LEFT_ALIGN, __MSTORE32_offset0_len32)
+
+        $ => A                  :MLOAD(MEM:RR)
+        $ => B                  :MLOAD(MEM:RR+1)
+
+        ${memAlignWR_W0(A,mem.bytesToStore,C)} => D    :MSTORE(MEM:RR)      ; no trust calculate W0
+        ${memAlignWR_W1(B,mem.bytesToStore,C)} => E    :MSTORE(MEM:RR + 1)  ; no trust calculate W1
+
+        $                       :MEM_ALIGN_WR,MLOAD(bytesToStore),JMP(__MSTORE32_restore)
+
+__MSTORE32_offset0_len32:
+        $ => C                  :MLOAD(bytesToStore)
+        C                       :MSTORE(MEM:RR)
+
+__MSTORE32_restore:
+        $ => A                  :RESTORE
+        __MSTOREX_len + E => E  :RETURN
+
+        
+__MSTOREX_end:
+                                :RETURN
+
+; @info get value from memory (32 bytes)
+; @in E => offset
+; @out A => value
+; @out E => new offset
+
+MLOAD32:
+        ; check step counters
+        %MAX_CNT_STEPS - STEP - 20              :JMPN(outOfCountersStep)
+        %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+
+        32 => C                         :SAVE(B,C,D,E,RR,RCX), JMP(__MLOADX_afterSave)
+
+; @info get value from memory (< 32 bytes)
+; @in E => offset
+; @in C => length
+; @out A => value
+; @out E => new offset
+        
+MLOADX:  
+        ; check step counters
+        %MAX_CNT_STEPS - STEP - 20              :JMPN(outOfCountersStep)
+        %MAX_CNT_MEM_ALIGN - CNT_MEM_ALIGN - 1  :JMPN(outOfCountersMemalign)
+
+        C                                       :JMP_GT(32, errorMLOADMSTORE)
+        C                                       :SAVE(B,C,D,E,RR,RCX), JMPZ(__MLOADX_len0)
+
+__MLOADX_afterSave:
+
+        ; verification without binary, required in non trust if E > 2**32, after that will verify two paths
+        ; path E < 2**32: 
+        ;   A0 < 2**32 => JMPN fails (if A0 < 0 then path __errorEmore32bits)
+        ;   A7..A1 == 0 because use $0
+        ;   A < 2**32
+        ;   E == A if not ASSERT fails => E < 2**32
+        ;   E >= MAX_MEM_EXPANSION_BYTES ==> errorMLOADMSTORE
+
+        $0{E > 0xFFFFFFFF ? -1:E} => A  :JMPN(__errorEmore32bits)
+        E                               :ASSERT,JMP_GE(%MAX_MEM_EXPANSION_BYTES, errorMLOADMSTORE)
+
+        $0{E / 32} => RR                :JMPN(failAssert)
+        ; RR = 32 bits positive value
+
+        $BYTE{E%32} => RCX,A          
+        RCX                             :JMP_GT(31, failAssert)
+
+        ; E === 32 * RR + A (RCX)
+        ; E - 32 * RR === A
+        ; secure: E < MAX_MEM_EXPASION_BYTES < 32 bits, RR < 32 bits, 32*RR < 37 bits, all < 38 bits
+        E - 32 * RR                 :ASSERT
+        
+        RCX + %MA_LEN_FACTOR * C => C     :JMP_EQ(%MA_LEN_FACTOR * 32, __MLOAD32_offset0_len32)
+
+        $ => A                  :MLOAD(MEM:RR)
+        $ => B                  :MLOAD(MEM:RR+1)
+
+        $ => A                  :MEM_ALIGN_RD,JMP(__MLOAD32_restore)
+
+__MLOAD32_offset0_len32:
+        $ => A                  :MLOAD(MEM:RR)
+
+__MLOAD32_restore:
+        $                       :RESTORE,MSTORE(__MSTOREX_len)
+        __MSTOREX_len + E => E  :RETURN
+        
+__MLOADX_len0:
+        0 => A                  :RETURN
+
+__errorEmore32bits:
+        ; path E >= 2**32 must be verified (dual path protection)
+        ; E >= 2**32 === !(E < 2**32)
+        E => A 
+        2n**32n => B
+        ; don't check binary counter, because here was a problem of dual path, if check
+        ; before this path was a performance problem. It's only one binary and it's outOfGas
+        0   :LT,JMP(errorMLOADMSTORE)

@@ -276,9 +276,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         ctx.sourceRef = sourceRef;
 
 
-        if (verboseOptions.zkPC) {
+        // if (verboseOptions.zkPC) {
             console.log(sourceRef);
-        }
+        // }
 
         // Store SR before set it to 0 at finalizeExecution
         if(Number(ctx.zkPC) === rom.labels.finalizeExecution) {
