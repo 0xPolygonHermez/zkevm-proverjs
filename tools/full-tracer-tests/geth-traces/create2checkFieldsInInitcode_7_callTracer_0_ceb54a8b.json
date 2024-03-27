@@ -1,0 +1,42 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x927c0",
+  "gasUsed": "0x8cc90",
+  "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x0000000000000000000000004400000000000000000000000000000000000000",
+  "calls": [
+    {
+      "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x8a7c2",
+      "gasUsed": "0x86fbd",
+      "to": "0x4400000000000000000000000000000000000000",
+      "input": "0x",
+      "calls": [
+        {
+          "from": "0x4400000000000000000000000000000000000000",
+          "gas": "0x809e8",
+          "gasUsed": "0x7f28d",
+          "to": "0xc91476965ddff489cdc5dc20c8f25819609ce341",
+          "input": "0x61010060006000600073f2000000000000000000000000000000000000005afa50600051600a550000",
+          "calls": [
+            {
+              "from": "0xc91476965ddff489cdc5dc20c8f25819609ce341",
+              "gas": "0x7df99",
+              "gasUsed": "0x7df99",
+              "to": "0xf200000000000000000000000000000000000000",
+              "input": "0x",
+              "error": "write protection",
+              "type": "STATICCALL"
+            }
+          ],
+          "value": "0x0",
+          "type": "CREATE2"
+        }
+      ],
+      "value": "0x0",
+      "type": "CALL"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}

@@ -1,0 +1,21 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x249f0",
+  "gasUsed": "0x249f0",
+  "to": "0x1000000000000000000000000000000000000000",
+  "input": "0x",
+  "error": "out of gas",
+  "calls": [
+    {
+      "from": "0x1000000000000000000000000000000000000000",
+      "gas": "0x174d1",
+      "gasUsed": "0x0",
+      "to": "0x24c100a15081f02b9efae8267a69f73bf15e75fa",
+      "input": "0x",
+      "value": "0x1",
+      "type": "CREATE2"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}

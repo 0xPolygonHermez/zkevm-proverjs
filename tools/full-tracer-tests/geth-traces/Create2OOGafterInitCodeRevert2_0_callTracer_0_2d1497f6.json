@@ -1,0 +1,33 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x124f8",
+  "gasUsed": "0xf0bc",
+  "to": "0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x",
+  "calls": [
+    {
+      "from": "0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x80e8",
+      "gasUsed": "0x80e1",
+      "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "input": "0x",
+      "output": "0x0000000000000000000000000000000000006460016001556000526005601bf3",
+      "error": "execution reverted",
+      "calls": [
+        {
+          "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "gas": "0x3bb",
+          "gasUsed": "0x3bb",
+          "input": "0x6460016001556000526005601bf3",
+          "error": "contract creation code storage out of gas",
+          "value": "0x0",
+          "type": "CREATE2"
+        }
+      ],
+      "value": "0x0",
+      "type": "CALL"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}

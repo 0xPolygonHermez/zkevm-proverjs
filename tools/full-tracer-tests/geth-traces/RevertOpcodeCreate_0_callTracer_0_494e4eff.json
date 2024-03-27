@@ -1,0 +1,21 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0x704e0",
+  "gasUsed": "0x18556",
+  "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x600160005560016000fe6011600155",
+  "calls": [
+    {
+      "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x61c0f",
+      "gasUsed": "0x5663",
+      "input": "0x600160005560016000fd6011600155",
+      "output": "0x00",
+      "error": "execution reverted",
+      "value": "0x1",
+      "type": "CREATE2"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}

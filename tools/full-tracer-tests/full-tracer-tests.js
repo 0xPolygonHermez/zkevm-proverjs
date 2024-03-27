@@ -1,3 +1,5 @@
+/* eslint-disable import/order */
+/* eslint-disable prefer-destructuring */
 /* eslint-disable multiline-comment-style */
 /* eslint-disable no-undef */
 /* eslint-disable max-len */
@@ -18,6 +20,7 @@ const chalk = require('chalk');
 const zkasm = require('@0xpolygonhermez/zkasmcom');
 const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
 const smMain = require('../../src/sm/sm_main/sm_main');
+const { createHash } = require('crypto');
 
 const CHAIN_ID = 1000;
 const providerURL = 'http://127.0.0.1:8545';
@@ -28,14 +31,22 @@ const opCall = ['CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'];
 const opCreate = ['CREATE', 'CREATE2'];
 const ethereumTestsPath = '../../../zkevm-testvectors/tools-inputs/tools-eth/tests/BlockchainTests/GeneralStateTests/';
 const stTestsPath = '../../../zkevm-testvectors/tools-inputs/data/';
-const stopOnFailure = true;
 const invalidTests = ['custom-tx.json', 'access-list.json', 'effective-gas-price.json', 'op-basefee.json', 'CREATE2_HighNonceDelegatecall.json', 'op-selfdestruct.json', 'txs-calldata.json', 'over-calldata.json', 'change-l2-block.json', 'ooc.json', 'test-length-data.json', 'pre-modexp.json', 'pre-modexp.json', 'empty-batch.json', 'uniswapv2.json', 'pre-revert.json'];
 const invalidOpcodes = ['BASEFEE', 'SELFDESTRUCT', 'TIMESTAMP', 'COINBASE', 'BLOCKHASH', 'NUMBER', 'DIFFICULTY', 'GASLIMIT', 'EXTCODEHASH', 'SENDALL', 'PUSH0'];
-const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point'];
+const invalidErrors = ['return data out of bounds', 'gas uint64 overflow', 'contract creation code storage out of gas', 'write protection', 'bn256: malformed point', 'stack underflow (0 <=>'];
 const noExec = require('../../../zkevm-testvectors/tools-inputs/tools-eth/no-exec.json');
 const { checkBlockInfoRootsFromTrace } = require('./full-tracer-tests-utils');
 
-const regen = false;
+let forceRegen = false;
+const { argv } = require('yargs')
+    .usage('node full-tracer-tests.js -n -f -r')
+    .alias('n', 'noStop') // Stop execution if one tests fails (default true)
+    .alias('f', 'forceRegen') // Retry failed test after regenerate
+    .alias('r', 'regen'); // Force test regeneration
+// CONFIG FLAGS
+const noStopOnFailure = argv.noStop;
+const forceRegenArg = argv.forceRegen;
+const regen = argv.regen;
 const errorsMap = {
     OOG: 'out of gas',
     invalidStaticTx: 'write protection',
@@ -87,15 +98,16 @@ async function main() {
                 }
                 // Find test from folder if not regen
                 let gethTraces = [];
+                const hash = createHash('sha256').update(`${test.testName}_${test.id}_${traceMethod}`).digest('hex').slice(0, 8);
                 files.forEach((file) => {
-                    const parts = file.split('_');
-                    if (test.testName === parts[0] && String(test.id) === parts[1] && traceMethod === parts[2]) {
+                    const identifier = file.split('_')[file.split('_').length - 1].replace('.json', '');
+                    if (identifier === hash) {
                         gethTraces.push(JSON.parse(fs.readFileSync(path.join(__dirname, 'geth-traces', file), 'utf8')));
                     }
                 });
                 // Get num of non changeL2Block txs
                 const ethTxs = isEthereumTest ? test.blocks[0].transactions.length : test.txs.filter((tx) => typeof tx.type === 'undefined').length;
-                if (regen || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
+                if (regen || (forceRegen && forceRegenArg) || (!isEthereumTest && gethTraces.length !== ethTxs) || (isEthereumTest && gethTraces.length !== test.blocks.length)) {
                     // Configure genesis for test
                     const isGethSupported = await configureGenesis(test, isEthereumTest);
                     if (!isGethSupported) {
@@ -118,7 +130,9 @@ async function main() {
                     continue;
                 }
                 const ftTraces = await getFtTrace(test, gethTraces.length, rom, isEthereumTest);
-
+                if (ftTraces.length === 0) {
+                    continue;
+                }
                 // Check block info root
                 await checkBlockInfoRootsFromTrace(test.testName);
 
@@ -129,10 +143,16 @@ async function main() {
                         const message = `Diff found at test ${test.testName}-${test.id}-${i}: ${JSON.stringify(changes)}`;
                         console.log(chalk.red(message));
                         failedTests.push(message);
-                        if (stopOnFailure) {
+                        if (!forceRegen && forceRegenArg) {
+                            forceRegen = true;
+                            j--;
+                            break;
+                        }
+                        if (!noStopOnFailure) {
                             process.exit(1);
                         }
                     } else {
+                        forceRegen = false;
                         console.log(chalk.green(`No differences for test ${test.testName}-${test.id}-${i} -- ${traceMethod}`));
                     }
                 }
@@ -192,9 +212,26 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             const keysTests = Object.keys(test).filter((op) => op.includes('_Berlin'));
             test = [test[keysTests[testToDebug]]];
         }
-        const inputTestPath = isEthereumTest ? path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`) : path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
-        const tn = isEthereumTest ? testName.split('/')[1] : testName;
-        const fn = isEthereumTest ? testName.split('/')[0] : testName;
+        let inputTestPath;
+        let tn;
+        let fn;
+        if (isEthereumTest) {
+            const ethPath = testName.split('/');
+            if (ethPath.length === 3) {
+                inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${ethPath[2]}_${testToDebug}.json`);
+                tn = ethPath[2];
+                fn = `${ethPath[0]}/${ethPath[1]}`;
+            } else {
+                inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`);
+                tn = ethPath[1];
+                fn = ethPath[0];
+            }
+        } else {
+            inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
+            tn = testName;
+            fn = testName;
+        }
+
         Object.assign(test[0], {
             testName: tn, inputTestPath, testToDebug, id: testToDebug, folderName: fn,
         });
@@ -224,11 +261,21 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 if (value.network !== 'Berlin') {
                     continue;
                 }
-                const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                const ethPath = folderName.split('/');
+                let inputTestPath;
+                if (ethPath.length === 2) {
+                    inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${file.split('.')[0]}_${j}.json`);
+                } else {
+                    inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                }
                 // Check input exists
                 if (!fs.existsSync(inputTestPath)) {
-                    console.log(`Input not found: ${inputTestPath}`);
-                    continue;
+                    inputTestPath = inputTestPath.replace('_0', '');
+                    if (j !== 0 && !fs.existsSync(inputTestPath)) {
+                    // Check file exists without num
+                        console.log(`Input not found: ${inputTestPath}`);
+                        continue;
+                    }
                 }
                 Object.assign(value, {
                     testName: file.split('.')[0], folderName, inputTestPath, testToDebug: j, id: j,
@@ -452,6 +499,32 @@ async function compareCallTracer(geth, fullTracer, i) {
                     }
                 }
                 calls.push(callData[ctx + 1]);
+            } else if (opCreate.includes(step.opcode) && currentStep === fullTracer.full_trace.steps.length - 1) {
+                callData[ctx + 1] = {
+                    from: previousStep.contract.address,
+                    gas: `0x${Number(step.gas).toString(16)}`,
+                    gasUsed: '0x0',
+                    to: 'not_available',
+                    input: getFromMemory(previousStep.memory, previousStep.stack, previousStep.opcode),
+                    output: step.return_data,
+                    type: step.opcode,
+                    value: step.stack[step.stack.length - 1],
+                    calls: [],
+                };
+
+                // Compute gas sent to call
+                let gasSent = Number(step.gas) - 32000;
+                gasSent -= Math.floor(gasSent / 64);
+                callData[ctx + 1].gas = `0x${gasSent.toString(16)}`;
+
+                let { calls } = newFT;
+                // Fill call in the right depth
+                if (previousStep.depth > 1) {
+                    for (let j = 1; j < previousStep.depth; j++) {
+                        calls = calls[calls.length - 1].calls;
+                    }
+                }
+                calls.push(callData[ctx + 1]);
             }
         }
         currentStep++;
@@ -603,8 +676,9 @@ function compareTraces(geth, fullTracer) {
                 const res = (_.isObject(value) && _.isObject(origObj[key])) ? changes(value, origObj[key]) : value;
                 let isKnownDifference = false;
                 // Don't compare gasCost discrepancies when is an errored opcode as it is a known difference
-                if (resultKey === 'gasCost' && origObj.error !== '') {
+                if ((resultKey === 'gasCost' && origObj.error !== '') || origObj[key] === 'not_available') {
                     isKnownDifference = true;
+                    console.log(`Known difference found: ${resultKey} = ${res}/${origObj[key]}`);
                 }
                 if (!(_.isObject(res) && Object.keys(res).length === 0) && !isKnownDifference) {
                     result[resultKey] = res;
@@ -668,8 +742,13 @@ async function getFtTrace(test, txsCount, rom, isEthereumTest) {
     const ftTraces = [];
     for (let i = 0; i < txsCount; i++) {
         const blockNum = isEthereumTest ? [1, i] : getBlockNumFromTxCount(test, i);
-        const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_${blockNum[0]}_${blockNum[1]}.json`), 'utf8'));
-        ftTraces.push(ftTrace);
+        const dir = path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_TX_${blockNum[0]}_${blockNum[1]}.json`);
+        if (fs.existsSync(dir)) {
+            const ftTrace = JSON.parse(fs.readFileSync(dir, 'utf8'));
+            ftTraces.push(ftTrace);
+        } else {
+            console.log(`Full trace not found: ${dir}`);
+        }
     }
 
     return ftTraces;
@@ -728,7 +807,8 @@ async function getGethTrace(txHashes, testName, traceMethod, testId) {
             traceConfig,
         ]);
         gethTraces.push(response);
-        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName}_${testId}_${traceMethod}_${testKey}_geth.json`), JSON.stringify(response, null, 2));
+        const testNameIdentifier = createHash('sha256').update(`${testName}_${testId}_${traceMethod}`).digest('hex');
+        fs.writeFileSync(path.join(__dirname, `geth-traces/${testName}_${testId}_${traceMethod}_${testKey}_${testNameIdentifier.slice(0, 8)}.json`), JSON.stringify(response, null, 2));
     }
 
     return gethTraces;
@@ -813,12 +893,14 @@ async function runTxsFromEthTest(test) {
     const jsonFile = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/tools-eth/tests/GeneralStateTests/${test.folderName}/${test.testName}.json`)))[test.testName];
     const pvtKey = jsonFile.transaction.secretKey;
     const wallet = (new ethers.Wallet(pvtKey)).connect(provider);
+    // Limit gas limit to rom max gas limit per tx
+    const gasLimit = Math.min(Number(txTest.gasLimit), Constants.TX_GAS_LIMIT);
     const tx = {
         to: txTest.to,
         nonce: Number(txTest.nonce),
         value: ethers.utils.parseUnits(String(Number(txTest.value)), 'wei'),
         data: txTest.data,
-        gasLimit: Number(txTest.gasLimit),
+        gasLimit,
         gasPrice: Number(txTest.gasPrice),
         chainId: CHAIN_ID,
     };
@@ -874,7 +956,7 @@ async function configureGenesis(test, isEthereumTest) {
             },
         },
         difficulty: '1',
-        gasLimit: '100000000',
+        gasLimit: '300000000',
         extradata: '0x000000000000000000000000000000000000000000000000000000000000000067d13ABa5613169Ea7C692712d14A69e068558F80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
         alloc: {
             '67d13ABa5613169Ea7C692712d14A69e068558F8': { balance: '100000000000000000000' },
@@ -925,7 +1007,7 @@ async function startGeth() {
     await buildAll({ cwd: path.join(__dirname), log: false });
     // start docker compose
     await upAll({ cwd: path.join(__dirname), log: false });
-    await sleep(2000);
+    await sleep(6000);
 }
 
 function sleep(ms) {

@@ -1,0 +1,21 @@
+{
+  "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "gas": "0xd2f0",
+  "gasUsed": "0xd2f0",
+  "to": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+  "input": "0x",
+  "error": "out of gas",
+  "calls": [
+    {
+      "from": "0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x3bb",
+      "gasUsed": "0x3bb",
+      "input": "0x6460016001556000526005601bf3",
+      "error": "contract creation code storage out of gas",
+      "value": "0x0",
+      "type": "CREATE2"
+    }
+  ],
+  "value": "0x0",
+  "type": "CALL"
+}
