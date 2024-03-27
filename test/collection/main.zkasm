@@ -1,8 +1,5 @@
 INCLUDE "header.zkasm"
 
-INCLUDE "constants.zkasm"
-INCLUDE "lvalues.zkasm"
-
 INCLUDE "basics.zkasm"
 INCLUDE "counters.zkasm"
 INCLUDE "features.zkasm"
