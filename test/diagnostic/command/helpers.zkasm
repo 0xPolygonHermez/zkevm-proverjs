@@ -1,0 +1,107 @@
+
+        0 => A,B,C,D,E
+
+        ; The following are input-dependent, do not work in general
+        ; ${getSequencerAddr()}
+        ; ${getForcedBlockHashL1()}
+        ; ${getL1InfoGER()}
+        ; ${getL1InfoBlockHash()}
+        ; ${getL1InfoTimestamp()}
+        ; ${getTxs()}
+        ; ${getTxsLen()}
+        ; ${getSmtProof()}
+
+        $${eventLog(onError, SomeCommonIssue)}
+
+        ; TODO: Fix it
+        ; 3 => B
+        ; 2 => C
+        ; ${cond(B > C)} => A
+        ; 18446744069414584320n       :ASSERT
+
+        ${inverseFpEc(40)} => A
+        0xd33333333333333333333333333333333333333333333333333333325ffffcdan     :ASSERT
+
+        ${inverseFnEc(1237187253761512763182)} => A
+        0x98c1149d689b920bae9a687efdbc80d409cd48b5e5b0c3fd38f61d67bde67728n     :ASSERT
+
+        ${sqrtFpEcParity(4,0)} => A
+        2       :ASSERT
+        ${sqrtFpEcParity(4,1)} => A
+        0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2dn       :ASSERT
+
+        1230484984819802341500327589947n => A
+        1194277090096511139801643222002n => B
+        ${dumpRegs()}
+        ${dump(A,B)}
+        ${dumphex(A,B,C)}
+
+        0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798n => A
+        0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8n => B
+        0xc6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5n => C
+        0x1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52an => D
+        ${xAddPointEc(A,B,C,D)} => A
+        0xf9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9n  :ASSERT
+        0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798n => A
+        ${yAddPointEc(A,B,C,D)} => A
+        0x388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672n  :ASSERT
+
+
+        0xfff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556n => A
+        0xae12777aacfbb620f3be96017f45c560de80f0f6518fe4a03c870c36b075f297n => B
+        ${xDblPointEc(A,B)} => A
+        0xd01115d548e7561b15c38f004d734633687cf4419620095bc5b0f47070afe85an  :ASSERT
+        0xfff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556n => A
+        ${yDblPointEc(A,B)} => A
+        0xa9f34ffdc815e0d7a8b64537e17bd81579238c5dd9a86d526b051b13f4062327n  :ASSERT
+
+        ; TODO: Fix it
+        ; ${beforeLast()} => A
+        ; 18446744069414584320n       :ASSERT
+
+        ; These one are not used and not needed anymore
+        ; ${bitwise()}
+        ; ${comp()}
+        ; ${loadScalar()}
+
+        ${log(A,Register)}
+
+        ${exp(2,3)} => A
+        8       :ASSERT
+
+        $${storeLog(3, 0, A)}
+
+        ${break()}
+
+        ${memAlignWR_W0(2631257310,7777,0)} => A
+        7777                :ASSERT
+
+        ${memAlignWR_W1(2631257310,7777,0)} => A
+        2631257310          :ASSERT
+
+        2 => A,B
+        3 => C,D
+        ${ARITH_BN254_MULFP2_X(A,B,C,D)} => A
+        0 :ASSERT
+        2 => A,B
+        3 => C,D
+        ${ARITH_BN254_MULFP2_Y(A,B,C,D)} => A
+        12 :ASSERT
+
+        2 => A,B
+        3 => C,D
+        ${ARITH_BN254_ADDFP2(A,B,C,D)} => A
+        4 :ASSERT
+        2 => A,B
+        3 => C,D
+        ${ARITH_BN254_SUBFP2(A,B,C,D)} => A
+        0 :ASSERT
+
+        ; TODO: Fix
+        ; 40                              :MSTORE(bi_a)
+
+        ; ${getMemAddr(bi_a)} => A
+        ; 40      :ASSERT
+
+        ; ${getMemValue(bi_a)} => A
+        ; ${dump(A)}
