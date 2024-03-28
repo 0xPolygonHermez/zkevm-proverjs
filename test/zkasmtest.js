@@ -69,10 +69,14 @@ const argv = require("yargs")
         "H": {
             alias: "helper",
             describe: "Path to the helper file",
-        }
+        },
+        "w": {
+            alias: "workpath",
+            describe: "Path to the working directory",
+        },
     })
     .group(["a","b","d","C","e","s","E","v","h","version"], "FLAGS:")
-    .group(["c","N","p","P","n","R","o","H"], "OPTIONS:")
+    .group(["c","N","p","P","n","R","w","o","H"], "OPTIONS:")
     .help('h')
     .alias('h', 'help')
     .epilogue("ARGS:\n  <input>   Path to a complete zkasm file or multiple zkasm files where the first file refers to the header file and the last file refers to the footer file")
@@ -83,13 +87,15 @@ const argv = require("yargs")
     .argv;
 
 async function main(){
+    const workpath = typeof(argv.workpath) === "string" ?  argv.workpath.trim() : "";
+
     let zkasmFile = "";
     switch (argv._.length) {
         case 0:
             console.log("You need to specify at least one zkasm source file");
             process.exit(1);
         case 1:
-            zkasmFile = argv._[0];
+            zkasmFile = path.join(workpath, argv._[0]);
             break;
         case 2:
             console.log("You need to specify the header file, at least one zkasm source file and the footer file");
@@ -98,13 +104,16 @@ async function main(){
             const files = argv._;
             const findIncludes = /INCLUDE\s+"([^"]+)"/g
             for (let i = 0; i < files.length; i++) {
-                let filei = fs.readFileSync(files[i], "utf8");
-                filei = filei.replace(findIncludes, (match) => {
-                    let newInclude = path.resolve(path.dirname(files[i]),match.match(/"([^"]+)"/)[1]);
+                const filei = path.join(workpath, files[i]);
+                console.log(`Reading ${filei}...`);
+
+                let contenti = fs.readFileSync(filei, "utf8");
+                contenti = contenti.replace(findIncludes, (match) => {
+                    let newInclude = path.resolve(path.dirname(filei),match.match(/"([^"]+)"/)[1]);
                     return `INCLUDE "${newInclude}"`;
                 });
 
-                zkasmFile += filei + "\n\n";
+                zkasmFile += contenti + "\n\n";
             }
     }
 
@@ -132,8 +141,7 @@ async function main(){
 
     const targetSuffix = blob ? '_blob':'';
 
-
-    let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
+    let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim() : "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
     ns = Array.isArray(ns) ? ns : [ns];

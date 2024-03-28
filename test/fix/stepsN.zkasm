@@ -1,3 +1,5 @@
+; This program consumes at least %UPTO x 2 = 80000 steps amb must fail if the default steps are lower
+
 start:
 
 CONST %UPTO = 40000
