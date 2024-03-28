@@ -127,9 +127,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 await db.setProgram(stringToH4(key), hexString2byteArray(value));
         }
 
+        input.batchHashDataComputed = await hashContractBytecode(input.batchL2Data);
+        // Compare computed batch hash data (from batch l2 data) with input batch hash data
+        if (typeof input.batchHashData !== 'undefined' && input.batchHashData !== input.batchHashDataComputed) {
+            throw new Error('batchHashData does not match the computed batchHashData (from batch l2 data)');
+        }
         // Load batchL2Data into DB
-        batchHashData = await hashContractBytecode(input.batchL2Data);
-        await db.setProgram(stringToH4(batchHashData), hexString2byteArray(input.batchL2Data));
+        await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
     }
 
     if(blob && input.blobType == 1) {
@@ -176,7 +180,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         final: false,
         helpers: new Helpers(helpers, {paths: helperPaths}),
         saved:{},
-        batchHashData,
         config,
     }
     
