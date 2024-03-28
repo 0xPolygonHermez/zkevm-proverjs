@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const { ethers } = require("ethers");
 const { Scalar, F1Field } = require("ffjavascript");
@@ -119,7 +120,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     // load programs into DB
     let batchHashData;
-    let blobL2HashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -136,15 +136,24 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
     }
 
-    if(blob) {
+    if(blob && input.blobType == 1) {
         // Load poseidonBlobData into DB
-        const z = await hashContractBytecode(input.blobData);
+        let z = await hashContractBytecode(input.blobData);
+        if(typeof input.z === 'undefined') {
+            input.z = z;
+        } else if(input.z !== z) {
+            throw new Error("input.z != poseidon(input.blobData)");
+        }
         await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
-    
+    } else if (blob) {
         // Load keccak256BlobData into DB
-        blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        let blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        if(typeof input.blobL2HashData === 'undefined') {
+            input.blobL2HashData = blobL2HashData;
+        } else if(input.blobL2HashData !== blobL2HashData) {
+            throw new Error("input.blobL2HashData != keccak(input.blobData)");
+        }
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
-    
     }
     // load smt
     const smt = new SMT(db, poseidon, Fr);
@@ -171,7 +180,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         final: false,
         helpers: new Helpers(helpers, {paths: helperPaths}),
         saved:{},
-        blobL2HashData,
         config,
     }
     
@@ -218,7 +226,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     let auxNewStateRoot;
 
     if (verboseOptions.batchL2Data) {
-        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector);
+        await printBatchL2Data(ctx.input.batchL2Data, verboseOptions.getNameSelector, verboseOptions);
     }
 
     const checkJmpZero = config.checkJmpZero ? (config.checkJmpZero === "warning" ? WarningCheck:ErrorCheck) : false;
@@ -1072,7 +1080,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
+                throw new Error(`Assert does not match ${sourceRef} (op:${[op0, op1, op2, op3, op4, op5, op6, op7]} A:${[ctx.A[0], ctx.A[1], ctx.A[2], ctx.A[3], ctx.A[4], ctx.A[5], ctx.A[6], ctx.A[7]]})`);
             }
             pols.assert[i] = 1n;
         } else {
@@ -2718,7 +2726,7 @@ async function eventsAsyncTracer(ctx, cmds) {
     }
 }
 
-async function printBatchL2Data(batchL2Data, getNameSelector) {
+async function printBatchL2Data(batchL2Data, getNameSelector, verboseOptions) {
     console.log('/////////////////////////////');
     console.log('/////// BATCH L2 DATA ///////');
     console.log('/////////////////////////////\n');
@@ -2726,6 +2734,9 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
     const txs = encodedStringToArray(batchL2Data);
     console.log('Number of transactions: ', txs.length);
     console.log('--------------------------');
+
+    const printTxs = [];
+
     for (let i = 0; i < txs.length; i++) {
         const rawTx = txs[i];
 
@@ -2733,6 +2744,13 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
             console.log(`Tx ${i} --> new Block L2`);
             const txDecoded = await decodeChangeL2BlockTx(rawTx);
             console.log(txDecoded);
+            const txToSave = {
+                type: txDecoded.type,
+                deltaTimestamp: Number(txDecoded.deltaTimestamp),
+                indexL1InfoTree: txDecoded.indexL1InfoTree,
+            };
+
+            printTxs.push(txToSave);
         } else {
             const infoTx = decodeCustomRawTxProverMethod(rawTx);
 
@@ -2750,10 +2768,15 @@ async function printBatchL2Data(batchL2Data, getNameSelector) {
             }
             console.log(`Tx ${i} --> new Tx`);
             console.log(infoTx.txDecoded);
+
+            printTxs.push(infoTx.txDecoded);
         }
         console.log('--------------------------');
     }
 
+    if (verboseOptions.saveBatchL2Data) {
+        fs.writeFileSync('batch-l2-data.json', JSON.stringify(printTxs, null, 2));
+    }
     console.log('/////////////////////////////');
     console.log('/////////////////////////////\n');
 }
@@ -3051,8 +3074,6 @@ function eval_functionCall(ctx, tag) {
         return eval_exp(ctx, tag)
     } else if (tag.funcName == "storeLog") {
         return eval_storeLog(ctx, tag)
-    } else if (tag.funcName.includes("precompiled") && tag.funcName.split('_')[0] === "precompiled") {
-        return eval_precompiled(ctx, tag);
     } else if (tag.funcName == "break") {
         return eval_breakPoint(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_MULFP2_X") {
