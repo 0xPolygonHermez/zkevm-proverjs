@@ -81,8 +81,8 @@ const argv = require("yargs")
     .alias('h', 'help')
     .epilogue("ARGS:\n  <input>   Path to a complete zkasm file or multiple zkasm files where the first file refers to the header file and the last file refers to the footer file")
     .example([
-        ['node test/zkasmtest.js test/collection/main.zkasm'],
-        ['node test/zkasmtest.js -dEs -N "2**23" -R "2**23" test/collection/header.zkasm test/collection/constants.zkasm test/collection/counters.zkasm test/collection/footer.zkasm']
+        ['node test/zkasmtest.js test/diagnostic/main.zkasm'],
+        ['node test/zkasmtest.js -dEs -N "2**23" -R "2**23" test/diagnostic/header.zkasm test/diagnostic/constants.zkasm test/diagnostic/counters.zkasm test/diagnostic/footer.zkasm']
       ])
     .argv;
 
