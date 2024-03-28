@@ -232,43 +232,43 @@ module.exports = class Main extends Helper {
         }
 
     // Check timestamp
-    const scalarNewTimestamp = Scalar.e(ctx.input.newTimestamp);
+    const scalarNewLastTimestamp = Scalar.e(ctx.input.newLastTimestamp);
 
-    if (!Scalar.eq(ctx.RR, scalarNewTimestamp)) {
-        let errorMsg = "Assert Error: newTimestamp does not match\n";
-        errorMsg += `   newTimestamp computed: ${Scalar.e(ctx.RR)}\n`;
-        errorMsg += `   newTimestamp expected: ${scalarNewTimestamp}\n`;
+    if (!Scalar.eq(ctx.RR, scalarNewLastTimestamp)) {
+        let errorMsg = "Assert Error: newLastTimestamp does not match\n";
+        errorMsg += `   newLastTimestamp computed: ${Scalar.e(ctx.RR)}\n`;
+        errorMsg += `   newLastTimestamp expected: ${scalarNewLastTimestamp}\n`;
         errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
-    // Check newL1InfoTreeIndex
-    const scalarNewL1InfoTreeIndex = Scalar.e(ctx.input.newL1InfoTreeIndex);
+    // Check currentL1InfoTreeIndex
+    const scalarcurrentL1InfoTreeIndex = Scalar.e(ctx.input.currentL1InfoTreeIndex);
 
-    if (!Scalar.eq(ctx.RCX, scalarNewL1InfoTreeIndex)) {
-        let errorMsg = "Assert Error: newL1InfoTreeIndex does not match\n";
-        errorMsg += `   newL1InfoTreeIndex computed: ${Scalar.e(ctx.RCX)}\n`;
-        errorMsg += `   newL1InfoTreeIndex expected: ${scalarNewL1InfoTreeIndex}\n`;
+    if (!Scalar.eq(ctx.RCX, scalarcurrentL1InfoTreeIndex)) {
+        let errorMsg = "Assert Error: currentL1InfoTreeIndex does not match\n";
+        errorMsg += `   currentL1InfoTreeIndex computed: ${Scalar.e(ctx.RCX)}\n`;
+        errorMsg += `   currentL1InfoTreeIndex expected: ${scalarcurrentL1InfoTreeIndex}\n`;
         errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }
 
-    // Check newL1InfoTreeRoot
-    const feaNewL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.newL1InfoTreeRoot));
+    // Check currentL1InfoTreeRoot
+    const feaCurrentL1InfoTreeRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.currentL1InfoTreeRoot));
 
     if (
-        (!ctx.Fr.eq(ctx.D[0], feaNewL1InfoTreeRoot[0])) ||
-        (!ctx.Fr.eq(ctx.D[1], feaNewL1InfoTreeRoot[1])) ||
-        (!ctx.Fr.eq(ctx.D[2], feaNewL1InfoTreeRoot[2])) ||
-        (!ctx.Fr.eq(ctx.D[3], feaNewL1InfoTreeRoot[3])) ||
-        (!ctx.Fr.eq(ctx.D[4], feaNewL1InfoTreeRoot[4])) ||
-        (!ctx.Fr.eq(ctx.D[5], feaNewL1InfoTreeRoot[5])) ||
-        (!ctx.Fr.eq(ctx.D[6], feaNewL1InfoTreeRoot[6])) ||
-        (!ctx.Fr.eq(ctx.D[7], feaNewL1InfoTreeRoot[7]))
+        (!ctx.Fr.eq(ctx.D[0], feaCurrentL1InfoTreeRoot[0])) ||
+        (!ctx.Fr.eq(ctx.D[1], feaCurrentL1InfoTreeRoot[1])) ||
+        (!ctx.Fr.eq(ctx.D[2], feaCurrentL1InfoTreeRoot[2])) ||
+        (!ctx.Fr.eq(ctx.D[3], feaCurrentL1InfoTreeRoot[3])) ||
+        (!ctx.Fr.eq(ctx.D[4], feaCurrentL1InfoTreeRoot[4])) ||
+        (!ctx.Fr.eq(ctx.D[5], feaCurrentL1InfoTreeRoot[5])) ||
+        (!ctx.Fr.eq(ctx.D[6], feaCurrentL1InfoTreeRoot[6])) ||
+        (!ctx.Fr.eq(ctx.D[7], feaCurrentL1InfoTreeRoot[7]))
     ) {
-        let errorMsg = "Assert Error: newL1InfoTreeRoot does not match\n";
-        errorMsg += `   newL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
-        errorMsg += `   newL1InfoTreeRoot expected: ${ctx.input.newL1InfoTreeRoot}\n`;
+        let errorMsg = "Assert Error: currentL1InfoTreeRoot does not match\n";
+        errorMsg += `   currentL1InfoTreeRoot computed: ${fea2String(ctx.Fr, ctx.D)}\n`;
+        errorMsg += `   currentL1InfoTreeRoot expected: ${ctx.input.currentL1InfoTreeRoot}\n`;
         errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
         throw new Error(errorMsg);
     }

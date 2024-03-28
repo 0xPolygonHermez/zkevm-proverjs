@@ -39,6 +39,7 @@ jobs:
           cd ../../../../zkevm-proverjs
       - name: setup zkevm-proverjs
         run: |
+          rm -rf node_modules package-lock.json
           npm i
       - name: Run full tracer tests
         run: |
