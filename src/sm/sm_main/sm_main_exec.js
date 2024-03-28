@@ -1077,7 +1077,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                throw new Error(`Assert does not match ${sourceRef} (op:${fea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7])} A:${fea2scalar(Fr, ctx.A)})`);
+                throw new Error(`Assert does not match ${sourceRef} (op:${[op0, op1, op2, op3, op4, op5, op6, op7]} A:${[ctx.A[0], ctx.A[1], ctx.A[2], ctx.A[3], ctx.A[4], ctx.A[5], ctx.A[6], ctx.A[7]]})`);
             }
             pols.assert[i] = 1n;
         } else {
@@ -3071,8 +3071,6 @@ function eval_functionCall(ctx, tag) {
         return eval_exp(ctx, tag)
     } else if (tag.funcName == "storeLog") {
         return eval_storeLog(ctx, tag)
-    } else if (tag.funcName.includes("precompiled") && tag.funcName.split('_')[0] === "precompiled") {
-        return eval_precompiled(ctx, tag);
     } else if (tag.funcName == "break") {
         return eval_breakPoint(ctx, tag);
     } else if (tag.funcName == "ARITH_BN254_MULFP2_X") {
