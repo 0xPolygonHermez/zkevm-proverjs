@@ -72,16 +72,19 @@ template Main() {
 
     signal input b_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
-<%  if(options.aggregatedInput) { -%>
-    signal input a_isAggregatedCircuit;
-    signal input b_isAggregatedCircuit;
-<%  } -%>
-
     signal publicsAggregated[<%- publics.nPublics %>];
     signal a_isOneBatch;
     signal b_isOneBatch;
 
+<%  if(options.isAggregatedInput) { -%>
+    signal input a_isAggregatedCircuit;
+    signal input b_isAggregatedCircuit;
+
+    (publicsAggregated, a_isOneBatch, b_isOneBatch) <== VerifyRecursive2()(a_publics, b_publics, a_isAggregatedCircuit, b_isAggregatedCircuit);
+<%  } else { -%>
     (publicsAggregated, a_isOneBatch, b_isOneBatch) <== VerifyRecursive2()(a_publics, b_publics);
+<%  } -%>
+
 
     for(var i=0; i<<%- publics.nPublics %>; i++) {
         publics[i] === publicsAggregated[i];

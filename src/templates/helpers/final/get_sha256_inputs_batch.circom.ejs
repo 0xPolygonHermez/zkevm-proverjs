@@ -1,6 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
+include "lessthangl.circom";
 include "sha256/sha256.circom";
 include "bitify.circom";
 
@@ -31,6 +32,7 @@ template getSha256Inputs() {
 
     signal output publicsHash;
 
+    signal oldStateRoot[8];
     signal n2bOldStateRoot[8][32];
     var oldStateRootPos = <%- publics.oldStateRootPos %>;
     var oldStateRootBitsOffset = <%- getPositionBits(publics, "oldStateRootPos") %>;
@@ -55,6 +57,7 @@ template getSha256Inputs() {
     var forkIdPos = <%- publics.forkIdPos %>;
     var forkIdBitsOffset = <%- getPositionBits(publics, "forkIdPos") %>;
 
+    signal newStateRoot[8];
     signal n2bNewStateRoot[8][32];
     var newStateRootPos = <%- publics.newStateRootPos %>;
     var newStateRootBitsOffset = <%- getPositionBits(publics, "newStateRootPos") %>;

@@ -69,7 +69,7 @@ template Main() {
 
 }
 
-<%  if(!options.setAggregatedKey) { -%>
+<%  if(options.setAggregatedKey) { -%>
 component main {public [publics, rootC]}= Main();
 <%  } else { -%>
 component main {public [publics]}= Main();

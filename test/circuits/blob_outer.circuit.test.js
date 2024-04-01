@@ -3,66 +3,37 @@ const tmp = require('temporary');
 const fs = require("fs");
 const ejs = require("ejs");
 const { batchPublicsEip4844, blobInnerPublics, blobOuterPublics } = require("../../src/templates/helpers/publics");
-const { scalar2fea } = require("@0xpolygonhermez/zkevm-commonjs/src/smt-utils");
-const { F1Field, Scalar } = require("ffjavascript");
 const { assert } = require("chai");
+const { preparePublics, generateRandomHex, generateRandomValue } = require("./helpers");
 
 const wasm_tester = require("circom_tester").wasm;
 
-function preparePublics(publics, publicsIndexes) {
-    const Fr = new F1Field(0xffffffff00000001n);
-
-    const publicsCircom = new Array(publicsIndexes.nPublics);
-
-    const publicsNames = Object.keys(publicsIndexes);
-    for(let i = 0; i < publicsNames.length; i++) {
-        const name = publicsNames[i];
-        if(name === "nPublics") continue;
-        
-        const nameIndex = publicsIndexes[name];
-        const nextNameIndex = publicsIndexes[publicsNames[i + 1]];
-        const length = nextNameIndex - nameIndex;
-        const value = publics[name.slice(0, -3)];
-        if(length === 1) {
-            publicsCircom[nameIndex] = Fr.e(value);
-        } else if(length === 8) {
-            const circomInputs = scalar2fea(Fr, Scalar.e(value));
-            for(let j = 0; j < circomInputs.length; j++) {
-                publicsCircom[nameIndex + j] = circomInputs[j];
-            }
-        } else throw new Error("Unsupported length: ", + length);
-
-    }
-
-    return publicsCircom;
-}
-
-function generatePublics(isInvalid_ = false, chainId_) {
-    const oldBatchStateRoot = generateRandomHex();
-    const oldBatchAccInputHash = generateRandomHex();
-    const previousL1InfoTreeRoot = generateRandomHex();
-    const previousL1InfoTreeIndex = Math.floor(Math.random() * Math.pow(2,8));
-    const chainId = Math.floor(Math.random() * 10);
-    const forkId = Math.floor(Math.random() * 10);
-    const newBatchStateRoot = generateRandomHex();
-    const newBatchAccInputHash = generateRandomHex();
-    const currentL1InfoTreeRoot = generateRandomHex();
-    const currentL1InfoTreeIndex = Math.floor(Math.random() * Math.pow(2,8));
-    const newLocalExitRoot = generateRandomHex();       
-    const newLastTimestamp = Math.floor(Math.random() * Math.pow(2,60));
+function generatePublicsBlobOuterProof(isInvalid_ = false, chainId_) {
+    const oldBatchStateRoot = generateRandomHex(63);
+    const oldBatchAccInputHash = generateRandomHex(256);
+    const previousL1InfoTreeRoot = generateRandomHex(256);
+    const previousL1InfoTreeIndex = generateRandomValue(32);
+    const chainId = generateRandomValue(10, chainId_);
+    const forkId = generateRandomValue(10);
+    const newBatchStateRoot = generateRandomHex(63, oldBatchStateRoot);
+    const newBatchAccInputHash = generateRandomHex(256, oldBatchAccInputHash);
+    const currentL1InfoTreeRoot = generateRandomHex(256, previousL1InfoTreeRoot);
+    const currentL1InfoTreeIndex = generateRandomValue(32, previousL1InfoTreeIndex);
+    const newLocalExitRoot = generateRandomHex(256);       
+    const newLastTimestamp = generateRandomValue(32);
 
     const publicsBatch = { oldStateRoot: oldBatchStateRoot, oldBatchAccInputHash, previousL1InfoTreeRoot, previousL1InfoTreeIndex, chainId, forkId, newStateRoot: newBatchStateRoot, newBatchAccInputHash, currentL1InfoTreeRoot, currentL1InfoTreeIndex, newLocalExitRoot, newLastTimestamp };
 
-    const oldBlobStateRoot = generateRandomHex();
-    const oldBlobAccInputHash = generateRandomHex();
-    const oldBlobNum = Math.floor(Math.random() * 10);
+    const oldBlobStateRoot = generateRandomHex(63);
+    const oldBlobAccInputHash = generateRandomHex(256);
+    const oldBlobNum = generateRandomValue(10);
     const oldStateRoot = oldBatchStateRoot;
     const forkIdBlobInner = forkId;
-    const newBlobStateRoot = generateRandomHex();
-    const newBlobAccInputHash = generateRandomHex();
+    const newBlobStateRoot = generateRandomHex(63);
+    const newBlobAccInputHash = generateRandomHex(256);
     const newBlobNum = oldBlobNum + 1;
     const finalAccBatchHashData = newBatchAccInputHash;
-    const localExitRootFromBlob = generateRandomHex();
+    const localExitRootFromBlob = generateRandomHex(256);
     const isInvalid = 0;
     const lastL1InfoTreeRoot = currentL1InfoTreeRoot;
     const lastL1InfoTreeIndex = currentL1InfoTreeIndex;
@@ -87,17 +58,15 @@ function generatePublics(isInvalid_ = false, chainId_) {
     return { publicsBatch, publicsBlobInner, publicsBlobOuter };
 }
 
-function generateRandomHex() {
-    return '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-}
 
 describe("Verify Blob Outer Circuit Test", function () {
     let circuit;
 
+    let chainId_ = generateRandomValue(10);
     this.timeout(10000000);
 
     before( async() => {
-        const template = await fs.promises.readFile(path.join(__dirname, "../../src/templates", "verify_blob_outer.circom.ejs"), "utf8");
+        const template = await fs.promises.readFile(path.join(__dirname, "../../src/templates", "helpers", "verify_blob_outer.circom.ejs"), "utf8");
         const options = { batchPublics: batchPublicsEip4844, blobInnerPublics, blobOuterPublics, isTest: true}
         const content = ejs.render(template, options);
         const circuitFile = path.join(new tmp.Dir().path, "circuit.circom");
@@ -106,9 +75,7 @@ describe("Verify Blob Outer Circuit Test", function () {
     });
 
     it("Check that correct blob outer publics are generated in the happy path", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
-
-        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublics();
+        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublicsBlobOuterProof();
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
         const blobInnerPublicsCircom = preparePublics(publicsBlobInner, blobInnerPublics);
@@ -124,9 +91,7 @@ describe("Verify Blob Outer Circuit Test", function () {
     });
 
     it("Check that if isInvalid = true in blob inner, blob outer inputs are selected from blob inner", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
-
-        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublics(true, chainId_);
+        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublicsBlobOuterProof(true, chainId_);
         publicsBlobInner.isInvalid = 1;
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
@@ -142,9 +107,7 @@ describe("Verify Blob Outer Circuit Test", function () {
     });
 
     it("Check that if finalAccBatchHashData = 0, blob outer inputs are selected from blob inner", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
-
-        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublics(true, chainId_);
+        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublicsBlobOuterProof(true, chainId_);
         publicsBlobInner.finalAccBatchHashData = 0;
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
@@ -160,10 +123,8 @@ describe("Verify Blob Outer Circuit Test", function () {
     });
 
     it("Check that if blob is valid and newBatchAccInputHash (batch) is not equal to finalAccBatchHashData (blobInner), verification fails", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
-
-        const { publicsBatch, publicsBlobInner } = generatePublics(false, chainId_);
-        publicsBlobInner.finalAccBatchHashData = Math.random() * publicsBatch.newBatchAccInputHash;
+        const { publicsBatch, publicsBlobInner } = generatePublicsBlobOuterProof(false, chainId_);
+        publicsBlobInner.finalAccBatchHashData = generateRandomHex(256, publicsBatch.newBatchAccInputHash);
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
         const blobInnerPublicsCircom = preparePublics(publicsBlobInner, blobInnerPublics);
@@ -171,16 +132,15 @@ describe("Verify Blob Outer Circuit Test", function () {
         const input = { publicsBatch: batchPublicsCircom, publicsBlobInner: blobInnerPublicsCircom, chainId: chainId_ };
         try {
             await circuit.calculateWitness(input, true);
+            assert(false);
         } catch(err) {
             assert(err.message.includes("Error in template VerifyBlobOuter_5 line: 88"));
         }
     });
 
-    it("Check that if blob is valid and newLastTimestampPos (batch) timestampLimitPos (blobInner), blob outer inputs are selected from blob inner", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
-
-        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublics(true, chainId_);
-        publicsBlobInner.timestampLimit = Math.random() * publicsBatch.newLastTimestamp;
+    it("Check that if blob is valid and newLastTimestampPos (batch) > timestampLimitPos (blobInner), blob outer inputs are selected from blob inner", async () => {
+        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublicsBlobOuterProof(true, chainId_);
+        publicsBatch.newLastTimestamp = publicsBlobInner.timestampLimit + 500;
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
         const blobInnerPublicsCircom = preparePublics(publicsBlobInner, blobInnerPublics);
@@ -195,9 +155,7 @@ describe("Verify Blob Outer Circuit Test", function () {
     });
 
     it("Check that if blob is valid and currentL1InfoTreeIndex (batch) != lastL1InfoTreeIndex (blobInner), blob outer inputs are selected from blob inner", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
-
-        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublics(true, chainId_);
+        const { publicsBatch, publicsBlobInner, publicsBlobOuter } = generatePublicsBlobOuterProof(true, chainId_);
         publicsBlobInner.lastL1InfoTreeIndex = publicsBatch.currentL1InfoTreeIndex + 1;
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
@@ -213,10 +171,9 @@ describe("Verify Blob Outer Circuit Test", function () {
     });
 
     it("Check that if blob is valid and currentL1InfoTreeIndex (batch) == lastL1InfoTreeIndex (blobInner) and currentL1InfoTreeRoot (batch) != lastL1InfoTreeRoot (blobInner), verification fails", async () => {
-        const chainId_ = Math.floor(Math.random() * 10);
 
-        const { publicsBatch, publicsBlobInner } = generatePublics(false, chainId_);
-        publicsBlobInner.lastL1InfoTreeRoot = Math.random() * publicsBatch.currentL1InfoTreeRoot;
+        const { publicsBatch, publicsBlobInner } = generatePublicsBlobOuterProof(false, chainId_);
+        publicsBlobInner.lastL1InfoTreeRoot = generateRandomHex(256, publicsBatch.currentL1InfoTreeRoot);
 
         const batchPublicsCircom = preparePublics(publicsBatch, batchPublicsEip4844);
         const blobInnerPublicsCircom = preparePublics(publicsBlobInner, blobInnerPublics);
@@ -224,6 +181,7 @@ describe("Verify Blob Outer Circuit Test", function () {
         const input = { publicsBatch: batchPublicsCircom, publicsBlobInner: blobInnerPublicsCircom, chainId: chainId_ };
         try {
             await circuit.calculateWitness(input, true);
+            assert(false);
         } catch(err) {
             assert(err.message.includes("Error in template VerifyBlobOuter_5 line: 97"));
         }

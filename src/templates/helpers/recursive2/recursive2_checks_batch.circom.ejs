@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-<% let starkInfo = starkInfoVerifiers[0]; %>
+include "iszero.circom";
 
 template VerifyRecursive2() {
     var oldStateRootPos = <%- publics.oldStateRootPos %>;
@@ -25,7 +25,7 @@ template VerifyRecursive2() {
     // Check recursive 2 publics
 
     for (var i=0; i<8; i++) {
-        a_publics[newStateRootPos + i] e=== b_publics[oldStateRootPos + i]; // Check State Root
+        a_publics[newStateRootPos + i] === b_publics[oldStateRootPos + i]; // Check State Root
         publics[oldStateRootPos + i] <== a_publics[oldStateRootPos + i]; // Old State Root
         publics[newStateRootPos + i] <== b_publics[newStateRootPos + i]; // New State Root
 

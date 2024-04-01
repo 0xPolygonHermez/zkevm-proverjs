@@ -1,20 +1,20 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-<% let starkInfo = starkInfoVerifiers[0]; %>
+include "iszero.circom";
 
 template VerifyRecursive2() {
-    var oldStateRootPos = <%- blobOuterPublics.oldStateRootPos %>;
-    var oldBlobStateRootPos = <%- blobOuterPublics.oldBlobStateRootPos %>;
-    var oldBlobAccInputHashPos = <%- blobOuterPublics.oldBlobAccInputHashPos %>;
-    var oldBlobNumPos = <%- blobOuterPublics.oldBlobNumPos %>;
-    var chainIdPos = <%- blobOuterPublics.chainIdPos %>;
-    var forkIdPos = <%- blobOuterPublics.forkIdPos %>;
-    var newStateRootPos = <%- blobOuterPublics.newStateRootPos %>;
-    var newBlobStateRootPos = <%- blobOuterPublics.newBlobStateRootPos %>;
-    var newBlobAccInputHashPos = <%- blobOuterPublics.newBlobAccInputHashPos %>;
-    var newBlobNumPos = <%- blobOuterPublics.newBlobNumPos %>;  
-    var newLocalExitRootPos = <%- blobOuterPublics.newLocalExitRootPos %>;
+    var oldStateRootPos = <%- publics.oldStateRootPos %>;
+    var oldBlobStateRootPos = <%- publics.oldBlobStateRootPos %>;
+    var oldBlobAccInputHashPos = <%- publics.oldBlobAccInputHashPos %>;
+    var oldBlobNumPos = <%- publics.oldBlobNumPos %>;
+    var chainIdPos = <%- publics.chainIdPos %>;
+    var forkIdPos = <%- publics.forkIdPos %>;
+    var newStateRootPos = <%- publics.newStateRootPos %>;
+    var newBlobStateRootPos = <%- publics.newBlobStateRootPos %>;
+    var newBlobAccInputHashPos = <%- publics.newBlobAccInputHashPos %>;
+    var newBlobNumPos = <%- publics.newBlobNumPos %>;  
+    var newLocalExitRootPos = <%- publics.newLocalExitRootPos %>;
 
     signal input a_publics[<%- publics.nPublics %>];
     signal input b_publics[<%- publics.nPublics %>];

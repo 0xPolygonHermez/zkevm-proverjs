@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 pragma custom_templates;
 
-<% let starkInfo = starkInfoVerifiers[0]; %>
+include "iszero.circom";
 
 template VerifyRecursive2() {
     var oldStateRootPos = <%- publics.oldStateRootPos %>;
@@ -57,8 +57,8 @@ template VerifyRecursive2() {
 
     publics[newLastTimestampPos] <== b_publics[newLastTimestampPos]; // Last timestamp
 
-    a_isOneBatch <== 1 - a_isAggregatedCircuit;
-    b_isOneBatch <== 1 - b_isAggregatedCircuit;
+    a_isOneBatch <== IsZero()(a_isAggregatedCircuit);
+    b_isOneBatch <== IsZero()(b_isAggregatedCircuit);
 }
 
 <% if(isTest) { -%>

@@ -1,10 +1,10 @@
 pragma circom 2.1.0;
 
 include "<%- verifierNames[0] %>.verifier.circom";
-include "lessthangl.circom";
 include "get_sha256_inputs.circom";
 
 <% let starkInfo = starkInfoVerifiers[0]; -%>
+<% let arity = starkInfo.merkleTreeArity; -%>
 template Main() {
     signal output publicsHash;
 

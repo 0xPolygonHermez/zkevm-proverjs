@@ -9,8 +9,8 @@ const argv = require("yargs")
     .usage("node main_gencircom.js -v <verification_keys.json> -s starkinfo.json -t starkstruct.json --cols=<12/18> --template=<compressor/recursive1/recursive2/recursivef>")
     .array("v").alias("v", "verkey")
     .array("s").alias("s", "starkinfo")
-    .alias("b", "batch")
-    .array("r").alias("r", "recursivefile")
+    .alias("b", "builddir")
+    .alias("r", "recursivefile")
     .string("template")
     .string("verifiername")
     .string("verifiername2")
@@ -32,8 +32,7 @@ async function run() {
         template = templateName;
     }
 
-    const recursiveFiles = argv.recursivefile;
-    const recursiveFile = recursiveFiles[0];
+    const recursiveFile = argv.recursivefile;
     if(typeof (recursiveFile) !== "string") throw new Error("A recursive file must be provided!");
 
     const starkInfoVerifiers = [];
@@ -77,21 +76,27 @@ async function run() {
     };
 
     if(template === "recursive2") {
+        const buildDir = argv.builddir;
+        if(typeof (buildDir) !== "string") throw new Error("A build directory must be provided!");
+
         let verifyRecursive2CircomTemplate;
         let verifyRecursive2InputsCircom = { isTest: false };
         
         if(templateName === "recursive2") {
             verifyRecursive2CircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "recursive2", "recursive2_checks_batch.circom.ejs"), "utf8");
             verifyRecursive2InputsCircom.publics = batchPublics;
-        } else if(template === "recursive2_batch") {
+            optionsCircom.publics = batchPublics;
+        } else if(templateName === "recursive2_batch") {
             verifyRecursive2CircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "recursive2", "recursive2_checks_batch_eip4844.circom.ejs"), "utf8");
             verifyRecursive2InputsCircom.publics = batchPublicsEip4844;
-        } else if(template === "recursive2_blob") {
+            optionsCircom.publics = batchPublicsEip4844;
+        } else if(templateName === "recursive2_blob") {
             verifyRecursive2CircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "recursive2", "recursive2_checks_blob.circom.ejs"), "utf8");
             verifyRecursive2InputsCircom.publics = blobOuterPublics;
-        }
+            optionsCircom.publics = blobOuterPublics;
+        } else throw new Error("Invalid templateName" + templateName);
 
-        const verifyRecursive2File = recursiveFiles[1];
+        const verifyRecursive2File = `${buildDir}/verify_recursive2.circom`;
         if(typeof (verifyRecursive2File) !== "string") throw new Error("A verify recursive2 file must be provided!");
 
         const verifyRecursive2CircomFile = ejs.render(verifyRecursive2CircomTemplate, verifyRecursive2InputsCircom);
@@ -100,7 +105,8 @@ async function run() {
     } 
     
     if(template === "blob_outer") {
-        if(template === "blob_outer") throw new Error("EIP-4844 must be provided for blob outer template!");
+        const buildDir = argv.builddir;
+        if(typeof (buildDir) !== "string") throw new Error("A build directory must be provided!");
 
         if(typeof(verkeyArray[1]) !== "string") throw new Error("A second verification key file must be provided!");
         const verkey2 = JSONbig.parse(await fs.promises.readFile(verkeyArray[1].trim(), "utf8"));
@@ -117,7 +123,7 @@ async function run() {
         if(verifierNames.length < 2) throw new Error("Invalid number of verifier names provided!");
         if(starkInfoVerifiers.length < 2) throw new Error("Invalid number of stark infos provided!");
 
-        const verifyBlobOuterCircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "verify_blob_outer.circom.ejs"), "utf8");
+        const verifyBlobOuterCircomTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "verify_blob_outer.circom.ejs"), "utf8");
         const optionsVerifyBlobOuterCircom = {
             batchPublics: batchPublicsEip4844,
             blobInnerPublics,
@@ -125,7 +131,11 @@ async function run() {
             isTest: false,
         };
 
-        const verifyBlobOuterFile = recursiveFiles[1];
+        optionsCircom.batchPublics = batchPublicsEip4844;
+        optionsCircom.blobInnerPublics = blobInnerPublics;
+        optionsCircom.blobOuterPublics = blobOuterPublics;
+
+        const verifyBlobOuterFile = `${buildDir}/verify_blob_outer.circom`;
         if(typeof (verifyBlobOuterFile) !== "string") throw new Error("A verify blob outer file must be provided!");
 
         const verifyBlobOuterCircomFile = ejs.render(verifyBlobOuterCircomTemplate, optionsVerifyBlobOuterCircom);
@@ -139,18 +149,21 @@ async function run() {
     }
 
     if(template === "final") {
+        const buildDir = argv.builddir;
+        if(typeof (buildDir) !== "string") throw new Error("A build directory must be provided!");
+
         let getSha256InputsTemplate;
         let optionsGetSha256InputsCircom = { isTest: false };
         
         if(templateName === "final_blob") {
-            getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs.circom_blob.ejs"), "utf8");
+            getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs_blob.circom.ejs"), "utf8");
             optionsGetSha256InputsCircom.publics = blobOuterPublics;
         } else {
-            getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs.circom_batch.ejs"), "utf8");
+            getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs_batch.circom.ejs"), "utf8");
             optionsGetSha256InputsCircom.publics = blobOuterPublics;
         }
        
-        const getSha256InputsFile = recursiveFiles[1];
+        const getSha256InputsFile = `${buildDir}/get_sha256_inputs.circom`;
         if(typeof (getSha256InputsFile) !== "string") throw new Error("A get sha256 inputs file must be provided!");
 
         const getSha256InputsCircomFile = ejs.render(getSha256InputsTemplate, optionsGetSha256InputsCircom);
