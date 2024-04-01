@@ -21,17 +21,17 @@ template Main() {
     signal input a_root1[4];
     signal input a_root2[4];
     signal input a_root3[4];
-    signal input a_rootQ[4];
+    signal input a_root4[4];
 
     signal input a_evals[118][3];
 
     signal input a_s0_vals1[43][18];
     signal input a_s0_vals3[43][39];
-    signal input a_s0_valsQ[43][21];
+    signal input a_s0_vals4[43][21];
     signal input a_s0_valsC[43][52];
     signal input a_s0_siblings1[43][20][4];
     signal input a_s0_siblings3[43][20][4];
-    signal input a_s0_siblingsQ[43][20][4];
+    signal input a_s0_siblings4[43][20][4];
     signal input a_s0_siblingsC[43][20][4];
 
     signal input a_s1_root[4];
@@ -59,16 +59,16 @@ template Main() {
     signal input b_root1[4];
     signal input b_root2[4];
     signal input b_root3[4];
-    signal input b_rootQ[4];
+    signal input b_root4[4];
     signal input b_evals[118][3];
 
     signal input b_s0_vals1[43][18];
     signal input b_s0_vals3[43][39];
-    signal input b_s0_valsQ[43][21];
+    signal input b_s0_vals4[43][21];
     signal input b_s0_valsC[43][52];
     signal input b_s0_siblings1[43][20][4];
     signal input b_s0_siblings3[43][20][4];
-    signal input b_s0_siblingsQ[43][20][4];
+    signal input b_s0_siblings4[43][20][4];
     signal input b_s0_siblingsC[43][20][4];
 
     signal input b_s1_root[4];
@@ -89,7 +89,7 @@ template Main() {
 
     signal input b_finalPol[64][3];
 
-    component vA = StarkVerifier();
+    component vA = StarkVerifier0();
 
     for (var i=0; i<44; i++) {
         vA.publics[i] <== a_publics[i];
@@ -97,15 +97,15 @@ template Main() {
     vA.root1 <== a_root1;
     vA.root2 <== a_root2;
     vA.root3 <== a_root3;
-    vA.rootQ <== a_rootQ;
+    vA.root4 <== a_root4;
     vA.evals <== a_evals;
     vA.s0_vals1 <== a_s0_vals1;
     vA.s0_vals3 <== a_s0_vals3;
-    vA.s0_valsQ <== a_s0_valsQ;
+    vA.s0_vals4 <== a_s0_vals4;
     vA.s0_valsC <== a_s0_valsC;
     vA.s0_siblings1 <== a_s0_siblings1;
     vA.s0_siblings3 <== a_s0_siblings3;
-    vA.s0_siblingsQ <== a_s0_siblingsQ;
+    vA.s0_siblings4 <== a_s0_siblings4;
     vA.s0_siblingsC <== a_s0_siblingsC;
     vA.s1_root <== a_s1_root;
     vA.s2_root <== a_s2_root;
@@ -133,7 +133,7 @@ template Main() {
     }
     vA.rootC <== a_muxRootC.out;
 
-    component vB = StarkVerifier();
+    component vB = StarkVerifier0();
 
     for (var i=0; i<44; i++) {
         vB.publics[i] <== b_publics[i];
@@ -141,15 +141,15 @@ template Main() {
     vB.root1 <== b_root1;
     vB.root2 <== b_root2;
     vB.root3 <== b_root3;
-    vB.rootQ <== b_rootQ;
+    vB.root4 <== b_root4;
     vB.evals <== b_evals;
     vB.s0_vals1 <== b_s0_vals1;
     vB.s0_vals3 <== b_s0_vals3;
-    vB.s0_valsQ <== b_s0_valsQ;
+    vB.s0_vals4 <== b_s0_vals4;
     vB.s0_valsC <== b_s0_valsC;
     vB.s0_siblings1 <== b_s0_siblings1;
     vB.s0_siblings3 <== b_s0_siblings3;
-    vB.s0_siblingsQ <== b_s0_siblingsQ;
+    vB.s0_siblings4 <== b_s0_siblings4;
     vB.s0_siblingsC <== b_s0_siblingsC;
     vB.s1_root <== b_s1_root;
     vB.s2_root <== b_s2_root;

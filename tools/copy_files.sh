@@ -156,8 +156,10 @@ if [ $CP_ZKEVM -eq 1 ]; then
     cpfile $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.dat
     cpfile $BDIR/zkevm.consttree                               $FULLDST
     cpfile $BDIR/zkevm.starkinfo.json                          $FULLDST
+    cpfile $BDIR/zkevm.expressionsinfo.json                    $FULLDST
     cpfile $BDIR/zkevm.verkey.json        		               $FULLDST
     cpfile $BDIR/zkevm.chelpers.bin                            $FULLDST
+    cpfile $BDIR/zkevm.chelpers_generic.bin                    $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpdir $BDIR/zkevm.verifier_cpp                         $DST/c_files
         cpdir $BDIR/zkevm.chelpers                             $DST/c_files
@@ -174,7 +176,9 @@ if [ $CP_C12A -eq 1 ]; then
     cpfile $BDIR/c12a.consttree                $FULLDST
     cpfile $BDIR/c12a.verkey.json              $FULLDST
     cpfile $BDIR/c12a.starkinfo.json           $FULLDST
+    cpfile $BDIR/c12a.expressionsinfo.json     $FULLDST
     cpfile $BDIR/c12a.chelpers.bin             $FULLDST
+    cpfile $BDIR/c12a.chelpers_generic.bin     $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
         cpfile $BDIR/c12a.pil                  $DST/pil
         cpdir $BDIR/c12a.chelpers              $DST/c_files
@@ -184,19 +188,21 @@ fi
 if [ $CP_RECURSIVE1 -eq 1 ]; then
     # recursive1
     FULLDST=$DST/config/recursive1
-    makedir $FULLDST
-    cpfile $BDIR/recursive1.const              $FULLDST
-    cpfile $BDIR/recursive1_cpp/recursive1.dat $FULLDST/recursive1.verifier.dat
-    cpfile $BDIR/recursive1.consttree          $FULLDST
-    cpfile $BDIR/recursive1.exec               $FULLDST
-    cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive1.starkstruct.json
-    cpfile $BDIR/recursive1.starkinfo.json     $FULLDST
-    cpfile $BDIR/recursive1.verkey.json        $FULLDST
-    cpfile $BDIR/recursive1.chelpers.bin       $FULLDST
+    makedir $FULLDST     
+    cpfile $BDIR/recursive1.const                $FULLDST
+    cpfile $BDIR/recursive1_cpp/recursive1.dat   $FULLDST/recursive1.verifier.dat
+    cpfile $BDIR/recursive1.consttree            $FULLDST
+    cpfile $BDIR/recursive1.exec                 $FULLDST
+    cpfile $BDIR/recursive.starkstruct.json      $FULLDST/recursive1.starkstruct.json
+    cpfile $BDIR/recursive1.starkinfo.json       $FULLDST
+    cpfile $BDIR/recursive1.expressionsinfo.json $FULLDST
+    cpfile $BDIR/recursive1.verkey.json          $FULLDST
+    cpfile $BDIR/recursive1.chelpers.bin         $FULLDST
+    cpfile $BDIR/recursive1.chelpers_generic.bin $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/recursive1.pil            $DST/pil
-        cpdir $BDIR/recursive1_cpp             $DST/c_files
-        cpdir $BDIR/recursive1.chelpers        $DST/c_files
+        cpfile $BDIR/recursive1.pil              $DST/pil
+        cpdir $BDIR/recursive1_cpp               $DST/c_files
+        cpdir $BDIR/recursive1.chelpers          $DST/c_files
     fi
 fi
 
@@ -204,18 +210,20 @@ if [ $CP_RECURSIVE2 -eq 1 ]; then
     # recursive 2
     FULLDST=$DST/config/recursive2
     makedir $FULLDST
-    cpfile $BDIR/recursive2.starkinfo.json     $FULLDST
-    cpfile $BDIR/recursive.starkstruct.json    $FULLDST/recursive2.starkstruct.json
-    cpfile $BDIR/recursive2.exec               $FULLDST
-    cpfile $BDIR/recursive2_cpp/recursive2.dat $FULLDST/recursive2.verifier.dat
-    cpfile $BDIR/recursive2.verkey.json        $FULLDST
-    cpfile $BDIR/recursive2.consttree          $FULLDST
-    cpfile $BDIR/recursive2.const              $FULLDST
-    cpfile $BDIR/recursive2.chelpers.bin       $FULLDST
+    cpfile $BDIR/recursive2.starkinfo.json       $FULLDST
+    cpfile $BDIR/recursive2.expressionsinfo.json $FULLDST
+    cpfile $BDIR/recursive.starkstruct.json      $FULLDST/recursive2.starkstruct.json
+    cpfile $BDIR/recursive2.exec                 $FULLDST
+    cpfile $BDIR/recursive2_cpp/recursive2.dat   $FULLDST/recursive2.verifier.dat
+    cpfile $BDIR/recursive2.verkey.json          $FULLDST
+    cpfile $BDIR/recursive2.consttree            $FULLDST
+    cpfile $BDIR/recursive2.const                $FULLDST
+    cpfile $BDIR/recursive2.chelpers.bin         $FULLDST
+    cpfile $BDIR/recursive2.chelpers_generic.bin $FULLDST
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/recursive2.pil            $DST/pil
-        cpdir $BDIR/recursive2_cpp             $DST/c_files
-        cpdir $BDIR/recursive2.chelpers        $DST/c_files
+        cpfile $BDIR/recursive2.pil              $DST/pil
+        cpdir $BDIR/recursive2_cpp               $DST/c_files
+        cpdir $BDIR/recursive2.chelpers          $DST/c_files
     fi
 fi
 
@@ -223,17 +231,20 @@ if [ $CP_RECURSIVEF -eq 1 ]; then
     # recursive f
     FULLDST=$DST/config/recursivef
     makedir $FULLDST
-    cpfile $BDIR/recursivef.verkey.json        $FULLDST
-    cpfile $BDIR/recursivef.consttree          $FULLDST
-    cpfile $BDIR/recursivef.starkinfo.json     $FULLDST
-    cpfile $BDIR/recursivef.exec               $FULLDST
-    cpfile $BDIR/recursivef.const              $FULLDST
-    cpfile $BDIR/recursivef_cpp/recursivef.dat $FULLDST/recursivef.verifier.dat
-    cpfile $BDIR/recursivef.chelpers.bin       $FULLDST
+    cpfile $BDIR/recursivef.verkey.json          $FULLDST
+    cpfile $BDIR/recursivef.consttree            $FULLDST
+    cpfile $BDIR/recursivef.starkinfo.json       $FULLDST
+    cpfile $BDIR/recursivef.expressionsinfo.json $FULLDST
+    cpfile $BDIR/recursivef.exec                 $FULLDST
+    cpfile $BDIR/recursivef.const                $FULLDST
+    cpfile $BDIR/recursivef_cpp/recursivef.dat   $FULLDST/recursivef.verifier.dat
+    cpfile $BDIR/recursivef.chelpers.bin         $FULLDST
+    cpfile $BDIR/recursivef.chelpers_generic.bin $FULLDST
+
     if [ $ONLY_CONFIG -eq 0 ]; then
-        cpfile $BDIR/recursivef.pil            $DST/pil
-        cpdir $BDIR/recursivef_cpp             $DST/c_files
-        cpdir $BDIR/recursivef.chelpers        $DST/c_files
+        cpfile $BDIR/recursivef.pil              $DST/pil
+        cpdir $BDIR/recursivef_cpp               $DST/c_files
+        cpdir $BDIR/recursivef.chelpers          $DST/c_files
     fi
 fi
 
