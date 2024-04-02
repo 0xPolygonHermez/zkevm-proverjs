@@ -1,12 +1,5 @@
 CONST %K1=230
 
-
-start:
-
-        STEP => A
-        0 :ASSERT
-
-        
         230 => A
 
         A       :JMP_EQ(230, @next+1)
@@ -26,7 +19,7 @@ start:
 
         123457890 => B
 
-        ; JMP_EQ        
+        ; JMP_EQ
 
         B       :JMP_EQ(123457890, @next+1)
                 :JMP(failAssert)
@@ -110,11 +103,11 @@ start:
 
         -1 => B
 
-        ; JMP_EQ        
+        ; JMP_EQ
 
         B + 1   :JMPZ(@next+1)
                 :JMP(failAssert)
-   
+
         B       :JMP_EQ(-1, @next+1)
                 :JMP(failAssert)
 
@@ -211,7 +204,7 @@ start:
 
         123457890 => B
 
-        ; CALL_EQ        
+        ; CALL_EQ
 
         B       :CALL_EQ(123457890, callOkReturnRRPlusTwo)
                 :JMP(failAssert)
@@ -295,7 +288,7 @@ start:
 
         -1 => B
 
-        ; CALL_EQ        
+        ; CALL_EQ
 
         B       :CALL_EQ(-1, callOkReturnRRPlusTwo)
                 :JMP(failAssert)
@@ -374,17 +367,13 @@ start:
         B       :CALL_GE(-1+2, failAssert, callOkReturnRRPlusTwo)
                 :JMP(failAssert)
 
-end:
-       0 => A,B,C,D,E, SP, PC, GAS, SR
-
-finalWait:
-        ${beforeLast()}  : JMPN(finalWait)
-
-                         : JMP(start)
+        ; finish if everything went well
+                :JMP(cond_const_ok)
 
 callOkReturnRRPlusTwo:
     RR + 1 => RR :RETURN
-    
-opINVALID:
+
 failAssert:
         A+1 :ASSERT
+
+cond_const_ok:
