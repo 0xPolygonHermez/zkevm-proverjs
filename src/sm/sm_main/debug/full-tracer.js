@@ -29,7 +29,7 @@ const responseErrors = [
     'OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'OOCSH',
     'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce',
     'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance',
-    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_L1_info_tree_index',
+    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code',
     'invalid_change_l2_block_min_timestamp', 'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
     'invalid_l1_info_tree_index',
 ];
