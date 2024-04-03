@@ -90,3 +90,4 @@ CONST %_1111001 = 11 ; 1111001....0110 #11
     CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
     CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
     CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
+    CNT_PADDING_PG  :MLOAD(v_cnt_padding_pg)

@@ -112,7 +112,7 @@ setB:
 loopC:
         E + 1 => E
         E + 1000 :MSTORE(c1 + E)
-        E - RCX - 300 :JMPN(loopC)
+        E - RCX - 299 :JMPN(loopC)
 setD:
         E + 1 => E :MSTORE(d)
 
@@ -134,5 +134,5 @@ setD:
         1002 => A
         ${mem.c1[2]} :ASSERT
 
-        301 => A
+        300 => A
         ${mem.d} :ASSERT

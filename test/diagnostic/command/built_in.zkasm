@@ -1,5 +1,6 @@
 
 VAR GLOBAL bi_a
+VAR GLOBAL bi_b[2]
 
         ; Declare Vars
         2 => B,C
@@ -177,12 +178,13 @@ VAR GLOBAL bi_a
         ${(5 < D) ? B : 39} => A
         39     :ASSERT
 
-        ; TODO: Fix
-        ; ; Getmemvalue and getmemaddress
-        ; 40                              :MSTORE(bi_a)
+        ; Getmemvalue and getmemaddress
+        40                              :MSTORE(bi_a)
 
-        ; ${mem.bi_a} => A
-        ; 40      :ASSERT
+        ${mem.bi_a} => A
+        40      :ASSERT
 
-        ; ${addr.bi_a} => A
-        ; ${dump(A)}
+        ${addr.bi_a} => A
+        ${addr.bi_b + 1} => B
+        B - A => A
+        2       :ASSERT
