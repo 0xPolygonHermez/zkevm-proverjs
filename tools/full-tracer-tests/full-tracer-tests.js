@@ -90,6 +90,9 @@ async function main() {
             for (let j = 0; j < tests.length; j++) {
                 const test = tests[j];
                 console.log(chalk.green(`Checking test number ${j}/${tests.length}: ${test.testName}-${test.id}   ----  ${traceMethod}`));
+                // Clear ft logs folder
+                const ftDir = path.join(__dirname, '../../src/sm/sm_main/logs-full-trace');
+                if (fs.existsSync(ftDir)) fs.rmSync(ftDir, { recursive: true });
                 // Skip tests from no exec file
                 if (noExecTests.filter((t) => t.name === `${test.folderName}/${test.testName}_${test.testToDebug}`
                     || t.name === `${test.folderName}/${test.testName}`).length > 0) {
