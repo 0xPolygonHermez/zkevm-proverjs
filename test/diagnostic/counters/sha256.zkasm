@@ -2,7 +2,20 @@
     ; Save the initial counters
     :CALL(SaveCounters)
 
-    ; 1] TEST 55 bytes => counter increase 1
+    ; TEST Hash digest never called => counter doesn't change
+    $ => E              :MLOAD(lastHashSId)
+    E + 1 => E          :MSTORE(lastHashSId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+
+    32                  :HASHSLEN(E)
+    ; $ => A              :HASHSDIGEST(E) ; Not called
+
+    CNT_SHA256_F        :MLOAD(v_cnt_sha256_f)
+
+    ; TEST 55 bytes => counter increase 1
     $ => E              :MLOAD(lastHashSId)
     E + 1 => E          :MSTORE(lastHashSId)
     0 => HASHPOS
@@ -17,7 +30,7 @@
 
     CNT_SHA256_F - 1    :MLOAD(v_cnt_sha256_f)
 
-    ; 2] TEST 56 bytes => counter increase 2
+    ; TEST 56 bytes => counter increase 2
     E + 1  => E         :MSTORE(lastHashSId)
     0 => HASHPOS
     32 => D
@@ -32,7 +45,7 @@
 
     CNT_SHA256_F - 3    :MLOAD(v_cnt_sha256_f)
 
-    ; 3] TEST 119 bytes => counter increase 2
+    ; TEST 119 bytes => counter increase 2
 
     E + 1 => E          :MSTORE(lastHashSId)
     0 => HASHPOS
@@ -49,7 +62,7 @@
 
     CNT_SHA256_F - 5    :MLOAD(v_cnt_sha256_f)
 
-    ; 4] TEST 120 bytes => counter increase 3
+    ; TEST 120 bytes => counter increase 3
 
     E + 1 => E          :MSTORE(lastHashSId)
     0 => HASHPOS

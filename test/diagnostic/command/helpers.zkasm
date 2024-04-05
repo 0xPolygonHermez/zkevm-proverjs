@@ -1,7 +1,4 @@
 
-VAR GLOBAL helpers_a
-VAR GLOBAL helpers_b[2]
-
         0 => A,B,C,D,E
 
         ; The following are input-dependent, do not work in general
@@ -99,14 +96,3 @@ VAR GLOBAL helpers_b[2]
         3 => C,D
         ${ARITH_BN254_SUBFP2(A,B,C,D)} => A
         0 :ASSERT
-
-        40                              :MSTORE(helpers_a)
-
-        ; TODO: Fix it
-        ; ${getMemValue(mem.helpers_a)} => A
-        ; 40      :ASSERT
-
-        ; ${getMemAddress(mem.helpers_a)} => A
-        ; ${getMemAddress(mem.helpers_b[1])} => B
-        ; B - A => A
-        ; 2       :ASSERT

@@ -2,7 +2,22 @@
     ; Save the initial counters
     :CALL(SaveCounters)
 
-    ; 1] TEST 55 bytes => counter increase 1
+    ; TEST Hash digest never called => counter doesn't change
+    $ => E              :MLOAD(lastHashPId)
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+
+    32                  :HASHPLEN(E)
+    ; $ => A              :HASHPDIGEST(E) ; Not called
+
+    CNT_POSEIDON_G      :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG      :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY          :MLOAD(v_cnt_binary)
+
+    ; TEST 55 bytes => counter increase 1
     $ => E                  :MLOAD(lastHashPId)
     E + 1 => E              :MSTORE(lastHashPId)
     0 => HASHPOS
@@ -19,7 +34,7 @@
     CNT_PADDING_PG - 1      :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 1          :MLOAD(v_cnt_binary)
 
-    ; 2] TEST 56 bytes => counter increase 2
+    ; TEST 56 bytes => counter increase 2
 
     E + 1 => E              :MSTORE(lastHashPId)
 
@@ -37,7 +52,7 @@
     CNT_PADDING_PG - 3      :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 2          :MLOAD(v_cnt_binary)
 
-    ; 3] TEST 111 bytes => counter increase 2
+    ; TEST 111 bytes => counter increase 2
 
     E + 1 => E              :MSTORE(lastHashPId)
 
@@ -57,7 +72,7 @@
     CNT_PADDING_PG - 5      :MLOAD(v_cnt_padding_pg)
     CNT_BINARY - 3          :MLOAD(v_cnt_binary)
 
-    ; 4] TEST 112 bytes => counter increase 3
+    ; TEST 112 bytes => counter increase 3
 
     E + 1 => E              :MSTORE(lastHashPId)
 
@@ -78,7 +93,7 @@
     CNT_BINARY - 4          :MLOAD(v_cnt_binary)
 
 
-    ; 5] Various tests playing around with SLOAD and SSTORE
+    ; Various tests playing around with SLOAD and SSTORE
     ; 0x72913A40CC0E013B4F05C9E8E7A52562CB0FA774C1D1800BDFD5590F83DE53D8n => SR
 
     0 => SR

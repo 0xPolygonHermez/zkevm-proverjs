@@ -42,6 +42,8 @@ const byteMaskOn256 = Scalar.bor(Scalar.shl(Mask256, 256), Scalar.shr(Mask256, 8
 const WarningCheck = 1;
 const ErrorCheck = 2;
 
+const MAX_HASH_ADDRESS = 0x100000000;
+
 let fullTracer;
 let debug;
 let statsTracer;
@@ -676,6 +678,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         const anyHash = l.hashP || l.hashK || l.hashS || l.hashPDigest || l.hashKDigest || l.hashSDigest || l.hashPLen || l.hashKLen || l.hashSLen;
         const memAddr = addr + (l.memUseAddrRel ? addrRel : 0);
         const hashAddr = anyHash ? (l.hashOffset ?? 0) + fe2n(Fr, ctx.E[0]) : 0;
+        if (hashAddr < 0 || hashAddr >= MAX_HASH_ADDRESS) {
+            throw new Error(`Hash address (${hashAddr}) out of bounds ${sourceRef}`);
+        }
 
 
 //////
@@ -1080,7 +1085,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     (!Fr.eq(ctx.A[6], op6)) ||
                     (!Fr.eq(ctx.A[7], op7))
             ) {
-                throw new Error(`Assert does not match ${sourceRef} (op:${[op0, op1, op2, op3, op4, op5, op6, op7]} A:${[ctx.A[0], ctx.A[1], ctx.A[2], ctx.A[3], ctx.A[4], ctx.A[5], ctx.A[6], ctx.A[7]]})`);
+                const op = [op0, op1, op2, op3, op4, op5, op6, op7];
+                const A = [ctx.A[0], ctx.A[1], ctx.A[2], ctx.A[3], ctx.A[4], ctx.A[5], ctx.A[6], ctx.A[7]];
+                throw new Error(`Assert does not match ${sourceRef}\n\top:[${op}] = ${fea2String(Fr,op)}\n\t A:[${A}] = ${fea2String(Fr,A)}`);
             }
             pols.assert[i] = 1n;
         } else {
