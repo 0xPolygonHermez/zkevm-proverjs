@@ -136,7 +136,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
     }
 
-    if(blob && input.blobType == 1) {
+    if (blob && input.blobType === 1) {
         // Load poseidonBlobData into DB
         let z = await hashContractBytecode(input.blobData);
         if(typeof input.z === 'undefined') {
@@ -145,7 +145,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             throw new Error("input.z != poseidon(input.blobData)");
         }
         await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
-    } else if (blob) {
+    } else if (blob && (input.blobType === 0 || input.blobType === 1 || input.blobType === 2)) {
         // Load keccak256BlobData into DB
         let blobL2HashData = await ethers.utils.keccak256(input.blobData);
         if(typeof input.blobL2HashData === 'undefined') {
