@@ -25,6 +25,7 @@ const {
 } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
 
 const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
+const ConstantsBlob = require('@0xpolygonhermez/zkevm-commonjs').blobInner.Constants;
 
 const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
@@ -58,7 +59,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         PoseidonG: [],
         Mem: [],
         MemAlign: [],
-        Storage: []
+        Storage: [],
     };
 
     const counterControls = {
@@ -136,22 +137,22 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
     }
 
-    if(blob && input.blobType == 1) {
+    if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.EIP4844) {
         // Load poseidonBlobData into DB
-        let z = await hashContractBytecode(input.blobData);
-        if(typeof input.z === 'undefined') {
+        const z = await hashContractBytecode(input.blobData);
+        if (typeof input.z === 'undefined') {
             input.z = z;
-        } else if(input.z !== z) {
-            throw new Error("input.z != poseidon(input.blobData)");
+        } else if (input.z !== z) {
+            throw new Error('input.z != poseidon(input.blobData)');
         }
         await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
-    } else if (blob) {
+    } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
         // Load keccak256BlobData into DB
-        let blobL2HashData = await ethers.utils.keccak256(input.blobData);
-        if(typeof input.blobL2HashData === 'undefined') {
+        const blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        if (typeof input.blobL2HashData === 'undefined') {
             input.blobL2HashData = blobL2HashData;
-        } else if(input.blobL2HashData !== blobL2HashData) {
-            throw new Error("input.blobL2HashData != keccak(input.blobData)");
+        } else if (input.blobL2HashData !== blobL2HashData) {
+            throw new Error('input.blobL2HashData != keccak(input.blobData)');
         }
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
     }
