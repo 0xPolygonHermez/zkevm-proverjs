@@ -2563,6 +2563,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         throw error;
     }
+    
+    ctx.helpers.event('onFinishExecution');
 
     if (config.stats) {
         statsTracer.saveStatsFile();
