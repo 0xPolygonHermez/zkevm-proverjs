@@ -1,0 +1,172 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+include "lessthangl.circom";
+include "sha256/sha256.circom";
+include "bitify.circom";
+
+<% function getPositionBits(publics, currentPublic) {
+    const publicsNames = Object.keys(publics).filter(p => p !== "nPublics").sort((a, b) => publics[a] - publics[b]);
+    if(!publicsNames.includes(currentPublic) && currentPublic !== "aggregatorAddr") {
+        throw new Error("Something went wrong!");
+    }
+
+    let publicIndex = currentPublic === "aggregatorAddr" 
+        ? publicsNames.length
+        : publicsNames.findIndex((publicName) => publicName === currentPublic);
+    let initialBits = 0;
+    for(let i = 0; i < publicIndex; i++) {
+        const public = publicsNames[i];
+        if(public.includes("NumPos") || public === "forkIdPos" || public === "chainIdPos") {
+            initialBits += 64;
+        } else {
+            initialBits += 256;
+        }
+    }
+    return initialBits;
+} -%>
+
+template getSha256Inputs() {
+    signal input aggregatorAddr;
+    signal input publics[<%- publics.nPublics %>];
+
+    signal output publicsHash;
+
+    signal oldStateRoot[8];
+    signal n2bOldStateRoot[8][32];
+    var oldStateRootPos = <%- publics.oldStateRootPos %>;
+    var oldStateRootBitsOffset = <%- getPositionBits(publics, "oldStateRootPos") %>;
+
+    signal oldBatchAccInputHash[8];
+    signal n2bOldBatchAccInputHash[8][32];
+    var oldBatchAccInputHashPos = <%- publics.oldBatchAccInputHashPos %>;
+    var oldBatchAccInputHashBitsOffset = <%- getPositionBits(publics, "oldBatchAccInputHashPos") %>;
+
+    signal oldBatchNum;
+    signal n2bOldBatchNum[63];
+    var oldBatchNumPos = <%- publics.oldBatchNumPos %>;
+    var oldBatchNumBitsOffset = <%- getPositionBits(publics, "oldBatchNumPos") %>;
+
+    signal chainId;
+    signal n2bChainId[63];
+    var chainIdPos = <%- publics.chainIdPos %>;
+    var chainIdBitsOffset = <%- getPositionBits(publics, "chainIdPos") %>;
+
+    signal forkId;
+    signal n2bForkId[63];
+    var forkIdPos = <%- publics.forkIdPos %>;
+    var forkIdBitsOffset = <%- getPositionBits(publics, "forkIdPos") %>;
+
+    signal newStateRoot[8];
+    signal n2bNewStateRoot[8][32];
+    var newStateRootPos = <%- publics.newStateRootPos %>;
+    var newStateRootBitsOffset = <%- getPositionBits(publics, "newStateRootPos") %>;
+
+    signal newBatchAccInputHash[8];
+    signal n2bNewBatchAccInputHash[8][32];
+    var newBatchAccInputHashPos = <%- publics.newBatchAccInputHashPos %>;
+    var newBatchAccInputHashBitsOffset = <%- getPositionBits(publics, "newBatchAccInputHashPos") %>;
+
+    signal newBatchNum;
+    signal n2bNewBatchNum[63];
+    var newBatchNumPos = <%- publics.newBatchNumPos %>;
+    var newBatchNumBitsOffset = <%- getPositionBits(publics, "newBatchNumPos") %>;
+   
+    signal newLocalExitRoot[8];
+    signal n2bNewLocalExitRoot[8][32];
+    var newLocalExitRootPos = <%- publics.newLocalExitRootPos %>;
+    var newLocalExitRootBitsOffset = <%- getPositionBits(publics, "newLocalExitRootPos") %>;
+
+
+<%  let aggregatorAddressOffset = getPositionBits(publics, "aggregatorAddr"); -%>
+    var aggregatorAddrBitsOffset = <%- aggregatorAddressOffset %>;
+
+    var totalBits = <%- aggregatorAddressOffset + 160 %>;
+
+    for(var i=0; i<8; i++) {
+        // State Root
+        oldStateRoot[i] <== publics[oldStateRootPos + i];
+        n2bOldStateRoot[i] <== Num2Bits(32)(oldStateRoot[i]);
+
+        newStateRoot[i] <== publics[newStateRootPos + i];
+        n2bNewStateRoot[i] <== Num2Bits(32)(newStateRoot[i]);
+
+        // Batch Acc Input Hash
+        oldBatchAccInputHash[i] <== publics[oldBatchAccInputHashPos + i];
+        n2bOldBatchAccInputHash[i] <== Num2Bits(32)(oldBatchAccInputHash[i]);
+
+        newBatchAccInputHash[i] <== publics[newBatchAccInputHashPos + i];
+        n2bNewBatchAccInputHash[i] <== Num2Bits(32)(newBatchAccInputHash[i]);
+
+        // Local Exit Root
+        newLocalExitRoot[i] <== publics[newLocalExitRootPos + i];
+        n2bNewLocalExitRoot[i] <== Num2Bits(32)(newLocalExitRoot[i]);
+    }
+
+    // Batch Num
+    oldBatchNum <== publics[oldBatchNumPos];
+    n2bOldBatchNum <== Num2Bits(63)(oldBatchNum);
+
+    newBatchNum <== publics[newBatchNumPos];
+    n2bNewBatchNum <== Num2Bits(63)(newBatchNum);
+
+    chainId <== publics[chainIdPos];
+    n2bChainId <== Num2Bits(63)(chainId);
+
+    forkId <== publics[forkIdPos];
+    n2bForkId <== Num2Bits(63)(forkId);
+    
+    signal n2bAggregatorAddr[160] <== Num2Bits(160)(aggregatorAddr);
+
+    // Check that state roots are lower than GL
+    for (var i = 0; i < 4; i++) {
+        _<== LessThanGoldilocks()(oldStateRoot[2*i] + (1 << 32) * oldStateRoot[2*i + 1]);
+        _<== LessThanGoldilocks()(newStateRoot[2*i] + (1 << 32) * newStateRoot[2*i + 1]);
+    }
+
+    component publicsHasher = Sha256(totalBits);
+
+    for (var i=0; i<8; i++) {
+        for (var j=0; j<32; j++) {
+            publicsHasher.in[oldStateRootBitsOffset + 32*(8-i) - 1 -j] <== n2bOldStateRoot[i][j];
+            publicsHasher.in[newStateRootBitsOffset + 32*(8-i) - 1 -j] <== n2bNewStateRoot[i][j];
+            
+            publicsHasher.in[oldBatchAccInputHashBitsOffset + 32*(8-i) - 1 -j] <== n2bOldBatchAccInputHash[i][j];
+            publicsHasher.in[newBatchAccInputHashBitsOffset + 32*(8-i) - 1 -j] <== n2bNewBatchAccInputHash[i][j];
+            
+            publicsHasher.in[newLocalExitRootBitsOffset + 32*(8-i) - 1 -j] <== n2bNewLocalExitRoot[i][j];
+        }
+    }
+
+    // Do 63 bits to avoid aliasing
+    for (var i=0; i<63; i++) {
+        publicsHasher.in[oldBatchNumBitsOffset + 64 - 1 -i] <== n2bOldBatchNum[i];
+        publicsHasher.in[newBatchNumBitsOffset + 64 - 1 -i] <== n2bNewBatchNum[i];
+
+        publicsHasher.in[chainIdBitsOffset + 64 - 1 -i] <== n2bChainId[i];
+        
+        publicsHasher.in[forkIdBitsOffset + 64 - 1 -i] <== n2bForkId[i];
+    }
+    
+    publicsHasher.in[oldBatchNumBitsOffset] <== 0;
+    publicsHasher.in[newBatchNumBitsOffset] <== 0;
+
+    publicsHasher.in[chainIdBitsOffset] <== 0;
+
+    publicsHasher.in[forkIdBitsOffset] <== 0;
+
+    for (var i=0; i<160; i++) {
+        publicsHasher.in[aggregatorAddrBitsOffset + 160 - 1 -i] <== n2bAggregatorAddr[i];
+    }
+    
+    component b2nPublicsHash = Bits2Num(256);
+    for (var i = 0; i < 256; i++) {
+        b2nPublicsHash.in[i] <== publicsHasher.out[255-i];
+    }
+    
+    publicsHash <== b2nPublicsHash.out;
+}
+
+<% if(isTest) { -%>
+component main = getSha256Inputs();
+<% } -%>

@@ -1,0 +1,55 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+include "iszero.circom";
+
+template VerifyRecursive2() {
+    var oldStateRootPos = <%- publics.oldStateRootPos %>;
+    var oldBatchAccInputHashPos = <%- publics.oldBatchAccInputHashPos %>;
+    var oldBatchNumPos = <%- publics.oldBatchNumPos %>;
+    var chainIdPos = <%- publics.chainIdPos %>;
+    var forkIdPos = <%- publics.forkIdPos %>;
+    var newStateRootPos = <%- publics.newStateRootPos %>;
+    var newBatchAccInputHashPos = <%- publics.newBatchAccInputHashPos %>;
+    var newLocalExitRootPos = <%- publics.newLocalExitRootPos %>;
+    var newBatchNumPos = <%- publics.newBatchNumPos %>;
+
+    signal input a_publics[<%- publics.nPublics %>];
+    signal input b_publics[<%- publics.nPublics %>];
+
+    signal output publics[<%- publics.nPublics %>];
+    signal output a_isOneBatch;
+    signal output b_isOneBatch;
+
+
+    // Check recursive 2 publics
+
+    for (var i=0; i<8; i++) {
+        a_publics[newStateRootPos + i] === b_publics[oldStateRootPos + i]; // Check State Root
+        publics[oldStateRootPos + i] <== a_publics[oldStateRootPos + i]; // Old State Root
+        publics[newStateRootPos + i] <== b_publics[newStateRootPos + i]; // New State Root
+
+        a_publics[newBatchAccInputHashPos + i] === b_publics[oldBatchAccInputHashPos + i]; // Check accumulated input hash
+        publics[oldBatchAccInputHashPos + i] <== a_publics[oldBatchAccInputHashPos + i]; // Old accumulated input hash
+        publics[newBatchAccInputHashPos + i] <== b_publics[newBatchAccInputHashPos + i]; // New accumulated input hash
+
+        publics[newLocalExitRootPos+i] <== b_publics[newLocalExitRootPos+i]; // Local exit root
+    }
+
+    a_publics[chainIdPos] === b_publics[chainIdPos]; // Check that chain ID matches between chains
+    publics[chainIdPos] <== a_publics[chainIdPos]; // Chain ID
+
+    a_publics[forkIdPos] === b_publics[forkIdPos]; // Check that fork ID matches between chains
+    publics[forkIdPos] <== a_publics[forkIdPos]; // Fork ID
+
+    a_publics[newBatchNumPos] === b_publics[oldBatchNumPos]; // Check batch number
+    publics[oldBatchNumPos] <== a_publics[oldBatchNumPos]; // Old batch number
+    publics[newBatchNumPos] <== b_publics[newBatchNumPos]; // New Batch number
+
+    a_isOneBatch <== IsZero()(a_publics[newBatchNumPos] - a_publics[oldBatchNumPos] - 1);
+    b_isOneBatch <== IsZero()(b_publics[newBatchNumPos] - b_publics[oldBatchNumPos] - 1);
+}
+
+<% if(isTest) { -%>
+    component main = VerifyRecursive2();
+<% } -%>
