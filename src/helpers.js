@@ -78,6 +78,12 @@ module.exports = class Helpers {
     callDefault(method, args = [], defaultReturn = null) {
         return this.#call(method, args, true, defaultReturn);
     }
+    event(method, args = []) {
+        for (const helper of this.helpers) {
+            if (typeof helper[method] !== 'function') continue;
+            helper[method].apply(helper, args);
+        }
+    }
     #call(method, args = [], hasDefault = false, defaultReturn = null) {
         for (const helper of this.helpers) {
             if (typeof helper[method] === 'function') {
