@@ -122,7 +122,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
 
     // load programs into DB
-    let batchHashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -130,13 +129,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 await db.setProgram(stringToH4(key), hexString2byteArray(value));
         }
 
-        input.batchHashDataComputed = await hashContractBytecode(input.batchL2Data);
+        const batchHashDataComputed = await hashContractBytecode(input.batchL2Data);
         // Compare computed batch hash data (from batch l2 data) with input batch hash data
-        if (typeof input.batchHashData !== 'undefined' && input.batchHashData !== input.batchHashDataComputed) {
+        if (typeof input.batchHashData === 'undefined') {
+            input.batchHashData = batchHashDataComputed;
+        } else if (input.batchHashData !== batchHashDataComputed) {
             throw new Error('batchHashData does not match the computed batchHashData (from batch l2 data)');
         }
         // Load batchL2Data into DB
-        await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
+        await db.setProgram(stringToH4(input.batchHashData), hexString2byteArray(input.batchL2Data));
     }
 
     if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.EIP4844) {
