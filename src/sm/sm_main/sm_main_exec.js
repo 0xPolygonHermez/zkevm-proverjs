@@ -309,7 +309,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 console.log("Total steps used: ", ctx.step);
             }
             // Set las save as restored because it is not restored at end.zkasm in case of fastDebugExit
-            ctx.saved[Object.keys(ctx.saved)[Object.keys(ctx.saved).length - 1]].restored = {};
+            if(Object.keys(ctx.saved).length > 0) {
+                ctx.saved[Object.keys(ctx.saved)[Object.keys(ctx.saved).length - 1]].restored = {};
+            }
             break;
         }
 
