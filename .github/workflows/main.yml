@@ -32,7 +32,6 @@ jobs:
         run: |
           cd ..
           git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop-feijoa
-          rm -rf zkevm-testvectors/inputs-executor/ethereum-tests
           cd zkevm-testvectors/tools-inputs/tools-eth
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests
