@@ -223,16 +223,16 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
         if (isEthereumTest) {
             const ethPath = testName.split('/');
             if (ethPath.length === 3) {
-                inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${ethPath[2]}_${testToDebug}.json`);
+                inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${ethPath[2]}_${testToDebug}.json`);
                 tn = ethPath[2];
                 fn = `${ethPath[0]}/${ethPath[1]}`;
             } else {
-                inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`);
+                inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${testName}_${testToDebug}.json`);
                 tn = ethPath[1];
                 fn = ethPath[0];
             }
         } else {
-            inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
+            inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/calldata/${testName}_${testToDebug}.json`);
             tn = testName;
             fn = testName;
         }
@@ -269,9 +269,9 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
                 const ethPath = folderName.split('/');
                 let inputTestPath;
                 if (ethPath.length === 2) {
-                    inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${file.split('.')[0]}_${j}.json`);
+                    inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${ethPath[0]}/${file.split('.')[0]}_${j}.json`);
                 } else {
-                    inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
+                    inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/ethereum-tests/GeneralStateTests/${folderName}/${file.split('.')[0]}_${j}.json`);
                 }
                 // Check input exists
                 if (!fs.existsSync(inputTestPath)) {
@@ -292,14 +292,14 @@ function createTestsArray(isEthereumTest, testName, testPath, testToDebug, folde
             const t = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../zkevm-testvectors/tools-inputs/data/${folderName}/${file}`)));
             if (Array.isArray(t)) {
                 t.map((v) => {
-                    const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
+                    const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/${folderName}/${file.split('.')[0]}_${v.id}.json`);
                     Object.assign(v, { testName: file.split('.')[0], folderName, inputTestPath });
 
                     return v;
                 });
                 tests = tests.concat(t);
             } else {
-                const inputTestPath = path.join(__dirname, `../../node_modules/@0xpolygonhermez/zkevm-testvectors/inputs-executor/calldata/${folderName}/${file.split('.')[0]}_${t.id}.json`);
+                const inputTestPath = path.join(__dirname, `../../../zkevm-testvectors/inputs-executor/calldata/${folderName}/${file.split('.')[0]}_${t.id}.json`);
                 Object.assign(t, { testName: file.split('.')[0], folderName, inputTestPath });
                 tests = tests.concat([t]);
             }

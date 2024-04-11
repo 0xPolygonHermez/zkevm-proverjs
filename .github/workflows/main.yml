@@ -30,13 +30,14 @@ jobs:
           node-version: 20
       - name: Clone repos
         run: |
-          cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop-feijoa
-          cd zkevm-testvectors/tools-inputs/tools-eth
-          git clone https://github.com/0xPolygonHermez/ethereum-tests tests
-          cd tests
-          git checkout test-vectors
-          cd ../../../../zkevm-proverjs
+          # cd ..
+          # git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop-feijoa
+          # cd zkevm-testvectors/tools-inputs/tools-eth
+          # git clone https://github.com/0xPolygonHermez/ethereum-tests tests
+          # cd tests
+          # git checkout test-vectors
+          # cd ../../../../zkevm-proverjs
+          # echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - name: setup zkevm-proverjs
         run: |
           rm -rf node_modules package-lock.json
