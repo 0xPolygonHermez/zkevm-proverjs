@@ -5,7 +5,7 @@ const ejs = require("ejs");
 const { batchPublics, blobOuterPublics } = require("../../src/templates/helpers/publics");
 const { FrSNARK } = require("@0xpolygonhermez/zkevm-commonjs/src/constants");
 const { Scalar } = require("ffjavascript");
-const { solidityPackedSha256 } = require("ethers");
+const { solidityPackedSha256 } = require("ethers").utils.soliditySha256;
 const { preparePublics, generateRandomHex, generateRandomValue } = require("./helpers");
 const { assert } = require("console");
 
