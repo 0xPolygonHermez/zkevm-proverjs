@@ -65,10 +65,11 @@ function nameToIndex(name, index, config = {}, cls = '')
 function resolveArrayIndex(value, index, constValues, config = {})
 {
     const chunkSize = config.chunkSize || 16;
+    const chunkBits = config.chunkBits || 16;
     if (typeof(constValues) !== 'undefined') {
         const constValue = constValues[value];
         if (typeof(constValue) !== 'undefined') {
-            chunkValue = ((BigInt(constValue) >> BigInt(16 * index)) & ((1n << 16n) - 1n));
+            chunkValue = ((BigInt(constValue) >> BigInt(chunkBits * index)) & ((1n << BigInt(chunkBits)) - 1n));
             return {value: chunkValue, constant: true};
         }
     }
