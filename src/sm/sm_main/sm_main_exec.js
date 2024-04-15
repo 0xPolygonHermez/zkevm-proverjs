@@ -186,7 +186,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         saved:{},
         config,
     }
-    
+
     if (config.stats) {
         metadata.stats = {
             trace:[],
@@ -307,6 +307,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             fastDebugExit = true;
             if (typeof verboseOptions.step === 'number') {
                 console.log("Total steps used: ", ctx.step);
+            }
+            // Set las save as restored because it is not restored at end.zkasm in case of fastDebugExit
+            if(Object.keys(ctx.saved).length > 0) {
+                ctx.saved[Object.keys(ctx.saved)[Object.keys(ctx.saved).length - 1]].restored = {};
             }
             break;
         }
@@ -626,10 +630,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             addr = 0;
             if (typeof l.maxAddrRel !== 'undefined' && addrRel > l.maxAddrRel) {
                 throw new Error(`Address out of bounds accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
-            }   
+            }
             if (typeof l.minAddrRel !== 'undefined' && addrRel < l.minAddrRel) {
                 throw new Error(`Address out of bounds (negative index) accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
-            }   
+            }
             if (l.offset) addr += l.offset;
             if (l.isStack == 1) addr += Number(ctx.SP);
             if (!skipAddrRelControl) {
@@ -1967,7 +1971,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.memAlignRD || l.memAlignWR) {
             const wr = l.memAlignWR ? true: false;
-            ctx.helpers.MemAlign.verify(wr, safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0]), 
+            ctx.helpers.MemAlign.verify(wr, safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0]),
                                         safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]),
                                         wr ? safeFea2scalar(Fr, ctx.D) : 0n, wr ? safeFea2scalar(Fr, ctx.E) : 0n,
                                         required.MemAlign);
@@ -2563,7 +2567,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         throw error;
     }
-    
+
     ctx.helpers.event('onFinishExecution');
 
     if (config.stats) {
