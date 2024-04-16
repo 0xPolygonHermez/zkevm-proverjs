@@ -39,14 +39,14 @@
     ; $ => A              :HASHKDIGEST(E) ; Not called
 
 	; TEST Hash digest before anything else (without hashlen, key-value from input.contractsBytecode)
-    E + 1 => E          :MSTORE(lastHashKId)
-    0x0000000000000000000000000000000000000000000000000000000000000000 	:HASHKDIGEST(E)
+    ; E + 1 => E          :MSTORE(lastHashKId)
+    ; 0x0000000000000000000000000000000000000000000000000000000000000000 	:HASHKDIGEST(E)
 
 	; TEST Hash digest before anything else (with hashlen, key-value from input.contractsBytecode
-    E + 1 => E          :MSTORE(lastHashKId)
-    0x0000000000000000000000000000000000000000000000000000000000000001 	:HASHKDIGEST(E)
-	$ => A             	:HASHKLEN(E)
-	1 					:ASSERT
+    ; E + 1 => E          :MSTORE(lastHashKId)
+    ; 0x0000000000000000000000000000000000000000000000000000000000000001 	:HASHKDIGEST(E)
+	; $ => A             	:HASHKLEN(E)
+	; 1 					:ASSERT
 
     ; Hash zero bytes
     E + 1 => E          :MSTORE(lastHashKId)
