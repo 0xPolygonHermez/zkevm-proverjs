@@ -26,7 +26,7 @@
     "oldBatchAccInputHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
     "blobOuters": [
       {
-        "zkGasLimit": "10000000",
+        "zkGasLimit": "1000000000",
         "blobType": 0,
         "forcedHashData": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "previousL1InfoTreeRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -202,7 +202,7 @@
           },
           "blobInner": {
             "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "newBlobAccInputHash": "0xcaafa97ea390e76e27c80a36e6ea1514338481a5b0db6a1a9f76af3f63995c75",
+            "newBlobAccInputHash": "0xceb2a01534ea7e82248c453876ada7451a3b3e40d9d5d30ef639ebd4d47376c0",
             "newNumBlob": 1,
             "finalAccBatchHashData": "0xb97f392b0cafa501ec60aba6981ea2db79f7d335b4f1d1c62ed199442b3f16c2",
             "localExitRootFromBlob": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -211,14 +211,14 @@
           "blobOuter": {
             "newStateRoot": "0x94e2694f541e98b6b8cfb2828bda65ea24c230d81e0935cacebcb8bc27dd864d",
             "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "newBlobAccInputHash": "0xcaafa97ea390e76e27c80a36e6ea1514338481a5b0db6a1a9f76af3f63995c75",
+            "newBlobAccInputHash": "0xceb2a01534ea7e82248c453876ada7451a3b3e40d9d5d30ef639ebd4d47376c0",
             "newNumBlob": 1,
             "newLocalExitRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
           }
         }
       },
       {
-        "zkGasLimit": "10000000",
+        "zkGasLimit": "1000000000",
         "blobType": 0,
         "forcedHashData": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "previousL1InfoTreeRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -295,7 +295,7 @@
           },
           "blobInner": {
             "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "newBlobAccInputHash": "0xa7b3498984c422939844fbe62337e219c2ac4a70e20bc1a31282cb038f118ee2",
+            "newBlobAccInputHash": "0xbb3d7a2b7e7f52eaa59aa031ef199aa64a24cc6d302962d08c742a384f92e8d6",
             "newNumBlob": 2,
             "finalAccBatchHashData": "0xaf98377e881f17d3081ba3adb743800be8968639610f0efd1f0ba293ba9c45bd",
             "localExitRootFromBlob": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -304,14 +304,14 @@
           "blobOuter": {
             "newStateRoot": "0xbf1ed0f89abad42f63fa698fdcdbc980aed90bc73b2166d5d6838feef8443558",
             "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "newBlobAccInputHash": "0xa7b3498984c422939844fbe62337e219c2ac4a70e20bc1a31282cb038f118ee2",
+            "newBlobAccInputHash": "0xbb3d7a2b7e7f52eaa59aa031ef199aa64a24cc6d302962d08c742a384f92e8d6",
             "newNumBlob": 2,
             "newLocalExitRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
           }
         }
       },
       {
-        "zkGasLimit": "10000000",
+        "zkGasLimit": "1000000000",
         "blobType": 0,
         "forcedHashData": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "previousL1InfoTreeRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -461,7 +461,7 @@
           },
           "blobInner": {
             "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "newBlobAccInputHash": "0x9070a522e33fd52f9ac8221ab5c5e77c8c7b5378d553835574d931ce2a51f79e",
+            "newBlobAccInputHash": "0x27ec875e713bd3724b045d61f5767ba75519aa422585d3121b147f173ce65e85",
             "newNumBlob": 3,
             "finalAccBatchHashData": "0x287d430f52f249bc67f146b4e73552e0c69899bcc411f8bd0cf86996109f2ca0",
             "localExitRootFromBlob": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -470,7 +470,7 @@
           "blobOuter": {
             "newStateRoot": "0xdcd43410d7b738d63e88feb0bef716f5176750fa3bc974b509c0a1ea5f123d43",
             "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "newBlobAccInputHash": "0x9070a522e33fd52f9ac8221ab5c5e77c8c7b5378d553835574d931ce2a51f79e",
+            "newBlobAccInputHash": "0x27ec875e713bd3724b045d61f5767ba75519aa422585d3121b147f173ce65e85",
             "newNumBlob": 3,
             "newLocalExitRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
           }
@@ -480,11 +480,11 @@
     "expectedFinal": {
       "newStateRoot": "0xdcd43410d7b738d63e88feb0bef716f5176750fa3bc974b509c0a1ea5f123d43",
       "newBlobStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "newBlobAccInputHash": "0x9070a522e33fd52f9ac8221ab5c5e77c8c7b5378d553835574d931ce2a51f79e",
+      "newBlobAccInputHash": "0x27ec875e713bd3724b045d61f5767ba75519aa422585d3121b147f173ce65e85",
       "newNumBlob": 3,
       "newLocalExitRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "aggregatorAddress": "0x64E968003c934F8d7Ad9a4e30F48EE8e2409baE6",
-      "inputSnark": "0x00d6ec4e53cf5125f27039348cab112b46603fa02dccae62c26b71b249bf0a84"
+      "inputSnark": "0x24dd2d669f15400a84e2a58de0ecf8a6e3604f6599257fbae18af2c8f040908b"
     }
   }
 ]
