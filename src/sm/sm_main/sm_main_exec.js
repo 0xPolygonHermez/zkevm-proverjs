@@ -142,13 +142,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.EIP4844) {
         // Load poseidonBlobData into DB
-        const z = await hashContractBytecode(input.blobData);
+        const kzgCommitmentZ = input.kzgCommitment+input.blobData.replace("0x","");
+        const z = await hashContractBytecode(kzgCommitmentZ);
         if (typeof input.z === 'undefined') {
             input.z = z;
         } else if (input.z !== z) {
-            throw new Error('input.z != poseidon(input.blobData)');
+            throw new Error('input.z != poseidon(input.kzgCommitment+input.blobData)');
         }
-        await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
+        await db.setProgram(stringToH4(z), hexString2byteArray(kzgCommitmentZ));
+
+        const kzgCommitmentHash = createHash('sha256').update(Uint8Array.from(input.kzgCommitment)).digest('hex');
+        input.kzgCommitmentHash = "0x"+kzgCommitmentHash;
+        await db.setProgram(stringToH4(input.kzgCommitmentHash), hexString2byteArray(input.kzgCommitment));
+
     } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
         // Load keccak256BlobData into DB
         const blobL2HashData = await ethers.utils.keccak256(input.blobData);
@@ -1518,8 +1524,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.hashSDigest) {
             pols.hashSDigest[i] = 1n;
             const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            if (typeof ctx.hashS[hashAddr].digest === "undefined") {
-                throw new Error(`HASHSDIGEST(${hashAddr}) cannot load sha256 from DB ${sourceRef}`);
+            if (typeof ctx.hashS[hashAddr] === "undefined") {
+                const k = scalar2h4(dg);
+                const data = await smt.db.getProgram(k);
+
+                ctx.hashS[hashAddr] = {
+                    data: data,
+                    digest: dg,
+                    lenCalled: false,
+                    sourceRef,
+                    reads: {}
+                }
             }
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashS[hashAddr].digest))) {
                 throw new Error(`HashSDigest(${hashAddr}) doesn't match ${sourceRef}`);
