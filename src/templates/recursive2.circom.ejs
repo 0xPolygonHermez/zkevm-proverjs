@@ -1,0 +1,174 @@
+pragma circom 2.1.0;
+pragma custom_templates;
+
+include "<%- verifierNames[0] %>.verifier.circom";
+include "mux1.circom";
+include "iszero.circom";
+include "verify_recursive2.circom";
+
+<% let starkInfo = starkInfoVerifiers[0]; %>
+
+template Main() {
+    var rootCSingle[4] = [<%- vks[0].join(",") %>];
+
+    signal input publics[<%- publics.nPublics %>];
+    signal input rootC[4];
+
+    signal input a_publics[<%- publics.nPublics %>];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input a_root<%- s %>[4];
+<%  } -%>
+   
+    signal input a_evals[<%- starkInfo.evMap.length %>][3];
+
+    signal input a_s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
+    signal input a_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input a_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input a_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+    
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input a_s<%- s %>_root[4];
+<% }                                                  -%>
+
+<% for (let s=1; s< starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input a_s<%- s %>_vals[<%- starkInfo.starkStruct.nQueries %>][<%- (1 << parseInt(starkInfo.starkStruct.steps[s-1].nBits - starkInfo.starkStruct.steps[s].nBits))*3 %>];
+    signal input a_s<%- s %>_siblings[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[s].nBits %>][4];
+<% }                                                  -%>
+   
+    signal input a_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+
+    signal input b_publics[<%- publics.nPublics %>];
+ 
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    signal input b_root<%- s %>[4];
+<%  } -%>
+
+    signal input b_evals[<%- starkInfo.evMap.length %>][3];
+
+    signal input b_s0_valsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.nConstants %>];
+    signal input b_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    signal input b_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+    signal input b_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
+<%     } -%>
+<% } -%>
+    
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input b_s<%- s %>_root[4];
+<% }                                                  -%>
+
+<% for (let s=1; s< starkInfo.starkStruct.steps.length; s++) {   -%>
+    signal input b_s<%- s %>_vals[<%- starkInfo.starkStruct.nQueries %>][<%- (1 << parseInt(starkInfo.starkStruct.steps[s-1].nBits - starkInfo.starkStruct.steps[s].nBits))*3 %>];
+    signal input b_s<%- s %>_siblings[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[s].nBits %>][4];
+<% }                                                  -%>
+
+    signal input b_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
+
+    signal publicsAggregated[<%- publics.nPublics %>];
+    signal a_isOneBatch;
+    signal b_isOneBatch;
+
+<%  if(options.isAggregatedInput) { -%>
+    signal input a_isAggregatedCircuit;
+    signal input b_isAggregatedCircuit;
+
+    (publicsAggregated, a_isOneBatch, b_isOneBatch) <== VerifyRecursive2()(a_publics, b_publics, a_isAggregatedCircuit, b_isAggregatedCircuit);
+<%  } else { -%>
+    (publicsAggregated, a_isOneBatch, b_isOneBatch) <== VerifyRecursive2()(a_publics, b_publics);
+<%  } -%>
+
+
+    for(var i=0; i<<%- publics.nPublics %>; i++) {
+        publics[i] === publicsAggregated[i];
+    }
+
+    component vA = StarkVerifier();
+
+    for (var i=0; i< <%- publics.nPublics %>; i++) {
+        vA.publics[i] <== a_publics[i];
+    }
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vA.root<%- s %> <== a_root<%- s %>;
+<% } -%>
+
+    vA.evals <== a_evals;
+
+    vA.s0_valsC <== a_s0_valsC;
+    vA.s0_siblingsC <== a_s0_siblingsC;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vA.s0_vals<%- s %> <== a_s0_vals<%- s %>;
+    vA.s0_siblings<%- s %> <== a_s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vA.s<%- s %>_root <== a_s<%- s %>_root;
+<% }                                                  -%>
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vA.s<%- s %>_vals <== a_s<%- s %>_vals;
+    vA.s<%- s %>_siblings <== a_s<%- s %>_siblings;
+<% }                                                  -%>
+    vA.finalPol <== a_finalPol;
+<%  if(options.setEnableInput) { -%>
+    vA.enable <== 1;
+<%  } -%>
+
+    vA.rootC <== MultiMux1(4)([rootC, rootCSingle], a_isOneBatch);
+    
+    for (var i=0; i<4; i++) {
+        vA.publics[<%- publics.nPublics %> + i] <== rootC[i];
+    }
+
+    component vB = StarkVerifier();
+
+    for (var i=0; i< <%- publics.nPublics %>; i++) {
+        vB.publics[i] <== b_publics[i];
+    }
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+    vB.root<%- s %> <== b_root<%- s %>;
+<% } -%>
+   
+    vB.evals <== b_evals;
+
+    vB.s0_valsC <== b_s0_valsC;
+    vB.s0_siblingsC <== b_s0_siblingsC;
+
+<%  for (let s=1; s<=nStages + 1; ++s) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+    vB.s0_vals<%- s %> <== b_s0_vals<%- s %>;
+    vB.s0_siblings<%- s %> <== b_s0_siblings<%- s %>;
+<%     } -%>
+<% } -%>
+
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vB.s<%- s %>_root <== b_s<%- s %>_root;
+<% }                                                  -%>
+<% for (let s=1; s<starkInfo.starkStruct.steps.length; s++) {   -%>
+    vB.s<%- s %>_vals <== b_s<%- s %>_vals;
+    vB.s<%- s %>_siblings <== b_s<%- s %>_siblings;
+<% }                                                  -%>
+    vB.finalPol <== b_finalPol;
+<%  if(options.setEnableInput) { -%>
+    vB.enable <== 1;
+<%  } -%>
+
+    vB.rootC <== MultiMux1(4)([rootC, rootCSingle], b_isOneBatch);
+
+    for (var i=0; i<4; i++) {
+        vB.publics[<%- publics.nPublics %> +i] <== rootC[i];
+    }
+}
+
+component main {public [publics, rootC]}= Main();ack
