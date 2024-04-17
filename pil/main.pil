@@ -703,26 +703,27 @@ namespace Main(%N);
     //      EQ10: y1 - y2 = y3 - q2·p2
     //      EQ11: x1·y1 + x2 = y3 + (q1·2²⁵⁶ + q0)·y2
     
+    pol commit arithUseCD;
     arith {
         arithEquation,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
-        arithSame12 * (A0 - C0) + C0, // This should be A iff EQ2 (point doubling)
-        arithSame12 * (A1 - C1) + C1,
-        arithSame12 * (A2 - C2) + C2,
-        arithSame12 * (A3 - C3) + C3,
-        arithSame12 * (A4 - C4) + C4,
-        arithSame12 * (A5 - C5) + C5,
-        arithSame12 * (A6 - C6) + C6,
-        arithSame12 * (A7 - C7) + C7,
-        arithSame12 * (B0 - D0) + D0, // This should be B iff EQ2 (point doubling)
-        arithSame12 * (B1 - D1) + D1,
-        arithSame12 * (B2 - D2) + D2,
-        arithSame12 * (B3 - D3) + D3,
-        arithSame12 * (B4 - D4) + D4,
-        arithSame12 * (B5 - D5) + D5,
-        arithSame12 * (B6 - D6) + D6,
-        arithSame12 * (B7 - D7) + D7,
+        arithSame12 * A0 + arithUseCD * C0, // This should be A iff EQ2 (point doubling)
+        arithSame12 * A1 + arithUseCD * C1,
+        arithSame12 * A2 + arithUseCD * C2,
+        arithSame12 * A3 + arithUseCD * C3,
+        arithSame12 * A4 + arithUseCD * C4,
+        arithSame12 * A5 + arithUseCD * C5,
+        arithSame12 * A6 + arithUseCD * C6,
+        arithSame12 * A7 + arithUseCD * C7,
+        arithSame12 * B0 + arithUseCD * D0, // This should be B iff EQ2 (point doubling)
+        arithSame12 * B1 + arithUseCD * D1,
+        arithSame12 * B2 + arithUseCD * D2,
+        arithSame12 * B3 + arithUseCD * D3,
+        arithSame12 * B4 + arithUseCD * D4,
+        arithSame12 * B5 + arithUseCD * D5,
+        arithSame12 * B6 + arithUseCD * D6,
+        arithSame12 * B7 + arithUseCD * D7,
         arithUseE * E0, // This must be deactivated in EQ0 and EQ11 (standard and modular arith)
         arithUseE * E1,
         arithUseE * E2,

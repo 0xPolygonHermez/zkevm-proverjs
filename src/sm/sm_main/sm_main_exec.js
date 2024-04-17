@@ -201,12 +201,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     ctx.helpers.setup({
         evalCommand, checkParams,
-        multiBaseFeaToScalar,
-        getMultiBaseFea,
-        scalarToFea384, 
-        fea384ToScalar,
-        scalarToFea256: scalar2fea, 
-        fea256ToScalar: fea2scalar,
+        safeFea386ToScalar,safeFea2scalar,
+        multiBaseFeaToScalar,getMultiBaseFea,
+        scalarToFea384, fea384ToScalar,
         fullTracer, nameRomErrors,
         sr8to4, sr4to8, ctx
     });
@@ -750,10 +747,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     nHits++;
                 }
                 if (l.sRD == 1) {
-                    const address = fea256ToScalar(ctx.Fr, ctx.A);
+                    const address = fea2scalar(ctx.Fr, ctx.A);
                     const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
-                    const keyType = fea256ToScalar(ctx.Fr, ctx.B);
-                    const keyStorage = "0x"+ fea256ToScalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
+                    const keyType = fea2scalar(ctx.Fr, ctx.B);
+                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
 
                     let res = {};
                     if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
@@ -815,14 +812,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, res.value);
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, Scalar.e(res.value));
+                    fi = scalar2fea(Fr, Scalar.e(res.value));
                     nHits++;
                 }
                 if (l.sWR == 1) {
-                    const address = fea256ToScalar(ctx.Fr, ctx.A);
+                    const address = fea2scalar(ctx.Fr, ctx.A);
                     const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
-                    const keyStorage = "0x"+ fea256ToScalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
-                    const keyType = fea256ToScalar(ctx.Fr, ctx.B)
+                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
+                    const keyType = fea2scalar(ctx.Fr, ctx.B)
                     if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
                         input.stateOverride[addressHex].balance = safeFea2scalar(Fr, ctx.D).toString();
                     } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(ConstantsCommon.SMT_KEY_NONCE)){
@@ -904,7 +901,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[hashAddr].data[pos + k]));
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, s);
+                    fi = scalar2fea(Fr, s);
                     nHits++;
                 }
                 if (l.hashKDigest == 1) {
@@ -915,7 +912,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         throw new Error(`digest(${hashAddr}) not calculated. Call hashKlen to finish digest ${sourceRef}`);
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, ctx.hashK[hashAddr].digest);
+                    fi = scalar2fea(Fr, ctx.hashK[hashAddr].digest);
                     nHits++;
                 }
                 if (l.hashS) {
@@ -930,12 +927,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashS[hashAddr].data[pos + k]));
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, s);
+                    fi = scalar2fea(Fr, s);
                     nHits++;
                 }
                 if (l.hashKLen) {
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, typeof ctx.hashK[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashK[hashAddr].data.length));
+                    fi = scalar2fea(Fr, typeof ctx.hashK[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashK[hashAddr].data.length));
                     nHits++;
                 }
                 if (l.hashSDigest == 1) {
@@ -946,12 +943,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         throw new Error(`digest sha256(${hashAddr}) not calculated. Call hashSlen to finish digest ${sourceRef}`);
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, ctx.hashS[hashAddr].digest);
+                    fi = scalar2fea(Fr, ctx.hashS[hashAddr].digest);
                     nHits++;
                 }
                 if (l.hashSLen) {
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, typeof ctx.hashS[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashS[hashAddr].data.length));
+                    fi = scalar2fea(Fr, typeof ctx.hashS[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashS[hashAddr].data.length));
                     nHits++;
                 }
 
@@ -968,7 +965,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[hashAddr].data[pos + k]));
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, s);
+                    fi = scalar2fea(Fr, s);
                     nHits++;
                 }
                 if (l.hashPDigest == 1) {
@@ -979,12 +976,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         throw new Error(`digest(${hashAddr}) not calculated. Call hashPlen to finish digest ${sourceRef}`);
                     }
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, ctx.hashP[hashAddr].digest);
+                    fi = scalar2fea(Fr, ctx.hashP[hashAddr].digest);
                     nHits++;
                 }
                 if (l.hashPLen) {
                     // only 256 bits compatible
-                    fi = scalarToFea256(Fr, typeof ctx.hashP[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashP[hashAddr].data.length));
+                    fi = scalar2fea(Fr, typeof ctx.hashP[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashP[hashAddr].data.length));
                     nHits++;
                 }
                 if (l.bin) {
@@ -999,14 +996,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
                         // only 256 bits compatible
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 2) { // LT
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.lt(a, b);
                         // only 256 bits compatible
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 3) { // SLT
                         // only 256 bits compatible
@@ -1015,37 +1012,37 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         let b = safeFea2scalar(Fr, ctx.B);
                         if (Scalar.geq(b, twoTo255)) b = Scalar.sub(b, twoTo256);
                         const c = Scalar.lt(a, b);
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 4) { // EQ
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.eq(a, b);
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 5) { // AND
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(a, b);
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 6) { // OR
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.bor(a, b);
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 7) { // XOR
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.bxor(a, b);
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 8) { // LT4
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = lt4(a, b);
-                        fi = scalarToFea256(Fr, c);
+                        fi = scalar2fea(Fr, c);
                         nHits ++;
                     } else {
                         throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
@@ -1053,7 +1050,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
 
                 if (l.memAlignRD) {
-                    fi = scalarToFea256(Fr, ctx.helpers.MemAlign.calculate(safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0])));
+                    fi = scalar2fea(Fr, ctx.helpers.MemAlign.calculate(safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0])));
                     nHits ++;
                 }
                 if (l.arith && ctx.helpers.Arith.isFreeInEquation(l.arithEquation)) {
@@ -1375,7 +1372,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
 
             // commented since readings are also done directly in the smt
-            // ctx.sto[ ctx.lastSWrite.keyS ] = fea256ToScalar(Fr, ctx.D).toString(16).padStart(64, "0");
+            // ctx.sto[ ctx.lastSWrite.keyS ] = fea2scalar(Fr, ctx.D).toString(16).padStart(64, "0");
             for (let k=0; k<4; k++) {
                 pols.sKeyI[k][i] =  ctx.lastSWrite.keyI[k];
                 pols.sKey[k][i] = ctx.lastSWrite.key[k];
@@ -2700,11 +2697,11 @@ function eval_getVar(ctx, tag) {
     return ctx.vars[tag.varName];
 }
 
-function scalarToMultiBaseFeaToScalar(ctx, value) {
-        if (ctx.mode384) {
-            return scalarToFea384(ctx.Fr, value);
-        }
-        return scalar2fea(ctx.Fr, value);
+function scalarToMultiBaseFea(ctx, value) {
+    if (ctx.mode384) {
+        return scalarToFea384(ctx.Fr, value);
+    }
+    return scalar2fea(ctx.Fr, value);
 }
 
 function multiBaseFeaToScalar(ctx, value) {
@@ -2712,6 +2709,11 @@ function multiBaseFeaToScalar(ctx, value) {
         return ctx.fullFe ? fea384ToScalar(ctx.Fr, value) : safeFea384ToScalar(ctx.Fr, value);
     }
     return ctx.fullFe ? fea2scalar(ctx.Fr, value) : safeFea2scalar(ctx.Fr, value);
+}
+
+
+function getMultiBaseFea(ctx) {
+    return ctx.mode384 ? 384 : 256;
 }
 
 function eval_getReg(ctx, tag) {
@@ -3261,10 +3263,20 @@ function safeFea2scalar(Fr, arr) {
     for (let index = 0; index < 8; ++index) {
         const value = Fr.toObject(arr[index]);
         if (value > 0xFFFFFFFFn) {
-            throw new Error(`Invalid value 0x${value.toString(16)} to convert to scalar on index ${index}: ${sourceRef}`);
+            throw new Error(`Invalid value 0x${value.toString(16)} (mode:256 bits) to convert to scalar on index ${index}: ${sourceRef}`);
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+function safeFea386ToScalar(Fr, arr) {
+    for (let index = 0; index < 8; ++index) {
+        const value = Fr.toObject(arr[index]);
+        if (value > 0xFFFFFFFFFFFFn) {
+            throw new Error(`Invalid value 0x${value.toString(16)} (mode:384 bits) to convert to scalar on index ${index}: ${sourceRef}`);
+        }
+    }
+    return fea386ToScalar(Fr, arr);
 }
 
 /**

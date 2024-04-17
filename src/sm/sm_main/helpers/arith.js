@@ -25,9 +25,9 @@ const ARITH_BLS12381_SUBFP2 = 11;
 const ARITH_256TO384 = 12;
 
 module.exports = class Arith extends Helper {
-    constructor() {
-        super();
-        this.frZeros = scalar2fea(0n);
+    setup(props) {
+        super.setup(props);
+        this.frZeros = scalar2fea(this.ctx.Fr, 0n);
     }
     isFreeInEquation(arithEquation) {
         return arithEquation == ARITH_MOD || arithEquation == ARITH_384_MOD || arithEquation == ARITH_256TO384;
@@ -71,7 +71,7 @@ module.exports = class Arith extends Helper {
     }
     verify(arithEquation, a, b, op, c = 0n, d = 0n, e = 0n, required = []) {
         const Fr = this.ctx.Fr;
-        const Fe = this.ctx.Fe;
+        const Fec = this.ctx.Fec;
 
         const operation = ARITH_OPERATIONS[arithEquation - 1] ?? `ARITH_EQUATION_${arithEquation}`;
 
@@ -83,13 +83,13 @@ module.exports = class Arith extends Helper {
         // pols.arithUseE[i] = (arithEquation == 1 || arithEquation == 7 || arithEquation == 8 || l.artih) ? 0n : 1n;
         // pols.arithUseCD[i] = (arithEquation == 1 || arithEquation == 7) ? 0n : 1n;
     
-        let chunkToScalar, Fp;
+        let chunkToScalar, fp;
         if (arithEquation >= ARITH_384_MOD) {
             chunkToScalar = this.safeFea384ToScalar;
-            Fp = this.ctx.FpBLS12381;
+            fp = this.ctx.FpBLS12381;
         } else {
             chunkToScalar = this.safeFea2scalar;
-            Fp = this.ctx.FpBLS12381;
+            fp = this.ctx.FpBN254;
         }
         if (arithEquation == ARITH_BASE || arithEquation == ARITH_MOD || arithEquation == ARITH_384_MOD) {
             useE = 0n;
@@ -105,7 +105,7 @@ module.exports = class Arith extends Helper {
                 right = Scalar.add(Scalar.shl(_d, 256), _op);
             } else {
                 if (Scalar.isZero(_d)) {
-                    throw new Error(`Modular arithmetic is undefined when D is zero ${sourceRef}`);
+                    throw new Error(`Modular arithmetic is undefined when D is zero ${this.ctx.sourceRef}`);
                 }
                 left = Scalar.mod(Scalar.add(Scalar.mul(_a, _b), _c), _d);
                 right = _op;
@@ -120,7 +120,7 @@ module.exports = class Arith extends Helper {
 
                 console.log(left.toString() + ' (0x'+left.toString(16)+') != '+ right.toString()
                                             + ' (0x' + right.toString(16)+')');
-                throw new Error(`Arithmetic ${operation} does not match ${sourceRef}`);
+                throw new Error(`Arithmetic ${operation} does not match ${this.ctx.sourceRef}`);
             }
             required.push({ x1: a, y1: b, x2: c, y2: d, x3: [...this.frZeros], y3: op, arithEquation});
         }
@@ -141,7 +141,7 @@ module.exports = class Arith extends Helper {
                     const divisor = Fec.add(Fec.e(y1), Fec.e(y1));
                     same12 = 1n;
                     if (Fec.isZero(divisor)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${arithEquation} ${sourceRef}`);
+                        throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${arithEquation} ${this.ctx.sourceRef}`);
                     }
                     s = Fec.div(Fec.mul(3n, Fec.mul(Fec.e(x1), Fec.e(x1))), divisor);
                 }
@@ -149,7 +149,7 @@ module.exports = class Arith extends Helper {
                     // Division by zero must be managed by ROM before call ARITH
                     const deltaX = Fec.sub(Fec.e(x2), Fec.e(x1))
                     if (Fec.isZero(deltaX)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${arithEquation} ${sourceRef}`);
+                        throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${arithEquation} ${this.ctx.sourceRef}`);
                     }
                     s = Fec.div(Fec.sub(Fec.e(y2), Fec.e(y1)), deltaX);
                 }
@@ -162,8 +162,8 @@ module.exports = class Arith extends Helper {
                     break;
 
                 case ARITH_ECADD_SAME:
-                    const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), Fec.e(x1)));
-                    const _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
+                    _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), Fec.e(x1)));
+                    _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
                     break;
 
                 case ARITH_BN254_MULFP2:
@@ -196,7 +196,7 @@ module.exports = class Arith extends Helper {
                 console.log('x3: '+x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
                 console.log('y3: '+y3.toString()+(y3eq ? ' == ' : ' != ')+_y3.toString());
 
-                throw new Error(`Arithmetic ${operation} point does not match: ${sourceRef}`);
+                throw new Error(`Arithmetic ${operation} point does not match: ${this.ctx.sourceRef}`);
             }
 
             required.push({x1: a, y1: b,x2: dbl ? a:c, y2: dbl ? b:d, x3: e, y3: op, arithEquation});
@@ -214,13 +214,13 @@ module.exports = class Arith extends Helper {
                 console.log('B: '+_b.toString()+' (0x'+_b.toString(16)+')');
                 console.log('op: '+_op.toString()+' (0x'+_op.toString(16)+')');
 
-                throw new Error(`Arithmetic ${operation} point does not match: ${sourceRef}`);
+                throw new Error(`Arithmetic ${operation} point does not match: ${this.ctx.sourceRef}`);
             }
             useCD = 0n;
             required.push({x1: a, y1: b,x2: dbl ? a:c, y2: dbl ? b:d, x3: e, y3: op, arithEquation});
         }
         else {
-            throw new Error(`Invalid arithmetic ${operation} arithEquation:${arithEquation} at ${sourceRef}`);
+            throw new Error(`Invalid arithmetic ${operation} arithEquation:${arithEquation} at ${this.ctx.sourceRef}`);
         }
         return {flags: {same12, useE, useCD}};
     }
