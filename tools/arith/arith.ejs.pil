@@ -317,14 +317,46 @@ namespace Arith(%N);
                             // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
                             // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
 
+    
+    pol constant RANGE_HSEL; // 0:0-255,0xFFFF:(2**16-256)       NOTE: when arith389 = 0 ==> hrci * (1 - arith389) === 0
+                             // 0:                                    if 0 
+                             // 
+                             // -----------------------------------------------------------------------
+                             // 37:2**16-7885,0:7885     38:2**16-26750,0:26750  39:2**16-29672,0:29672
+                             // 11:2**16-24534,0:24534   22:2**16-26749,0:26749  33:2**16-10115,0:10115
+                             // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
+                             // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
+                             // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
+                             // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
+
+    
+    pol constant RANGE_HSEL; // 0:0-255,0xFFFF:(2**16-256)       NOTE: when arith389 = 0 ==> hrci * (1 - arith389) === 0
+                             // 0:                                    if 0 
+                             // 
+                             // -----------------------------------------------------------------------
+                             // 37:2**16-7885,0:7885     38:2**16-26750,0:26750  39:2**16-29672,0:29672
+                             // 11:2**16-24534,0:24534   22:2**16-26749,0:26749  33:2**16-10115,0:10115
+                             // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
+                             // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
+                             // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
+                             // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
+
     // range to be looked up for each chunk and for each prime
-    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[1] + selEq[2]);
-    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18])
-                        + 11 * (Global.CLK32[3] + Global.CLK32[19]) + 13 * (Global.CLK32[4] + Global.CLK32[20]) + 15 * (Global.CLK32[5] + Global.CLK32[21])
-                        + 17 * (Global.CLK32[6] + Global.CLK32[22]) + 19 * (Global.CLK32[7] + Global.CLK32[23]) + 21 * (Global.CLK32[8] + Global.CLK32[24])
-                        + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
+    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29]  + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[1] + selEq[2]);
+
+    pol pRangeBN254 =     (5 * (Global.CLK32[0]  + Global.CLK32[16]) +  7 * (Global.CLK32[1]  + Global.CLK32[17]) +  9 * (Global.CLK32[2]  + Global.CLK32[18])
+                        + 11 * (Global.CLK32[3]  + Global.CLK32[19]) + 13 * (Global.CLK32[4]  + Global.CLK32[20]) + 15 * (Global.CLK32[5]  + Global.CLK32[21])
+                        + 17 * (Global.CLK32[6]  + Global.CLK32[22]) + 19 * (Global.CLK32[7]  + Global.CLK32[23]) + 21 * (Global.CLK32[8]  + Global.CLK32[24])
+                        + 23 * (Global.CLK32[9]  + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
                         + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
                         + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[3] + selEq[4] + selEq[5]);
+
+    pol pRangeBLS381 =   (37 * (Global.CLK32[0]  + Global.CLK32[16]) + 39 * (Global.CLK32[1]  + Global.CLK32[17]) + 41 * (Global.CLK32[2]  + Global.CLK32[18])
+                        + 43 * (Global.CLK32[3]  + Global.CLK32[19]) + 45 * (Global.CLK32[4]  + Global.CLK32[20]) + 47 * (Global.CLK32[5]  + Global.CLK32[21])
+                        + 49 * (Global.CLK32[6]  + Global.CLK32[22]) + 51 * (Global.CLK32[7]  + Global.CLK32[23]) + 53 * (Global.CLK32[8]  + Global.CLK32[24])
+                        + 55 * (Global.CLK32[9]  + Global.CLK32[25]) + 57 * (Global.CLK32[10] + Global.CLK32[26]) + 59 * (Global.CLK32[11] + Global.CLK32[27])
+                        + 61 * (Global.CLK32[12] + Global.CLK32[28]) + 63 * (Global.CLK32[13] + Global.CLK32[29]) + 64 * (Global.CLK32[14] + Global.CLK32[30])
+                        + 67 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[7] + selEq[8] + selEq[9] + selEq[10]);
 
     // Correctness of the y2clock, x3clock and y3clock
     0 = (y2[15]-y2clock)*Global.CLK32[0] + (y2[14]-y2clock)*Global.CLK32[1] + (y2[13]-y2clock)*Global.CLK32[2] + (y2[12]-y2clock)*Global.CLK32[3] + (y2[11]-y2clock)*Global.CLK32[4] + (y2[10]-y2clock)*Global.CLK32[5] + (y2[9]-y2clock)*Global.CLK32[6] + (y2[8]-y2clock)*Global.CLK32[7]
@@ -356,7 +388,22 @@ namespace Arith(%N);
     // Note: In the (mathematical) undefined case where y2 = 0, we have y3 = chunkLtPrime = 0 and therefore that x3 = 0xFFFF
 
     // lookup with RANGE_SEL as first column and BYTE2 as second column
-    {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
+    pol commit rangeSel;
+    rangeSel = (pRangeSecp256k1 + pRangeBN254 + pRangeBLS381) * (1 - valueLtPrime);
+    pol commit hrc4,lrc4;
+
+    <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %> = hrc4 * 2**24 + lrc4;
+
+    pol arith384 = selEq[7] + selEq[8] + selEq[9] + selEq[10];
+
+    hrc0 * (1 - arith384) = 0;
+    hrc1 * (1 - arith384) = 0;
+    hrc2 * (1 - arith384) = 0;
+    hrc3 * (1 - arith384) = 0;
+    hrc4 * (1 - arith384) = 0;
+
+    {rangeSel, hrc4} in {RANGE_HSEL, Global.BYTE2};
+    {rangeSel, lrc4} in {RANGE_SEL, Global.BYTE2};
 
     /****
     *

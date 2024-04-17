@@ -317,14 +317,32 @@ namespace Arith(%N);
                             // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
                             // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
 
+    
+    pol constant RANGE_HSEL; // 0-36:0,0xFFFF:(2**16-2) 
+                             // -----------------------------------------------------------------------
+                             // 37:2**16-7885,0:7885     38:2**16-26750,0:26750  39:2**16-29672,0:29672
+                             // 11:2**16-24534,0:24534   22:2**16-26749,0:26749  33:2**16-10115,0:10115
+                             // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
+                             // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
+                             // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
+                             // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
+
     // range to be looked up for each chunk and for each prime
-    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[1] + selEq[2]);
-    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18])
-                        + 11 * (Global.CLK32[3] + Global.CLK32[19]) + 13 * (Global.CLK32[4] + Global.CLK32[20]) + 15 * (Global.CLK32[5] + Global.CLK32[21])
-                        + 17 * (Global.CLK32[6] + Global.CLK32[22]) + 19 * (Global.CLK32[7] + Global.CLK32[23]) + 21 * (Global.CLK32[8] + Global.CLK32[24])
-                        + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
+    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29]  + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[1] + selEq[2]);
+
+    pol pRangeBN254 =     (5 * (Global.CLK32[0]  + Global.CLK32[16]) +  7 * (Global.CLK32[1]  + Global.CLK32[17]) +  9 * (Global.CLK32[2]  + Global.CLK32[18])
+                        + 11 * (Global.CLK32[3]  + Global.CLK32[19]) + 13 * (Global.CLK32[4]  + Global.CLK32[20]) + 15 * (Global.CLK32[5]  + Global.CLK32[21])
+                        + 17 * (Global.CLK32[6]  + Global.CLK32[22]) + 19 * (Global.CLK32[7]  + Global.CLK32[23]) + 21 * (Global.CLK32[8]  + Global.CLK32[24])
+                        + 23 * (Global.CLK32[9]  + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
                         + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
                         + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[3] + selEq[4] + selEq[5]);
+
+    pol pRangeBLS381 =   (37 * (Global.CLK32[0]  + Global.CLK32[16]) + 39 * (Global.CLK32[1]  + Global.CLK32[17]) + 41 * (Global.CLK32[2]  + Global.CLK32[18])
+                        + 43 * (Global.CLK32[3]  + Global.CLK32[19]) + 45 * (Global.CLK32[4]  + Global.CLK32[20]) + 47 * (Global.CLK32[5]  + Global.CLK32[21])
+                        + 49 * (Global.CLK32[6]  + Global.CLK32[22]) + 51 * (Global.CLK32[7]  + Global.CLK32[23]) + 53 * (Global.CLK32[8]  + Global.CLK32[24])
+                        + 55 * (Global.CLK32[9]  + Global.CLK32[25]) + 57 * (Global.CLK32[10] + Global.CLK32[26]) + 59 * (Global.CLK32[11] + Global.CLK32[27])
+                        + 61 * (Global.CLK32[12] + Global.CLK32[28]) + 63 * (Global.CLK32[13] + Global.CLK32[29]) + 64 * (Global.CLK32[14] + Global.CLK32[30])
+                        + 67 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[7] + selEq[8] + selEq[9] + selEq[10]);
 
     // Correctness of the y2clock, x3clock and y3clock
     0 = (y2[15]-y2clock)*Global.CLK32[0] + (y2[14]-y2clock)*Global.CLK32[1] + (y2[13]-y2clock)*Global.CLK32[2] + (y2[12]-y2clock)*Global.CLK32[3] + (y2[11]-y2clock)*Global.CLK32[4] + (y2[10]-y2clock)*Global.CLK32[5] + (y2[9]-y2clock)*Global.CLK32[6] + (y2[8]-y2clock)*Global.CLK32[7]
@@ -356,10 +374,23 @@ namespace Arith(%N);
     // Note: In the (mathematical) undefined case where y2 = 0, we have y3 = chunkLtPrime = 0 and therefore that x3 = 0xFFFF
 
     // lookup with RANGE_SEL as first column and BYTE2 as second column
-    {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
+    pol commit rangeSel;
+    rangeSel = (pRangeSecp256k1 + pRangeBN254 + pRangeBLS381) * (1 - valueLtPrime);
+    pol commit hrc4,lrc4;
+
+    x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
 	   + x3[7]*Global.CLK32[8] + x3[6]*Global.CLK32[9] + x3[5]*Global.CLK32[10] + x3[4]*Global.CLK32[11] + x3[3]*Global.CLK32[12] + x3[2]*Global.CLK32[13] + x3[1]*Global.CLK32[14] + x3[0]*Global.CLK32[15]
 	   + y3[15]*Global.CLK32[16] + y3[14]*Global.CLK32[17] + y3[13]*Global.CLK32[18] + y3[12]*Global.CLK32[19] + y3[11]*Global.CLK32[20] + y3[10]*Global.CLK32[21] + y3[9]*Global.CLK32[22] + y3[8]*Global.CLK32[23]
-	   + y3[7]*Global.CLK32[24] + y3[6]*Global.CLK32[25] + y3[5]*Global.CLK32[26] + y3[4]*Global.CLK32[27] + y3[3]*Global.CLK32[28] + y3[2]*Global.CLK32[29] + y3[1]*Global.CLK32[30] + y3[0]*Global.CLK32[31]} in {RANGE_SEL, Global.BYTE2};
+	   + y3[7]*Global.CLK32[24] + y3[6]*Global.CLK32[25] + y3[5]*Global.CLK32[26] + y3[4]*Global.CLK32[27] + y3[3]*Global.CLK32[28] + y3[2]*Global.CLK32[29] + y3[1]*Global.CLK32[30] + y3[0]*Global.CLK32[31] = hrc4 * 2**24 + lrc4;
+
+    hrc0 * (1 - arithEq_789A) = 0;
+    hrc1 * (1 - arithEq_789A) = 0;
+    hrc2 * (1 - arithEq_789A) = 0;
+    hrc3 * (1 - arithEq_789A) = 0;
+    hrc4 * (1 - arithEq_789A) = 0;
+
+    {rangeSel, hrc4} in {RANGE_HSEL, Global.BYTE2};
+    {rangeSel, lrc4} in {RANGE_SEL, Global.BYTE2};
 
     /****
     *
@@ -574,7 +605,6 @@ namespace Arith(%N);
 	   + q1[9]*Global.CLK32[8] + q1[10]*Global.CLK32[9] + q1[11]*Global.CLK32[10] + q1[12]*Global.CLK32[11] + q1[13]*Global.CLK32[12] + q1[14]*Global.CLK32[13] + q2[0]*Global.CLK32[14] + q2[1]*Global.CLK32[15]
 	   + q2[2]*Global.CLK32[16] + q2[3]*Global.CLK32[17] + q2[4]*Global.CLK32[18] + q2[5]*Global.CLK32[19] + q2[6]*Global.CLK32[20] + q2[7]*Global.CLK32[21] + q2[8]*Global.CLK32[22] + q2[9]*Global.CLK32[23]
 	   + q2[10]*Global.CLK32[24] + q2[11]*Global.CLK32[25] + q2[12]*Global.CLK32[26] + q2[13]*Global.CLK32[27] + q2[14]*Global.CLK32[28] + q0[15]*Global.CLK32[29] + q1[15]*Global.CLK32[30] + q2[15]*Global.CLK32[31] = hrc3 * 2**16 + lrc3;
-
      
     {hrc0,hrc1} in {Global.BYTE2,Global.BYTE2};
     // hrc1 in Global.BYTE2;
