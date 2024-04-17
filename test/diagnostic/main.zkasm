@@ -1,0 +1,18 @@
+INCLUDE "header.zkasm"
+
+    ; Edge-case: Obtain the pre-computed hash of the BATCH executor:
+    ;           hashContractBytecode(input.batchL2Data)
+    ; where input.batchL2Data = "0x0" and the chosen hash function is poseidon
+    $ => E              :MLOAD(lastHashPId)
+    E + 1 => E          :MSTORE(lastHashPId)
+	0x95c0fb2578c1ca5cbe733041248d0d6d51adcdb218147c845cca7c553590c73bn     :HASHPDIGEST(E)
+
+INCLUDE "basics.zkasm"
+INCLUDE "command.zkasm"
+INCLUDE "counters.zkasm"
+INCLUDE "features.zkasm"
+INCLUDE "fix.zkasm"
+INCLUDE "operations.zkasm"
+INCLUDE "special.zkasm"
+
+INCLUDE "footer.zkasm"

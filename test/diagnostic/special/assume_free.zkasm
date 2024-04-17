@@ -1,0 +1,1219 @@
+VAR GLOBAL v0[8]
+VAR GLOBAL v1[12]
+VAR GLOBAL padding[7]
+VAR GLOBAL g7_8[8]
+VAR GLOBAL g15
+VAR CTX lpadding[10]
+VAR CTX l10_80[80]
+VAR CTX l90
+CONST %CS1 = 10
+CONST %CS2 = 2
+CONST %CS3 = 3
+CONSTL %CL1 = 100
+
+VAR GLOBAL assumef_var1
+VAR GLOBAL assumef_var2
+VAR GLOBAL assumef_var3
+VAR GLOBAL assumef_var4
+VAR GLOBAL assumef_var5
+
+        :JMP(assume_free_start)
+        ; This is used for calls
+        assume_free_label_call:
+        1 => A
+        1 => A
+        1 => A
+        :RETURN
+
+        assume_free_label_no_call:
+        :RETURN
+
+assume_free_start:
+        ;;
+        ; F_MLOAD
+        ;;
+        ; small test
+        10                      :MSTORE(assumef_var1)
+        $ + 3 => A              :F_MLOAD(assumef_var1)
+        13                      :ASSERT
+        assumef_var1 + 3 => A
+        13                      :ASSERT
+
+        ; 2^32-1 (maximum allowed value for freeinput computations)
+        0xfffffffen             :MSTORE(assumef_var1)
+        $ + 1 => A              :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+        assumef_var1 + 1 => A
+        0xffffffffn             :ASSERT
+
+        ; random value
+        0x9334b875              :MSTORE(assumef_var1)
+        $ + 0x6ccb478a => A     :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+        assumef_var1 + 0x6ccb478a => A
+        0xffffffffn             :ASSERT
+
+        ;;
+        ; Syntactic Sugar for F_MLOAD, MLOAD, MSTORE
+        ;;
+        3 - 2 * B => A,C        :MSTORE(v1)
+        A                       :MLOAD(v1)
+        3 - 2 * B => v1,C
+        A                       :MLOAD(v1)
+
+        1 => v1,B
+        3 * $ - 2 * B => A,C    :F_MLOAD(v1)
+        1                       :MLOAD(v1)
+        3 * v1 - 2 * B => A,C
+        1                       :MLOAD(v1)
+
+        1                       :MSTORE(v1[6])
+        3 * $ - 2 * B => A,C    :F_MLOAD(v1+6)
+        1                       :MLOAD(v1[6])
+        3 * v1[6] - 2 * B => A,C
+        1                       :MLOAD(v1[6])
+
+        ; Playing with F_MLOAD and the associated syntactic sugar
+        0 => A,B
+        2 * B + 8 => A
+        2 * g15 + 8 => A
+        2 * l90 + 8 => A
+        2 * g7_8 + 8 => A
+        2 * l10_80 + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g15)
+        2 * $ + 8 => A    :F_MLOAD(l90)
+        2 * $ + 8 => A    :F_MLOAD(g7_8)
+        2 * $ + 8 => A    :F_MLOAD(l10_80)
+
+        B => g15
+        2 * ${B} + 8 => A    :F_MLOAD(g15)
+        B => l90
+        2 * ${B} + 8 => A    :F_MLOAD(l90)
+        B => g7_8
+        2 * ${B} + 8 => A    :F_MLOAD(g7_8)
+        B => l10_80
+        2 * ${B} + 8 => A    :F_MLOAD(l10_80)
+
+        0 => E
+        2 * g15[E+2] + 8 => A
+        2 * l90[E+2] + 8 => A
+        2 * g7_8[E+2] + 8 => A
+        2 * l10_80[E+2] + 8 => A
+        2 * g7_8[5*E+2] + 8 => A
+        2 * l10_80[5*E+2] + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g7_8+E)
+        2 * $ + 8 => A    :F_MLOAD(l10_80+E)
+        2 * $ + 8 => A    :F_MLOAD(g7_8[5*E+2])
+        2 * $ + 8 => A    :F_MLOAD(l10_80[5*E+2])
+
+        2 => E,RR
+        2 * g7_8[5*E+2-3*RR] + 8 => A
+        2 * l10_80[5*E+2-3*RR] + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g7_8[5*E+2-3*RR])
+        2 * $ + 8 => A    :F_MLOAD(l10_80[5*E+2-3*RR])
+
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A
+        2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A
+
+        2 * $ + 8 => A    :F_MLOAD(g7_8[5*E+%CS2-%CS3*RR])
+        2 * $ + 8 => A    :F_MLOAD(l10_80[5*E+%CS2-%CS3*RR])
+
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(assume_free_label_comb1)
+        assume_free_label_comb1:
+        2 * l10_80[5*E+%CS2-%CS3*RR] + 8 => A :JMP(assume_free_label_comb2)
+        assume_free_label_comb2:
+
+        assume_free_label_jmp:
+        1 => E,RR ; 5*E-3*RR = 2, 6*E-3*RR = 3
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMP(@assume_free_label_jmp+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMP(@assume_free_label_jmp+6*E-3*RR)
+
+        assume_free_label_jmpn:
+        1 => E,RR
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@assume_free_label_jmpn+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPN(@assume_free_label_jmpn+6*E-3*RR)
+
+        assume_free_label_jmpz:
+        1 => E,RR
+        2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@assume_free_label_jmpz+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@assume_free_label_jmpz+6*E-3*RR)
+
+	assume_free_label_jmpnz:
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@assume_free_label_jmpnz+5*E-3*RR)
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@assume_free_label_jmpnz+6*E-3*RR)
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPZ(@assume_free_label_jmpz1+5*E-3*RR,@assume_free_label_jmpz2+5*E-3*RR)
+        assume_free_label_jmpz1:
+        assume_free_label_jmpz2:
+        1 => A
+        1       :ASSERT
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPZ(@assume_free_label_jmpz3+6*E-3*RR,@assume_free_label_jmpz4+6*E-3*RR)
+        assume_free_label_jmpz3:
+        assume_free_label_jmpz4:
+        1 => A
+        1       :ASSERT
+        1       :ASSERT
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPN(@assume_free_label_jmpn1+5*E-3*RR,@assume_free_label_jmpn2+5*E-3*RR)
+        assume_free_label_jmpn1:
+        assume_free_label_jmpn2:
+        1 => A
+        1       :ASSERT
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPN(@assume_free_label_jmpn3+6*E-3*RR,@assume_free_label_jmpn4+6*E-3*RR)
+        assume_free_label_jmpn3:
+        assume_free_label_jmpn4:
+        1 => A
+        1       :ASSERT
+        1       :ASSERT
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :JMPNZ(@assume_free_label_jmpnz1+5*E-3*RR,@assume_free_label_jmpn2+5*E-3*RR)
+        assume_free_label_jmpnz1:
+        assume_free_label_jmpnz2:
+        1 => A
+        1       :ASSERT
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :JMPNZ(@assume_free_label_jmpnz3+6*E-3*RR,@assume_free_label_jmpn4+6*E-3*RR)
+        assume_free_label_jmpnz3:
+        assume_free_label_jmpnz4:
+        1 => A
+        1       :ASSERT
+        1       :ASSERT
+
+        ; CALL
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(assume_free_label_call)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL(assume_free_label_call)
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL(@assume_free_label_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL(@assume_free_label_call+6*E-3*RR)
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_N(@assume_free_label_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_N(@assume_free_label_call+6*E-3*RR)
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_Z(@assume_free_label_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_Z(@assume_free_label_call+6*E-3*RR)
+
+	1 => E,RR
+	2 * g7_8[5*E+%CS2-%CS3*RR] + 8 => A   :CALL_NZ(@assume_free_label_call+5*E-3*RR,@assume_free_label_no_call+5*E-3*RR)
+        1 => E,RR
+        2 * l10_80[6*E+%CS2-%CS3*RR] + 8 => A :CALL_NZ(@assume_free_label_call+6*E-3*RR,@assume_free_label_no_call+6*E-3*RR)
+
+        ;;
+        ; F_HASHP,F_HASHPN
+        ;;
+        $ => E                  :MLOAD(lastHashPId)
+
+        E + 1 => E              :MSTORE(lastHashPId)
+        0 => HASHPOS
+        4 => D
+	0x5EFF87B9n	        :HASHP(E)
+
+        2 => B
+        0 => HASHPOS
+	$ + B => A              :F_HASHP(E)
+	0x5EFF87BBn             :ASSERT
+
+	; HASHP1 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x000000004Cn	:HASHP1(E)
+
+	0x0032C50D3An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP1(E)
+	0x0032C50D86	:ASSERT
+
+	; HASHP2 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00000038A2n	:HASHP2(E)
+
+	0x00B1F87097n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP2(E)
+	0x00B1F8A939	:ASSERT
+
+	; HASHP3 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00005063B6n	:HASHP3(E)
+
+	0x008B2DCA24n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP3(E)
+	0x008B7E2DDA	:ASSERT
+
+	; HASHP4 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x001409361Cn	:HASHP4(E)
+
+	0x007C3A7289n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP4(E)
+	0x009043A8A5	:ASSERT
+
+	; HASHP5 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x004C12D398n	:HASHP5(E)
+
+	0x009603BA84n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP5(E)
+	0x00E2168E1C	:ASSERT
+
+	; HASHP6 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00D3427F32n	:HASHP6(E)
+
+	0x00181C898Dn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP6(E)
+	0x00EB5F08BF	:ASSERT
+
+	; HASHP7 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x007D832717n	:HASHP7(E)
+
+	0x005D495208n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP7(E)
+	0x00DACC791F	:ASSERT
+
+	; HASHP8 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00AAD7AA48n	:HASHP8(E)
+
+	0x001B31B043n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP8(E)
+	0x00C6095A8B	:ASSERT
+
+	; HASHP9 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x006458B4EDn	:HASHP9(E)
+
+	0x00977C87C2n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP9(E)
+	0x00FBD53CAF	:ASSERT
+
+	; HASHP10 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00A098D0C2n	:HASHP10(E)
+
+	0x00183A5449n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP10(E)
+	0x00B8D3250B	:ASSERT
+
+	; HASHP11 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x007D562908n	:HASHP11(E)
+
+	0x0037FE4A4Dn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP11(E)
+	0x00B5547355	:ASSERT
+
+	; HASHP12 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x0098C3E72An	:HASHP12(E)
+
+	0x0041B9844Fn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP12(E)
+	0x00DA7D6B79	:ASSERT
+
+	; HASHP13 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00C731BDCDn	:HASHP13(E)
+
+	0x002FC0DAF4n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP13(E)
+	0x00F6F298C1	:ASSERT
+
+	; HASHP14 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00F3450AC8n	:HASHP14(E)
+
+	0x000C4F329Dn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP14(E)
+	0x00FF943D65	:ASSERT
+
+	; HASHP15 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00C72690EBn	:HASHP15(E)
+
+	0x0033735162n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP15(E)
+	0x00FA99E24D	:ASSERT
+
+	; HASHP16 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x0095F16EDDn	:HASHP16(E)
+
+	0x002E2F82A0n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP16(E)
+	0x00C420F17D	:ASSERT
+
+	; HASHP17 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x0006E9A7B6n	:HASHP17(E)
+
+	0x00AFE6E5EBn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP17(E)
+	0x00B6D08DA1	:ASSERT
+
+	; HASHP18 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00E24C1770n	:HASHP18(E)
+
+	0x00168DCF6Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP18(E)
+	0x00F8D9E6DC	:ASSERT
+
+	; HASHP19 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00FDBC4C3Dn	:HASHP19(E)
+
+	0x00001D06B1n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP19(E)
+	0x00FDD952EE	:ASSERT
+
+	; HASHP20 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x008281DD53n	:HASHP20(E)
+
+	0x0048DC501Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP20(E)
+	0x00CB5E2D6F	:ASSERT
+
+	; HASHP21 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x004F187BB9n	:HASHP21(E)
+
+	0x0055614EAEn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP21(E)
+	0x00A479CA67	:ASSERT
+
+	; HASHP22 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x006EB9C0B4n	:HASHP22(E)
+
+	0x0017491733n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP22(E)
+	0x008602D7E7	:ASSERT
+
+	; HASHP23 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x0017CCFDF6n	:HASHP23(E)
+
+	0x0019175300n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP23(E)
+	0x0030E450F6	:ASSERT
+
+	; HASHP24 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00651E04A6n	:HASHP24(E)
+
+	0x0051D835EEn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP24(E)
+	0x00B6F63A94	:ASSERT
+
+	; HASHP25 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00836ED7F9n	:HASHP25(E)
+
+	0x001B741C62n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP25(E)
+	0x009EE2F45B	:ASSERT
+
+	; HASHP26 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00B0C73C93n	:HASHP26(E)
+
+	0x0015C6C3A2n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP26(E)
+	0x00C68E0035	:ASSERT
+
+	; HASHP27 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x0099DA8B5Bn	:HASHP27(E)
+
+	0x00050A381An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP27(E)
+	0x009EE4C375	:ASSERT
+
+	; HASHP28 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x002083A3C0n	:HASHP28(E)
+
+	0x0072AEBCD9n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP28(E)
+	0x0093326099	:ASSERT
+
+	; HASHP29 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00D0D2FA00n	:HASHP29(E)
+
+	0x001527A4E6n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP29(E)
+	0x00E5FA9EE6	:ASSERT
+
+	; HASHP30 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00FEF0C7BEn	:HASHP30(E)
+
+	0x0000BE456Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP30(E)
+	0x00FFAF0D2A	:ASSERT
+
+	; HASHP31 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00571B6DE9n	:HASHP31(E)
+
+	0x0062C4A29Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP31(E)
+	0x00B9E01085	:ASSERT
+
+	; HASHP32 Test
+	E + 1 => E	:MSTORE(lastHashPId)
+	0 => HASHPOS
+	0x00198FE9BFn	:HASHP32(E)
+
+	0x001C0FEEE1n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHP32(E)
+	0x00359FD8A0	:ASSERT
+
+        ;;
+        ; F_HASHK,F_HASHKN
+        ;;
+        $ => E                  :MLOAD(lastHashKId)
+
+        E + 1 => E              :MSTORE(lastHashKId)
+        0 => HASHPOS
+        32 => D
+	0xB497577Bn     :HASHK(E)
+        32 	        :HASHKLEN(E)
+
+        0x4B68A884n => B
+        0 => HASHPOS
+	$ + B => A      :F_HASHK(E)
+	0xFFFFFFFF      :ASSERT
+
+	; HASHK1 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0000000017n	:HASHK1(E)
+
+	0x00251A61D8n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK1(E)
+	0x00251A61EF	:ASSERT
+
+	; HASHK2 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x000000C7F2n	:HASHK2(E)
+
+	0x00379BCA1Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK2(E)
+	0x00379C920E	:ASSERT
+
+	; HASHK3 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0000F17FAFn	:HASHK3(E)
+
+	0x00E5859801n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK3(E)
+	0x00E67717B0	:ASSERT
+
+	; HASHK4 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00E4900B6En	:HASHK4(E)
+
+	0x000962D93Dn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK4(E)
+	0x00EDF2E4AB	:ASSERT
+
+	; HASHK5 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00FC514747n	:HASHK5(E)
+
+	0x000373033Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK5(E)
+	0x00FFC44A83	:ASSERT
+
+	; HASHK6 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x008AC96547n	:HASHK6(E)
+
+	0x000833F40Fn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK6(E)
+	0x0092FD5956	:ASSERT
+
+	; HASHK7 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00FA0F706Bn	:HASHK7(E)
+
+	0x0003976703n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK7(E)
+	0x00FDA6D76E	:ASSERT
+
+	; HASHK8 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00A1F3999Dn	:HASHK8(E)
+
+	0x00391A438Cn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK8(E)
+	0x00DB0DDD29	:ASSERT
+
+	; HASHK9 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00E2AE667Bn	:HASHK9(E)
+
+	0x001BF8831An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK9(E)
+	0x00FEA6E995	:ASSERT
+
+	; HASHK10 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00E6ADDD96n	:HASHK10(E)
+
+	0x0014A95375n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK10(E)
+	0x00FB57310B	:ASSERT
+
+	; HASHK11 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00BF6ECDF4n	:HASHK11(E)
+
+	0x003D434583n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK11(E)
+	0x00FCB21377	:ASSERT
+
+	; HASHK12 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00199E7687n	:HASHK12(E)
+
+	0x009BD144F6n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK12(E)
+	0x00B56FBB7D	:ASSERT
+
+	; HASHK13 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x002901C0A4n	:HASHK13(E)
+
+	0x0063980FBEn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK13(E)
+	0x008C99D062	:ASSERT
+
+	; HASHK14 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00DED32C14n	:HASHK14(E)
+
+	0x00130325D2n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK14(E)
+	0x00F1D651E6	:ASSERT
+
+	; HASHK15 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x001EBFB12Cn	:HASHK15(E)
+
+	0x00BB1E8615n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK15(E)
+	0x00D9DE3741	:ASSERT
+
+	; HASHK16 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00B6CCB989n	:HASHK16(E)
+
+	0x00240A5CB0n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK16(E)
+	0x00DAD71639	:ASSERT
+
+	; HASHK17 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x003F3CE081n	:HASHK17(E)
+
+	0x00497562B1n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK17(E)
+	0x0088B24332	:ASSERT
+
+	; HASHK18 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0008E20851n	:HASHK18(E)
+
+	0x00CC6FB098n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK18(E)
+	0x00D551B8E9	:ASSERT
+
+	; HASHK19 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x000DCC3AEEn	:HASHK19(E)
+
+	0x00C9F7BEA2n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK19(E)
+	0x00D7C3F990	:ASSERT
+
+	; HASHK20 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00B8DF2A0Dn	:HASHK20(E)
+
+	0x000C717FCBn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK20(E)
+	0x00C550A9D8	:ASSERT
+
+	; HASHK21 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x001DAF60FDn	:HASHK21(E)
+
+	0x00DA1DB8D8n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK21(E)
+	0x00F7CD19D5	:ASSERT
+
+	; HASHK22 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00F55B80EEn	:HASHK22(E)
+
+	0x00042C280Fn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK22(E)
+	0x00F987A8FD	:ASSERT
+
+	; HASHK23 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00EBCD2D26n	:HASHK23(E)
+
+	0x0002608E17n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK23(E)
+	0x00EE2DBB3D	:ASSERT
+
+	; HASHK24 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0017011BE9n	:HASHK24(E)
+
+	0x008D4BE0D4n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK24(E)
+	0x00A44CFCBD	:ASSERT
+
+	; HASHK25 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x002554839Fn	:HASHK25(E)
+
+	0x0006AC9B1Bn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK25(E)
+	0x002C011EBA	:ASSERT
+
+	; HASHK26 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x00C770900Fn	:HASHK26(E)
+
+	0x001DB76555n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK26(E)
+	0x00E527F564	:ASSERT
+
+	; HASHK27 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0092735F5Dn	:HASHK27(E)
+
+	0x0040F0FBA6n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK27(E)
+	0x00D3645B03	:ASSERT
+
+	; HASHK28 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0011F25F58n	:HASHK28(E)
+
+	0x0094A653FFn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK28(E)
+	0x00A698B357	:ASSERT
+
+	; HASHK29 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x001CF16B90n	:HASHK29(E)
+
+	0x00C1FD270Dn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK29(E)
+	0x00DEEE929D	:ASSERT
+
+	; HASHK30 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x008C8968AAn	:HASHK30(E)
+
+	0x001A341C73n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK30(E)
+	0x00A6BD851D	:ASSERT
+
+	; HASHK31 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x0067431E07n	:HASHK31(E)
+
+	0x003118742An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK31(E)
+	0x00985B9231	:ASSERT
+
+	; HASHK32 Test
+	E + 1 => E	:MSTORE(lastHashKId)
+	0 => HASHPOS
+	0x009BF2DFF5n	:HASHK32(E)
+
+	0x0051510559n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHK32(E)
+	0x00ED43E54E	:ASSERT
+
+        ;;
+        ; F_HASHS,F_HASHSN
+        ;;
+        $ => E                  :MLOAD(lastHashSId)
+
+        E + 1 => E              :MSTORE(lastHashSId)
+        0 => HASHPOS
+        32 => D
+	0x24640586n     :HASHS(E)
+        32 	        :HASHSLEN(E)
+
+        0x503FEBEAn => B
+        0 => HASHPOS
+	$ + B => A      :F_HASHS(E)
+	0x74A3F170      :ASSERT
+
+	; HASHS1 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x000000008Cn	:HASHS1(E)
+
+	0x00746F4D7Fn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS1(E)
+	0x00746F4E0B	:ASSERT
+
+	; HASHS2 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x000000351Fn	:HASHS2(E)
+
+	0x0071ADBEB6n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS2(E)
+	0x0071ADF3D5	:ASSERT
+
+	; HASHS3 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0000D5FEA5n	:HASHS3(E)
+
+	0x00593C1516n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS3(E)
+	0x005A1213BB	:ASSERT
+
+	; HASHS4 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00DB42734Cn	:HASHS4(E)
+
+	0x000791307En => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS4(E)
+	0x00E2D3A3CA	:ASSERT
+
+	; HASHS5 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x009C3A404An	:HASHS5(E)
+
+	0x0026A8FB84n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS5(E)
+	0x00C2E33BCE	:ASSERT
+
+	; HASHS6 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00693A5CF0n	:HASHS6(E)
+
+	0x004F685FD3n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS6(E)
+	0x00B8A2BCC3	:ASSERT
+
+	; HASHS7 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0075C87E53n	:HASHS7(E)
+
+	0x0021B00534n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS7(E)
+	0x0097788387	:ASSERT
+
+	; HASHS8 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00163A290Cn	:HASHS8(E)
+
+	0x0035A5A18An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS8(E)
+	0x004BDFCA96	:ASSERT
+
+	; HASHS9 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00FAA8C5AEn	:HASHS9(E)
+
+	0x0002157E72n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS9(E)
+	0x00FCBE4420	:ASSERT
+
+	; HASHS10 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0063883719n	:HASHS10(E)
+
+	0x0011F23AB2n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS10(E)
+	0x00757A71CB	:ASSERT
+
+	; HASHS11 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x009E5F9C05n	:HASHS11(E)
+
+	0x0014B16BB9n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS11(E)
+	0x00B31107BE	:ASSERT
+
+	; HASHS12 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0052C91087n	:HASHS12(E)
+
+	0x004AFA93A6n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS12(E)
+	0x009DC3A42D	:ASSERT
+
+	; HASHS13 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00B445E435n	:HASHS13(E)
+
+	0x002DEC03ABn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS13(E)
+	0x00E231E7E0	:ASSERT
+
+	; HASHS14 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00584FCF3Dn	:HASHS14(E)
+
+	0x002B2B44FBn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS14(E)
+	0x00837B1438	:ASSERT
+
+	; HASHS15 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x000FE7B8C4n	:HASHS15(E)
+
+	0x001B2D6FE8n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS15(E)
+	0x002B1528AC	:ASSERT
+
+	; HASHS16 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x004ACBBDD1n	:HASHS16(E)
+
+	0x0011E28713n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS16(E)
+	0x005CAE44E4	:ASSERT
+
+	; HASHS17 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x006E37243En	:HASHS17(E)
+
+	0x005F3F56D0n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS17(E)
+	0x00CD767B0E	:ASSERT
+
+	; HASHS18 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0051C1DFDBn	:HASHS18(E)
+
+	0x00766EC6B1n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS18(E)
+	0x00C830A68C	:ASSERT
+
+	; HASHS19 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00976A2F92n	:HASHS19(E)
+
+	0x002207E8F5n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS19(E)
+	0x00B9721887	:ASSERT
+
+	; HASHS20 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00F706DD03n	:HASHS20(E)
+
+	0x00006FED09n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS20(E)
+	0x00F776CA0C	:ASSERT
+
+	; HASHS21 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0082E63FB4n	:HASHS21(E)
+
+	0x0038377D49n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS21(E)
+	0x00BB1DBCFD	:ASSERT
+
+	; HASHS22 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x005646F14An	:HASHS22(E)
+
+	0x0052460D53n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS22(E)
+	0x00A88CFE9D	:ASSERT
+
+	; HASHS23 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0086E95A36n	:HASHS23(E)
+
+	0x0016A5EDCCn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS23(E)
+	0x009D8F4802	:ASSERT
+
+	; HASHS24 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0015925456n	:HASHS24(E)
+
+	0x00443C02A6n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS24(E)
+	0x0059CE56FC	:ASSERT
+
+	; HASHS25 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00ADF6B90Cn	:HASHS25(E)
+
+	0x003BE9FA2An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS25(E)
+	0x00E9E0B336	:ASSERT
+
+	; HASHS26 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x002D6C4E98n	:HASHS26(E)
+
+	0x0068B965A9n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS26(E)
+	0x009625B441	:ASSERT
+
+	; HASHS27 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x000949F70Dn	:HASHS27(E)
+
+	0x0041ECE48An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS27(E)
+	0x004B36DB97	:ASSERT
+
+	; HASHS28 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x005017EF63n	:HASHS28(E)
+
+	0x008F92E7BFn => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS28(E)
+	0x00DFAAD722	:ASSERT
+
+	; HASHS29 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00C8E186AFn	:HASHS29(E)
+
+	0x001E49430An => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS29(E)
+	0x00E72AC9B9	:ASSERT
+
+	; HASHS30 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x0077ACCB24n	:HASHS30(E)
+
+	0x0031A7ABE2n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS30(E)
+	0x00A9547706	:ASSERT
+
+	; HASHS31 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x004DE26C6An	:HASHS31(E)
+
+	0x0071D63A79n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS31(E)
+	0x00BFB8A6E3	:ASSERT
+
+	; HASHS32 Test
+	E + 1 => E	:MSTORE(lastHashSId)
+	0 => HASHPOS
+	0x00740AA8DAn	:HASHS32(E)
+
+	0x003B40A0F4n => B
+	0 => HASHPOS
+	$ + B => A	:F_HASHS32(E)
+	0x00AF4B49CE	:ASSERT

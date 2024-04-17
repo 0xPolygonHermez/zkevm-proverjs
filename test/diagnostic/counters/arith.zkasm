@@ -1,0 +1,131 @@
+
+    ; Save the initial counters
+    :CALL(SaveCounters)
+
+    ; 1] ARITH: A*B + C = D*2**256 + op
+    0 => A,B,C,D
+    A    :ARITH
+
+    CNT_ARITH - 1   :MLOAD(v_cnt_arith)
+
+    0x2000000000000000000000000000000000000000000000000000000000000001n => A
+    0x100    => B
+    0x73     => C
+    0x20     => D
+    0x173   :ARITH
+
+    CNT_ARITH - 2   :MLOAD(v_cnt_arith)
+
+    ; 2] ARITH_ECADD_DIFFERENT: (A, B) + (C, D) = (E, op)
+    %SECP256K1_GX => A
+    %SECP256K1_GY => B
+    0xc6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5n => C
+    0x1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52an => D
+    0xf9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9n => E
+    0x388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672n   :ARITH_ECADD_DIFFERENT
+
+    CNT_ARITH - 3   :MLOAD(v_cnt_arith)
+
+    0xf9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9n => A
+    0x388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672n => B
+    %SECP256K1_GX => C
+    %SECP256K1_GY => D
+    0xe493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13n => E
+    0x51ed993ea0d455b75642e2098ea51448d967ae33bfbdfe40cfe97bdc47739922n   :ARITH_ECADD_DIFFERENT
+
+    CNT_ARITH - 4   :MLOAD(v_cnt_arith)
+
+    ; 3] ARITH_ECADD_SAME: (A, B) + (A, B) = (E, op)
+    %SECP256K1_GX => A
+    %SECP256K1_GY => B
+    0xc6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5n => E
+    0x1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52an   :ARITH_ECADD_SAME
+
+    CNT_ARITH - 5   :MLOAD(v_cnt_arith)
+
+    0xc6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5n => A
+    0x1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52an => B
+    0xe493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13n => E
+    0x51ed993ea0d455b75642e2098ea51448d967ae33bfbdfe40cfe97bdc47739922n   :ARITH_ECADD_SAME
+
+    CNT_ARITH - 6   :MLOAD(v_cnt_arith)
+
+    ; 4] ARITH_BN254_ADDFP2: (A + B·u) + (C + D·u) = E + op·u
+    0x1e5085cf6935ccbfca77e01b0a6a63ed3d0db17ab5c3aa0a44b1345295a5f100n => A
+    0xe2298271941c5233abed20a8052b099f3d471283bba1b6b1c1193bd7f78dd4dn => B
+    0x1b4adf559b14c52a12e79499aa33f96efda343b2f39534de1b2e26ee656a31cn => C
+    0x1fbf58b053562c96036b9562680d7b63ec4f19e9fcacca996eb46b79fe44db5en => D
+    0x200533c4c2e719126ba65964a50da3842ce7e5b5e4fcfd58266416c17bfc941cn => E
+    0x2de1f0d76c97f1b93e2a676ce8602bfde0238b123866e6048ac5ff377dbdb8abn   :ARITH_BN254_ADDFP2
+
+    CNT_ARITH - 7   :MLOAD(v_cnt_arith)
+
+    0x13c9e917c906d6762c6a40634e487696bf0dfc110f866e24e7b117f26064f7a5n => A
+    0x2a7cf01c79f060256a8ef96780007daddf209e915357f10a224c3df30f0d298n => B
+    0x257c09b65030251bff10010473f7a1ad6b39b43cfc4920919c4013b0ff2d5a69n => C
+    0x2ac8ce26b4902faa851ad62cf3a6914b89a12f98db843b280d31717d424a31cen => D
+    0x8e1a45b38055b687329fbb140bebfe692c645bca35dc42947d09f8c871554c7n => E
+    0x2d709d287c2f35acdbc3c5c36ba6992667933981f0b9ba38af56355c733b0466n   :ARITH_BN254_ADDFP2
+
+    CNT_ARITH - 8   :MLOAD(v_cnt_arith)
+
+    ; 5] ARITH_BN254_SUBFP2: (A + B·u) - (C + D·u) = E + op·u
+    0x1e5085cf6935ccbfca77e01b0a6a63ed3d0db17ab5c3aa0a44b1345295a5f100n => A
+    0xe2298271941c5233abed20a8052b099f3d471283bba1b6b1c1193bd7f78dd4n => B
+    0x1b4adf559b14c52a12e79499aa33f96efda343b2f39534de1b2e26ee656a31cn => C
+    0x1fbf58b053562c96036b9562680d7b63ec4f19e9fcacca996eb46b79fe44db5en => D
+    0x1c9bd7da0f84806d294966d16fc724564d337d3f868a56bc62fe51e3af4f4de4n => E
+    0x11871f44ff6f8fe5e8909d74c17908034a6f97b9ef80a1aa7f2d39d8b22fafbdn   :ARITH_BN254_SUBFP2
+
+    CNT_ARITH - 9   :MLOAD(v_cnt_arith)
+
+    0x13c9e917c906d6762c6a40634e487696bf0dfc110f866e24e7b117f26064f7a5n => A
+    0x2a7cf01c79f060256a8ef96780007daddf209e915357f10a224c3df30f0d298n => B
+    0x257c09b65030251bff10010473f7a1ad6b39b43cfc4920919c4013b0ff2d5a69n => C
+    0x2ac8ce26b4902faa851ad62cf3a6914b89a12f98db843b280d31717d424a31cen => D
+    0x1eb22dd45a085183e5aa85155bd22d46eb55b2657baf18208791905839b49a83n => E
+    0x8434f4df440768189de5f2005daceecebd244e1a2230e75d113de78c7239e11n   :ARITH_BN254_SUBFP2
+
+    CNT_ARITH - 10  :MLOAD(v_cnt_arith)
+
+    ; 6] ARITH_BN254_MULFP2: (A + B·u) * (C + D·u) = E + op·u
+    0x1e5085cf6935ccbfca77e01b0a6a63ed3d0db17ab5c3aa0a44b1345295a5f100n => A
+    0xe2298271941c5233abed20a8052b099f3d471283bba1b6b1c1193bd7f78dd4n => B
+    0x1b4adf559b14c52a12e79499aa33f96efda343b2f39534de1b2e26ee656a31cn => C
+    0x1fbf58b053562c96036b9562680d7b63ec4f19e9fcacca996eb46b79fe44db5en => D
+    0x194c7c454171037436be8689a6cd102891910a2ab6d39f0b4a745defc78b5de6n => E
+    0x20be56e0f6f1c83e77e509f642ca5fa80ae72650c15388e315e37891833723d8n   :ARITH_BN254_MULFP2
+
+    CNT_ARITH - 11  :MLOAD(v_cnt_arith)
+
+    0x13c9e917c906d6762c6a40634e487696bf0dfc110f866e24e7b117f26064f7a5n => A
+    0x2a7cf01c79f060256a8ef96780007daddf209e915357f10a224c3df30f0d298n => B
+    0x257c09b65030251bff10010473f7a1ad6b39b43cfc4920919c4013b0ff2d5a69n => C
+    0x2ac8ce26b4902faa851ad62cf3a6914b89a12f98db843b280d31717d424a31cen => D
+    0x71998b31fe824ece2f0351c35025feadf4e00ed02f138309d3a5238742f545fn => E
+    0x69e94df6c06a467df1edaedc491f258856077d39a779d65473035d9846664aan   :ARITH_BN254_MULFP2
+
+    CNT_ARITH - 12  :MLOAD(v_cnt_arith)
+
+    ; 7] ARITH_MOD: A*B + C = op (mod D)
+    0 => A,B,C
+    1 => D
+    0               :ARITH_MOD
+
+    CNT_ARITH - 13  :MLOAD(v_cnt_arith)
+
+    2 => A,B
+    0 => C
+    3 => D
+    1               :ARITH_MOD
+
+    CNT_ARITH - 14  :MLOAD(v_cnt_arith)
+
+    ; Check the other counters have not changed
+    CNT_BINARY      :MLOAD(v_cnt_binary)
+    CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
+    CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
+    CNT_POSEIDON_G  :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG  :MLOAD(v_cnt_padding_pg)
+

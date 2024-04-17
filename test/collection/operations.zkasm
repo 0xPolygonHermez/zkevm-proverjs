@@ -1,8 +1,0 @@
-INCLUDE "operations/binary.zkasm"
-INCLUDE "operations/repeat.zkasm"
-INCLUDE "operations/jmpx.zkasm"
-INCLUDE "operations/jmpaddr.zkasm"
-INCLUDE "operations/callreturn.zkasm"
-INCLUDE "operations/hash1.zkasm"
-INCLUDE "operations/mem_align.zkasm"
-;INCLUDE "operations/mem.zkasm"
