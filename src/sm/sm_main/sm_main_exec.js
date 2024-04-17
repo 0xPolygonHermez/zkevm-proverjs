@@ -86,7 +86,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const blob = config.blob ? true : false;
 
     // const defaultHelpers = ['arith', 'batch', 'debug', 'helper', 'mem_align', 'operations', 'save_restore', 'binary', 'command', 'counter_controls'];
-    const defaultHelpers = [...(blob ? ['main_blob', 'ft-blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls'];
+    const defaultHelpers = [...(blob ? ['main_blob', 'ft-blob']:['main_batch', 'rom_batch']), 'debug', 'helpers', 'mem_align', 'save_restore', 'command', 'counter_controls', 'arith'];
     const customHelpers = (config && config.helpers) ? (Array.isArray(config.helpers) ? config.helpers : [config.helpers]) : [];
     const helpers = [...defaultHelpers, ...customHelpers ];
 
@@ -113,6 +113,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
     const FpBN254 = new F1Field(pBN254);
+
+    let pBLS12381 = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn;
+    const FpBLS12381 = new F1Field(pBLS12381);
 
     const FrFirst32Negative = 0xFFFFFFFF00000001n - 0xFFFFFFFFn;
     const FrLast32Positive = 0xFFFFFFFFn;
@@ -163,7 +166,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const smt = new SMT(db, poseidon, Fr);
 
     let op7, op6, op5, op4, op3, op2, op1, op0;
-    const Fr8zero = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+    const FrZeros = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
     const ctx = {
         mem: [],
         hashK: [],
@@ -176,6 +179,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fec: Fec,
         Fnec: Fnec,
         FpBN254,
+        FpBLS12381,
+        FrZeros,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -196,7 +201,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     ctx.helpers.setup({
         evalCommand, checkParams,
-        safeFea2scalar,
+        multiBaseFeaToScalar,
+        getMultiBaseFea,
+        scalarToFea384, 
+        fea384ToScalar,
+        scalarToFea256: scalar2fea, 
+        fea256ToScalar: fea2scalar,
         fullTracer, nameRomErrors,
         sr8to4, sr4to8, ctx
     });
@@ -335,7 +345,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 // LOAD INPUTS
 //////////
 
-        [op0, op1, op2, op3, op4, op5, op6, op7] = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+        [op0, op1, op2, op3, op4, op5, op6, op7] = [...FrZeros];
 
         if (l.inA) {
             [op0, op1, op2, op3, op4, op5, op6, op7] =
@@ -578,7 +588,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 pols.CONST5[i],
                 pols.CONST6[i],
                 pols.CONST7[i]
-            ] = scalar2fea(Fr, l.CONSTL);
+            ] = scalarToMultiBaseFea(ctx, l.CONSTL);
             [op0, op1, op2, op3, op4, op5, op6, op7] = [
                 Fr.add(op0 , pols.CONST0[i]),
                 Fr.add(op1 , pols.CONST1[i]),
@@ -731,15 +741,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.mem[memAddr] != "undefined") {
                         fi = ctx.mem[memAddr];
                     } else {
-                        fi = [Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero, Fr.zero];
+                        fi = [...FrZeros];
                     }
                     nHits++;
                 }
                 if (l.sRD == 1) {
-                    const address = fea2scalar(ctx.Fr, ctx.A);
+                    const address = fea256ToScalar(ctx.Fr, ctx.A);
                     const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
-                    const keyType = fea2scalar(ctx.Fr, ctx.B);
-                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
+                    const keyType = fea256ToScalar(ctx.Fr, ctx.B);
+                    const keyStorage = "0x"+ fea256ToScalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
 
                     let res = {};
                     if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
@@ -800,15 +810,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (fullTracer){
                         fullTracer.addReadWriteAddress(ctx.Fr, ctx.A, ctx.B, res.value);
                     }
-
-                    fi = scalar2fea(Fr, Scalar.e(res.value));
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, Scalar.e(res.value));
                     nHits++;
                 }
                 if (l.sWR == 1) {
-                    const address = fea2scalar(ctx.Fr, ctx.A);
+                    const address = fea256ToScalar(ctx.Fr, ctx.A);
                     const addressHex = ethers.utils.getAddress(`0x${Scalar.toString(address, 16).padStart(40, '0')}`);
-                    const keyStorage = "0x"+ fea2scalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
-                    const keyType = fea2scalar(ctx.Fr, ctx.B)
+                    const keyStorage = "0x"+ fea256ToScalar(ctx.Fr, ctx.C).toString(16).padStart(64,'0');
+                    const keyType = fea256ToScalar(ctx.Fr, ctx.B)
                     if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].balance && keyType === Scalar.e(ConstantsCommon.SMT_KEY_BALANCE)){
                         input.stateOverride[addressHex].balance = safeFea2scalar(Fr, ctx.D).toString();
                     } else if (input.stateOverride && input.stateOverride[addressHex] && input.stateOverride[addressHex].nonce && keyType === Scalar.e(ConstantsCommon.SMT_KEY_NONCE)){
@@ -889,7 +899,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         if (typeof ctx.hashK[hashAddr].data[pos + k] === "undefined") throw new Error(`Accessing hashK(${hashAddr}) not defined place ${pos+k} ${sourceRef}`);
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashK[hashAddr].data[pos + k]));
                     }
-                    fi = scalar2fea(Fr, s);
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, s);
                     nHits++;
                 }
                 if (l.hashKDigest == 1) {
@@ -899,7 +910,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.hashK[hashAddr].digest === "undefined") {
                         throw new Error(`digest(${hashAddr}) not calculated. Call hashKlen to finish digest ${sourceRef}`);
                     }
-                    fi = scalar2fea(Fr, ctx.hashK[hashAddr].digest);
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, ctx.hashK[hashAddr].digest);
                     nHits++;
                 }
                 if (l.hashS) {
@@ -913,11 +925,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         if (typeof ctx.hashS[hashAddr].data[pos + k] === "undefined") throw new Error(`Accessing hashS(${hashAddr}) not defined place ${pos+k} ${sourceRef}`);
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashS[hashAddr].data[pos + k]));
                     }
-                    fi = scalar2fea(Fr, s);
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, s);
                     nHits++;
                 }
                 if (l.hashKLen) {
-                    fi = scalar2fea(Fr, typeof ctx.hashK[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashK[hashAddr].data.length));
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, typeof ctx.hashK[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashK[hashAddr].data.length));
                     nHits++;
                 }
                 if (l.hashSDigest == 1) {
@@ -927,11 +941,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.hashS[hashAddr].digest === "undefined") {
                         throw new Error(`digest sha256(${hashAddr}) not calculated. Call hashSlen to finish digest ${sourceRef}`);
                     }
-                    fi = scalar2fea(Fr, ctx.hashS[hashAddr].digest);
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, ctx.hashS[hashAddr].digest);
                     nHits++;
                 }
                 if (l.hashSLen) {
-                    fi = scalar2fea(Fr, typeof ctx.hashS[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashS[hashAddr].data.length));
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, typeof ctx.hashS[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashS[hashAddr].data.length));
                     nHits++;
                 }
 
@@ -947,7 +963,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         if (typeof ctx.hashP[hashAddr].data[pos + k] === "undefined") throw new Error(`Accessing hashP(${hashAddr}) not defined place ${pos+k} ${sourceRef}`);
                         s = Scalar.add(Scalar.mul(s, 256), Scalar.e(ctx.hashP[hashAddr].data[pos + k]));
                     }
-                    fi = scalar2fea(Fr, s);
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, s);
                     nHits++;
                 }
                 if (l.hashPDigest == 1) {
@@ -957,11 +974,13 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (typeof ctx.hashP[hashAddr].digest === "undefined") {
                         throw new Error(`digest(${hashAddr}) not calculated. Call hashPlen to finish digest ${sourceRef}`);
                     }
-                    fi = scalar2fea(Fr, ctx.hashP[hashAddr].digest);
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, ctx.hashP[hashAddr].digest);
                     nHits++;
                 }
                 if (l.hashPLen) {
-                    fi = scalar2fea(Fr, typeof ctx.hashP[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashP[hashAddr].data.length));
+                    // only 256 bits compatible
+                    fi = scalarToFea256(Fr, typeof ctx.hashP[hashAddr] === "undefined" ? 0n : BigInt(ctx.hashP[hashAddr].data.length));
                     nHits++;
                 }
                 if (l.bin) {
@@ -975,51 +994,54 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(Scalar.add(Scalar.sub(a, b), twoTo256), Mask256);
-                        fi = scalar2fea(Fr, c);
+                        // only 256 bits compatible
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 2) { // LT
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.lt(a, b);
-                        fi = scalar2fea(Fr, c);
+                        // only 256 bits compatible
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 3) { // SLT
+                        // only 256 bits compatible
                         let a = safeFea2scalar(Fr, ctx.A);
                         if (Scalar.geq(a, twoTo255)) a = Scalar.sub(a, twoTo256);
                         let b = safeFea2scalar(Fr, ctx.B);
                         if (Scalar.geq(b, twoTo255)) b = Scalar.sub(b, twoTo256);
                         const c = Scalar.lt(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 4) { // EQ
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.eq(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 5) { // AND
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.band(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 6) { // OR
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.bor(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 7) { // XOR
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = Scalar.bxor(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else if (l.binOpcode == 8) { // LT4
                         const a = safeFea2scalar(Fr, ctx.A);
                         const b = safeFea2scalar(Fr, ctx.B);
                         const c = lt4(a, b);
-                        fi = scalar2fea(Fr, c);
+                        fi = scalarToFea256(Fr, c);
                         nHits ++;
                     } else {
                         throw new Error(`Invalid Binary operation ${l.binOpCode} ${sourceRef}`);
@@ -1027,9 +1049,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
 
                 if (l.memAlignRD) {
-                    fi = scalar2fea(Fr, ctx.helpers.MemAlign.calculate(safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0])));
+                    fi = scalarToFea256(Fr, ctx.helpers.MemAlign.calculate(safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0])));
                     nHits ++;
                 }
+                if (l.arith && ctx.helpers.Arith.isFreeInEquation(l.arithEquation)) {
+                    fi = ctx.helpers.Arith.calculate(l.arithEquation, ctx.A, ctx.B, ctx.C, ctx.D);
+                    nHits ++;
+                }
+
 
                 if (nHits==0) {
                     throw new Error(`Empty freeIn without a valid instruction ${sourceRef}`);
@@ -1039,7 +1066,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
             } else {
                 fi = evalCommand(ctx, l.freeInTag);
-                if (!Array.isArray(fi)) fi = scalar2fea(Fr, fi);
+                if (!Array.isArray(fi)) fi = scalarToMultiBaseFea(ctx, fi);
             }
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = fi;
             [op0, op1, op2, op3, op4, op5, op6, op7] =
@@ -1056,7 +1083,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.inFREE0[i] = Fr.e(l.inFREE0);
         } else {
             [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i],
-             pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = l.restore ? dataToRestore.op : Fr8zero;
+             pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]] = l.restore ? dataToRestore.op : [...FrZeros];
             pols.inFREE[i] = Fr.zero;
             pols.inFREE0[i] = Fr.zero;
         }
@@ -1344,7 +1371,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             }
 
             // commented since readings are also done directly in the smt
-            // ctx.sto[ ctx.lastSWrite.keyS ] = fea2scalar(Fr, ctx.D).toString(16).padStart(64, "0");
+            // ctx.sto[ ctx.lastSWrite.keyS ] = fea256ToScalar(Fr, ctx.D).toString(16).padStart(64, "0");
             for (let k=0; k<4; k++) {
                 pols.sKeyI[k][i] =  ctx.lastSWrite.keyI[k];
                 pols.sKey[k][i] = ctx.lastSWrite.key[k];
@@ -1618,230 +1645,18 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (l.arith) {
+            res = ctx.helpers.Arith.verify(l.arithEquation, ctx.A, ctx.B, [op0, op1, op2, op3, op4, op5, op6, op7], 
+                  ctx.C, ctx.D, ctx.E, required.Arith);
             pols.arith[i] = 1n;
-            pols.arithSame12[i] = (l.arithEquation == 3) ? 1n : 0n;
-            pols.arithUseE[i] = (l.arithEquation == 1 || l.arithEquation == 7) ? 0n : 1n;
-
-            if (l.arithEquation == 1) {
-                const A = safeFea2scalar(Fr, ctx.A);
-                const B = safeFea2scalar(Fr, ctx.B);
-                const C = safeFea2scalar(Fr, ctx.C);
-                const D = safeFea2scalar(Fr, ctx.D);
-                const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-
-                // A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
-
-                if (!Scalar.eq(Scalar.add(Scalar.mul(A, B), C),Scalar.add(Scalar.shl(D, 256), op))) {
-                    console.log('A: '+A.toString()+' (0x'+A.toString(16)+')');
-                    console.log('B: '+B.toString()+' (0x'+B.toString(16)+')');
-                    console.log('C: '+C.toString()+' (0x'+C.toString(16)+')');
-                    console.log('D: '+D.toString()+' (0x'+D.toString(16)+')');
-                    console.log('op: '+op.toString()+' (0x'+op.toString(16)+')');
-                    let left = Scalar.add(Scalar.mul(A, B), C);
-                    let right = Scalar.add(Scalar.shl(D, 256), op);
-                    console.log(left.toString() + ' (0x'+left.toString(16)+') != '+ right.toString()
-                                                + ' (0x' + right.toString(16)+')');
-                    throw new Error(`Arithmetic(Eq0) does not match ${sourceRef}`);
-                }
-                pols.arithEquation[i] = 1n;
-                required.Arith.push({ x1: ctx.A, y1: ctx.B,
-                                      x2: ctx.C, y2: ctx.D,
-                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
-                                      selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 0});
-            }
-            else if (l.arithEquation == 4) {
-                const x1 = safeFea2scalar(Fr, ctx.A);
-                const y1 = safeFea2scalar(Fr, ctx.B);
-                const x2 = safeFea2scalar(Fr, ctx.C);
-                const y2 = safeFea2scalar(Fr, ctx.D);
-
-                // fields output must be less than 32 bits
-                const x3 = safeFea2scalar(Fr, ctx.E);
-                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-
-                // y1 * x2 + x1 * y2 = y3
-                // x1 * x2 - y1 * y2 = x3
-
-                const _x3 = FpBN254.sub(FpBN254.mul(FpBN254.e(x1), FpBN254.e(x2)), FpBN254.mul(FpBN254.e(y1), FpBN254.e(y2)));
-                const _y3 = FpBN254.add(FpBN254.mul(FpBN254.e(y1), FpBN254.e(x2)), FpBN254.mul(FpBN254.e(x1), FpBN254.e(y2)));
-
-                const x3eq = Scalar.eq(x3, _x3);
-                const y3eq = Scalar.eq(y3, _y3);
-
-                if (!x3eq || !y3eq) {
-                    console.log(`(${x1.toString()} + ${y1.toString()}i) * (${x2.toString()} + ${y2.toString()}i)`);
-
-                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
-                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
-
-                    throw new Error(`Arithmetic FP2 multiplication point does not match: ${sourceRef}`);
-                }
-
-                pols.arithEquation[i] = 4n;
-                required.Arith.push({x1:ctx.A, y1:ctx.B,
-                                     x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 1, selEq4: 0, selEq5: 0, selEq6: 0});
-            }
-            else if (l.arithEquation == 5) {
-                const x1 = safeFea2scalar(Fr, ctx.A);
-                const y1 = safeFea2scalar(Fr, ctx.B);
-                const x2 = safeFea2scalar(Fr, ctx.C);
-                const y2 = safeFea2scalar(Fr, ctx.D);
-
-                const x3 = safeFea2scalar(Fr, ctx.E);
-                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-
-                // x1 + x2 = x3
-                // y1 + y2 = y3
-
-                const _x3 = FpBN254.add(FpBN254.e(x1), FpBN254.e(x2));
-                const _y3 = FpBN254.add(FpBN254.e(y1), FpBN254.e(y2));
-
-                const x3eq = FpBN254.eq(x3, _x3);
-                const y3eq = FpBN254.eq(y3, _y3);
-
-                if (!x3eq || !y3eq) {
-                    console.log(`(${x1.toString()} + ${y1.toString()}i) + (${x2.toString()} + ${y2.toString()}i)`);
-
-                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
-                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
-
-                    throw new Error(`Arithmetic FP2 addition does not match: ${sourceRef}`);
-                }
-
-                pols.arithEquation[i] = 5n;
-                required.Arith.push({x1:ctx.A, y1:ctx.B,
-                                     x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 1, selEq5: 0, selEq6: 0});
-            }
-            else if (l.arithEquation == 6) {
-                const x1 = safeFea2scalar(Fr, ctx.A);
-                const y1 = safeFea2scalar(Fr, ctx.B);
-                const x2 = safeFea2scalar(Fr, ctx.C);
-                const y2 = safeFea2scalar(Fr, ctx.D);
-
-                const x3 = safeFea2scalar(Fr, ctx.E);
-                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-
-                // x1 - x2 = x3
-                // y1 - y2 = y3
-
-                const _x3 = FpBN254.sub(FpBN254.e(x1), FpBN254.e(x2));
-                const _y3 = FpBN254.sub(FpBN254.e(y1), FpBN254.e(y2));
-
-                const x3eq = FpBN254.eq(x3, _x3);
-                const y3eq = FpBN254.eq(y3, _y3);
-
-                if (!x3eq || !y3eq) {
-                    console.log(`(${x1.toString()} + ${y1.toString()}i) - (${x2.toString()} + ${y2.toString()}i)`);
-
-                    console.log(x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
-                    console.log(y3.toString()+(y3eq ? 'i == ' : 'i != ')+_y3.toString()+'i');
-
-                    throw new Error(`Arithmetic FP2 subtraction does not match: ${sourceRef}`);
-                }
-
-                pols.arithEquation[i] = 6n;
-                required.Arith.push({x1:ctx.A, y1:ctx.B,
-                                     x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 1, selEq6: 0});
-            }
-            else if (l.arithEquation == 7) {
-                const A = safeFea2scalar(Fr, ctx.A);
-                const B = safeFea2scalar(Fr, ctx.B);
-                const C = safeFea2scalar(Fr, ctx.C);
-                const D = safeFea2scalar(Fr, ctx.D);
-                const op = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-
-                if (Scalar.isZero(D)) {
-                    throw new Error(`Modular arithmetic is undefined when D is zero ${sourceRef}`);
-                }
-
-                // A(x1) * B(y1) + C(x2) = op(y3) (mod D(y2))
-
-                if (!Scalar.eq(Scalar.mod(Scalar.add(Scalar.mul(A, B), C), D),op)) {
-                    console.log('A: '+A.toString()+' (0x'+A.toString(16)+')');
-                    console.log('B: '+B.toString()+' (0x'+B.toString(16)+')');
-                    console.log('C: '+C.toString()+' (0x'+C.toString(16)+')');
-                    console.log('D: '+D.toString()+' (0x'+D.toString(16)+')');
-                    console.log('op: '+op.toString()+' (0x'+op.toString(16)+')');
-                    let LHS = Scalar.mod(Scalar.add(Scalar.mul(A, B), C),D);
-                    let RHS = op;
-                    console.log(LHS.toString() + ' (0x'+LHS.toString(16)+') != '+ RHS.toString()
-                                               + ' (0x' + RHS.toString(16)+')');
-                    throw new Error(`Modular arithmetic does not match ${sourceRef}`);
-                }
-
-                pols.arithEquation[i] = 7n;
-                required.Arith.push({ x1: ctx.A, y1: ctx.B,
-                                      x2: ctx.C, y2: ctx.D,
-                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
-                                      selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 1});
-            }
-            else {
-                const x1 = safeFea2scalar(Fr, ctx.A);
-                const y1 = safeFea2scalar(Fr, ctx.B);
-                const x2 = safeFea2scalar(Fr, ctx.C);
-                const y2 = safeFea2scalar(Fr, ctx.D);
-                const x3 = safeFea2scalar(Fr, ctx.E);
-                const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-                let dbl = false;
-                if (l.arithEquation == 2) {
-                    dbl = false;
-                } else if (l.arithEquation == 3) {
-                    dbl = true;
-                } else {
-                    throw new Error(`Invalid arithmetic op arithEquation:${l.arithEquation} ${sourceRef}`);
-                }
-
-                let s;
-                if (dbl) {
-                    // Division by zero must be managed by ROM before call ARITH
-                    const divisor = Fec.add(Fec.e(y1), Fec.e(y1));
-                    if (Fec.isZero(divisor)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${l.arithEquation} ${sourceRef}`);
-                    }
-                    s = Fec.div(Fec.mul(3n, Fec.mul(Fec.e(x1), Fec.e(x1))), divisor);
-                }
-                else {
-                    // Division by zero must be managed by ROM before call ARITH
-                    const deltaX = Fec.sub(Fec.e(x2), Fec.e(x1))
-                    if (Fec.isZero(deltaX)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${l.arithEquation} ${sourceRef}`);
-                    }
-                    s = Fec.div(Fec.sub(Fec.e(y2), Fec.e(y1)), deltaX);
-                }
-
-                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), dbl ? Fec.e(x1) : Fec.e(x2)));
-                const _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
-                const x3eq = Scalar.eq(x3, _x3);
-                const y3eq = Scalar.eq(y3, _y3);
-
-                if (!x3eq || !y3eq) {
-                    console.log('x1,y1: ('+x1.toString()+', '+y1.toString()+')');
-                    if (!dbl) {
-                        console.log('x2,y2: ('+x2.toString()+', '+y2.toString()+')');
-                    }
-
-                    console.log('x3: '+x3.toString()+(x3eq ? ' == ' : ' != ')+_x3.toString());
-                    console.log('y3: '+y3.toString()+(y3eq ? ' == ' : ' != ')+_y3.toString());
-
-                    throw new Error('Arithmetic curve '+(dbl?'dbl':'add')+` point does not match: ${sourceRef}`);
-                }
-
-                pols.arithEquation[i] = dbl ? 3n : 2n;
-                required.Arith.push({x1: ctx.A, y1: ctx.B,
-                                     x2: dbl ? ctx.A:ctx.C, y2: dbl? ctx.B:ctx.D,
-                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 0});
-            }
+            pols.arithEquation[i] = Fr.e(l.arithEquation)
+            pols.arithSame12[i] = res.flags.same12;
+            pols.arithUseCD[i] = res.flags.useCD;
+            pols.arithUseE[i] = res.flags.useE;
         } else {
             pols.arith[i] = 0n;
             pols.arithEquation[i] = 0n;
             pols.arithSame12[i] = 0n;
+            pols.arithUseCD[i] = 0n;
             pols.arithUseE[i] = 0n;
         }
 
@@ -2809,6 +2624,8 @@ function evalCommand(ctx, tag) {
         return eval_getVar(ctx, tag);
     } else if (tag.op == "getReg") {
         return eval_getReg(ctx, tag);
+    } else if (tag.op == "getReg384") {
+        return eval_getReg384(ctx, tag);
     } else if (tag.op == "functionCall") {
         return eval_functionCall(ctx, tag);
     } else if (tag.op == "add") {
@@ -2879,19 +2696,33 @@ function eval_getVar(ctx, tag) {
     return ctx.vars[tag.varName];
 }
 
+function scalarToMultiBaseFeaToScalar(ctx, value) {
+        if (ctx.mode384) {
+            return scalarToFea384(ctx.Fr, value);
+        }
+        return scalar2fea(ctx.Fr, value);
+}
+
+function multiBaseFeaToScalar(ctx, value) {
+    if (ctx.mode384) {
+        return ctx.fullFe ? fea384ToScalar(ctx.Fr, value) : safeFea384ToScalar(ctx.Fr, value);
+    }
+    return ctx.fullFe ? fea2scalar(ctx.Fr, value) : safeFea2scalar(ctx.Fr, value);
+}
+
 function eval_getReg(ctx, tag) {
     if (tag.regName == "A") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.A) : safeFea2scalar(ctx.Fr, ctx.A);
+        return multiBaseFeaToScalar(ctx, ctx.A);
     } else if (tag.regName == "B") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.B) : safeFea2scalar(ctx.Fr, ctx.B);
+        return multiBaseFeaToScalar(ctx, ctx.B);
     } else if (tag.regName == "C") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.C) : safeFea2scalar(ctx.Fr, ctx.C);
+        return multiBaseFeaToScalar(ctx, ctx.C);
     } else if (tag.regName == "D") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.D) : safeFea2scalar(ctx.Fr, ctx.D);
+        return multiBaseFeaToScalar(ctx, ctx.D);
     } else if (tag.regName == "E") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.E) : safeFea2scalar(ctx.Fr, ctx.E);
+        return multiBaseFeaToScalar(ctx, ctx.E);
     } else if (tag.regName == "SR") {
-        return ctx.fullFe ? fea2scalar(ctx.Fr, ctx.SR) : safeFea2scalar(ctx.Fr, ctx.SR);
+        return multiBaseFeaToScalar(ctx, ctx.SR);
     } else if (tag.regName == "CTX") {
         return Scalar.e(ctx.CTX);
     } else if (tag.regName == "SP") {
@@ -3021,12 +2852,7 @@ function eval_getMemAddr(ctx, tag) {
 
 function eval_getMemValue(ctx, tag) {
     const offset = eval_getMemAddr(ctx, tag);
-
-    if (ctx.fullFe) {
-        return fea2scalar(ctx.Fr, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
-    }
-
-    return safeFea2scalar(ctx.Fr, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
+    return multiBaseFeaToScalar(ctx, ctx.mem[offset] ?? [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]);
 }
 
 function eval_functionCall(ctx, tag) {
@@ -3172,14 +2998,14 @@ function eval_cond(ctx, tag) {
     if (result) {
         return [ctx.Fr.e(-1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [...ctx.FrZeros];
 }
 
 function eval_exp(ctx, tag) {
     if (tag.params.length != 2) throw new Error(`Invalid number of parameters (2 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`)
     const a = evalCommand(ctx, tag.params[0]);
     const b = evalCommand(ctx, tag.params[1])
-    return scalar2fea(ctx.Fr, Scalar.exp(a, b));;
+    return Scalar.exp(a, b);
 }
 
 function eval_bitwise(ctx, tag) {
@@ -3216,25 +3042,6 @@ function eval_beforeLast(ctx) {
     }
 }
 
-function eval_comp(ctx, tag){
-    checkParams(ctx, tag, 2);
-
-    const func = tag.funcName.split('_')[1];
-    const a = evalCommand(ctx,tag.params[0]);
-    const b = evalCommand(ctx,tag.params[1]);
-
-    switch (func){
-        case 'lt':
-            return Scalar.lt(a, b) ? 1 : 0;
-        case 'gt':
-            return Scalar.gt(a, b) ? 1 : 0;
-        case 'eq':
-            return Scalar.eq(a, b) ? 1 : 0;
-        default:
-            throw new Error(`Invalid bitwise operation ${func} (${tag.funcName}) ${ctx.sourceRef}`)
-    }
-}
-
 function eval_loadScalar(ctx, tag){
     checkParams(ctx, tag, 1);
     return evalCommand(ctx,tag.params[0]);
@@ -3264,6 +3071,7 @@ function eval_storeLog(ctx, tag){
 }
 
 function eval_log(ctx, tag) {
+    // TODO: review 256/384 bits
     const frLog = ctx[tag.params[0].regName];
     const label = typeof tag.params[1] === "undefined" ? "notset" : tag.params[1].varName;
     if(typeof(frLog) == "number") {
@@ -3291,7 +3099,7 @@ function eval_log(ctx, tag) {
 
 function eval_breakPoint(ctx, tag) {
     console.log(`Breakpoint: ${ctx.sourceRef}`);
-    return scalar2fea(ctx.Fr, Scalar.e(0));
+    return [...ctx.FrZeros];
 }
 
 function checkParams(ctx, tag, expectedParams){
@@ -3302,21 +3110,13 @@ function eval_dumpRegs(ctx, tag) {
 
     console.log(`dumpRegs ${ctx.fileName}:${ctx.line}`);
 
-    if (ctx.fullFe) {
-        console.log(['A', fea2scalar(ctx.Fr, ctx.A)]);
-        console.log(['B', fea2scalar(ctx.Fr, ctx.B)]);
-        console.log(['C', fea2scalar(ctx.Fr, ctx.C)]);
-        console.log(['D', fea2scalar(ctx.Fr, ctx.D)]);
-        console.log(['E', fea2scalar(ctx.Fr, ctx.E)]);
-    } else {
-        console.log(['A', safeFea2scalar(ctx.Fr, ctx.A)]);
-        console.log(['B', safeFea2scalar(ctx.Fr, ctx.B)]);
-        console.log(['C', safeFea2scalar(ctx.Fr, ctx.C)]);
-        console.log(['D', safeFea2scalar(ctx.Fr, ctx.D)]);
-        console.log(['E', safeFea2scalar(ctx.Fr, ctx.E)]);
-    }
+    console.log(['A', multiBaseFeaToScalar(ctx, ctx.A), getMultiBaseFea(ctx)]);
+    console.log(['B', multiBaseFeaToScalar(ctx, ctx.B), getMultiBaseFea(ctx)]);
+    console.log(['C', multiBaseFeaToScalar(ctx, ctx.C), getMultiBaseFea(ctx)]);
+    console.log(['D', multiBaseFeaToScalar(ctx, ctx.D), getMultiBaseFea(ctx)]);
+    console.log(['E', multiBaseFeaToScalar(ctx, ctx.E), getMultiBaseFea(ctx)]);
 
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [...ctx.FrZeros];
 }
 
 function eval_dump(ctx, tag) {
@@ -3330,7 +3130,7 @@ function eval_dump(ctx, tag) {
         console.log("\x1b[35m"+ name +"\x1b[0;35m: "+evalCommand(ctx, value)+"\x1b[0m");
     });
 
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return [...ctx.FrZeros];
 }
 
 function eval_dumphex(ctx, tag) {
@@ -3344,122 +3144,7 @@ function eval_dumphex(ctx, tag) {
         console.log("\x1b[35m"+ name +"\x1b[0;35m: 0x"+evalCommand(ctx, value).toString(16)+"\x1b[0m");
     });
 
-    return [ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
-}
-
-function eval_inverseFpEc(ctx, tag) {
-    const a = ctx.Fec.e(evalCommand(ctx, tag.params[0]));
-    if (ctx.Fec.isZero(a)) {
-        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
-    }
-    return ctx.Fec.inv(a);
-}
-
-function eval_inverseFnEc(ctx, tag) {
-    const a = ctx.Fnec.e(evalCommand(ctx, tag.params[0]));
-    if (ctx.Fnec.isZero(a)) {
-        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
-    }
-    return ctx.Fnec.inv(a);
-}
-
-function eval_sqrtFpEcParity(ctx, tag) {
-    const a = evalCommand(ctx, tag.params[0]);
-    const parity = evalCommand(ctx, tag.params[1]);
-    const r = ctx.Fec.sqrt(a);
-    if (r === null) {
-        return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
-    }
-    if ((r & 0x01n) === parity)  {
-        return r;
-    }
-    return ctx.Fec.neg(r);
-}
-
-function eval_xAddPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, false)[0];
-}
-
-function eval_yAddPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, false)[1];
-}
-
-function eval_xDblPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, true)[0];
-}
-
-function eval_yDblPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, true)[1];
-}
-
-function eval_AddPointEc(ctx, tag, dbl)
-{
-    const x1 = ctx.Fec.e(evalCommand(ctx, tag.params[0]));
-    const y1 = ctx.Fec.e(evalCommand(ctx, tag.params[1]));
-    const x2 = ctx.Fec.e(evalCommand(ctx, tag.params[dbl ? 0 : 2]));
-    const y2 = ctx.Fec.e(evalCommand(ctx, tag.params[dbl ? 1 : 3]));
-
-    let s;
-    if (dbl) {
-        // Division by zero must be managed by ROM before call ARITH
-        const divisor = ctx.Fec.add(y1, y1)
-        if (ctx.Fec.isZero(divisor)) {
-            throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
-        }
-        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), divisor);
-    }
-    else {
-        const deltaX = ctx.Fec.sub(x2, x1)
-        if (ctx.Fec.isZero(deltaX)) {
-            throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
-        }
-        s = ctx.Fec.div(ctx.Fec.sub(y2, y1), deltaX );
-    }
-
-    const x3 = ctx.Fec.sub(ctx.Fec.mul(s, s), ctx.Fec.add(x1, x2));
-    const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
-
-    return [x3, y3];
-}
-
-function eval_ARITH_BN254_MULFP2_X(ctx, tag)
-{
-    // const ctxFullFe = {...ctx, fullFe: true};
-    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
-    const y1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
-    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[2]));
-    const y2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[3]));
-
-    return ctx.FpBN254.sub(ctx.FpBN254.mul(x1,x2), ctx.FpBN254.mul(y1, y2));
-}
-
-function eval_ARITH_BN254_MULFP2_Y(ctx, tag)
-{
-    // const ctxFullFe = {...ctx, fullFe: true};
-    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
-    const y1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
-    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[2]));
-    const y2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[3]));
-
-    return ctx.FpBN254.add(ctx.FpBN254.mul(x1,y2), ctx.FpBN254.mul(x2, y1));
-}
-
-function eval_ARITH_BN254_ADDFP2(ctx, tag)
-{
-    // const ctxFullFe = {...ctx, fullFe: true};
-    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
-    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
-
-    return ctx.FpBN254.add(x1,x2);
-}
-
-function eval_ARITH_BN254_SUBFP2(ctx, tag)
-{
-    // const ctxFullFe = {...ctx, fullFe: true};
-    const x1 = ctx.FpBN254.e(evalCommand(ctx, tag.params[0]));
-    const x2 = ctx.FpBN254.e(evalCommand(ctx, tag.params[1]));
-
-    return ctx.FpBN254.sub(x1,x2);
+    return [...ctx.FrZeros];
 }
 
 function printRegs(Fr, ctx) {
@@ -3532,8 +3217,6 @@ function printReg(Fr, name, V, h, short) {
     }
 
     console.log(S);
-
-
 }
 
 
@@ -3578,6 +3261,47 @@ function safeFea2scalar(Fr, arr) {
         }
     }
     return fea2scalar(Fr, arr);
+}
+
+/**
+* Field element 48 bits array to Scalar
+* result = arr[0] + arr[1]*(2^48) + arr[2]*(2^96) + arr[3]*(2^144) + arr[4]*(2^192) + arr[5]*(2^240) + arr[6]*(2^288) + arr[7]*(2^336)
+* @param {Field} F - field element
+* @param {Array[Field]} arr - array of fields elements
+* @returns {Scalar}
+*/
+function fea384ToScalar(Fr, arr) {
+    let res = Fr.toObject(arr[0]);
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[1]), 48));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[2]), 96));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[3]), 144));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[4]), 192));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[5]), 240));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[6]), 288));
+    res = Scalar.add(res, Scalar.shl(Fr.toObject(arr[7]), 336));
+
+    return res;
+}
+
+/**
+ * Converts a Scalar into an array of 8 elements encoded as Fields elements where each one represents 48 bits
+ * result = [Scalar[0:47], scalar[48:95], scalar[96:143], scalar[144:191], scalar[192:239], scalar[240:287], scalar[288:335], scalar[336:383]]
+ * @param {Field} Fr - field
+ * @param {Scalar} scalar - value to convert
+ * @returns {Array[Field]} array of fields
+ */
+function scalarToFea384(Fr, scalar) {
+    scalar = Scalar.e(scalar);
+    const r0 = Scalar.band(scalar, Scalar.e('0xFFFFFFFFFFFF'));
+    const r1 = Scalar.band(Scalar.shr(scalar, 48), Scalar.e('0xFFFFFFFFFFFF'));
+    const r2 = Scalar.band(Scalar.shr(scalar, 96), Scalar.e('0xFFFFFFFFFFFF'));
+    const r3 = Scalar.band(Scalar.shr(scalar, 144), Scalar.e('0xFFFFFFFFFFFF'));
+    const r4 = Scalar.band(Scalar.shr(scalar, 192), Scalar.e('0xFFFFFFFFFFFF'));
+    const r5 = Scalar.band(Scalar.shr(scalar, 240), Scalar.e('0xFFFFFFFFFFFF'));
+    const r6 = Scalar.band(Scalar.shr(scalar, 288), Scalar.e('0xFFFFFFFFFFFF'));
+    const r7 = Scalar.band(Scalar.shr(scalar, 336), Scalar.e('0xFFFFFFFFFFFF'));
+
+    return [Fr.e(r0), Fr.e(r1), Fr.e(r2), Fr.e(r3), Fr.e(r4), Fr.e(r5), Fr.e(r6), Fr.e(r7)];
 }
 
 /**

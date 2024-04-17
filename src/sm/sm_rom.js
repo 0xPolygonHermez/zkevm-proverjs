@@ -33,6 +33,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
             pols.CONST6[i] = F.zero;
             pols.CONST7[i] = F.zero;
         } else if (rom.program[pIndex].CONSTL) {
+            // TODO: 384
             [
                 pols.CONST0[i],
                 pols.CONST1[i],
