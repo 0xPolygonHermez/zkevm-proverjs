@@ -26,7 +26,7 @@ const {
 
 const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 const ConstantsBlob = require('@0xpolygonhermez/zkevm-commonjs').blobInner.Constants;
-const { safeFea2scalar, safeFea386ToScalar, fea384ToScalar, scalarToFea384 } = require('../../lib/fea.js');
+const { safeFea2scalar, safeFea384ToScalar, fea384ToScalar, scalarToFea384 } = require('../../lib/fea.js');
 
 const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
@@ -202,7 +202,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     ctx.helpers.setup({
         evalCommand, checkParams,
-        safeFea386ToScalar,safeFea2scalar,
+        safeFea384ToScalar,safeFea2scalar,
         multiBaseFeaToScalar,getMultiBaseFea,
         scalarToFea384, fea384ToScalar,
         fullTracer, nameRomErrors,
@@ -287,6 +287,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         const l = rom.program[ ctx.zkPC ];
+        ctx.mode384 = l.mode384 ?? false;
         if (config.stats) {
             statsTracer.addZkPC(ctx.zkPC);
             metadata.stats.trace.push(ctx.zkPC);

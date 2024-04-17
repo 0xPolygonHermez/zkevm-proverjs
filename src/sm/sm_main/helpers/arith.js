@@ -73,16 +73,13 @@ module.exports = class Arith extends Helper {
         const Fr = this.ctx.Fr;
         const Fec = this.ctx.Fec;
 
+        // console.log({arithEquation, a, b, op, c, d, e});
         const operation = ARITH_OPERATIONS[arithEquation - 1] ?? `ARITH_EQUATION_${arithEquation}`;
 
         let same12 = 0n;
         let useE = 1n;
         let useCD = 1n;
 
-        // pols.arithSame12[i] = (arithEquation == 3) ? 1n : 0n;
-        // pols.arithUseE[i] = (arithEquation == 1 || arithEquation == 7 || arithEquation == 8 || l.artih) ? 0n : 1n;
-        // pols.arithUseCD[i] = (arithEquation == 1 || arithEquation == 7) ? 0n : 1n;
-    
         let chunkToScalar, fp;
         if (arithEquation >= ARITH_384_MOD) {
             chunkToScalar = this.safeFea384ToScalar;
@@ -126,7 +123,7 @@ module.exports = class Arith extends Helper {
         }
         else if ((arithEquation >= ARITH_ECADD_DIFFERENT && arithEquation <= ARITH_BN254_SUBFP2) ||
                  (arithEquation >= ARITH_BLS12381_MULFP2 && arithEquation <= ARITH_BLS12381_SUBFP2)) {   
-            const dbl = (arithEquation == ARITH_ECADD_SAME);
+            const dbl = (arithEquation === ARITH_ECADD_SAME);
             const x1 = chunkToScalar(Fr, a);
             const y1 = chunkToScalar(Fr, b);
             const x2 = dbl ? x1 : chunkToScalar(Fr, c);
@@ -159,12 +156,12 @@ module.exports = class Arith extends Helper {
             switch (arithEquation) {
                 case ARITH_ECADD_DIFFERENT:
                     _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), Fec.e(x2)));
-                    _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
+                    _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),_x3)), Fec.e(y1));
                     break;
 
                 case ARITH_ECADD_SAME:
                     _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), Fec.e(x1)));
-                    _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
+                    _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),_x3)), Fec.e(y1));
                     break;
 
                 case ARITH_BN254_MULFP2:
@@ -202,7 +199,7 @@ module.exports = class Arith extends Helper {
 
             required.push({x1: a, y1: b,x2: dbl ? a:c, y2: dbl ? b:d, x3: e, y3: op, arithEquation});
         } 
-        else if (l.arith == ARITH_256TO384) {
+        else if (arithEquation == ARITH_256TO384) {
             const _a = this.safeFea2scalar(Fr, a);
             const _b = this.safeFea2scalar(Fr, b);
             const _op = this.safeFea384ToScalar(Fr, op);
@@ -210,16 +207,17 @@ module.exports = class Arith extends Helper {
                 throw new Error(`B is too big, ${_b} >= 2**16 on ARITH_256TO384 operation at ${this.ctx.sourceRef}`);
             }
             const _expected = _a + P2_256 * _b;
-            if (_op !== expected) {
+            if (_op !== _expected) {
                 console.log('A: '+_a.toString()+' (0x'+_a.toString(16)+')');
                 console.log('B: '+_b.toString()+' (0x'+_b.toString(16)+')');
                 console.log('op: '+_op.toString()+' (0x'+_op.toString(16)+')');
+                console.log('expected: '+_expected.toString()+' (0x'+_expected.toString(16)+')');
 
-                throw new Error(`Arithmetic ${operation} point does not match: ${this.ctx.sourceRef}`);
+                throw new Error(`Arithmetic ${operation} point does not match ${_op.toString(16)} vs ${_expected.toString(16)} (expected) at ${this.ctx.sourceRef}`);
             }
             useCD = 0n;
             useE = 0n;
-            required.push({x1: a, y1: b,x2: dbl ? a:c, y2: dbl ? b:d, x3: e, y3: op, arithEquation});
+            required.push({x1: a, y1: b,x2: 0, y2: 0, x3: 0, y3: op, arithEquation});
         }
         else {
             throw new Error(`Invalid arithmetic ${operation} arithEquation:${arithEquation} at ${this.ctx.sourceRef}`);
@@ -351,7 +349,7 @@ module.exports = class Arith extends Helper {
         const x2 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[2]));
         const y2 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[3]));
 
-        return this.scalarToFea384(this.Fr, ctx.FpBLS12381.sub(ctx.FpBLS12381.mul(x1,x2), ctx.FpBLS12381.mul(y1, y2)));
+        return this.scalarToFea384(ctx.Fr, ctx.FpBLS12381.sub(ctx.FpBLS12381.mul(x1,x2), ctx.FpBLS12381.mul(y1, y2)));
     }
 
     eval_ARITH_BLS12381_MULFP2_Y(ctx, tag)
@@ -362,7 +360,7 @@ module.exports = class Arith extends Helper {
         const x2 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[2]));
         const y2 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[3]));
 
-        return this.scalarToFea384(this.Fr, ctx.FpBLS12381.add(ctx.FpBLS12381.mul(x1,y2), ctx.FpBLS12381.mul(x2, y1)));
+        return this.scalarToFea384(ctx.Fr, ctx.FpBLS12381.add(ctx.FpBLS12381.mul(x1,y2), ctx.FpBLS12381.mul(x2, y1)));
     }
 
     eval_ARITH_BLS12381_ADDFP2(ctx, tag)
@@ -370,8 +368,8 @@ module.exports = class Arith extends Helper {
         // const ctxFullFe = {...ctx, fullFe: true};
         const x1 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[0]));
         const x2 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[1]));
-
-        return this.scalarToFea384(this.Fr, ctx.FpBLS12381.add(x1,x2));
+        
+        return this.scalarToFea384(ctx.Fr, ctx.FpBLS12381.add(x1,x2));
     }
 
     eval_ARITH_BLS12381_SUBFP2(ctx, tag)
@@ -380,18 +378,18 @@ module.exports = class Arith extends Helper {
         const x1 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[0]));
         const x2 = ctx.FpBLS12381.e(this.evalCommand(ctx, tag.params[1]));
 
-        return this.scalarToFea384(this.Fr, ctx.FpBLS12381.sub(x1,x2));
+        return this.scalarToFea384(ctx.Fr, ctx.FpBLS12381.sub(x1,x2));
     }
 
     eval_FROM_384_TO_256_H(ctx, tag)
     {
         const value = this.evalCommand({...ctx, mode384: true}, tag.params[0]);
-        return this.scalar2fea(ctx.Fr, (value >> 256n) & MASK_128);
+        return scalar2fea(ctx.Fr, (value >> 256n) & MASK_128);
     }
 
     eval_FROM_384_TO_256_L(ctx, tag)
     {
         const value = this.evalCommand({...ctx, mode384: true}, tag.params[0]);
-        return this.scalar2fea(ctx.Fr, MASK_256);
+        return scalar2fea(ctx.Fr, value & MASK_256);
     }
 }

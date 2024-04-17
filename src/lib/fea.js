@@ -3,7 +3,7 @@ const { Scalar } = require("ffjavascript");
 
 module.exports = {
     safeFea2scalar,
-    safeFea386ToScalar,
+    safeFea384ToScalar,
     fea384ToScalar,
     scalarToFea384
 }
@@ -18,14 +18,14 @@ function safeFea2scalar(Fr, arr) {
     return fea2scalar(Fr, arr);
 }
 
-function safeFea386ToScalar(Fr, arr) {
+function safeFea384ToScalar(Fr, arr) {
     for (let index = 0; index < 8; ++index) {
         const value = Fr.toObject(arr[index]);
         if (value > 0xFFFFFFFFFFFFn) {
             throw new Error(`Invalid value 0x${value.toString(16)} (mode:384 bits) to convert to scalar on index ${index}: ${sourceRef}`);
         }
     }
-    return fea386ToScalar(Fr, arr);
+    return fea384ToScalar(Fr, arr);
 }
 
 /**
