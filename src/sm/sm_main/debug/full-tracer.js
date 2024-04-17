@@ -43,7 +43,7 @@ const changeBlockErrors = ['invalid_change_l2_block_limit_timestamp', 'invalid_c
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
- * for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
+ * for each batch and also a log is created for each transaction separately. The events are triggered from the zkrom and handled
  * from the zkprover
  */
 class FullTracer {

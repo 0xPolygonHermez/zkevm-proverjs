@@ -1,0 +1,4 @@
+INCLUDE "special/assume_free.zkasm"
+INCLUDE "special/free0_is_byte.zkasm"
+INCLUDE "special/infree0.zkasm"
+INCLUDE "special/sp_offset.zkasm"

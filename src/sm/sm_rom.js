@@ -143,7 +143,11 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
             + (rom.program[pIndex].free0IsByte ? (2n**49n * BigInt(rom.program[pIndex].free0IsByte)) : 0n)
             + (rom.program[pIndex].hashS ? (2n**50n * BigInt(rom.program[pIndex].hashS)) : 0n)
             + (rom.program[pIndex].hashSDigest ? (2n**51n * BigInt(rom.program[pIndex].hashSDigest)) : 0n)
-            + (rom.program[pIndex].hashSLen ? (2n**52n * BigInt(rom.program[pIndex].hashSLen)) : 0n);
+            + (rom.program[pIndex].hashSLen ? (2n**52n * BigInt(rom.program[pIndex].hashSLen)) : 0n)
+            + (blob ? 0n : ((rom.program[pIndex].hashS ? (2n**53n * BigInt(rom.program[pIndex].hashS)) : 0n)
+                            + (rom.program[pIndex].hashSDigest ? (2n**54n * BigInt(rom.program[pIndex].hashSDigest)) : 0n)
+                            + (rom.program[pIndex].hashSLen ? (2n**55n * BigInt(rom.program[pIndex].hashSLen)) : 0n))
+              );
 
         pols.ind[i] = rom.program[pIndex].ind ? BigInt(rom.program[pIndex].ind) : 0n;
         pols.indRR[i] = rom.program[pIndex].indRR ? BigInt(rom.program[pIndex].indRR) : 0n;
