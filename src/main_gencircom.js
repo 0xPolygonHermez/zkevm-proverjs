@@ -68,7 +68,7 @@ async function run() {
     verifierNames.push(verifierName);
 
     const optionsCircom = {
-        nStages: 3,
+        nStages: starkInfoVerifiers[0].nStages,
         starkInfoVerifiers,
         vks,
         options,
@@ -160,7 +160,7 @@ async function run() {
             optionsGetSha256InputsCircom.publics = blobOuterPublics;
         } else {
             getSha256InputsTemplate = await fs.promises.readFile(path.join(__dirname, "templates", "helpers", "final", "get_sha256_inputs_batch.circom.ejs"), "utf8");
-            optionsGetSha256InputsCircom.publics = blobOuterPublics;
+            optionsGetSha256InputsCircom.publics = batchPublics;
         }
        
         const getSha256InputsFile = `${buildDir}/get_sha256_inputs.circom`;
@@ -169,7 +169,7 @@ async function run() {
         const getSha256InputsCircomFile = ejs.render(getSha256InputsTemplate, optionsGetSha256InputsCircom);
         await fs.promises.writeFile(getSha256InputsFile, getSha256InputsCircomFile, "utf8");
 
-        options.arity = starkInfoVerifiers[0].merkleTreeArity;
+        options.arity = starkInfoVerifiers[0].starkStruct.merkleTreeArity;
     }
 
 

@@ -2,6 +2,7 @@
             "nBits": 23,
             "nBitsExt": 24,
             "nQueries": 128,
+            "hashCommits": true,
             "verificationHashType": "GL",
             "steps": [
                 {"nBits": 24},

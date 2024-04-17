@@ -4,7 +4,7 @@ include "<%- verifierNames[0] %>.verifier.circom";
 include "get_sha256_inputs.circom";
 
 <% let starkInfo = starkInfoVerifiers[0]; -%>
-<% let arity = starkInfo.merkleTreeArity; -%>
+<% let arity = starkInfo.starkStruct.merkleTreeArity; -%>
 template Main() {
     signal output publicsHash;
 
@@ -22,8 +22,8 @@ template Main() {
     signal input s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/Math.log2(arity))+1 %>][<%- arity %>];
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
-    signal input s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
+    signal input s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}`] %>];
     signal input s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- Math.floor((parseInt(starkInfo.starkStruct.steps[0].nBits) - 1)/Math.log2(arity))+1 %>][<%- arity %>];
 <%     } -%>
 <% } -%>
@@ -52,7 +52,7 @@ template Main() {
     sv.s0_siblingsC <== s0_siblingsC;
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
     sv.s0_vals<%- s %> <== s0_vals<%- s %>;
     sv.s0_siblings<%- s %> <== s0_siblings<%- s %>;
 <%     } -%>

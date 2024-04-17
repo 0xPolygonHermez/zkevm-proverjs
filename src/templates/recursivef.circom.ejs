@@ -21,8 +21,8 @@ template Main() {
     signal input s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
-    signal input s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
+    signal input s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}`] %>];
     signal input s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 <%     } -%>
 <% } -%>
@@ -38,7 +38,7 @@ template Main() {
 
     signal input finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
-    component sv = StarkVerifier();
+    component sv = StarkVerifier0();
 
     for (var i=0; i< <%- nPublics %>; i++) {
         sv.publics[i] <== publics[i];
@@ -53,7 +53,7 @@ template Main() {
     sv.s0_valsC <== s0_valsC;
     sv.s0_siblingsC <== s0_siblingsC;
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
     sv.s0_vals<%- s %> <== s0_vals<%- s %>;
     sv.s0_siblings<%- s %> <== s0_siblings<%- s %>;
 <%     } -%>

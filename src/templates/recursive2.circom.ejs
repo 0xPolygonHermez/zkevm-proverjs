@@ -26,8 +26,8 @@ template Main() {
     signal input a_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
-    signal input a_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
+    signal input a_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}`] %>];
     signal input a_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 <%     } -%>
 <% } -%>
@@ -55,8 +55,8 @@ template Main() {
     signal input b_s0_siblingsC[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
-    signal input b_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}_n`] %>];
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
+    signal input b_s0_vals<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.mapSectionsN[`cm${s}`] %>];
     signal input b_s0_siblings<%- s %>[<%- starkInfo.starkStruct.nQueries %>][<%- starkInfo.starkStruct.steps[0].nBits %>][4];
 <%     } -%>
 <% } -%>
@@ -73,8 +73,8 @@ template Main() {
     signal input b_finalPol[<%- 1 << parseInt(starkInfo.starkStruct.steps[starkInfo.starkStruct.steps.length-1].nBits) %>][3];
 
     signal publicsAggregated[<%- publics.nPublics %>];
-    signal a_isOneBatch;
-    signal b_isOneBatch;
+    signal {binary} a_isOneBatch;
+    signal {binary} b_isOneBatch;
 
 <%  if(options.isAggregatedInput) { -%>
     signal input a_isAggregatedCircuit;
@@ -90,7 +90,7 @@ template Main() {
         publics[i] === publicsAggregated[i];
     }
 
-    component vA = StarkVerifier();
+    component vA = StarkVerifier0();
 
     for (var i=0; i< <%- publics.nPublics %>; i++) {
         vA.publics[i] <== a_publics[i];
@@ -106,7 +106,7 @@ template Main() {
     vA.s0_siblingsC <== a_s0_siblingsC;
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
     vA.s0_vals<%- s %> <== a_s0_vals<%- s %>;
     vA.s0_siblings<%- s %> <== a_s0_siblings<%- s %>;
 <%     } -%>
@@ -130,7 +130,7 @@ template Main() {
         vA.publics[<%- publics.nPublics %> + i] <== rootC[i];
     }
 
-    component vB = StarkVerifier();
+    component vB = StarkVerifier0();
 
     for (var i=0; i< <%- publics.nPublics %>; i++) {
         vB.publics[i] <== b_publics[i];
@@ -146,7 +146,7 @@ template Main() {
     vB.s0_siblingsC <== b_s0_siblingsC;
 
 <%  for (let s=1; s<=nStages + 1; ++s) { -%>
-<%     if (starkInfo.mapSectionsN[`cm${s}_2ns`] > 0) { -%>
+<%     if (starkInfo.mapSectionsN[`cm${s}`] > 0) { -%>
     vB.s0_vals<%- s %> <== b_s0_vals<%- s %>;
     vB.s0_siblings<%- s %> <== b_s0_siblings<%- s %>;
 <%     } -%>
@@ -171,4 +171,4 @@ template Main() {
     }
 }
 
-component main {public [publics, rootC]}= Main();ack
+component main {public [publics, rootC]}= Main();

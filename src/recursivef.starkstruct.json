@@ -2,6 +2,7 @@
     "nBits": 17,
     "nBitsExt": 21,
     "nQueries": 32,
+    "merkleTreeArity": 4,
     "verificationHashType": "BN128",
     "steps": [
         {"nBits": 21},
