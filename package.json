@@ -184,7 +184,7 @@
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#develop-feijoa",
+    "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#feature/arith-384",
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v7.0.0-rc.1-fork.10",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
