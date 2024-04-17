@@ -158,7 +158,9 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         //        that the added offset is the lowest.
         // Note2: x1,x2,y1,y2 can be assumed to be alias free, as this is the pre condition in the Arith SM.
         //        I.e, x1,x2,y1,y2 ∈ [0, 2^256-1].
-        if (input[i].selEq1) {
+        const eqInfo = getEquationInfo(input[i].arithEquation);
+        const selectors = eqInfo.selectors;
+        if (selectors.selEq[1]) {
             let eq;
             if (Fec.eq(x2, x1) && !continueOnError) {
                 throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
@@ -186,7 +188,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq2) {
+        else if (selectors.selEq[2]) {
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];
             } else {
@@ -215,7 +217,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             q0 = 0n;
         }
 
-        if (input[i].selEq1 || input[i].selEq2) {
+        if (selectors.selEq[1] || selectors.selEq[2]) {
             let eqa = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
                                             // with (2^256-1)**2 > |-3*(2^256-1)|
             q1 = eqa/pFec;
@@ -255,7 +257,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq3) {
+        else if (selectors.selEq[3]) {
             let eqa = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
                                               // with |-2^256*(2^256-1)| > (2^256-1)**2
             q1 = -(eqa/pBN254);
@@ -292,7 +294,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq4) {
+        else if (selectors.selEq[4]) {
             let eqa = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
                                     // with 2*(2^256-1) > |-(2^256-1)|
             q1 = eqa/pBN254;
@@ -329,7 +331,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq5) {
+        else if (selectors.selEq[5]) {
             let eqa = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
             q1 = -(eqa/pBN254);
@@ -370,7 +372,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             q2 = 0n;
         }
 
-        if (input[i].selEq6) {
+        if (selectors.selEq[6]) {
             let eq = x1 * y1 + x2 - y3;
             if (y2 === 0n) {
                 throw new Error(`For input ${i}, y2 is zero on modular arithmetic`);
@@ -407,6 +409,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let offset = i * 32;
         let xAreDifferent = false;
         let valueLtPrime;
+        const eqInfo = getEquationInfo(input[i].arithEquation);
+        const selectors = eqInfo.selectors;
         for (let step = 0; step < 32; ++step) {
             const index = offset + step;
             const nextIndex = (index + 1) % N;
@@ -428,13 +432,9 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
             pols.y2clock[index] = BigInt(input[i]["_y2"][15 - step16])
             pols.y3clock[index] = BigInt(input[i]["_y3"][15 - step16])
-            pols.selEq[0][index] = BigInt(input[i].selEq0);
-            pols.selEq[1][index] = BigInt(input[i].selEq1);
-            pols.selEq[2][index] = BigInt(input[i].selEq2);
-            pols.selEq[3][index] = BigInt(input[i].selEq3);
-            pols.selEq[4][index] = BigInt(input[i].selEq4);
-            pols.selEq[5][index] = BigInt(input[i].selEq5);
-            pols.selEq[6][index] = BigInt(input[i].selEq6);
+            for (let isel = 0; isel < pols.selEq.length; ++isel) {
+                pols.selEq[isel][offset + step] = BigInt(selectors.selEq[isel]);
+            }
 
             // selEq1 (addition different points) is select need to check that points are diferent
             if (pols.selEq[1][index] && step < 16) {
@@ -466,32 +466,24 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
 
             pols.x3clock[index] = 0xFFFFn + pols.y3[15 - step16][offset] - pols.y2[15 - step16][offset] + pols.chunkLtPrime[index];
-
-            pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
-            pols.selEq[1][offset + step] = BigInt(input[i].selEq1);
-            pols.selEq[2][offset + step] = BigInt(input[i].selEq2);
-            pols.selEq[3][offset + step] = BigInt(input[i].selEq3);
-            pols.selEq[4][offset + step] = BigInt(input[i].selEq4);
-            pols.selEq[5][offset + step] = BigInt(input[i].selEq5);
-            pols.selEq[6][offset + step] = BigInt(input[i].selEq6);
         }
         let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0];
         let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
 
-        let eqIndexes = [];
-        if (pols.selEq[0][offset]) eqIndexes.push(0);
-        if (pols.selEq[1][offset]) eqIndexes.push(1);
-        if (pols.selEq[2][offset]) eqIndexes.push(2);
-        if (pols.selEq[1][offset] || pols.selEq[2][offset]) eqIndexes = eqIndexes.concat([3, 4]);
+        const eqIndexes = eqInfo.eqIndexes;
+
+/*        if (pols.selEq[0][offset]) eqIndexes.push(0);
+        if (pols.selEq[1][offset]) eqIndexes.push([1,3,4]);
+        if (pols.selEq[2][offset]) eqIndexes.push([2,3,4]);
         if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([5, 6]);
         if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([7, 8]);
         if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([9, 10]);
-        if (pols.selEq[6][offset]) eqIndexes.push(11);
+        if (pols.selEq[6][offset]) eqIndexes.push(11);*/
 
         for (let step = 0; step < 32; ++step) {
-            eqIndexes.forEach((eqIndex) => {
-                let carryIndex = eqIndexToCarryIndex[eqIndex];
+            eqIndexes.forEach((eqIndex, index) => {
+                // carryIndex is carry
+                const carryIndex = index;
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {

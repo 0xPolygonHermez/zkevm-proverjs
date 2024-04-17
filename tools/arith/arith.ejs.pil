@@ -35,6 +35,8 @@
 	EQ17:  x1 - x2 - x3 + (q1 * p2)                              - selEq[10]
 	EQ18:  y1 - y2 - y3 + (q2 * p2)                              - selEq[10]
 
+	EQ19:  256to384                                              - selEq[11]
+
 
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
@@ -398,7 +400,6 @@ namespace Arith(%N);
     <%- clksel(['s[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> = hrc2 * 2**16 + lrc2;
     <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]'], 'Global.CLK32') %> = hrc3 * 2**16 + lrc3;
 
-     
     {hrc0,hrc1} in {Global.BYTE2,Global.BYTE2};
     // hrc1 in Global.BYTE2;
     // hrc2 in Global.BYTE2;
@@ -599,7 +600,7 @@ namespace Arith(%N);
     pol eq18 = <%- clksel(['eq18_[0..31]'], 'Global.CLK32') %>;
 
     // Equation selectors. Must be binary, constant during the operation and operation-exclusive
-    pol commit selEq[11];
+    pol commit selEq[12];
 
     <%- latch(['selEq[0..10]'],'Global.CLK32[31]') %>
     <%- binary(['selEq[0..10]']) %>
@@ -618,22 +619,32 @@ namespace Arith(%N);
     carry[2] in GL_SIGNED_22BITS;
 
     selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+
     selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
     selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
     (selEq[1] + selEq[2]) * (eq3 + carry[1]) = (selEq[1] + selEq[2]) * carry[1]' * 2**16;
     (selEq[1] + selEq[2]) * (eq4 + carry[2]) = (selEq[1] + selEq[2]) * carry[2]' * 2**16;
-    selEq[3] * (eq5 + carry[1]) = selEq[3] * carry[1]' * 2**16;
-    selEq[3] * (eq6 + carry[2]) = selEq[3] * carry[2]' * 2**16;
-    selEq[4] * (eq7 + carry[1]) = selEq[4] * carry[1]' * 2**16;
-    selEq[4] * (eq8 + carry[2]) = selEq[4] * carry[2]' * 2**16;
-    selEq[5] * (eq9 + carry[1]) = selEq[5] * carry[1]' * 2**16;
-    selEq[5] * (eq10 + carry[2]) = selEq[5] * carry[2]' * 2**16;
+
+    selEq[3] * (eq5 + carry[0]) = selEq[3] * carry[0]' * 2**16;
+    selEq[3] * (eq6 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+
+    selEq[4] * (eq7 + carry[0]) = selEq[4] * carry[0]' * 2**16;
+    selEq[4] * (eq8 + carry[1]) = selEq[4] * carry[1]' * 2**16;
+
+    selEq[5] * (eq9 + carry[0]) = selEq[5] * carry[0]' * 2**16;
+    selEq[5] * (eq10 + carry[1]) = selEq[5] * carry[1]' * 2**16;
+
     selEq[6] * (eq11 + carry[0]) = selEq[6] * carry[0]' * 2**16;
 
     selEq[7] * (eq12 + carry[0]) = selEq[7] * carry[0]' * 2**24;
-    selEq[8] * (eq13 + carry[1]) = selEq[8] * carry[1]' * 2**24;
-    selEq[8] * (eq14 + carry[2]) = selEq[8] * carry[2]' * 2**24;
-    selEq[9] * (eq15 + carry[1]) = selEq[9] * carry[1]' * 2**24;
-    selEq[9] * (eq16 + carry[2]) = selEq[9] * carry[2]' * 2**24;
-    selEq[10] * (eq17 + carry[1]) = selEq[10] * carry[1]' * 2**24;
-    selEq[10] * (eq18 + carry[2]) = selEq[10] * carry[2]' * 2**24;
+
+    selEq[8] * (eq13 + carry[0]) = selEq[8] * carry[0]' * 2**24;
+    selEq[8] * (eq14 + carry[1]) = selEq[8] * carry[1]' * 2**24;
+
+    selEq[9] * (eq15 + carry[0]) = selEq[9] * carry[0]' * 2**24;
+    selEq[9] * (eq16 + carry[1]) = selEq[9] * carry[1]' * 2**24;
+
+    selEq[10] * (eq17 + carry[0]) = selEq[10] * carry[0]' * 2**24;
+    selEq[10] * (eq18 + carry[1]) = selEq[10] * carry[1]' * 2**24;
+
+    selEq[11] * (eq19 + carry[0]) = selEq[11] * carry[0]' * 2**24;
