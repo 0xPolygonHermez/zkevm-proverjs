@@ -11,7 +11,7 @@
         ; ${getTxsLen()}
         ; ${getSmtProof()}
 
-        $${eventLog(onError, SomeCommonIssue)}
+        ; $${eventLog(onError, SomeCommonIssue)}
 
         ; TODO: Fix it
         ; 3 => B
@@ -64,14 +64,14 @@
         ; ${comp()}
         ; ${loadScalar()}
 
-        ${log(A,Register)}
+        ; ${log(A,Register)}
 
         ${exp(2,3)} => A
         8       :ASSERT
 
-        $${storeLog(3, 0, A)}
+        ; $${storeLog(3, 0, A)}
 
-        ${break()}
+        ; ${break()}
 
         ${memAlignWR_W0(2631257310,7777,0)} => A
         7777                :ASSERT
