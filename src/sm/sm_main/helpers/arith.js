@@ -140,6 +140,7 @@ module.exports = class Arith extends Helper {
                     // Division by zero must be managed by ROM before call ARITH
                     const divisor = Fec.add(Fec.e(y1), Fec.e(y1));
                     same12 = 1n;
+                    useCD = 0n;
                     if (Fec.isZero(divisor)) {
                         throw new Error(`Invalid arithmetic op, DivisionByZero arithEquation:${arithEquation} ${this.ctx.sourceRef}`);
                     }
@@ -217,6 +218,7 @@ module.exports = class Arith extends Helper {
                 throw new Error(`Arithmetic ${operation} point does not match: ${this.ctx.sourceRef}`);
             }
             useCD = 0n;
+            useE = 0n;
             required.push({x1: a, y1: b,x2: dbl ? a:c, y2: dbl ? b:d, x3: e, y3: op, arithEquation});
         }
         else {
