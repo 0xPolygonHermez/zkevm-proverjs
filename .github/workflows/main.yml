@@ -24,14 +24,18 @@ jobs:
         - 8545:8545
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Clone repos
         run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cd ..
-          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch feature/forkid-10
+          git clone https://github.com/0xPolygonHermez/zkevm-testvectors.git --branch develop-feijoa
           cd zkevm-testvectors/tools-inputs/tools-eth
           git clone https://github.com/0xPolygonHermez/ethereum-tests tests
           cd tests

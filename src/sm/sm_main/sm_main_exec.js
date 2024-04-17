@@ -25,6 +25,7 @@ const {
 } = require('@0xpolygonhermez/zkevm-commonjs').processorUtils;
 
 const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
+const ConstantsBlob = require('@0xpolygonhermez/zkevm-commonjs').blobInner.Constants;
 
 const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
@@ -60,7 +61,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         PoseidonG: [],
         Mem: [],
         MemAlign: [],
-        Storage: []
+        Storage: [],
     };
 
     const counterControls = {
@@ -121,7 +122,6 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     await db.connect(config.databaseURL, config.dbNodesTable, config.dbProgramTable);
 
     // load programs into DB
-    let batchHashData;
     if (!blob) {
         for (const [key, value] of Object.entries(input.contractsBytecode)){
             // filter smt smart contract hashes
@@ -129,31 +129,33 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 await db.setProgram(stringToH4(key), hexString2byteArray(value));
         }
 
-        input.batchHashDataComputed = await hashContractBytecode(input.batchL2Data);
+        const batchHashDataComputed = await hashContractBytecode(input.batchL2Data);
         // Compare computed batch hash data (from batch l2 data) with input batch hash data
-        if (typeof input.batchHashData !== 'undefined' && input.batchHashData !== input.batchHashDataComputed) {
+        if (typeof input.batchHashData === 'undefined') {
+            input.batchHashData = batchHashDataComputed;
+        } else if (input.batchHashData !== batchHashDataComputed) {
             throw new Error('batchHashData does not match the computed batchHashData (from batch l2 data)');
         }
         // Load batchL2Data into DB
-        await db.setProgram(stringToH4(input.batchHashDataComputed), hexString2byteArray(input.batchL2Data));
+        await db.setProgram(stringToH4(input.batchHashData), hexString2byteArray(input.batchL2Data));
     }
 
-    if(blob && input.blobType == 1) {
+    if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.EIP4844) {
         // Load poseidonBlobData into DB
-        let z = await hashContractBytecode(input.blobData);
-        if(typeof input.z === 'undefined') {
+        const z = await hashContractBytecode(input.blobData);
+        if (typeof input.z === 'undefined') {
             input.z = z;
-        } else if(input.z !== z) {
-            throw new Error("input.z != poseidon(input.blobData)");
+        } else if (input.z !== z) {
+            throw new Error('input.z != poseidon(input.blobData)');
         }
         await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
-    } else if (blob) {
+    } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
         // Load keccak256BlobData into DB
-        let blobL2HashData = await ethers.utils.keccak256(input.blobData);
-        if(typeof input.blobL2HashData === 'undefined') {
+        const blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        if (typeof input.blobL2HashData === 'undefined') {
             input.blobL2HashData = blobL2HashData;
-        } else if(input.blobL2HashData !== blobL2HashData) {
-            throw new Error("input.blobL2HashData != keccak(input.blobData)");
+        } else if (input.blobL2HashData !== blobL2HashData) {
+            throw new Error('input.blobL2HashData != keccak(input.blobData)');
         }
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
     }
@@ -184,7 +186,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         saved:{},
         config,
     }
-    
+
     if (config.stats) {
         metadata.stats = {
             trace:[],
@@ -305,6 +307,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             fastDebugExit = true;
             if (typeof verboseOptions.step === 'number') {
                 console.log("Total steps used: ", ctx.step);
+            }
+            // Set las save as restored because it is not restored at end.zkasm in case of fastDebugExit
+            if(Object.keys(ctx.saved).length > 0) {
+                ctx.saved[Object.keys(ctx.saved)[Object.keys(ctx.saved).length - 1]].restored = {};
             }
             break;
         }
@@ -624,10 +630,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             addr = 0;
             if (typeof l.maxAddrRel !== 'undefined' && addrRel > l.maxAddrRel) {
                 throw new Error(`Address out of bounds accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
-            }   
+            }
             if (typeof l.minAddrRel !== 'undefined' && addrRel < l.minAddrRel) {
                 throw new Error(`Address out of bounds (negative index) accessing index ${l.offset - l.baseLabel + addrRel} but ${l.offsetLabel}[${l.sizeLabel}] ind:${addrRel}`);
-            }   
+            }
             if (l.offset) addr += l.offset;
             if (l.isStack == 1) addr += Number(ctx.SP);
             if (!skipAddrRelControl) {
@@ -1965,7 +1971,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.memAlignRD || l.memAlignWR) {
             const wr = l.memAlignWR ? true: false;
-            ctx.helpers.MemAlign.verify(wr, safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0]), 
+            ctx.helpers.MemAlign.verify(wr, safeFea2scalar(Fr, ctx.A), safeFea2scalar(Fr, ctx.B), fe2n(Fr, ctx.C[0]),
                                         safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]),
                                         wr ? safeFea2scalar(Fr, ctx.D) : 0n, wr ? safeFea2scalar(Fr, ctx.E) : 0n,
                                         required.MemAlign);
@@ -2561,6 +2567,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
         throw error;
     }
+
+    ctx.helpers.event('onFinishExecution');
 
     if (config.stats) {
         statsTracer.saveStatsFile();

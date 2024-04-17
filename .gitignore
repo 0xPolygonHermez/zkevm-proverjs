@@ -21,3 +21,5 @@ main.pil.json
 main_blob.pil.json
 tools/full-tracer-tests/ft-traces/
 batch-l2-data.json
+src/sm/sm_main/logs-ft-*
+MyLogFile.log

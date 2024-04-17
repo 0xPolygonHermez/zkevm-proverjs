@@ -72,7 +72,10 @@ async function run() {
         process.exit(1);
     }
     
-    const blob = argv.blob ? true : false;
+    if(typeof config.blob === 'undefined') {
+        config.blob = argv.blob ? true : false;
+    }
+    const blob = config.blob;
 
     // parse commandline config sets
 
@@ -106,7 +109,6 @@ async function run() {
         config[confname] = (typeof argv[argname] === 'string' ? argv[argname].trim() : (config[confname] ?? configFiles[name]));
     }
 
-    config.blob = blob;
     if (argv.define) {
         config.defines = config.defines ?? {};
         for (define of argv.define) {

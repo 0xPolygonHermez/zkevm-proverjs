@@ -29,7 +29,7 @@ const responseErrors = [
     'OOCS', 'OOCK', 'OOCB', 'OOCM', 'OOCA', 'OOCPA', 'OOCPO', 'OOCSH',
     'intrinsic_invalid_signature', 'intrinsic_invalid_chain_id', 'intrinsic_invalid_nonce',
     'intrinsic_invalid_gas_limit', 'intrinsic_invalid_gas_overflow', 'intrinsic_invalid_balance',
-    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code', 'invalid_L1_info_tree_index',
+    'intrinsic_invalid_batch_gas_limit', 'intrinsic_invalid_sender_code',
     'invalid_change_l2_block_min_timestamp', 'invalidRLP', 'invalidDecodeChangeL2Block', 'invalidNotFirstTxChangeL2Block',
     'invalid_l1_info_tree_index',
 ];
@@ -43,7 +43,7 @@ const changeBlockErrors = ['invalid_change_l2_block_limit_timestamp', 'invalid_c
 
 /**
  * Tracer service to output the logs of a batch of transactions. A complete log is created with all the transactions embedded
- * for each batch and also a log is created for each transaction separatedly. The events are triggered from the zkrom and handled
+ * for each batch and also a log is created for each transaction separately. The events are triggered from the zkrom and handled
  * from the zkprover
  */
 class FullTracer {
@@ -636,7 +636,9 @@ class FullTracer {
         this.finalTrace.new_state_root = bnToPaddedHex(fea2scalar(ctx.Fr, ctx.SR), 64);
         this.finalTrace.new_acc_input_hash = bnToPaddedHex(getVarFromCtx(ctx, true, 'newAccInputHash'), 64);
         this.finalTrace.new_local_exit_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'newLocalExitRoot'), 64);
-        this.finalTrace.new_batch_num = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'newNumBatch'));
+        this.finalTrace.new_last_timestamp = ethers.utils.hexlify(getVarFromCtx(ctx, true, 'timestamp'));
+        this.finalTrace.current_l1_info_tree_root = bnToPaddedHex(getVarFromCtx(ctx, true, 'currentL1InfoTreeRoot'), 64);
+        this.finalTrace.current_l1_info_tree_index = Number(getVarFromCtx(ctx, true, 'currentL1InfoTreeIndex'));
 
         this.verbose.printBatch('finish');
         this.verbose.saveFinalStateRoot(this.finalTrace.new_state_root);
