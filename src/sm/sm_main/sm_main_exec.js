@@ -26,6 +26,7 @@ const {
 
 const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 const ConstantsBlob = require('@0xpolygonhermez/zkevm-commonjs').blobInner.Constants;
+const { buildPointZData, computePointZ } = require('@0xpolygonhermez/zkevm-commonjs').blobUtils;
 
 const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
@@ -142,17 +143,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.EIP4844) {
         // Load poseidonBlobData into DB
-        const kzgCommitmentZ = input.kzgCommitment+input.blobData.replace("0x","");
-        const z = await hashContractBytecode(kzgCommitmentZ);
+        const pointZData = buildPointZData(input.kzgCommitment, input.blobData);
+        const z = await computePointZ(input.kzgCommitment, input.blobData);
         if (typeof input.z === 'undefined') {
             input.z = z;
         } else if (input.z !== z) {
-            throw new Error('input.z != poseidon(input.kzgCommitment+input.blobData)');
+            throw new Error('input.z != poseidon(pointZData)');
         }
-        await db.setProgram(stringToH4(z), hexString2byteArray(kzgCommitmentZ));
+        await db.setProgram(stringToH4(z), hexString2byteArray(pointZData));
 
         const kzgCommitmentHash = createHash('sha256').update(Uint8Array.from(input.kzgCommitment)).digest('hex');
-        input.kzgCommitmentHash = "0x"+kzgCommitmentHash;
+        input.kzgCommitmentHash = `0x${kzgCommitmentHash}`;
         await db.setProgram(stringToH4(input.kzgCommitmentHash), hexString2byteArray(input.kzgCommitment));
 
     } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
