@@ -1005,7 +1005,7 @@ class FullTracer {
         const keys = Object.keys(this.finalTrace.read_write_addresses);
         const rootArray = stringToH4(this.finalTrace.new_state_root);
 
-        // get balance and noince
+        // get balance and nonce
         for (const address of keys) {
             const state = await stateUtils.getState(address, this.smt, rootArray);
             this.finalTrace.read_write_addresses[address] = {
