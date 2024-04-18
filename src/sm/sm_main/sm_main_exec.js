@@ -335,6 +335,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             for (let j=0; j< l.cmdBefore.length; j++) {
                 evalCommand(ctx, l.cmdBefore[j]);
             }
+            if (fullTracer){
+                await eventsAsyncTracer(ctx, l.cmdBefore);
+            }
         }
 
         // print external logs
