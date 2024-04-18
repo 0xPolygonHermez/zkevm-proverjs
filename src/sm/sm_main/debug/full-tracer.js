@@ -7,8 +7,8 @@
 /* eslint-disable camelcase */
 const fs = require('fs');
 const path = require('path');
-const { fea2scalar, fea2String } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
-const { Constants } = require('@0xpolygonhermez/zkevm-commonjs');
+const { fea2scalar, fea2String, stringToH4 } = require('@0xpolygonhermez/zkevm-commonjs').smtUtils;
+const { Constants, stateUtils } = require('@0xpolygonhermez/zkevm-commonjs');
 const { ethers } = require('ethers');
 const { Scalar } = require('ffjavascript');
 const {
@@ -89,6 +89,7 @@ class FullTracer {
         this.options = options;
         this.setTracerOptions();
 
+        this.smt = smt;
         this.verbose = new Verbose(options.verbose, smt, logFileName);
         this.reservedCounters = reservedCounters;
 
@@ -143,6 +144,7 @@ class FullTracer {
         try {
             if (tag.params[0].varName === 'onFinishBatch') {
                 await this.printStates();
+                await this.fillInReadWriteAddresses();
             }
         } catch (e) {
             console.log(e);
@@ -651,9 +653,6 @@ class FullTracer {
             cnt_reserve_arithmetics: Number(this.reservedCounters.outOfCountersArith.reserved),
             cnt_reserve_binaries: Number(this.reservedCounters.outOfCountersBinary.reserved),
         };
-
-        // Create output files and dirs
-        this.exportTrace();
     }
 
     /**
@@ -1000,6 +999,23 @@ class FullTracer {
         if (Scalar.eq(keyType, Constants.SMT_KEY_NONCE)) {
             this.finalTrace.read_write_addresses[addressHex].nonce = Number(Scalar.e(_value)).toString();
         }
+    }
+
+    async fillInReadWriteAddresses() {
+        const keys = Object.keys(this.finalTrace.read_write_addresses);
+        const rootArray = stringToH4(this.finalTrace.new_state_root);
+
+        // get balance and nonce
+        for (const address of keys) {
+            const state = await stateUtils.getState(address, this.smt, rootArray);
+            this.finalTrace.read_write_addresses[address] = {
+                balance: Scalar.e(state.balance).toString(),
+                nonce: Number(Scalar.e(state.nonce)).toString(),
+            };
+        }
+
+        // Create output files and dirs
+        this.exportTrace();
     }
 
     /**
