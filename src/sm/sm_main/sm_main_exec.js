@@ -2552,7 +2552,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         }
 
         if (pols.zkPC[nexti] == (pols.zkPC[i] + 1n)) {
-            pendingCmds = l.cmdAfter;
+            pendingCmds = typeof l.cmdAfter === 'undefined' ? l.cmdBefore : l.cmdAfter;
         }
         if (checkJmpZero && pols.zkPC[nexti] === 0n && nexti !== 0) {
             if (checkJmpZero === ErrorCheck) {
