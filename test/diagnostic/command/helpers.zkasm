@@ -90,9 +90,10 @@
 
         2 => A,B
         3 => C,D
-        ${ARITH_BN254_ADDFP2(A,B,C,D)} => A
+        ${ARITH_BN254_ADDFP2(A,B)} => A
         4 :ASSERT
-        2 => A,B
+        15 => A
+        8 => B
         3 => C,D
-        ${ARITH_BN254_SUBFP2(A,B,C,D)} => A
+        ${ARITH_BN254_SUBFP2(C,D)} => A
         0 :ASSERT
