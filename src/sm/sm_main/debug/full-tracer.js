@@ -1007,7 +1007,6 @@ class FullTracer {
 
         // get balance and noince
         for (const address of keys) {
-            // get balance & nonce
             const state = await stateUtils.getState(address, this.smt, rootArray);
             this.finalTrace.read_write_addresses[address] = {
                 balance: Scalar.e(state.balance).toString(),
