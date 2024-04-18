@@ -93,7 +93,7 @@
         ${ARITH_BN254_ADDFP2(A,B)} => A
         4 :ASSERT
         15 => A
-        12 => B
+        8 => B
         3 => C,D
         ${ARITH_BN254_SUBFP2(C,D)} => A
         0 :ASSERT
