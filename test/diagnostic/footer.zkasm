@@ -16,9 +16,10 @@ end:
 
 ; label finalizeExecution needed by executor C++
 finalizeExecution:
-        ${beforeLast()}  : JMPN(finalizeExecution)
-
-                         : JMP(start)
+                         :JMP(finalWait)
+finalWait:
+        ${beforeLast()}  :JMPN(finalWait)
+                         :JMP(start)
 opINVALID:
 ; label checkAndSaveFrom needed by executor C++
 checkAndSaveFrom:
