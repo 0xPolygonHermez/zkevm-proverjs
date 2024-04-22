@@ -427,13 +427,28 @@ namespace Arith(%N);
     *
     *****/
 
-    pol commit hrc_x1y1,  lrc_x1y1;
-    pol commit hrc_x2y2,  lrc_x2y2;
-    pol commit hrc_sq0q1, lrc_sq0q1;
-    pol commit hrc_q1q2_hsq0q1q2, lrc_q1q2_hsq0q1q2;
-    pol commit hrc_x3y3, lrc_x3y3;
+    pol commit hsc_x1y1, lsc_x1y1;
+    pol commit hsc_x2y2, lsc_x2y2;
+    pol commit hsc_sq0,  lsc_sq0;
+    pol commit hsc_q1q2, lsc_q1q2;
+    pol commit hsc_x3y3, lsc_x3y3;
 
-    <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %> = hrc_x3y3 * 2**24 + hrc_x3y3;
+    // divide range check in two chunks of high significant chunk (hsc_xx) and less significant chunk (lsc_xx)
+    // constrints to 
+
+    <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hrc_x1y1 * 2**16 + lrc_x1y1;
+    <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> = hrc_x2y2 * 2**16 + lrc_x2_y2;
+    <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %> = hrc_x3y3 * 2**16 + lrc_x3y3;
+    <%- clksel([ 's[0..15]','q0[0..15]'], 'Global.CLK32') %> = hrc_sq0  * 2**16 + lrc_sq0;
+    <%- clksel(['q1[0..15]','q2[0..15]'], 'Global.CLK32') %> = hrc_q1q2 * 2**16 + lrc_q1q2;
+
+    // check less significant chunks are 16 bits chunk, lsc_x3y3 could be other values because is dynamic
+
+    lsc_x1y1 in Global.BYTE2;
+    lsc_x2y2 in Global.BYTE2;
+    lsc_sq0  in Global.BYTE2;
+    lsc_q1q2 in Global.BYTE2;
+
 
     // A:x1 B:y1 C:x2 D:y2 E:x3 op:y3
     
@@ -446,6 +461,7 @@ namespace Arith(%N);
     // when operation no use fully (*) 384 bits, high part must be 0, because value must be < 2**16 
     hrc_x1y1 * (1 - arith384) = 0;
     hrc_x2y2 * (1 - arith384) = 0; 
+    hrc_x3y3 * (1 - arith384) = 0; 
     hrc_sq0q1 * (1 - arith384) = 0;  
 
     // (*) in case of arith to prove 256TO384 no use fully 384 bits, because only op (x3) work with 384 bits.
@@ -456,22 +472,13 @@ namespace Arith(%N);
     hrhrc_q1q2_hsq0q1q2 * (1 - arith384) = 0;
 
 
-    <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hrc0 * 2**16 + lrc0;
-    <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> = hrc1 * 2**16 + lrc1;
-    <%- clksel(['s[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> = hrc2 * 2**16 + lrc2;
-    <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]'], 'Global.CLK32') %> = hrc3 * 2**16 + lrc3;
-
-    pol constant MULTI_4BITS;
-
-    {hrc_x1y1,hrc_x2y2,hrc_x3y3,hrc_sq0q1} in {MULTI_4BITS};
+    // TODO: add columns arithEq?
+    {hrc_x1y1,hrc_x2y2} in {Global.BYTE, Global.BYTE_2A};
+    {hrc_x3y3,hrc_sq0q1} in {Global.BYTE, Global.BYTE_2A};
 
     // TODO
     { Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], hrc2, hrc3} in {SEL_BYTE2_BIT21,Global.BYTE2, BYTE2_BIT21};
 
-    lrc0 in Global.BYTE2;
-    lrc1 in Global.BYTE2;
-    lrc2 in Global.BYTE2;
-    lrc3 in Global.BYTE2;
 
     /*******
     *
