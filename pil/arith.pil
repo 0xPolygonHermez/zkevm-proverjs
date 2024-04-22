@@ -4,6 +4,8 @@
 
     ===============  256 bits =======================================
 
+    ===============  256 bits =======================================
+
     EQ0:   A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)   - selEq[0]
 
     EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)   lambda - ADD  - selEq[1]
@@ -283,17 +285,28 @@ namespace Arith(%N);
     // If selEq[1]+selEq[2],selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
     pol commit valueLtPrime;
 
-    // chunkLtPrime indicates whether the current value chunk is smaller than the prime chunk.
+    // how range is too big, we divide chunckLtPrime in two flags, highChunckLtPrime and lowChunkLtPrime.
+    // highChunkLtPrime indicates whether the high part (bits: 23-16) of current value chunk is smaller than the high prime chunk.
+    // lowChunkLtPrime indicates whether the low part (bits: 0-15) of current value chunk is smaller than the low prime chunk.
     // If selEq[1]+selEq[2],selEq[3],selEq[4],selEq[5],selEq[6] = 0 or valueLtPrime = 1, it must be 0.
-    pol commit chunkLtPrime;
+    pol commit highChunkLtPrime;
+    pol commit lowChunkLtPrime;
 
     // binary constraints
-    chunkLtPrime * (1 - chunkLtPrime) = 0;
     valueLtPrime * (1 - valueLtPrime) = 0;
+    lowChunkLtPrime * (1 - lowChunkLtPrime) = 0;
+    highChunkLtPrime * (1 - highChunkLtPrime) = 0;
+
+    // force highChunkLtPrime to 0 if a regular arithmetic (256 bits)
+    highChunkLtPrime * (1 - arith384) = 0;
+
+    // only one of chunkLtPrime could be 1
+    lowChunkLtPrime * (1 - highChunkLtPrime) = 0;
+    highChunkLtPrime * (1 - lowChunkLtPrime) = 0;
 
     // This constraint applies to the next value of valueLtPrime. At the beginning of each 16-clock cycle,
     // valueLtPrime is ignored because it refers to the previous value.
-    valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
+    valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + lowChunkLtPrime + highChunkLtPrime;
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
     // This constraint is applied when one of selEq[1..6] equals 1.
@@ -345,24 +358,23 @@ namespace Arith(%N);
                         + 67 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[7] + selEq[8] + selEq[9] + selEq[10]);
 
     // Correctness of the y2clock, x3clock and y3clock
-    0 = (y2[15]-y2clock)*Global.CLK32[0] + (y2[14]-y2clock)*Global.CLK32[1] + (y2[13]-y2clock)*Global.CLK32[2] + (y2[12]-y2clock)*Global.CLK32[3] + (y2[11]-y2clock)*Global.CLK32[4] + (y2[10]-y2clock)*Global.CLK32[5] + (y2[9]-y2clock)*Global.CLK32[6] + (y2[8]-y2clock)*Global.CLK32[7]
-	   + (y2[7]-y2clock)*Global.CLK32[8] + (y2[6]-y2clock)*Global.CLK32[9] + (y2[5]-y2clock)*Global.CLK32[10] + (y2[4]-y2clock)*Global.CLK32[11] + (y2[3]-y2clock)*Global.CLK32[12] + (y2[2]-y2clock)*Global.CLK32[13] + (y2[1]-y2clock)*Global.CLK32[14] + (y2[0]-y2clock)*Global.CLK32[15]
-	   + (y2[15]-y2clock)*Global.CLK32[16] + (y2[14]-y2clock)*Global.CLK32[17] + (y2[13]-y2clock)*Global.CLK32[18] + (y2[12]-y2clock)*Global.CLK32[19] + (y2[11]-y2clock)*Global.CLK32[20] + (y2[10]-y2clock)*Global.CLK32[21] + (y2[9]-y2clock)*Global.CLK32[22] + (y2[8]-y2clock)*Global.CLK32[23]
-	   + (y2[7]-y2clock)*Global.CLK32[24] + (y2[6]-y2clock)*Global.CLK32[25] + (y2[5]-y2clock)*Global.CLK32[26] + (y2[4]-y2clock)*Global.CLK32[27] + (y2[3]-y2clock)*Global.CLK32[28] + (y2[2]-y2clock)*Global.CLK32[29] + (y2[1]-y2clock)*Global.CLK32[30] + (y2[0]-y2clock)*Global.CLK32[31];
-    0 = (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[0] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[1] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[2] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[3] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[4] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[5] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[6] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[7]
-	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[8] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[9] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[10] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[11] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[12] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[13] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[14] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[15]
-	   + (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[16] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[17] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[18] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[19] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[20] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[21] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[22] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[23]
-	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[24] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[25] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[26] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[27] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[28] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[29] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[30] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[31];
-    0 = (y3[15]-y3clock)*Global.CLK32[0] + (y3[14]-y3clock)*Global.CLK32[1] + (y3[13]-y3clock)*Global.CLK32[2] + (y3[12]-y3clock)*Global.CLK32[3] + (y3[11]-y3clock)*Global.CLK32[4] + (y3[10]-y3clock)*Global.CLK32[5] + (y3[9]-y3clock)*Global.CLK32[6] + (y3[8]-y3clock)*Global.CLK32[7]
-	   + (y3[7]-y3clock)*Global.CLK32[8] + (y3[6]-y3clock)*Global.CLK32[9] + (y3[5]-y3clock)*Global.CLK32[10] + (y3[4]-y3clock)*Global.CLK32[11] + (y3[3]-y3clock)*Global.CLK32[12] + (y3[2]-y3clock)*Global.CLK32[13] + (y3[1]-y3clock)*Global.CLK32[14] + (y3[0]-y3clock)*Global.CLK32[15]
-	   + (y3[15]-y3clock)*Global.CLK32[16] + (y3[14]-y3clock)*Global.CLK32[17] + (y3[13]-y3clock)*Global.CLK32[18] + (y3[12]-y3clock)*Global.CLK32[19] + (y3[11]-y3clock)*Global.CLK32[20] + (y3[10]-y3clock)*Global.CLK32[21] + (y3[9]-y3clock)*Global.CLK32[22] + (y3[8]-y3clock)*Global.CLK32[23]
-	   + (y3[7]-y3clock)*Global.CLK32[24] + (y3[6]-y3clock)*Global.CLK32[25] + (y3[5]-y3clock)*Global.CLK32[26] + (y3[4]-y3clock)*Global.CLK32[27] + (y3[3]-y3clock)*Global.CLK32[28] + (y3[2]-y3clock)*Global.CLK32[29] + (y3[1]-y3clock)*Global.CLK32[30] + (y3[0]-y3clock)*Global.CLK32[31];
+    y2[15]*Global.CLK32[0] + y2[14]*Global.CLK32[1] + y2[13]*Global.CLK32[2] + y2[12]*Global.CLK32[3] + y2[11]*Global.CLK32[4] + y2[10]*Global.CLK32[5] + y2[9]*Global.CLK32[6] + y2[8]*Global.CLK32[7]
+	   + y2[7]*Global.CLK32[8] + y2[6]*Global.CLK32[9] + y2[5]*Global.CLK32[10] + y2[4]*Global.CLK32[11] + y2[3]*Global.CLK32[12] + y2[2]*Global.CLK32[13] + y2[1]*Global.CLK32[14] + y2[0]*Global.CLK32[15]
+	   + y2[15]*Global.CLK32[16] + y2[14]*Global.CLK32[17] + y2[13]*Global.CLK32[18] + y2[12]*Global.CLK32[19] + y2[11]*Global.CLK32[20] + y2[10]*Global.CLK32[21] + y2[9]*Global.CLK32[22] + y2[8]*Global.CLK32[23]
+	   + y2[7]*Global.CLK32[24] + y2[6]*Global.CLK32[25] + y2[5]*Global.CLK32[26] + y2[4]*Global.CLK32[27] + y2[3]*Global.CLK32[28] + y2[2]*Global.CLK32[29] + y2[1]*Global.CLK32[30] + y2[0]*Global.CLK32[31] - y2clock = 0;
+
+    y3[15]*Global.CLK32[0] + y3[14]*Global.CLK32[1] + y3[13]*Global.CLK32[2] + y3[12]*Global.CLK32[3] + y3[11]*Global.CLK32[4] + y3[10]*Global.CLK32[5] + y3[9]*Global.CLK32[6] + y3[8]*Global.CLK32[7]
+	   + y3[7]*Global.CLK32[8] + y3[6]*Global.CLK32[9] + y3[5]*Global.CLK32[10] + y3[4]*Global.CLK32[11] + y3[3]*Global.CLK32[12] + y3[2]*Global.CLK32[13] + y3[1]*Global.CLK32[14] + y3[0]*Global.CLK32[15]
+	   + y3[15]*Global.CLK32[16] + y3[14]*Global.CLK32[17] + y3[13]*Global.CLK32[18] + y3[12]*Global.CLK32[19] + y3[11]*Global.CLK32[20] + y3[10]*Global.CLK32[21] + y3[9]*Global.CLK32[22] + y3[8]*Global.CLK32[23]
+	   + y3[7]*Global.CLK32[24] + y3[6]*Global.CLK32[25] + y3[5]*Global.CLK32[26] + y3[4]*Global.CLK32[27] + y3[3]*Global.CLK32[28] + y3[2]*Global.CLK32[29] + y3[1]*Global.CLK32[30] + y3[0]*Global.CLK32[31] - y3clock = 0;
+
+    2**16 - 1 - y3clock - y2clock + chunkLtPrime - x3clock = 0;
 
     // Now, prove that x3 == 2**16 - 1 + y3 - y2 + chunkLtPrime (1)
     // Since we ensure that x3 ∈ [0, 2¹⁶) we have that (2**16 - 1 + y3 - y2 + chunkLtPrime) ∈ [0, 2¹⁶).
     // Moreover, we also make sure that y2,y3 ∈ [0, 2¹⁶). Both checks imply that y3 is smaller than y2, as needed.
-    pol y3LTy2InEq7 = selEq[6] * (1 - valueLtPrime);
-    y3LTy2InEq7 * (2**16 - 1 + y3clock - y2clock + chunkLtPrime - x3clock) = 0;
+    pol y3LTy2InEq7 = (selEq[6] + selEq[7]) * (1 - valueLtPrime);
+    y3LTy2InEq7 * (2**16 + (2**24 - 2**16) * arith384 - 1 + y3clock - y2clock + chunkLtPrime - x3clock) = 0;
 
     //      ┌── y3clock       ┌───── chunkLtPrime (y3[i] < y2[i], i ∈ [15..0])
     //      │     ┌─ y2clock  │     ┌─── (1) value
@@ -600,6 +612,8 @@ namespace Arith(%N);
     s[0]*Global.CLK32[0] + s[1]*Global.CLK32[1] + s[2]*Global.CLK32[2] + s[3]*Global.CLK32[3] + s[4]*Global.CLK32[4] + s[5]*Global.CLK32[5] + s[6]*Global.CLK32[6] + s[7]*Global.CLK32[7]
 	   + s[8]*Global.CLK32[8] + s[9]*Global.CLK32[9] + s[10]*Global.CLK32[10] + s[11]*Global.CLK32[11] + s[12]*Global.CLK32[12] + s[13]*Global.CLK32[13] + s[14]*Global.CLK32[14] + s[15]*Global.CLK32[15]
 	   + q0[0]*Global.CLK32[16] + q0[1]*Global.CLK32[17] + q0[2]*Global.CLK32[18] + q0[3]*Global.CLK32[19] + q0[4]*Global.CLK32[20] + q0[5]*Global.CLK32[21] + q0[6]*Global.CLK32[22] + q0[7]*Global.CLK32[23]
+	   + q0[8]*Global.CLK32[24] + q0[9]*Global.CLK32[25] + q0[10]*Global.CLK32[26] + q0[11]*Global.CLK32[27] + q0[12]*Global.CLK32[28] + q0[13]*Global.CLK32[29] + q0[14]*Global.CLK32[30] + q1[0]*Global.CLK32[31] = hrc2 * 2**16 + lrc2;
+    q1[1]*Global.CLK32[0] + q1[2]*Global.CLK32[1] + q1[3]*Global.CLK32[2] + q1[4]*Global.CLK32[3] + q1[5]*Global.CLK32[4] + q1[6]*Global.CLK32[5] + q1[7]*Global.CLK32[6] + q1[8]*Global.CLK32[7]
 	   + q0[8]*Global.CLK32[24] + q0[9]*Global.CLK32[25] + q0[10]*Global.CLK32[26] + q0[11]*Global.CLK32[27] + q0[12]*Global.CLK32[28] + q0[13]*Global.CLK32[29] + q0[14]*Global.CLK32[30] + q1[0]*Global.CLK32[31] = hrc2 * 2**16 + lrc2;
     q1[1]*Global.CLK32[0] + q1[2]*Global.CLK32[1] + q1[3]*Global.CLK32[2] + q1[4]*Global.CLK32[3] + q1[5]*Global.CLK32[4] + q1[6]*Global.CLK32[5] + q1[7]*Global.CLK32[6] + q1[8]*Global.CLK32[7]
 	   + q1[9]*Global.CLK32[8] + q1[10]*Global.CLK32[9] + q1[11]*Global.CLK32[10] + q1[12]*Global.CLK32[11] + q1[13]*Global.CLK32[12] + q1[14]*Global.CLK32[13] + q2[0]*Global.CLK32[14] + q2[1]*Global.CLK32[15]
@@ -7594,21 +7608,27 @@ namespace Arith(%N);
     carry[2] * Global.CLK32[0] = 0;
 
     // TODO: review with 384
+    // TODO: review with 384
     carry[0] in GL_SIGNED_22BITS;
     carry[1] in GL_SIGNED_22BITS;
     carry[2] in GL_SIGNED_22BITS;
 
     selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+
     selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
     selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
     (selEq[1] + selEq[2]) * (eq3 + carry[1]) = (selEq[1] + selEq[2]) * carry[1]' * 2**16;
     (selEq[1] + selEq[2]) * (eq4 + carry[2]) = (selEq[1] + selEq[2]) * carry[2]' * 2**16;
-    selEq[3] * (eq5 + carry[1]) = selEq[3] * carry[1]' * 2**16;
-    selEq[3] * (eq6 + carry[2]) = selEq[3] * carry[2]' * 2**16;
-    selEq[4] * (eq7 + carry[1]) = selEq[4] * carry[1]' * 2**16;
-    selEq[4] * (eq8 + carry[2]) = selEq[4] * carry[2]' * 2**16;
-    selEq[5] * (eq9 + carry[1]) = selEq[5] * carry[1]' * 2**16;
-    selEq[5] * (eq10 + carry[2]) = selEq[5] * carry[2]' * 2**16;
+
+    selEq[3] * (eq5 + carry[0]) = selEq[3] * carry[0]' * 2**16;
+    selEq[3] * (eq6 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+
+    selEq[4] * (eq7 + carry[0]) = selEq[4] * carry[0]' * 2**16;
+    selEq[4] * (eq8 + carry[1]) = selEq[4] * carry[1]' * 2**16;
+
+    selEq[5] * (eq9 + carry[0]) = selEq[5] * carry[0]' * 2**16;
+    selEq[5] * (eq10 + carry[1]) = selEq[5] * carry[1]' * 2**16;
+
     selEq[6] * (eq11 + carry[0]) = selEq[6] * carry[0]' * 2**16;
 
     selEq[7] * (eq12 + carry[0]) = selEq[7] * carry[0]' * 2**24;
