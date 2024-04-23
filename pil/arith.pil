@@ -47,8 +47,6 @@ include "global.pil";
 
 namespace Arith(%N);
 
-    pol constant BYTE2_BIT21;
-    pol constant SEL_BYTE2_BIT21;
     pol constant GL_SIGNED_22BITS;
 
     pol commit x1[16];
@@ -245,10 +243,10 @@ namespace Arith(%N);
     //         0             0           1            0            OK
     //         0             1           1            1            OK
     //         1             0           1            0            OK
-    //         1             1           1            1            OK (E)
+    //         1             1           1            1            OK (2)
     //
     //   (D) when valueLtPrime = 0 ==> chunkLtPrime must be zero, if not it FAILS
-    //   (E) on clocks 0 and 16, current value of valueLtPrime isn't considered
+    //   (2) on clocks 0 and 16, current value of valueLtPrime isn't considered
     //
     //
     //    Examples (Secp256k1 prime):
@@ -302,24 +300,6 @@ namespace Arith(%N);
     // This constraint is applied when one of selEq[1..6] equals 1.
     (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
-
-    // TODO: CLK32[32] ==> CLK32C[16] (using ')
-
-    // range to be looked up for each chunk and for each prime
-    // pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + lowChunkLtPrime) * (selEq[1] + selEq[2]);
-
-    // pol constant INDEX;  // [0..15]
-    
-    //pol pRange =  1 + (selEq[1] + selEq[2]) + 
-    //             33 * (selEq[3] + selEq[4] + selEq[5]) + 
-    //             65 * (selEq[8] + selEq[9] + selEq[10]) + 
-    //              2 * INDEX + lowChunkLtPrime; 
-    
-    // {pRange * (1 - valueLtPrime), lsc_x3y3} in {L_RANGE_SEL, Global.BYTE2};
-    // {(pRange + highChunkLtPrime) * (1 - valueLtPrime), hsc_x3y3} in {H_RANGE_SEL, Global.BYTE};
-
-    // pol low_pRangeBLS12_381  = (pRangeBLS12_381 + lowChunkLtPrime) * (selEq[8] + selEq[9] + selEq[10]);
-    // pol high_pRangeBLS12_381 = (pRangeBLS12_381 + highChunkLtPrime) * (selEq[8] + selEq[9] + selEq[10]);
 
     // Correctness of the y2_clock, x3_clock and y3_clock
     y2[15]*Global.CLK32[0] + y2[14]*Global.CLK32[1] + y2[13]*Global.CLK32[2] + y2[12]*Global.CLK32[3] + y2[11]*Global.CLK32[4] + y2[10]*Global.CLK32[5] + y2[9]*Global.CLK32[6] + y2[8]*Global.CLK32[7]
@@ -550,29 +530,31 @@ namespace Arith(%N);
 	   + q2[10]*Global.CLK32[24] + q2[11]*Global.CLK32[25] + q2[12]*Global.CLK32[26] + q2[13]*Global.CLK32[27] + q2[14]*Global.CLK32[28] + q2[15]*Global.CLK32[29] + q0[15]*Global.CLK32[30] + q1[15]*Global.CLK32[31] = hsc_q1q2qh * 2**16 + lsc_q1q2qh;
 
     pol commit hs_bit_delta, ls_bits_delta;
-    pol commit limit_chunk;
+    pol commit prime_chunk;
 
-    pol constant LIMIT_SECP256K1;   // cycle: 16 chunks x 16 bits of prime curve Secp256k1 from high significant chunk to less significant chunk
-                                    // [0xFFFF:13, 0xFFFE, 0xFFFF, 0xFC2F]
+    pol constant PRIME_SECP256K1_CHUNKS; // cycle: 16 chunks x 16 bits of prime curve Secp256k1 from high significant chunk to less significant chunk
+                                         // [0xFFFF:13, 0xFFFE, 0xFFFF, 0xFC2F]
 
-    pol constant LIMIT_BN254;       // cycle: 16 chunks x 16 bits of prime curve BN254 from high significant chunk to less significant chunk
-                                    // [0x3064, 0x4E72, 0xE131, 0xA029, 0xB850, 0x45B6, 0x8181, 0x585D, 
-                                    //  0x9781, 0x6A91, 0x6871, 0xCA8D, 0x3C20, 0x8C16, 0xD87C, 0xFD47]...
+    pol constant PRIME_BN254_CHUNKS;     // cycle: 16 chunks x 16 bits of prime curve BN254 from high significant chunk to less significant chunk
+                                         // [0x3064, 0x4E72, 0xE131, 0xA029, 0xB850, 0x45B6, 0x8181, 0x585D, 
+                                         //  0x9781, 0x6A91, 0x6871, 0xCA8D, 0x3C20, 0x8C16, 0xD87C, 0xFD47]...
 
-    pol constant LIMIT_BLS12381;    // cycle: 16 chunks x 24 bits of prime curve BLS12-381 from high significant chunk to less significant chunk
-                                    // [0x1A0111, 0xEA397F, 0xE69A4B, 0x1BA7B6, 0x434BAC, 0xD76477, 0x4B84F3, 0x8512BF, 
-                                    //  0x6730D2, 0xA0F6B0, 0xF6241E, 0xABFFFE, 0xB153FF, 0xFFB9FE, 0xFFFFFF, 0xFFAAAB]...
+    pol constant PRIME_BLS12381_CHUNKS;  // cycle: 16 chunks x 24 bits of prime curve BLS12-381 from high significant chunk to less significant chunk
+                                         // [0x1A0111, 0xEA397F, 0xE69A4B, 0x1BA7B6, 0x434BAC, 0xD76477, 0x4B84F3, 0x8512BF, 
+                                         //  0x6730D2, 0xA0F6B0, 0xF6241E, 0xABFFFE, 0xB153FF, 0xFFB9FE, 0xFFFFFF, 0xFFAAAB]...
 
-    limit_chunk = (selEq[1] + selEq[2]) * LIMIT_SECP256K1 + (selEq[3] + selEq[4] + selEq[5]) * LIMIT_BN254 + 
-                  (selEq[7] + selEq[8] + selEq[9]) * LIMIT_BLS12381 + (selEq[6] + selEq[7]) * y2_clock + 
+    prime_chunk = (selEq[1] + selEq[2]) * PRIME_SECP256K1_CHUNKS + 
+                  (selEq[3] + selEq[4] + selEq[5]) * PRIME_BN254_CHUNKS + 
+                  (selEq[7] + selEq[8] + selEq[9]) * PRIME_BLS12381_CHUNKS + 
+                  (selEq[6] + selEq[7]) * y2_clock + 
                   (selEq[0] + selEq[11]) * x3y3_clock;
 
-    // selEq[0] o selEq[11] => chunkLtPrime = 0, limit_chunk = x3y3_clock, hs_bit_delta = 0, ls_bits_delta = 0
+    // selEq[0] o selEq[11] => chunkLtPrime = 0, prime_chunk = x3y3_clock, hs_bit_delta = 0, ls_bits_delta = 0
 
     // delta = limit - x3y3_clock - chunkLtPrime ==> delta - limit + x3y3_clock + chunkLtPrime = 0
     // delta >= 0 ==> delta € [0, 2**24)
 
-    (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - limit_chunk + x3y3_clock + chunkLtPrime) = 0;
+    (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - prime_chunk + x3y3_clock + chunkLtPrime) = 0;
         
     // check valueLtPrime is one at end of each 16 clocks for all operations that control limit of x3,y3.
     (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
@@ -590,14 +572,10 @@ namespace Arith(%N);
     // BLS12-381 arith + modular 384 (no includes 256To384)
     pol arith384 = selEq[7] + selEq[8] + selEq[9] + selEq[10];
 
-    pol arith256to386 = selEq[11];
-    // 256TO384 A(x1),B(y1) 256 bits  op(y3) 384 bits
-
     // when operation no use fully (*) 384 bits, high part must be 0, because value must be < 2**16 
     hs_bit_x1y1 * (1 - arith384) = 0;
     hsc_x1y1 * (1 - arith384) = 0;
     hsc_x2y2 * (1 - arith384) = 0; 
-    hsc_x3y3 * (1 - arith384) = 0; 
 
     // s,q0,q1,q2 could be 24 bits ¿enought for arith384 ?
     hsc_sq0q1 * (1 - arith384) = 0;  
@@ -606,11 +584,11 @@ namespace Arith(%N);
 
     // (*) in case of arith to prove 256TO384 no use fully 384 bits, because only op (x3) work with 384 bits.
     // 256TO384 don't use x3, for this reason not matter that it's 256 or 384 bits.
-    hsc_x3y3 * (1 - arith384 - arith256to386) = 0;  
+    hsc_x3y3 * (1 - arith384 - selEq[11]) = 0;  
 
     pol constant BITS7_BYTE2;
-    pol constant BYTE2_BIT14_SEL;
-    pol constant BYTE2_BIT14;
+    pol constant BYTE_2A_BIT14_SEL;
+    pol constant BYTE_2A_BIT14;
 
     // BITS7_BYTE2: 7 bits + Global.BYTE: 8 bits + Global.BYTE_2A: 8 bits = 23 bits 
     // hsc_x1y1 has only 7 bits, the 8th bit was on hs_bit_x1y1
@@ -619,9 +597,9 @@ namespace Arith(%N);
 
     
     // TODO: review range checks of Qs
-    // BYTE2_BIT14_SEL: 1 bit + Global.BYTE: 8 bits + BYTE2_BIT14: 14 bits = 23 bits 
+    // BYTE_2A_BIT14_SEL: 1 bit + Global.BYTE: 8 bits + BYTE_2A_BIT14: 14 bits = 23 bits 
     // low part: 16 + high part: 14 bits = 30 bits (REVIEW for 384 aritmetics)
-    { Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], hsc_sq0q1, hsc_q1q2qh} in {BYTE2_BIT14_SEL, Global.BYTE, BYTE2_BIT14};
+    { Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], hsc_sq0q1, hsc_q1q2qh} in {BYTE_2A_BIT14_SEL, Global.BYTE, BYTE_2A_BIT14};
 
 
     /*******
