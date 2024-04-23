@@ -151,9 +151,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             throw new Error('input.z != poseidon(pointZData)');
         }
         await db.setProgram(stringToH4(z), hexString2byteArray(pointZData));
-
-        const kzgCommitmentHash = createHash('sha256').update(Uint8Array.from(input.kzgCommitment)).digest('hex');
-        input.kzgCommitmentHash = `0x${kzgCommitmentHash}`;
+        const kzgCommitmentArray = new Uint8Array(hexString2byteArray(input.kzgCommitment));
+        const sha256Str = createHash('sha256').update(kzgCommitmentArray).digest('hex');
+        input.kzgCommitmentHash = `0x${sha256Str}`;
         await db.setProgram(stringToH4(input.kzgCommitmentHash), hexString2byteArray(input.kzgCommitment));
 
     } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
