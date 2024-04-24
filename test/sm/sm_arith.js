@@ -3180,14 +3180,15 @@ describe("Arithmetic state machines tests", async function () {
             (1- Arith.selEq[0] - Arith.selEq[6]) * ax3_7,
             ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
         };`;
-
         const pil = await compile(F, pilCode, null, { compileFromString: true, defines: {N: 2 ** 23}});
+        console.log('creating pols');
         const constPols = newConstantPolsArray(pil);
         const cmPols = newCommitPolsArray(pil);
 
+        console.log('build constants');
         await global.buildConstants(constPols.Global);
         await arith.buildConstants(constPols.Arith);
-
+        
         const splitInput = prepareInput32bits(input)
 
         executeMain(cmPols.Main, splitInput);

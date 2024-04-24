@@ -347,7 +347,7 @@ namespace Arith(%N);
     <%- clksel(['q1[1..14]','q2[0..15]','q0[15]', 'q1[15]'], 'Global.CLK32') %> = hsc_q1q2qh * 2**16 + lsc_q1q2qh;
 
     pol commit hs_bit_delta, ls_bits_delta;
-    pol commit prime_chunk;
+    pol commit primeChunk;
 
     pol constant PRIME_SECP256K1_CHUNKS; // cycle: 16 chunks x 16 bits of prime curve Secp256k1 from high significant chunk to less significant chunk
                                          // [0xFFFF:13, 0xFFFE, 0xFFFF, 0xFC2F]
@@ -360,18 +360,18 @@ namespace Arith(%N);
                                          // [0x1A0111, 0xEA397F, 0xE69A4B, 0x1BA7B6, 0x434BAC, 0xD76477, 0x4B84F3, 0x8512BF, 
                                          //  0x6730D2, 0xA0F6B0, 0xF6241E, 0xABFFFE, 0xB153FF, 0xFFB9FE, 0xFFFFFF, 0xFFAAAB]...
 
-    prime_chunk = (selEq[1] + selEq[2]) * PRIME_SECP256K1_CHUNKS + 
-                  (selEq[3] + selEq[4] + selEq[5]) * PRIME_BN254_CHUNKS + 
-                  (selEq[7] + selEq[8] + selEq[9]) * PRIME_BLS12381_CHUNKS + 
-                  (selEq[6] + selEq[7]) * y2_clock + 
-                  (selEq[0] + selEq[11]) * x3y3_clock;
+    primeChunk = (selEq[1] + selEq[2]) * PRIME_SECP256K1_CHUNKS + 
+                 (selEq[3] + selEq[4] + selEq[5]) * PRIME_BN254_CHUNKS + 
+                 (selEq[7] + selEq[8] + selEq[9]) * PRIME_BLS12381_CHUNKS + 
+                 (selEq[6] + selEq[7]) * y2_clock + 
+                 (selEq[0] + selEq[11]) * x3y3_clock;
 
     // selEq[0] o selEq[11] => chunkLtPrime = 0, prime_chunk = x3y3_clock, hs_bit_delta = 0, ls_bits_delta = 0
 
     // delta = limit - x3y3_clock - chunkLtPrime ==> delta - limit + x3y3_clock + chunkLtPrime = 0
     // delta >= 0 ==> delta € [0, 2**24)
 
-    (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - prime_chunk + x3y3_clock + chunkLtPrime) = 0;
+    (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - primeChunk + x3y3_clock + chunkLtPrime) = 0;
         
     // check valueLtPrime is one at end of each 16 clocks for all operations that control limit of x3,y3.
     (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
