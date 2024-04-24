@@ -179,13 +179,14 @@
     "test:full-tracer": "node --max-old-space-size=16000 tools/full-tracer-tests/full-tracer-tests.js",
     "eslint:tracer": "npx eslint src/sm/sm_main/debug/**.js",
     "eslint:sm_main": "npx eslint src/sm/sm_main/sm_main_exec.js",
-    "eslint": "npm run eslint:tracer && npm run eslint:sm_main"
+    "eslint": "npm run eslint:tracer && npm run eslint:sm_main",
+    "clean:install": "rm -r ./node_modules package-lock.json && npm i"
   },
   "author": "Jordi Baylina",
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#develop-feijoa",
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#feature/fix-computez",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#develop-feijoa",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
