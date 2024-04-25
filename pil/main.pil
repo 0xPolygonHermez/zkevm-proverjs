@@ -735,8 +735,9 @@ namespace Main(%N);
         arithUseE * E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
     Arith.resultEq {
-        Arith.selEq[0] + 2 * Arith.selEq[1] + 3 * Arith.selEq[2] + 4 * Arith.selEq[3] + 5 * Arith.selEq[4] + 6 * Arith.selEq[5] 
-                       + 7 * Arith.selEq[6] + 8 * Arith.selEq[7] + 9 * Arith.selEq[8] + 10 * Arith.selEq[9] + 11 * Arith.selEq[10],
+        Arith.selEq[0] + 2 * Arith.selEq[1] + 3 * Arith.selEq[2] + 4 * Arith.selEq[3] + 5 * Arith.selEq[4] 
+                       + 6 * Arith.selEq[5] + 7 * Arith.selEq[6] + 8 * Arith.selEq[7] + 9 * Arith.selEq[8] 
+                       + 10 * Arith.selEq[9] + 11 * Arith.selEq[10] + 12 * Arith.selEq[11],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,

@@ -340,9 +340,11 @@ namespace Arith(%N);
     // divide range check in two chunks of high significant chunk (hsc_xx) and less significant chunk (lsc_xx)
     // constrints to 
 
+    hs_bit_x1y1 * (1 - hs_bit_x1y1) = 0;
+
     <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hs_bit_x1y1 * 2**23 + hsc_x1y1 * 2**16 + lsc_x1y1;
     <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> = hsc_x2y2 * 2**16 + lsc_x2y2;
-    <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %> = hsc_x3y3 * 2**16 + lsc_x3y3;
+    <%- clksel(['x3[0..15]','y3[0..15]'], 'Global.CLK32') %> = hsc_x3y3 * 2**16 + lsc_x3y3;
     <%- clksel([ 's[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> = hsc_sq0q1 * 2**16 + lsc_sq0q1;
     <%- clksel(['q1[1..14]','q2[0..15]','q0[15]', 'q1[15]'], 'Global.CLK32') %> = hsc_q1q2qh * 2**16 + lsc_q1q2qh;
 
@@ -374,7 +376,7 @@ namespace Arith(%N);
     (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - primeChunk + x3y3_clock + chunkLtPrime) = 0;
         
     // check valueLtPrime is one at end of each 16 clocks for all operations that control limit of x3,y3.
-    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
     ls_bits_delta in Global.STEP;
     hs_bit_delta * (1 - hs_bit_delta) = 0;
@@ -394,9 +396,9 @@ namespace Arith(%N);
     hsc_x1y1 * (1 - arith384) = 0;
     hsc_x2y2 * (1 - arith384) = 0; 
 
+
     // s,q0,q1,q2 could be 24 bits ¿enought for arith384 ?
     hsc_sq0q1 * (1 - arith384) = 0;  
-    hsc_q1q2qh * (1 - arith384) = 0;  
 
 
     // (*) in case of arith to prove 256TO384 no use fully 384 bits, because only op (x3) work with 384 bits.
