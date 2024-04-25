@@ -149,8 +149,9 @@ class ArithExecutor {
                             arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate, arithEq14.calculate,
                             arithEq15.calculate, arithEq16.calculate, arithEq17.calculate, arithEq18.calculate, arithEq19.calculate];
     }
-    setupEquation(inputIndex, arithEquation) {
-        this.arithEquation = Number(arithEquation);
+    setupEquation(inputIndex, input) {
+        this.arithEquation = Number(input.arithEquation);
+        this.input = input;
         this.location = `input #${inputIndex} ${ARITH_OPERATIONS[this.arithEquation - 1] ?? '@'+arithEquation}`;
         this.offset = inputIndex * ARITH_CYCLE;
         this.setSelectorPols();
@@ -169,7 +170,7 @@ class ArithExecutor {
 
         for (let i = 0; i < inputs.length; i++) {
             // console.log(inputs[i]);
-            this.setupEquation(i, inputs[i].arithEquation);
+            this.setupEquation(i, inputs[i]);
             const [x1,y1,x2,y2,x3,y3] = this.prepareInputPols(inputs[i]);
 
             // In the following, recall that we can only work with unsiged integers of 256 bits.
@@ -512,6 +513,7 @@ class ArithExecutor {
         ++this.errorCount; 
 
         const _msg = this.location + ':' + msg;
+        console.log(this.input);
         if (this.continueOnError) {
             console.warn(_msg);
         }

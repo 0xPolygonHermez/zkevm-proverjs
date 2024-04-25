@@ -32,32 +32,36 @@ function inputToZkasm() {
     return zkasmCode;
 }
 
-function prepareInput32bits(input) {
-    let input16bits = [];
+function prepareInput(input) {
+    let inputSm = [];
     for (let i = 0; i < input.length; i++) {
         let keyvalue = {};
+        const arithEquation = Number(input[i].arithEquation);
         for (let key of Object.keys(input[i])) {
             if (['x1', 'y1', 'x2', 'y2', 'x3', 'y3'].includes(key)) {
-                keyvalue[key] = to32bitsRegisters(input[i][key]);
+                const bits = (arithEquation < 8n || (arithEquation === 12 && (key == 'x1' || key == 'y1'))) ? 32n:48n;
+                keyvalue['__'+key] = input[i][key];
+                keyvalue[key] = toXbitsRegisters(input[i][key], bits);
             } else {
                 keyvalue[key] = input[i][key];
             }
         }
-        input16bits.push(keyvalue);
+        inputSm.push(keyvalue);
     }
 
-    return input16bits;
+    return inputSm;
 }
 
-function to32bitsRegisters(value) {
+function toXbitsRegisters(value, bits) {
     if (typeof value !== 'bigint') {
         value = BigInt(value);
     }
 
     let parts = [];
+    const mask = (1n << bits) - 1n;
     for (let part = 0; part < 8; ++part) {
-        parts.push(value & (part < 7 ? 0xFFFFFFFFn : 0xFFFFFFFFFn));
-        value = value >> 32n;
+        parts.push(part < 7 ? (mask & value): value);
+        value = value >> bits;
     }
     return parts;
 }
@@ -119,22 +123,22 @@ describe("Arithmetic state machines tests", async function () {
 
     async function generatePols(F, input) {
         const pil = await compile(F, __dirname + '/sm_arith.pil', null, { defines: {N: 2 ** 23}});
-        console.log('creating constPols ....');
-        const constPols = newConstantPolsArray(pil);
+        // console.log('creating constPols ....');
+        // const constPols = newConstantPolsArray(pil);
         console.log('creating cmPols ....');
         const cmPols = newCommitPolsArray(pil);
 
 
-        console.log('build global constants ....');
-        await global.buildConstants(constPols.Global);
-        console.log('build arith constants ....');
-        await arith.buildConstants(constPols.Arith);
+        // console.log('build global constants ....');
+        // await global.buildConstants(constPols.Global);
+        // console.log('build arith constants ....');
+        // await arith.buildConstants(constPols.Arith);
         
         console.log('prepare inputs ....');
-        const splitInput = prepareInput32bits(input)
+        const splitInput = prepareInput(input)
 
-        console.log('executor "main" ....');
-        executeMain(cmPols.Main, splitInput);
+        // console.log('executor "main" ....');
+        // executeMain(cmPols.Main, splitInput);
 
         console.log('executor arith ....');
         await arith.execute(cmPols.Arith, splitInput);

@@ -95,6 +95,7 @@ function valueToString(value, config = {})
 }
 function equationPols(name, products, sums, constValues, config = {})
 {
+    console.log({name, config});
     /*
                                 A3     A2     A1     A0
                                 B3     B2     B1     B0
@@ -113,6 +114,7 @@ function equationPols(name, products, sums, constValues, config = {})
     let lntab = config.lntab ?? ln+tab;
     let endEq = config.endEq ?? (';' + ln);
     let def;
+    const chunkBits = config.chunkBits || 16;
     const chunkSize = config.chunkSize || 16;
     const chunkSize2 = chunkSize * 2;
 
@@ -261,10 +263,10 @@ function equationPols(name, products, sums, constValues, config = {})
     return s;
 
     function isPowOfChunk(value) {
-        return value % 2n**BigInt(chunkSize) === 0n;
+        return value % 2n**BigInt(chunkBits) === 0n;
     }
     function whichPowOfChunk(value) {
-        const base = 2n**BigInt(chunkSize);
+        const base = 2n**BigInt(chunkBits);
 
         let result = 0;
         while (value % base === 0n) {
