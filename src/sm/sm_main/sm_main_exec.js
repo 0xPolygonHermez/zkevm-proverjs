@@ -34,6 +34,7 @@ const Prints = require("./debug/prints");
 const StatsTracer = require("./debug/stats-tracer");
 const Constants = require('./const-sm-main-exec');
 const Helpers = require("../../helpers.js");
+const { computeBlobL2HashKData, computeBlobL2HashPData } = require("@0xpolygonhermez/zkevm-commonjs/src/blob-inner/blob-utils.js");
 
 const twoTo255 = Scalar.shl(Scalar.one, 255);
 const twoTo256 = Scalar.shl(Scalar.one, 256);
@@ -158,11 +159,21 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
         // Load keccak256BlobData into DB
-        const blobL2HashData = await ethers.utils.keccak256(input.blobData);
+        const blobL2HashData = await computeBlobL2HashKData(input.blobData);
         if (typeof input.blobL2HashData === 'undefined') {
             input.blobL2HashData = blobL2HashData;
         } else if (input.blobL2HashData !== blobL2HashData) {
             throw new Error('input.blobL2HashData != keccak(input.blobData)');
+        }
+        await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
+
+    } else if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.VALIDIUM) {
+        // Load poseidonBlobData into DB
+        const blobL2HashData = await computeBlobL2HashPData(input.blobData);
+        if (typeof input.blobL2HashData === 'undefined') {
+            input.blobL2HashData = blobL2HashData;
+        } else if (input.blobL2HashData !== blobL2HashData) {
+            throw new Error('input.blobL2HashData != poseidon(input.blobData)');
         }
         await db.setProgram(stringToH4(blobL2HashData), hexString2byteArray(input.blobData));
     }
