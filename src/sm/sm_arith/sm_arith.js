@@ -54,6 +54,7 @@ const PRIME_BLS12381_CHUNKS = [ 0x1A0111n, 0xEA397Fn, 0xE69A4Bn, 0x1BA7B6n, 0x43
                                 0x6730D2n, 0xA0F6B0n, 0xF6241En, 0xABFFFEn, 0xB153FFn, 0xFFB9FEn, 0xFFFFFFn, 0xFFAAABn ];
 
 
+const CARRY_OFFSET = 2n**28n;
 
 class ArithConstants {
     constructor(pols) {
@@ -64,7 +65,8 @@ class ArithConstants {
         this.buildCycle(pols.PRIME_BLS12381_CHUNKS, PRIME_BLS12381_CHUNKS);
         this.buildByte2A(pols.BYTE_2A_BIT14_SEL, pols.BYTE_2A_BIT14, 256, 2**14);
         this.buildRange(pols.GL_SIGNED_22BITS, -(2n**22n), (2n**22n)-1n);
-        this.buildRange(pols.BITS7_BYTE2, 0n, 127n, 2**16);
+        this.buildRange(pols.BITS7_C256, 0n, 127n, 2**8);
+        this.buildRange(pols.BITS7_C32K, 0n, 127n, 2**15);
     }
 
     buildCycle(pvalue, values) {
@@ -148,6 +150,7 @@ class ArithExecutor {
                             arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
                             arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate, arithEq14.calculate,
                             arithEq15.calculate, arithEq16.calculate, arithEq17.calculate, arithEq18.calculate, arithEq19.calculate];
+        this.offset = 0;
     }
     setupEquation(inputIndex, input) {
         this.arithEquation = Number(input.arithEquation);
@@ -166,7 +169,7 @@ class ArithExecutor {
         // prepareInput256bits(input, N);
         // inputFeaToChunks(input, N);
 
-        this.initPols(N, pols)
+        this.initPols(N, pols, inputs.length * ARITH_CYCLE);
 
         for (let i = 0; i < inputs.length; i++) {
             // console.log(inputs[i]);
@@ -311,11 +314,39 @@ class ArithExecutor {
     }
     calculateCarryAndEquationStep(eqIndex, carryIndex, step, bits = 16n) {
         const eqValue = this.eqCalculates[eqIndex](this.pols, step, this.offset);
-        const carry = step > 0 ? this.pols.carry[carryIndex][this.offset + step] : 0n;
+        const carry = step > 0 ? this.getCarry(carryIndex, step) : 0n;
         const mask = (1n << bits) - 1n;
         this.assert(((eqValue + carry) & mask) === 0n, `Equation ${eqIndex}[${step}]:${eqValue} and carry[${carryIndex}][${step}]:${carry} do not sum 0 module 2**${bits}`);
-        this.pols.carry[carryIndex][this.offset + step + 1] = (eqValue + carry) >> bits;
+        this.setCarry(carryIndex, step + 1, (eqValue + carry) >> bits);
         // TODO: range check ?
+    }
+    getCarry(carryIndex, step) {
+        switch (carryIndex) {
+            case 0: return (this.pols.ls_carry0[this.offset + step] + (this.pols.hs_carry0[this.offset + step] << 23n) - CARRY_OFFSET);
+            case 1: return (this.pols.ls_carry1[this.offset + step] + (this.pols.hs_carry1[this.offset + step] << 23n) - CARRY_OFFSET);
+            case 2: return this.pols.carry2[this.offset + step];
+        }
+        throw new Error(`Invalid carrIndex ${carryIndex}`);
+    }
+    setCarry(carryIndex, step, value) {
+        switch (carryIndex) {
+            case 0: 
+                this.pols.ls_carry0[this.offset + step] = (value + CARRY_OFFSET) & 0x7FFFFFn;
+                this.pols.hs_carry0[this.offset + step] = (value + CARRY_OFFSET) >> 23n;
+                break;
+
+            case 1: 
+                this.pols.ls_carry1[this.offset + step] = (value + CARRY_OFFSET) & 0x7FFFFFn;
+                this.pols.hs_carry1[this.offset + step] = (value + CARRY_OFFSET) >> 23n;
+                break;
+
+            case 2:
+                this.pols.carry2[this.offset + step] = value;
+                break;
+        
+            default:
+                throw new Error(`Invalid carrIndex ${carryIndex}`);
+        }
     }
     getPrimeChunk(step, moduleChunk) {
         switch (this.arithEquation) {
@@ -463,8 +494,8 @@ class ArithExecutor {
 
         // how chunk values could has 24 bits is necessary divide in two chunk to do range check.
 
-        this.splitChunkRangeCheck3P(this.pols.x1, 0, INPUT_CHUNKS, 0, this.pols.hs_bit_x1y1, this.pols.hsc_x1y1, this.pols.lsc_x1y1);
-        this.splitChunkRangeCheck3P(this.pols.y1, 0, INPUT_CHUNKS, INPUT_CHUNKS, this.pols.hs_bit_x1y1, this.pols.hsc_x1y1, this.pols.lsc_x1y1);
+        this.splitChunkRangeCheck(this.pols.x1, 0, INPUT_CHUNKS, 0, this.pols.hsc_x1y1, this.pols.lsc_x1y1);
+        this.splitChunkRangeCheck(this.pols.y1, 0, INPUT_CHUNKS, INPUT_CHUNKS, this.pols.hsc_x1y1, this.pols.lsc_x1y1);
 
         this.splitChunkRangeCheck(this.pols.x2, 0, INPUT_CHUNKS, 0, this.pols.hsc_x2y2, this.pols.lsc_x2y2);
         this.splitChunkRangeCheck(this.pols.y2, 0, INPUT_CHUNKS, INPUT_CHUNKS, this.pols.hsc_x2y2, this.pols.lsc_x2y2);      
@@ -608,7 +639,7 @@ class ArithExecutor {
             value = value >> chunkBits;
         }
     }
-    initPols(N, pols) {
+    initPols(N, pols, from = 0) {
         // Initialization
         for (let i = 0; i < N; i++) {
             for (let j = 0; j < 16; j++) {
@@ -622,12 +653,10 @@ class ArithExecutor {
                 pols.q1[j][i] = 0n;
                 pols.q2[j][i] = 0n;
                 pols.s[j][i] = 0n;
-                if (j < pols.carry.length) pols.carry[j][i] = 0n;
                 if (j < pols.selEq.length) pols.selEq[j][i] = 0n;
             }
             pols.y2_clock[i] = 0n;
             pols.x3y3_clock[i] = 0n;
-            pols.hs_bit_x1y1[i] = 0n;
             pols.hsc_x1y1[i] = 0n;
             pols.lsc_x1y1[i] = 0n;
             pols.hsc_x2y2[i] = 0n;
@@ -648,6 +677,10 @@ class ArithExecutor {
             pols.valueLtPrime[i] = 0n;
             pols.chunkLtPrime[i] = 0n;
             pols.primeChunk[i] = 0n;
+
+            this.setCarry(0, i, 0n);
+            this.setCarry(1, i, 0n);
+            this.setCarry(2, i, 0n);
         }
     }
 }

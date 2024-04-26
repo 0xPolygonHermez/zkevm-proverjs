@@ -296,7 +296,7 @@ namespace Arith(%N);
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
     // This constraint is applied when one of selEq[1..6] equals 1.
-    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
 
     // Correctness of the y2_clock, x3_clock and y3_clock
@@ -331,7 +331,7 @@ namespace Arith(%N);
 
     //  RANGE CHECK x1,y1,x2,y2,s,q0,q1,q2
 
-    pol commit hs_bit_x1y1, hsc_x1y1, lsc_x1y1;
+    pol commit hsc_x1y1, lsc_x1y1;
     pol commit hsc_x2y2, lsc_x2y2;
     pol commit hsc_sq0q1,  lsc_sq0q1;
     pol commit hsc_q1q2qh, lsc_q1q2qh;
@@ -340,9 +340,8 @@ namespace Arith(%N);
     // divide range check in two chunks of high significant chunk (hsc_xx) and less significant chunk (lsc_xx)
     // constrints to 
 
-    hs_bit_x1y1 * (1 - hs_bit_x1y1) = 0;
-
-    <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hs_bit_x1y1 * 2**23 + hsc_x1y1 * 2**16 + lsc_x1y1;
+    
+    <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hsc_x1y1 * 2**16 + lsc_x1y1;
     <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> = hsc_x2y2 * 2**16 + lsc_x2y2;
     <%- clksel(['x3[0..15]','y3[0..15]'], 'Global.CLK32') %> = hsc_x3y3 * 2**16 + lsc_x3y3;
     <%- clksel([ 's[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> = hsc_sq0q1 * 2**16 + lsc_sq0q1;
@@ -364,7 +363,7 @@ namespace Arith(%N);
 
     primeChunk = (selEq[1] + selEq[2]) * PRIME_SECP256K1_CHUNKS + 
                  (selEq[3] + selEq[4] + selEq[5]) * PRIME_BN254_CHUNKS + 
-                 (selEq[7] + selEq[8] + selEq[9]) * PRIME_BLS12381_CHUNKS + 
+                 (selEq[8] + selEq[9] + selEq[10]) * PRIME_BLS12381_CHUNKS + 
                  (selEq[6] + selEq[7]) * y2_clock + 
                  (selEq[0] + selEq[11]) * x3y3_clock;
 
@@ -392,7 +391,6 @@ namespace Arith(%N);
     pol arith384 = selEq[7] + selEq[8] + selEq[9] + selEq[10];
 
     // when operation no use fully (*) 384 bits, high part must be 0, because value must be < 2**16 
-    hs_bit_x1y1 * (1 - arith384) = 0;
     hsc_x1y1 * (1 - arith384) = 0;
     hsc_x2y2 * (1 - arith384) = 0; 
 
@@ -405,14 +403,13 @@ namespace Arith(%N);
     // 256TO384 don't use x3, for this reason not matter that it's 256 or 384 bits.
     hsc_x3y3 * (1 - arith384 - selEq[11]) = 0;  
 
-    pol constant BITS7_BYTE2;
     pol constant BYTE_2A_BIT14_SEL;
     pol constant BYTE_2A_BIT14;
 
     // BITS7_BYTE2: 7 bits + Global.BYTE: 8 bits + Global.BYTE_2A: 8 bits = 23 bits 
     // hsc_x1y1 has only 7 bits, the 8th bit was on hs_bit_x1y1
     // NOTE: done in this way because it's more cheaper 3 lookup in only one
-    {hsc_x1y1, hsc_x2y2, hsc_x3y3} in {BITS7_BYTE2, Global.BYTE, Global.BYTE_2A};
+    {hsc_x2y2, hsc_x3y3} in {Global.BYTE, Global.BYTE_2A};
 
     
     // TODO: review range checks of Qs
@@ -597,13 +594,33 @@ namespace Arith(%N);
 
 
     pol eq19_0 = x1[0] + 2**16 * x1[1] - y3[0];
-    pol eq19_1 = x1[2] + 2**16 - y3[1];
+    pol eq19_1 = x1[2] + 2**8 - y3[1];
     pol eq19_2 = x1[3] + 2**16 * x1[4] - y3[2];
-    pol eq19_3 = x1[5] + 2**16 - y3[3];
+    pol eq19_3 = x1[5] + 2**8 - y3[3];
     pol eq19_4 = x1[6] + 2**16 * x1[7] - y3[4];
-    pol eq19_5 = y1[0] + 2**16 - y3[5];
-    pol eq19_6 = y1[1] + 2**16 * y1[2] - y3[6];
-    pol eq19_7 = y1[3] + 2**16 - y3[7];
+    pol eq19_5 = x1[8] + 2**8 - y3[5];
+    pol eq19_6 = x1[9] + 2**16 * x1[10] - y3[6];
+    pol eq19_7 = x1[11] + 2**8 - y3[7];
+    pol eq19_8 = x1[12] + 2**16 * x1[13] - y3[8];
+    pol eq19_9 = x1[14] + 2**8 - y3[9];
+    pol eq19_10 = x1[15] + 2**16 * y1[0] - y3[10];
+    pol eq19_11 = y1[1] + 2**8 - y3[11];
+    pol eq19_12 = y1[2] + 2**16 * y1[3] - y3[12];
+    pol eq19_13 = y1[4] + 2**8 - y3[13];
+    pol eq19_14 = y1[5] + 2**16 * y1[6] - y3[14];
+    pol eq19_15 = y1[7] + 2**8 - y3[15];
+
+    pol eq19_16 = 0;     // carry clean
+    pol eq19_17 = 0;
+    pol eq19_18 = 0;
+    pol eq19_19 = y1[4];
+    pol eq19_20 = y1[5];
+    pol eq19_21 = y1[6];
+    pol eq19_22 = y1[7];
+    pol eq19_23 = y1[8];
+    pol eq19_24 = y1[9];
+    pol eq19_25 = y1[10];
+    pol eq19_26 = y1[11];
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
@@ -624,7 +641,7 @@ namespace Arith(%N);
     pol eq16 = <%- clksel(['eq16_[0..31]'], 'Global.CLK32') %>;
     pol eq17 = <%- clksel(['eq17_[0..31]'], 'Global.CLK32') %>;
     pol eq18 = <%- clksel(['eq18_[0..31]'], 'Global.CLK32') %>;
-    pol eq19 = <%- clksel(['eq19_[0..7]'], 'Global.CLK32') %>;
+    pol eq19 = <%- clksel(['eq19_[0..26]'], 'Global.CLK32') %>;
 
 
     // Equation selectors. Must be binary, constant during the operation and operation-exclusive
@@ -635,44 +652,53 @@ namespace Arith(%N);
     pol allSelEq = selEq[0] + selEq[1] + selEq[2] + selEq[3] + selEq[4] + selEq[5] + selEq[6] + selEq[7] + selEq[8] + selEq[9] + selEq[10] + selEq[11];
 
     <%- binary(['allSelEq']) %>
-    pol commit carry[3];
 
-    carry[0] * Global.CLK32[0] = 0;
-    carry[1] * Global.CLK32[0] = 0;
-    carry[2] * Global.CLK32[0] = 0;
+    pol commit ls_carry0, hs_carry0, ls_carry1, hs_carry1, carry2;
+
+    pol carry0 = ls_carry0 + 2**23 * hs_carry0 - 2**28;
+    pol carry1 = ls_carry1 + 2**23 * hs_carry1 - 2**28;
+
+    carry0 * Global.CLK32[0] = 0;
+    carry1 * Global.CLK32[0] = 0;
+    carry2 * Global.CLK32[0] = 0;
 
     // TODO: review with 384
-    carry[0] in GL_SIGNED_22BITS;
-    carry[1] in GL_SIGNED_22BITS;
-    carry[2] in GL_SIGNED_22BITS;
+    ls_carry0 in Global.STEP;
+    ls_carry1 in Global.STEP;
+    carry2  in GL_SIGNED_22BITS;
 
-    selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+    pol constant BITS7_C256; // [0:256...127:256,]
+    pol constant BITS7_C32K; // [0:2**15...127:2**15]
 
-    selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
-    selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
-    (selEq[1] + selEq[2]) * (eq3 + carry[1]) = (selEq[1] + selEq[2]) * carry[1]' * 2**16;
-    (selEq[1] + selEq[2]) * (eq4 + carry[2]) = (selEq[1] + selEq[2]) * carry[2]' * 2**16;
+    {hs_carry0, hs_carry1, hsc_x1y1} in {BITS7_C32K, BITS7_C256, Global.BYTE};
 
-    selEq[3] * (eq5 + carry[0]) = selEq[3] * carry[0]' * 2**16;
-    selEq[3] * (eq6 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+    selEq[0] * (eq0 + carry0) = selEq[0] * carry0' * 2**16;
 
-    selEq[4] * (eq7 + carry[0]) = selEq[4] * carry[0]' * 2**16;
-    selEq[4] * (eq8 + carry[1]) = selEq[4] * carry[1]' * 2**16;
+    selEq[1] * (eq1 + carry0) = selEq[1] * carry0' * 2**16;
+    selEq[2] * (eq2 + carry0) = selEq[2] * carry0' * 2**16;
+    (selEq[1] + selEq[2]) * (eq3 + carry1) = (selEq[1] + selEq[2]) * carry1' * 2**16;
+    (selEq[1] + selEq[2]) * (eq4 + carry2) = (selEq[1] + selEq[2]) * carry2' * 2**16;
 
-    selEq[5] * (eq9 + carry[0]) = selEq[5] * carry[0]' * 2**16;
-    selEq[5] * (eq10 + carry[1]) = selEq[5] * carry[1]' * 2**16;
+    selEq[3] * (eq5 + carry0) = selEq[3] * carry0' * 2**16;
+    selEq[3] * (eq6 + carry1) = selEq[3] * carry1' * 2**16;
 
-    selEq[6] * (eq11 + carry[0]) = selEq[6] * carry[0]' * 2**16;
+    selEq[4] * (eq7 + carry0) = selEq[4] * carry0' * 2**16;
+    selEq[4] * (eq8 + carry1) = selEq[4] * carry1' * 2**16;
 
-    selEq[7] * (eq12 + carry[0]) = selEq[7] * carry[0]' * 2**24;
+    selEq[5] * (eq9 + carry0) = selEq[5] * carry0' * 2**16;
+    selEq[5] * (eq10 + carry1) = selEq[5] * carry1' * 2**16;
 
-    selEq[8] * (eq13 + carry[0]) = selEq[8] * carry[0]' * 2**24;
-    selEq[8] * (eq14 + carry[1]) = selEq[8] * carry[1]' * 2**24;
+    selEq[6] * (eq11 + carry0) = selEq[6] * carry0' * 2**16;
 
-    selEq[9] * (eq15 + carry[0]) = selEq[9] * carry[0]' * 2**24;
-    selEq[9] * (eq16 + carry[1]) = selEq[9] * carry[1]' * 2**24;
+    selEq[7] * (eq12 + carry0) = selEq[7] * carry0' * 2**24;
 
-    selEq[10] * (eq17 + carry[0]) = selEq[10] * carry[0]' * 2**24;
-    selEq[10] * (eq18 + carry[1]) = selEq[10] * carry[1]' * 2**24;
+    selEq[8] * (eq13 + carry0) = selEq[8] * carry0' * 2**24;
+    selEq[8] * (eq14 + carry1) = selEq[8] * carry1' * 2**24;
 
-    selEq[11] * (eq19 + carry[0]) = selEq[11] * carry[0]' * 2**24;
+    selEq[9] * (eq15 + carry0) = selEq[9] * carry0' * 2**24;
+    selEq[9] * (eq16 + carry1) = selEq[9] * carry1' * 2**24;
+
+    selEq[10] * (eq17 + carry0) = selEq[10] * carry0' * 2**24;
+    selEq[10] * (eq18 + carry1) = selEq[10] * carry1' * 2**24;
+
+    selEq[11] * (eq19 + carry0) = selEq[11] * carry0' * 2**24;
