@@ -123,22 +123,22 @@ describe("Arithmetic state machines tests", async function () {
 
     async function generatePols(F, input) {
         const pil = await compile(F, __dirname + '/sm_arith.pil', null, { defines: {N: 2 ** 23}});
-        // console.log('creating constPols ....');
-        // const constPols = newConstantPolsArray(pil);
+        console.log('creating constPols ....');
+        const constPols = newConstantPolsArray(pil);
         console.log('creating cmPols ....');
         const cmPols = newCommitPolsArray(pil);
 
 
-        // console.log('build global constants ....');
-        // await global.buildConstants(constPols.Global);
-        // console.log('build arith constants ....');
-        // await arith.buildConstants(constPols.Arith);
+        console.log('build global constants ....');
+        await global.buildConstants(constPols.Global);
+        console.log('build arith constants ....');
+        await arith.buildConstants(constPols.Arith);
         
         console.log('prepare inputs ....');
         const splitInput = prepareInput(input)
 
-        // console.log('executor "main" ....');
-        // executeMain(cmPols.Main, splitInput);
+        console.log('executor "main" ....');
+        executeMain(cmPols.Main, splitInput);
 
         console.log('executor arith ....');
         await arith.execute(cmPols.Arith, splitInput);

@@ -354,7 +354,7 @@ class ArithExecutor {
                 [q1,q2] = this.calculateAddPointQs(s, x1, y1, x2, y2, x3, y3);
                 break;
             case ARITH_BN254_MULFP2:
-                [q1,q2] = this.calculateMulFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3);
+                [q1,q2] = this.calculateMulFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3, 256n);
                 break;
             case ARITH_BN254_ADDFP2:
                 [q1,q2] = this.calculateAddFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3);
@@ -370,7 +370,7 @@ class ArithExecutor {
                 chunkBits = 24n;
                 break;
             case ARITH_BLS12381_MULFP2:
-                [q1,q2] = this.calculateMulFp2Qs(this.pBLS12381, x1, y1, x2, y2, x3, y3);
+                [q1,q2] = this.calculateMulFp2Qs(this.pBLS12381, x1, y1, x2, y2, x3, y3, 384n);
                 chunkBits = 24n;
                 break;
             case ARITH_BLS12381_ADDFP2:
@@ -529,28 +529,28 @@ class ArithExecutor {
         return [q1,q2];
     }
 
-    calculateMulFp2Qs(module, x1, y1, x2, y2, x3, y3) {
+    calculateMulFp2Qs(module, x1, y1, x2, y2, x3, y3, bits = 256n) {
         // Worst values are {-2^256*(2^256-1),(2^256-1)**2} with |-2^256*(2^256-1)| > (2^256-1)**2
-        const q1 = this.calculateQ(module, x1 * x2 - y1 * y2 - x3, 2n ** 259n, 'q1', -1n);
+        const q1 = this.calculateQ(module, x1 * x2 - y1 * y2 - x3, (bits === 256n ? (2n ** 259n) : (2n ** 388n)), 'q1', -1n);
 
         // Worst values are {-(2^256-1),2*(2^256-1)**2} with 2*(2^256-1)**2 > |-(2^256-1)|
-        const q2 = this.calculateQ(module, y1 * x2 + x1 * y2 - y3, 2n ** 3n, 'q2');
+        const q2 = this.calculateQ(module, y1 * x2 + x1 * y2 - y3, 2n ** 4n, 'q2');
         return [q1,q2]
     }
     calculateAddFp2Qs(module, x1, y1, x2, y2, x3, y3) {
         // Worst values are {-(2^256-1),2*(2^256-1)} with 2*(2^256-1) > |-(2^256-1)|
-        const q1 = this.calculateQ(module, x1 + x2 - x3, 2n ** 3n, 'q1');
+        const q1 = this.calculateQ(module, x1 + x2 - x3, 2n ** 4n, 'q1');
 
         // Worst values are {-(2^256-1),2*(2^256-1)} with 2*(2^256-1) > |-(2^256-1)|
-        const q2 = this.calculateQ(module, y1 + y2 - y3, 2n ** 3n, 'q2');
+        const q2 = this.calculateQ(module, y1 + y2 - y3, 2n ** 4n, 'q2');
         return [q1,q2];
     }
     calculateSubFp2Qs(module, x1, y1, x2, y2, x3, y3) {
        // Worst values are {-2*(2^256-1),(2^256-1)} with |-2*(2^256-1)| > (2^256-1)
-        const q1 = this.calculateQ(module, x1 - x2 - x3, 2n ** 3n, 'q1', -1n);
+        const q1 = this.calculateQ(module, x1 - x2 - x3, 2n ** 4n, 'q1', -1n);
 
         // Worst values are {-2*(2^256-1),(2^256-1)} with |-2*(2^256-1)| > (2^256-1)
-        const q2 = this.calculateQ(module, y1 - y2 - y3, 2n ** 3n, 'q2', -1n);
+        const q2 = this.calculateQ(module, y1 - y2 - y3, 2n ** 4n, 'q2', -1n);
         return [q1,q2];
     }
     calculateModularQs(bits, x1, y1, x2, y2, y3) {
