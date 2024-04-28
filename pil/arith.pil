@@ -7475,33 +7475,33 @@ namespace Arith(%N);
 
 
     pol eq19_0 = x1[0] + 2**16 * x1[1] - y3[0];
-    pol eq19_1 = x1[2] + 2**8 - y3[1];
+    pol eq19_1 = 2**8 * x1[2] - y3[1];
     pol eq19_2 = x1[3] + 2**16 * x1[4] - y3[2];
-    pol eq19_3 = x1[5] + 2**8 - y3[3];
+    pol eq19_3 = 2**8 * x1[5] - y3[3];
     pol eq19_4 = x1[6] + 2**16 * x1[7] - y3[4];
-    pol eq19_5 = x1[8] + 2**8 - y3[5];
+    pol eq19_5 = 2**8 * x1[8] - y3[5];
     pol eq19_6 = x1[9] + 2**16 * x1[10] - y3[6];
-    pol eq19_7 = x1[11] + 2**8 - y3[7];
+    pol eq19_7 = 2**8 * x1[11] - y3[7];
     pol eq19_8 = x1[12] + 2**16 * x1[13] - y3[8];
-    pol eq19_9 = x1[14] + 2**8 - y3[9];
+    pol eq19_9 = 2**8 * x1[14] - y3[9];
     pol eq19_10 = x1[15] + 2**16 * y1[0] - y3[10];
-    pol eq19_11 = y1[1] + 2**8 - y3[11];
+    pol eq19_11 = 2**8 * y1[1] - y3[11];
     pol eq19_12 = y1[2] + 2**16 * y1[3] - y3[12];
-    pol eq19_13 = y1[4] + 2**8 - y3[13];
+    pol eq19_13 = 2**8 * y1[4] - y3[13];
     pol eq19_14 = y1[5] + 2**16 * y1[6] - y3[14];
-    pol eq19_15 = y1[7] + 2**8 - y3[15];
+    pol eq19_15 = 2**8 * y1[7] - y3[15];
 
     pol eq19_16 = 0;     // carry clean
     pol eq19_17 = 0;
     pol eq19_18 = 0;
-    pol eq19_19 = y1[4];
-    pol eq19_20 = y1[5];
-    pol eq19_21 = y1[6];
-    pol eq19_22 = y1[7];
-    pol eq19_23 = y1[8];
-    pol eq19_24 = y1[9];
-    pol eq19_25 = y1[10];
-    pol eq19_26 = y1[11];
+    pol eq19_19 = y1[8];
+    pol eq19_20 = y1[9];
+    pol eq19_21 = y1[10];
+    pol eq19_22 = y1[11];
+    pol eq19_23 = y1[12];
+    pol eq19_24 = y1[13];
+    pol eq19_25 = y1[14];
+    pol eq19_26 = y1[15];
 
     pol eq0 = eq0_0*Global.CLK32[0] + eq0_1*Global.CLK32[1] + eq0_2*Global.CLK32[2] + eq0_3*Global.CLK32[3] + eq0_4*Global.CLK32[4] + eq0_5*Global.CLK32[5] + eq0_6*Global.CLK32[6] + eq0_7*Global.CLK32[7]
 	   + eq0_8*Global.CLK32[8] + eq0_9*Global.CLK32[9] + eq0_10*Global.CLK32[10] + eq0_11*Global.CLK32[11] + eq0_12*Global.CLK32[12] + eq0_13*Global.CLK32[13] + eq0_14*Global.CLK32[14] + eq0_15*Global.CLK32[15]

@@ -122,6 +122,7 @@ describe("Arithmetic state machines tests", async function () {
     }
 
     async function generatePols(F, input) {
+        console.log(input[535]);
         const pil = await compile(F, __dirname + '/sm_arith.pil', null, { defines: {N: 2 ** 23}});
         console.log('creating constPols ....');
         const constPols = newConstantPolsArray(pil);

@@ -4086,6 +4086,51 @@ const input = [
   x3: 3952442622299119618591503940759032032814633055015582047750730207971353589044851465029238086207813346265157421853859n,
   y3: 0n,
   arithEquation: 9n
+},
+{
+  x1: 0x808182838485868788898A8B8C8D8E8FC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFn,
+  y1: 0x101112131415161718191A1B1C1D1E1Fn,
+  x2: 0n,
+  y2: 0n,
+  x3: 0n,
+  y3: 0x101112131415161718191A1B1C1D1E1F808182838485868788898A8B8C8D8E8FC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFn,
+  arithEquation: 12n
+},
+{
+  x1: 0n,
+  y1: 0x80000000000000000000000000000000n,
+  x2: 0n,
+  y2: 0n,
+  x3: 0n,
+  y3: 0x800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n,
+  arithEquation: 12n
+}, 
+{
+  x1: 0n,
+  y1: 0n,
+  x2: 0n,
+  y2: 0n,
+  x3: 0n,
+  y3: 0n,
+  arithEquation: 12n
+},
+{
+  x1: 1n,
+  y1: 0n,
+  x2: 0n,
+  y2: 0n,
+  x3: 0n,
+  y3: 1n,
+  arithEquation: 12n
+},
+{
+  x1: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+  y1: 0xffffffffffffffffffffffffffffffffn,
+  x2: 0n,
+  y2: 0n,
+  x3: 0n,
+  y3: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+  arithEquation: 12n
 }
 ];
 

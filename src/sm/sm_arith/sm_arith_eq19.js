@@ -7,7 +7,7 @@ module.exports.calculate = function (p, step, _o)
 	switch(step) {
 		case 0: return (p.x1[0][_o] + 0x10000n * p.x1[1][_o] - p.y3[0][_o]);
 		case 1: return (0x100n * p.x1[2][_o] - p.y3[1][_o]);
-		case 2: return (p.x1[3][_o] + 0x10000n * p.x1[5][_o] - p.y3[2][_o]);
+		case 2: return (p.x1[3][_o] + 0x10000n * p.x1[4][_o] - p.y3[2][_o]);
 		case 3: return (0x100n * p.x1[5][_o] - p.y3[3][_o]);
 		case 4: return (p.x1[6][_o] + 0x10000n * p.x1[7][_o] - p.y3[4][_o]);
 		case 5: return (0x100n * p.x1[8][_o] - p.y3[5][_o]);

@@ -503,9 +503,7 @@ class ArithExecutor {
         this.splitChunkRangeCheck(this.pols.x3, 0, INPUT_CHUNKS, 0, this.pols.hsc_x3y3, this.pols.lsc_x3y3);
         this.splitChunkRangeCheck(this.pols.y3, 0, INPUT_CHUNKS, INPUT_CHUNKS, this.pols.hsc_x3y3, this.pols.lsc_x3y3);
 
-        // TODO: DELTA
-
-        const [_bits1, _bits2] = [2n*bits1, 2n*bits1];
+        const [_bits1, _bits2] = [2n*bits1, 2n*bits2];
         return [this.feaToScalar(input.x1, _bits1), this.feaToScalar(input.y1, _bits1),
                 this.feaToScalar(input.x2, _bits2), this.feaToScalar(input.y2, _bits2),
                 this.feaToScalar(input.x3, _bits2), this.feaToScalar(input.y3, _bits2)];
