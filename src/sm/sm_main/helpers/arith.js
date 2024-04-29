@@ -1,5 +1,7 @@
 const { fea2scalar } = require('@0xpolygonhermez/zkevm-commonjs/src/smt-utils.js');
 const Helper = require('./helper.js')
+const { Scalar, F1Field } = require("ffjavascript");
+
 const {
     scalar2fea,
     fea2String,
@@ -23,6 +25,8 @@ const ARITH_BLS12381_MULFP2 = 9;
 const ARITH_BLS12381_ADDFP2 = 10;
 const ARITH_BLS12381_SUBFP2 = 11;
 const ARITH_256TO384 = 12;
+
+console.log('???????????????????????????????????????????????????????????????????????????????????');
 
 module.exports = class Arith extends Helper {
     setup(props) {
@@ -90,6 +94,7 @@ module.exports = class Arith extends Helper {
         }
         if (arithEquation == ARITH_BASE || arithEquation == ARITH_MOD || arithEquation == ARITH_384_MOD) {
             useE = 0n;
+		console.log(Scalar);
             const _a = chunkToScalar(Fr, a);
             const _b = chunkToScalar(Fr, b);
             const _c = chunkToScalar(Fr, c);
