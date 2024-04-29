@@ -53,6 +53,10 @@ const PRIME_BN254_CHUNKS = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6
 const PRIME_BLS12381_CHUNKS = [ 0x1A0111n, 0xEA397Fn, 0xE69A4Bn, 0x1BA7B6n, 0x434BACn, 0xD76477n, 0x4B84F3n, 0x8512BFn, 
                                 0x6730D2n, 0xA0F6B0n, 0xF6241En, 0xABFFFEn, 0xB153FFn, 0xFFB9FEn, 0xFFFFFFn, 0xFFAAABn ];
 
+const P2_256 = 2n**256n;
+const P2_259 = 2n**259n;
+const P2_384 = 2n**384n;
+const P2_388 = 2n**388n;
 
 const CARRY_OFFSET = 2n**28n;
 
@@ -385,13 +389,13 @@ class ArithExecutor {
                 [q1,q2] = this.calculateAddPointQs(s, x1, y1, x2, y2, x3, y3);
                 break;
             case ARITH_BN254_MULFP2:
-                [q1,q2] = this.calculateMulFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3, 256n);
+                [q1,q2] = this.calculateMulFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3, [P2_259, 0n]);
                 break;
             case ARITH_BN254_ADDFP2:
                 [q1,q2] = this.calculateAddFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3);
                 break;
             case ARITH_BN254_SUBFP2:
-                [q1,q2] = this.calculateSubFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3);
+                [q1,q2] = this.calculateSubFp2Qs(this.pBN254, x1, y1, x2, y2, x3, y3,[8n,8n]);
                 break;
             case ARITH_MOD:
                 [q0, q1] = this.calculateModularQs(256n, x1, y1, x2, y2, y3);
@@ -401,7 +405,7 @@ class ArithExecutor {
                 chunkBits = 24n;
                 break;
             case ARITH_BLS12381_MULFP2:
-                [q1,q2] = this.calculateMulFp2Qs(this.pBLS12381, x1, y1, x2, y2, x3, y3, 384n);
+                [q1,q2] = this.calculateMulFp2Qs(this.pBLS12381, x1, y1, x2, y2, x3, y3,[P2_388, 0n]);
                 chunkBits = 24n;
                 break;
             case ARITH_BLS12381_ADDFP2:
@@ -409,7 +413,7 @@ class ArithExecutor {
                 chunkBits = 24n;
                 break;
             case ARITH_BLS12381_SUBFP2:
-                [q1,q2] = this.calculateSubFp2Qs(this.pBLS12381, x1, y1, x2, y2, x3, y3);
+                [q1,q2] = this.calculateSubFp2Qs(this.pBLS12381, x1, y1, x2, y2, x3, y3,[16n,16n]);
                 chunkBits = 24n;
                 break;
         }
@@ -558,28 +562,19 @@ class ArithExecutor {
         return [q1,q2];
     }
 
-    calculateMulFp2Qs(module, x1, y1, x2, y2, x3, y3, bits = 256n) {
-        // Worst values are {-2^256*(2^256-1),(2^256-1)**2} with |-2^256*(2^256-1)| > (2^256-1)**2
-        const q1 = this.calculateQ(module, x1 * x2 - y1 * y2 - x3, (bits === 256n ? (2n ** 259n) : (2n ** 388n)), 'q1', -1n);
-
-        // Worst values are {-(2^256-1),2*(2^256-1)**2} with 2*(2^256-1)**2 > |-(2^256-1)|
-        const q2 = this.calculateQ(module, y1 * x2 + x1 * y2 - y3, 2n ** 4n, 'q2');
+    calculateMulFp2Qs(module, x1, y1, x2, y2, x3, y3, offsets = [0n,0n]) {
+        const q1 = this.calculateQ(module, x1 * x2 - y1 * y2 - x3, offsets[0], 'q1', -1n);
+        const q2 = this.calculateQ(module, y1 * x2 + x1 * y2 - y3, offsets[1], 'q2');
         return [q1,q2]
     }
-    calculateAddFp2Qs(module, x1, y1, x2, y2, x3, y3) {
-        // Worst values are {-(2^256-1),2*(2^256-1)} with 2*(2^256-1) > |-(2^256-1)|
-        const q1 = this.calculateQ(module, x1 + x2 - x3, 2n ** 4n, 'q1');
-
-        // Worst values are {-(2^256-1),2*(2^256-1)} with 2*(2^256-1) > |-(2^256-1)|
-        const q2 = this.calculateQ(module, y1 + y2 - y3, 2n ** 4n, 'q2');
+    calculateAddFp2Qs(module, x1, y1, x2, y2, x3, y3, offsets = [0n,0n]) {
+        const q1 = this.calculateQ(module, x1 + x2 - x3, offsets[0], 'q1');
+        const q2 = this.calculateQ(module, y1 + y2 - y3, offsets[1], 'q2');
         return [q1,q2];
     }
-    calculateSubFp2Qs(module, x1, y1, x2, y2, x3, y3) {
-       // Worst values are {-2*(2^256-1),(2^256-1)} with |-2*(2^256-1)| > (2^256-1)
-        const q1 = this.calculateQ(module, x1 - x2 - x3, 2n ** 4n, 'q1', -1n);
-
-        // Worst values are {-2*(2^256-1),(2^256-1)} with |-2*(2^256-1)| > (2^256-1)
-        const q2 = this.calculateQ(module, y1 - y2 - y3, 2n ** 4n, 'q2', -1n);
+    calculateSubFp2Qs(module, x1, y1, x2, y2, x3, y3, offsets = [0n,0n]) {
+        const q1 = this.calculateQ(module, x1 - x2 - x3, offsets[0], 'q1', -1n);
+        const q2 = this.calculateQ(module, y1 - y2 - y3, offsets[1], 'q2', -1n);
         return [q1,q2];
     }
     calculateModularQs(bits, x1, y1, x2, y2, y3) {
