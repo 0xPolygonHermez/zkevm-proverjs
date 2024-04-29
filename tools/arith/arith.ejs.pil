@@ -609,9 +609,10 @@ namespace Arith(%N);
     carry1 * Global.CLK32[0] = 0;
     carry2 * Global.CLK32[0] = 0;
 
-    // TODO: review with 384
+    // range check 23 bits
     ls_carry0 in Global.STEP;
     ls_carry1 in Global.STEP;
+
     carry2  in GL_SIGNED_22BITS;
 
     pol constant BITS7_C256; // [0:256...127:256,]

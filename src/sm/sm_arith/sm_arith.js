@@ -169,25 +169,22 @@ class ArithExecutor {
         const N = pols.x1[0].length;
         this.pols = pols;
 
-        // Split the input in little-endian words
-        // prepareInput256bits(input, N);
-        // inputFeaToChunks(input, N);
-
         this.initPols(N, pols, inputs.length * ARITH_CYCLE);
 
         for (let i = 0; i < inputs.length; i++) {
-            // console.log(inputs[i]);
             this.setupEquation(i, inputs[i]);
             const [x1,y1,x2,y2,x3,y3] = this.prepareInputPols(inputs[i]);
 
-            // In the following, recall that we can only work with unsiged integers of 256 bits.
             // Therefore, as the quotient needs to be represented in our VM, we need to know
             // the worst negative case and add an offset so that the resulting name is never negative.
             // Then, this offset is also added in the PIL constraint to ensure the equality.
+            //
             // Note1: Since we can choose whether the quotient is positive or negative, we choose it so
             //        that the added offset is the lowest.
-            // Note2: x1,x2,y1,y2 can be assumed to be alias free, as this is the pre condition in the Arith SM.
-            //        I.e, x1,x2,y1,y2 ∈ [0, 2^256-1].
+            //
+            // Note2: x1,x2,y1,y2,x3,y3,s are well-composed with chunks of 16 or 24 bits verified with
+            //        range check. For this reason we could assume that x1,x2,y1,y2,s ∈ [0, 2^256-1] in
+            //        case of 256 bits equation and x1,x2,y1,y2,s ∈ [0, 2^384-1] in case of 384 bit equations.
 
             const [s,q0,q1,q2] = this.calculateSQPols(x1, y1, x2, y2, x3, y3);            
 
@@ -221,8 +218,6 @@ class ArithExecutor {
                 const chunkValue = step < INPUT_CHUNKS ? pols.x3[15 - chunkStep][this.offset] : pols.y3[15 - chunkStep][this.offset];
                 pols.x3y3_clock[index] = chunkValue;
 
-                //     (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - prime_chunk + x3y3_clock + chunkLtPrime) = 0;
-
                 if (this.moduleCheck) {
                     let primeChunk = this.getPrimeChunk(chunkStep, pols.y2[15 - chunkStep][this.offset]);
 
@@ -231,7 +226,6 @@ class ArithExecutor {
                     pols.primeChunk[index] = primeChunk;
                     pols.chunkLtPrime[index] = chunkLtPrime;
                     pols.valueLtPrime[nextIndex] = valueLtPrime ? 1n : 0n;
-                    // console.log({primeChunk, chunkValue, chunkLtPrime, step, chunkStep, y2: pols.y2[15 - chunkStep][this.offset], _:this.location})
                     const delta = this.Fr.e(primeChunk - chunkValue - chunkLtPrime);
                     pols.hs_bit_delta[index] = (delta >> 23n) & 0x01n;
                     pols.ls_bits_delta[index] = delta & 0x7FFFFn;
@@ -246,12 +240,9 @@ class ArithExecutor {
             }
 
             // calculateEquation need all pols calculated
-
             for (let step = 0; step < ARITH_CYCLE; ++step) {
                 this.calculateEquationStep(step);
             }
-    
-            // hs_bit_delta, ls_bits_delta;
         }
     }
 
@@ -536,7 +527,6 @@ class ArithExecutor {
         if (s === false) {
             s = this.Fec.div(this.Fec.mul(3n, this.Fec.mul(x1, x1)), this.Fec.add(y1, y1));
         }
-        // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2} with |-3*(2^256-1)**2| > 2*(2^256-1)**2
         const q0 = this.calculateQ(this.pFec, s * 2n * y1 - 3n * x1 * x1, 2n ** 258n, 'q0 same point', -1n);
         return [s, q0];
     }
@@ -553,11 +543,7 @@ class ArithExecutor {
         throw new Error(_msg);
     }
     calculateAddPointQs(s, x1, y1, x2, y2, x3, y3) {
-        // Worst values are {-3*(2^256-1),(2^256-1)**2}  with (2^256-1)**2 > |-3*(2^256-1)|
-        // console.log({s,x1,x2,x3});
         const q1 = this.calculateQ(this.pFec, s * s - x1 - x2 - x3, 2n ** 2n, 'q1');
-        
-        // Worst values are {-(2^256+1)*(2^256-1),(2^256-1)**2}  with |-(2^256+1)*(2^256-1)| > (2^256-1)**2
         const q2 = this.calculateQ(this.pFec, s * x1 - s * x3 - y1 - y3, 2n ** 257n, 'q2', -1n);
         return [q1,q2];
     }
@@ -677,21 +663,3 @@ class ArithExecutor {
         }
     }
 }
-
-/*
-
-function to16bitsRegisters(value) {
-    if (typeof value !== 'bigint') {
-        value = BigInt(value);
-    }
-
-    let parts = [];
-    for (let part = 0; part < 16; ++part) {
-        parts.push(part < 15 ? (value & 0xFFFFn) : value);
-        value = value >> 16n;
-    }
-    return parts;
-}
-
-
-*/
