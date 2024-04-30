@@ -12,7 +12,7 @@ function safeFea2scalar(Fr, arr) {
     for (let index = 0; index < 8; ++index) {
         const value = Fr.toObject(arr[index]);
         if (value > 0xFFFFFFFFn) {
-            throw new Error(`Invalid value 0x${value.toString(16)} (mode:256 bits) to convert to scalar on index ${index}: ${sourceRef}`);
+            throw new Error(`Invalid value 0x${value.toString(16)} (mode:256 bits) to convert to scalar on index ${index}`);
         }
     }
     return fea2scalar(Fr, arr);
@@ -22,7 +22,7 @@ function safeFea384ToScalar(Fr, arr) {
     for (let index = 0; index < 8; ++index) {
         const value = Fr.toObject(arr[index]);
         if (value > 0xFFFFFFFFFFFFn) {
-            throw new Error(`Invalid value 0x${value.toString(16)} (mode:384 bits) to convert to scalar on index ${index}: ${sourceRef}`);
+            throw new Error(`Invalid value 0x${value.toString(16)} (mode:384 bits) to convert to scalar on index ${index}`);
         }
     }
     return fea384ToScalar(Fr, arr);
