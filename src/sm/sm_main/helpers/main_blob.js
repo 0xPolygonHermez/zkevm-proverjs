@@ -87,6 +87,7 @@ module.exports = class Main extends Helper {
         pols.cntArith[0] = 0n;
         pols.cntBinary[0] = 0n;
         pols.cntKeccakF[0] = 0n;
+        pols.cntSha256F[0] = 0n;
         pols.cntMemAlign[0] = 0n;
         pols.cntPaddingPG[0] = 0n;
         pols.cntPoseidonG[0] = 0n;

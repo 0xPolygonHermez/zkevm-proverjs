@@ -27,6 +27,7 @@ const {
 const ConstantsCommon = require('@0xpolygonhermez/zkevm-commonjs').Constants;
 const ConstantsBlob = require('@0xpolygonhermez/zkevm-commonjs').blobInner.Constants;
 const { safeFea2scalar, safeFea384ToScalar, fea384ToScalar, scalarToFea384 } = require('../../lib/fea.js');
+const { buildPointZData, computePointZ } = require('@0xpolygonhermez/zkevm-commonjs').blobUtils;
 
 const FullTracer = require("./debug/full-tracer");
 const fullTracerUtils = require("./debug/full-tracer-utils");
@@ -146,13 +147,19 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
     if (blob && input.blobType === ConstantsBlob.BLOB_TYPE.EIP4844) {
         // Load poseidonBlobData into DB
-        const z = await hashContractBytecode(input.blobData);
+        const pointZData = buildPointZData(input.kzgCommitment, input.blobData);
+        const z = await computePointZ(input.kzgCommitment, input.blobData);
         if (typeof input.z === 'undefined') {
             input.z = z;
         } else if (input.z !== z) {
-            throw new Error('input.z != poseidon(input.blobData)');
+            throw new Error('input.z != poseidon(pointZData)');
         }
-        await db.setProgram(stringToH4(z), hexString2byteArray(input.blobData));
+        await db.setProgram(stringToH4(z), hexString2byteArray(pointZData));
+        const kzgCommitmentArray = new Uint8Array(hexString2byteArray(input.kzgCommitment));
+        const sha256Str = createHash('sha256').update(kzgCommitmentArray).digest('hex');
+        input.kzgCommitmentHash = `0x${sha256Str}`;
+        await db.setProgram(stringToH4(input.kzgCommitmentHash), hexString2byteArray(input.kzgCommitment));
+
     } else if (blob && (input.blobType === ConstantsBlob.BLOB_TYPE.CALLDATA || input.blobType === ConstantsBlob.BLOB_TYPE.FORCED)) {
         // Load keccak256BlobData into DB
         const blobL2HashData = await ethers.utils.keccak256(input.blobData);
@@ -1544,8 +1551,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         if (l.hashSDigest) {
             pols.hashSDigest[i] = 1n;
             const dg = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
-            if (typeof ctx.hashS[hashAddr].digest === "undefined") {
-                throw new Error(`HASHSDIGEST(${hashAddr}) cannot load sha256 from DB ${sourceRef}`);
+            if (typeof ctx.hashS[hashAddr] === "undefined") {
+                const k = scalar2h4(dg);
+                const data = await smt.db.getProgram(k);
+
+                ctx.hashS[hashAddr] = {
+                    data: data,
+                    digest: dg,
+                    lenCalled: false,
+                    sourceRef,
+                    reads: {}
+                }
             }
             if (!Scalar.eq(Scalar.e(dg), Scalar.e(ctx.hashS[hashAddr].digest))) {
                 throw new Error(`HashSDigest(${hashAddr}) doesn't match ${sourceRef}`);

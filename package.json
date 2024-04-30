@@ -185,7 +185,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#feature/arith-384",
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v7.0.0-rc.1-fork.10",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#feature/fix-computez",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
@@ -212,7 +212,7 @@
     "mocha": "^9.1.3",
     "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#v7.0.0-rc.1-fork.10",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
-    "@0xpolygonhermez/zkevm-blob-rom": "github:0xPolygonHermez/zkevm-blob-rom#v1.0.0-rc.1-fork.10",
-    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v7.0.0-rc.1-fork.10"
+    "@0xpolygonhermez/zkevm-blob-rom": "github:0xPolygonHermez/zkevm-blob-rom#develop-feijoa",
+    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#develop-feijoa"
   }
 }
