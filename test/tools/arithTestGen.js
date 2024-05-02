@@ -1,3 +1,9 @@
+
+const argv = require("yargs")
+    .usage("arithTestGen -z")
+    .alias("z", "zkasm")
+    .argv;
+
 const two256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935n; // 2^256-1
 const P2_384 = (2n ** 384n) - 1n;
 const P_BN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
@@ -45,7 +51,7 @@ const eqs = { ARITH: { eq: 1, file: 'standard',  rcheck: ['$${var _arithComp = A
 };
 
 //  
-// node test/tools/arithTestGen.js | awk '/; redirect:/{F="test/diagnostic/operations/arith/"$3; print "">F;next}{print $0>>F}'
+// node test/tools/arithTestGen.js -z | awk '/; redirect:/{F="test/diagnostic/operations/arith/"$3; print "">F;next}{print $0>>F}'
 // 
 
 let values = [
@@ -334,19 +340,23 @@ for (const eq in eqs) {
         y3: 0n,
         arithEquation
     };
-    /* const outputFile = eqInfo.file ?? eq.toLowerCase().slice(6);
-    const label = `_${eq.toLowerCase()}_tests`;
-    console.log(`; redirect: ${outputFile}.zkasm`);
-    if (arithEquation >= 8) {
-        console.log('PRAGMA MODE_384_BITS\n');
+    const zkasm = argv.zkasm ?? false;
+
+    if (zkasm) {
+        const outputFile = eqInfo.file ?? eq.toLowerCase().slice(6);
+        const label = `_${eq.toLowerCase()}_tests`;
+        console.log(`; redirect: ${outputFile}.zkasm`);
+        if (arithEquation >= 8) {
+            console.log('PRAGMA MODE_384_BITS\n');
+        }
+        console.log(`\t:JMP(${label})\n`);
+        console.log(`__REDUNDANT_${eq}_CHECK:\n`);
+        for (const line of eqInfo.rcheck) {
+            console.log('\t'+line);
+        }
+        console.log('\t\t\t:RETURN\n');
+        console.log(`${label}:\n`);
     }
-    console.log(`\t:JMP(${label})\n`);
-    console.log(`__REDUNDANT_${eq}_CHECK:\n`);
-    for (const line of eqInfo.rcheck) {
-        console.log('\t'+line);
-    }
-    console.log('\t\t\t:RETURN\n');
-    console.log(`${label}:\n`);*/
     let done = {};
     for (const value of values) {
         if (value._mode384 && arithEquation < 8) continue;
@@ -383,10 +393,13 @@ for (const eq in eqs) {
         if (done[key]) continue;
         done[key] = true;
         input.y3 = op;
-        console.log(input,","); // This is for the arithmetic tests
-        for (const reg in regs) {
-            // console.log(`\t${regs[reg]}n => ${reg}`);
+        if (zkasm) {
+            for (const reg in regs) {
+                console.log(`\t${regs[reg]}n => ${reg}`);
+            }
+            console.log(`\t${op}n :${eq}\n\t:CALL(__REDUNDANT_${eq}_CHECK)\n`);
+        } else {
+            console.log(input,","); // This is for the arithmetic tests
         }
-        // console.log(`\t${op}n :${eq}\n\t:CALL(__REDUNDANT_${eq}_CHECK)\n`);
     }
 }
