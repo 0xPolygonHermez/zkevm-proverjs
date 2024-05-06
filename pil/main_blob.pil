@@ -538,6 +538,24 @@ namespace Main(%N);
     public lastL1InfoTreeIdx = RCX(%N-1);
     Global.LLAST * (RCX - :lastL1InfoTreeIdx) = 0;
 
+    public expectedNewStateRoot0 = SR0(%N-1);
+    public expectedNewStateRoot1 = SR1(%N-1);
+    public expectedNewStateRoot2 = SR2(%N-1);
+    public expectedNewStateRoot3 = SR3(%N-1);
+    public expectedNewStateRoot4 = SR4(%N-1);
+    public expectedNewStateRoot5 = SR5(%N-1);
+    public expectedNewStateRoot6 = SR6(%N-1);
+    public expectedNewStateRoot7 = SR7(%N-1);
+    Global.LLAST * (SR0 - :expectedNewStateRoot0) = 0;
+    Global.LLAST * (SR1 - :expectedNewStateRoot1) = 0;
+    Global.LLAST * (SR2 - :expectedNewStateRoot2) = 0;
+    Global.LLAST * (SR3 - :expectedNewStateRoot3) = 0;
+    Global.LLAST * (SR4 - :expectedNewStateRoot4) = 0;
+    Global.LLAST * (SR5 - :expectedNewStateRoot5) = 0;
+    Global.LLAST * (SR6 - :expectedNewStateRoot6) = 0;
+    Global.LLAST * (SR7 - :expectedNewStateRoot7) = 0;
+
+
     // Check that the calculated hash is well formed
     sWR + hashPDigest {
         op0, op1, op2, op3, op4, op5, op6, op7,

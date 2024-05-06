@@ -127,6 +127,14 @@ module.exports = class Main extends Helper {
             (!Fr.isZero(pols.E5[0])) ||
             (!Fr.isZero(pols.E6[0])) ||
             (!Fr.isZero(pols.E7[0])) ||
+            (!Fr.isZero(pols.SR0[0])) ||
+            (!Fr.isZero(pols.SR1[0])) ||
+            (!Fr.isZero(pols.SR2[0])) ||
+            (!Fr.isZero(pols.SR3[0])) ||
+            (!Fr.isZero(pols.SR4[0])) ||
+            (!Fr.isZero(pols.SR5[0])) ||
+            (!Fr.isZero(pols.SR6[0])) ||
+            (!Fr.isZero(pols.SR7[0])) ||
             (pols.PC[0]) ||
             (pols.SP[0]) ||
             (pols.GAS[0]) ||
@@ -173,21 +181,6 @@ module.exports = class Main extends Helper {
             throw new Error("Register RR not termined equal as its initial value");
         }
 
-        const feaOldStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.oldStateRoot));
-        if (
-            (!Fr.eq(pols.SR0[0], feaOldStateRoot[0])) ||
-            (!Fr.eq(pols.SR1[0], feaOldStateRoot[1])) ||
-            (!Fr.eq(pols.SR2[0], feaOldStateRoot[2])) ||
-            (!Fr.eq(pols.SR3[0], feaOldStateRoot[3])) ||
-            (!Fr.eq(pols.SR4[0], feaOldStateRoot[4])) ||
-            (!Fr.eq(pols.SR5[0], feaOldStateRoot[5])) ||
-            (!Fr.eq(pols.SR6[0], feaOldStateRoot[6])) ||
-            (!Fr.eq(pols.SR7[0], feaOldStateRoot[7]))
-        ) {
-            if(this.fullTracer) this.fullTracer.exportTrace();
-            throw new Error("Register SR not termined equal as its initial value");
-        }
-
         if (!Fr.eq(pols.RCX[0], ctx.Fr.e(ctx.input.forkID))){
             if(this.fullTracer) this.fullTracer.exportTrace();
             throw new Error(`Register RCX not termined equal as its initial value RCX[0]:${pols.RCX[0]} forkID:${ctx.input.forkID}`);
@@ -211,7 +204,7 @@ module.exports = class Main extends Helper {
             (!ctx.Fr.eq(ctx.B[6], feaNewBlobStateRoot[6])) ||
             (!ctx.Fr.eq(ctx.B[7], feaNewBlobStateRoot[7]))
         ) {
-            let errorMsg = "Assert Error: newStateRoot does not match\n";
+            let errorMsg = "Assert Error: newBlobStateRoot does not match\n";
             errorMsg += `   newBlobStateRoot computed: ${fea2String(ctx.Fr, ctx.B)}\n`;
             errorMsg += `   newBlobStateRoot expected: ${ctx.input.newBlobStateRoot}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
@@ -323,6 +316,26 @@ module.exports = class Main extends Helper {
             let errorMsg = "Assert Error: lastL1InfoTreeIndex does not match\n";
             errorMsg += `   lastL1InfoTreeIndex computed: ${Number(ctx.RCX)}\n`;
             errorMsg += `   lastL1InfoTreeIndex expected: ${ctx.input.lastL1InfoTreeIndex}\n`;
+            errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
+            throw new Error(errorMsg);
+        }
+
+        const feaExpectedNewStateRoot = scalar2fea(ctx.Fr, Scalar.e(ctx.input.expectedNewStateRoot));
+        console.log('INPUT: ', ctx.input.expectedNewStateRoot);
+        console.log('REGISTER: ', fea2String(ctx.Fr, ctx.SR));
+        if (
+            (!ctx.Fr.eq(ctx.SR[0], feaExpectedNewStateRoot[0])) ||
+            (!ctx.Fr.eq(ctx.SR[1], feaExpectedNewStateRoot[1])) ||
+            (!ctx.Fr.eq(ctx.SR[2], feaExpectedNewStateRoot[2])) ||
+            (!ctx.Fr.eq(ctx.SR[3], feaExpectedNewStateRoot[3])) ||
+            (!ctx.Fr.eq(ctx.SR[4], feaExpectedNewStateRoot[4])) ||
+            (!ctx.Fr.eq(ctx.SR[5], feaExpectedNewStateRoot[5])) ||
+            (!ctx.Fr.eq(ctx.SR[6], feaExpectedNewStateRoot[6])) ||
+            (!ctx.Fr.eq(ctx.SR[7], feaExpectedNewStateRoot[7]))
+        ) {
+            let errorMsg = "Assert Error: expectedNewStateRoot does not match\n";
+            errorMsg += `   expectedNewStateRoot computed: ${fea2String(ctx.Fr, ctx.SR)}\n`;
+            errorMsg += `   expectedNewStateRoot expected: ${ctx.input.expectedNewStateRoot}\n`;
             errorMsg += `Errors: ${this.nameRomErrors.toString()}`;
             throw new Error(errorMsg);
         }
