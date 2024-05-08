@@ -117,8 +117,8 @@ class FullTracer {
     handleEvent(ctx, tag) {
         try {
             const func = this[tag.params[0].varName];
-
-            if (func && typeof func === 'function') {
+            // Do not call onFinishBatch because it is called later asynchronously
+            if (func && typeof func === 'function' && tag.params[0].varName !== 'onFinishBatch') {
                 this[tag.params[0].varName](ctx, tag);
             } else if (tag.funcName === 'storeLog') {
                 this.onStoreLog(ctx, tag);
@@ -144,7 +144,7 @@ class FullTracer {
         try {
             if (tag.params[0].varName === 'onFinishBatch') {
                 await this.printStates();
-                await this.fillInReadWriteAddresses();
+                await this.onFinishBatch(ctx);
             }
         } catch (e) {
             console.log(e);
@@ -598,7 +598,7 @@ class FullTracer {
      * @param {Object} ctx Current context object
      * @param {Object} tag to identify the log values
      */
-    onFinishBatch(ctx) {
+    async onFinishBatch(ctx) {
         this.finalTrace.gas_used = String(this.accBatchGas);
         this.finalTrace.cnt_arithmetics = Number(ctx.cntArith);
         this.finalTrace.cnt_binaries = Number(ctx.cntBinary);
@@ -655,6 +655,11 @@ class FullTracer {
             cnt_reserve_arithmetics: Number(this.reservedCounters.outOfCountersArith.reserved),
             cnt_reserve_binaries: Number(this.reservedCounters.outOfCountersBinary.reserved),
         };
+
+        await this.fillInReadWriteAddresses();
+
+        // Create output files and dirs
+        this.exportTrace();
     }
 
     /**
@@ -1015,9 +1020,6 @@ class FullTracer {
                 nonce: Number(Scalar.e(state.nonce)).toString(),
             };
         }
-
-        // Create output files and dirs
-        this.exportTrace();
     }
 
     /**
