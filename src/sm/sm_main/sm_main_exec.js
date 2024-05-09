@@ -1168,11 +1168,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         (!Fr.eq(ctx.mem[memAddr][6],  value[6])) ||
                         (!Fr.eq(ctx.mem[memAddr][7],  value[7])))
                     {
+                        const hlen = l.mode384 ? 12:8;
                         const memdata = ctx.mem[memAddr].slice().reverse().join(',');
-                        const hmemdata = ctx.mem[memAddr].slice().reverse().map((x)=>x.toString(16).padStart(8,'0')).join('');
+                        const hmemdata = ctx.mem[memAddr].slice().reverse().map((x)=>x.toString(16).padStart(hlen,'0')).join('');
                         const data = value.reverse();
                         const opdata = data.join(',');
-                        const hopdata = data.map((x)=>x.toString(16).padStart(8,'0')).join('');
+                        const hopdata = data.map((x)=>x.toString(16).padStart(hlen,'0')).join('');
                         throw new Error(`Memory Read does not match MEM[${memAddr}]=[${memdata}] OP=[${opdata}] ${sourceRef}\n${hmemdata}\n${hopdata}`);
                     }
                 } else {
