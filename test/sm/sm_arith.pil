@@ -1,0 +1,140 @@
+    include "../../pil/global.pil";
+    include "../../pil/arith.pil";
+
+    namespace Main(%N);
+
+    pol commit A7, A6, A5, A4, A3, A2, A1;
+    pol commit A0;
+
+    pol commit B7, B6, B5, B4, B3, B2, B1;
+    pol commit B0;
+
+    pol commit C7, C6, C5, C4, C3, C2, C1;
+    pol commit C0;
+
+    pol commit D7, D6, D5, D4, D3, D2, D1;
+    pol commit D0;
+
+    pol commit E7, E6, E5, E4, E3, E2, E1;
+    pol commit E0;
+
+    pol commit op7, op6, op5, op4, op3, op2, op1;
+    pol commit op0;
+
+    pol commit arith, arithEquation, arithSame12, arithUseCD, arithUseE;
+
+    pol ax1_0 = Arith.x1[0]  + Arith.x1[1]  * arithBase;
+    pol ax1_1 = Arith.x1[2]  + Arith.x1[3]  * arithBase;
+    pol ax1_2 = Arith.x1[4]  + Arith.x1[5]  * arithBase;
+    pol ax1_3 = Arith.x1[6]  + Arith.x1[7]  * arithBase;
+    pol ax1_4 = Arith.x1[8]  + Arith.x1[9]  * arithBase;
+    pol ax1_5 = Arith.x1[10] + Arith.x1[11] * arithBase;
+    pol ax1_6 = Arith.x1[12] + Arith.x1[13] * arithBase;
+    pol ax1_7 = Arith.x1[14] + Arith.x1[15] * arithBase;
+
+    pol ay1_0 = Arith.y1[0]  + Arith.y1[1]  * arithBase;
+    pol ay1_1 = Arith.y1[2]  + Arith.y1[3]  * arithBase;
+    pol ay1_2 = Arith.y1[4]  + Arith.y1[5]  * arithBase;
+    pol ay1_3 = Arith.y1[6]  + Arith.y1[7]  * arithBase;
+    pol ay1_4 = Arith.y1[8]  + Arith.y1[9]  * arithBase;
+    pol ay1_5 = Arith.y1[10] + Arith.y1[11] * arithBase;
+    pol ay1_6 = Arith.y1[12] + Arith.y1[13] * arithBase;
+    pol ay1_7 = Arith.y1[14] + Arith.y1[15] * arithBase;
+
+    pol ax2_0 = Arith.x2[0]  + Arith.x2[1]  * arithBase;
+    pol ax2_1 = Arith.x2[2]  + Arith.x2[3]  * arithBase;
+    pol ax2_2 = Arith.x2[4]  + Arith.x2[5]  * arithBase;
+    pol ax2_3 = Arith.x2[6]  + Arith.x2[7]  * arithBase;
+    pol ax2_4 = Arith.x2[8]  + Arith.x2[9]  * arithBase;
+    pol ax2_5 = Arith.x2[10] + Arith.x2[11] * arithBase;
+    pol ax2_6 = Arith.x2[12] + Arith.x2[13] * arithBase;
+    pol ax2_7 = Arith.x2[14] + Arith.x2[15] * arithBase;
+
+    pol ay2_0 = Arith.y2[0]  + Arith.y2[1]  * arithBase;
+    pol ay2_1 = Arith.y2[2]  + Arith.y2[3]  * arithBase;
+    pol ay2_2 = Arith.y2[4]  + Arith.y2[5]  * arithBase;
+    pol ay2_3 = Arith.y2[6]  + Arith.y2[7]  * arithBase;
+    pol ay2_4 = Arith.y2[8]  + Arith.y2[9]  * arithBase;
+    pol ay2_5 = Arith.y2[10] + Arith.y2[11] * arithBase;
+    pol ay2_6 = Arith.y2[12] + Arith.y2[13] * arithBase;
+    pol ay2_7 = Arith.y2[14] + Arith.y2[15] * arithBase;
+
+    // All fully 384-bit operations (256TO386 is a mixed operation) use a 2**24 base, while the rest use a 2**16 base.
+    pol arithFull384 = Arith.selEq[7] + Arith.selEq[8] + Arith.selEq[9] + Arith.selEq[10];
+    pol arithBase = 2**16 + arithFull384 * (2**24 - 2**16);
+
+    // In mixed operation 256TO386, the base is 2**16 for A(x1) and B(y1) and 2**24 for op (y3).
+    pol arithBase_y3 = 2**16 + (arithFull384 + Arith.selEq[11]) * (2**24 - 2**16);
+
+    pol ax3_0 = Arith.x3[0]  + arithBase * Arith.x3[1];
+    pol ax3_1 = Arith.x3[2]  + arithBase * Arith.x3[3];
+    pol ax3_2 = Arith.x3[4]  + arithBase * Arith.x3[5];
+    pol ax3_3 = Arith.x3[6]  + arithBase * Arith.x3[7];
+    pol ax3_4 = Arith.x3[8]  + arithBase * Arith.x3[9];
+    pol ax3_5 = Arith.x3[10] + arithBase * Arith.x3[11];
+    pol ax3_6 = Arith.x3[12] + arithBase * Arith.x3[13];
+    pol ax3_7 = Arith.x3[14] + arithBase * Arith.x3[15];
+
+    pol ay3_0 = Arith.y3[0]  + Arith.y3[1]  * arithBase_y3;
+    pol ay3_1 = Arith.y3[2]  + Arith.y3[3]  * arithBase_y3;
+    pol ay3_2 = Arith.y3[4]  + Arith.y3[5]  * arithBase_y3;
+    pol ay3_3 = Arith.y3[6]  + Arith.y3[7]  * arithBase_y3;
+    pol ay3_4 = Arith.y3[8]  + Arith.y3[9]  * arithBase_y3;
+    pol ay3_5 = Arith.y3[10] + Arith.y3[11] * arithBase_y3;
+    pol ay3_6 = Arith.y3[12] + Arith.y3[13] * arithBase_y3;
+    pol ay3_7 = Arith.y3[14] + Arith.y3[15] * arithBase_y3;
+
+    // List of arithmetic equations:                           Conversion Table:
+    //      EQ0:  x1·y1 + x2 = y2·2²⁵⁶ + y3                        A <--> x1
+    //      EQ1:  s·(x2 - x1) = (y2 - y1) - q0 · p1                B <--> y1
+    //      EQ2:  2s·y1 = 3x1² - q0·p1                             C <--> x2
+    //      EQ3:  s² - x1 - x2 = x3 - q1·p1                        D <--> y2
+    //      EQ4:  s·(x1 - x3) - y1 = y3 - q2·p1                    E <--> x3
+    //      EQ5:  x1·x2 - y1·y2 = x3 - q1·p2                      op <--> y3
+    //      EQ6:  y1·x2 + x1·y2 = y3 - q2·p2
+    //      EQ7:  x1 + x2 = x3 - q1·p2
+    //      EQ8:  y1 + y2 = y3 - q2·p2
+    //      EQ9:  x1 - x2 = x3 - q1·p2
+    //      EQ10: y1 - y2 = y3 - q2·p2
+    //      EQ11: x1·y1 + x2 = y3 + (q1·2²⁵⁶ + q0)·y2
+    
+    arith {
+        arithEquation,
+        A0, A1, A2, A3, A4, A5, A6, A7,
+        B0, B1, B2, B3, B4, B5, B6, B7,
+        arithSame12 * A0 + arithUseCD * C0, // This should be A iff EQ2 (point doubling)
+        arithSame12 * A1 + arithUseCD * C1,
+        arithSame12 * A2 + arithUseCD * C2,
+        arithSame12 * A3 + arithUseCD * C3,
+        arithSame12 * A4 + arithUseCD * C4,
+        arithSame12 * A5 + arithUseCD * C5,
+        arithSame12 * A6 + arithUseCD * C6,
+        arithSame12 * A7 + arithUseCD * C7,
+        arithSame12 * B0 + arithUseCD * D0, // This should be B iff EQ2 (point doubling)
+        arithSame12 * B1 + arithUseCD * D1,
+        arithSame12 * B2 + arithUseCD * D2,
+        arithSame12 * B3 + arithUseCD * D3,
+        arithSame12 * B4 + arithUseCD * D4,
+        arithSame12 * B5 + arithUseCD * D5,
+        arithSame12 * B6 + arithUseCD * D6,
+        arithSame12 * B7 + arithUseCD * D7,
+        arithUseE * E0, // This must be deactivated in EQ0 and EQ11 (standard and modular arith)
+        arithUseE * E1,
+        arithUseE * E2,
+        arithUseE * E3,
+        arithUseE * E4,
+        arithUseE * E5,
+        arithUseE * E6,
+        arithUseE * E7,
+        op0, op1, op2, op3, op4, op5, op6, op7 } is
+    Arith.resultEq {
+        Arith.selEq[0] + 2 * Arith.selEq[1] + 3 * Arith.selEq[2] + 4 * Arith.selEq[3] + 5 * Arith.selEq[4] + 6 * Arith.selEq[5] 
+                       + 7 * Arith.selEq[6] + 8 * Arith.selEq[7] + 9 * Arith.selEq[8] + 10 * Arith.selEq[9] + 11 * Arith.selEq[10]
+                       + 12 * Arith.selEq[11],
+        ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
+        ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
+        ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
+        ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+        ax3_0, ax3_1, ax3_2, ax3_3, ax3_4, ax3_5, ax3_6, ax3_7, 
+        ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
+    };

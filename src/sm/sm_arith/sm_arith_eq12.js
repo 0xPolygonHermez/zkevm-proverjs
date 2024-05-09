@@ -2,7 +2,7 @@
 * code generated with arith_eq_gen.js
 * equation: x1*y1+x2-y3-q1*y2*powOfTwo-q0*y2
 * 
-* powOfTwo=0x10000000000000000000000000000000000000000000000000000000000000000
+* powOfTwo=0x1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 */
 
 module.exports.calculate = function (p, step, _o)
@@ -105,7 +105,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.x1[8][_o]  * p.y1[2][_o]  - p.q0[8][_o]  * p.y2[2][_o] ) +
 			(p.x1[9][_o]  * p.y1[1][_o]  - p.q0[9][_o]  * p.y2[1][_o] ) +
 			(p.x1[10][_o] * p.y1[0][_o]  - p.q0[10][_o] * p.y2[0][_o] )
-			 + p.x2[10][_o] - p.y3[10][_o] + 0x10000n);
+			 + p.x2[10][_o] - p.y3[10][_o]);
 
 		case 11: return (
 			(p.x1[0][_o]  * p.y1[11][_o] - p.q0[0][_o]  * p.y2[11][_o]) +

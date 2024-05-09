@@ -95,6 +95,7 @@ function valueToString(value, config = {})
 }
 function equationPols(name, products, sums, constValues, config = {})
 {
+    console.log({name, config});
     /*
                                 A3     A2     A1     A0
                                 B3     B2     B1     B0
@@ -113,6 +114,7 @@ function equationPols(name, products, sums, constValues, config = {})
     let lntab = config.lntab ?? ln+tab;
     let endEq = config.endEq ?? (';' + ln);
     let def;
+    const chunkBits = config.chunkBits || 16;
     const chunkSize = config.chunkSize || 16;
     const chunkSize2 = chunkSize * 2;
 
@@ -261,10 +263,10 @@ function equationPols(name, products, sums, constValues, config = {})
     return s;
 
     function isPowOfChunk(value) {
-        return value % 2n**BigInt(chunkSize) === 0n;
+        return value % 2n**BigInt(chunkBits) === 0n;
     }
     function whichPowOfChunk(value) {
-        const base = 2n**BigInt(chunkSize);
+        const base = 2n**BigInt(chunkBits);
 
         let result = 0;
         while (value % base === 0n) {
@@ -378,27 +380,46 @@ function equation(name, value, constValues, config = {})
     return equationPols(name, eq[0], eq[1], constValues, config);
 }
 
+function expandArrayRangeIndex(prefix, suffix, fromIndex, toIndex, delta = false) {
+    console.log({prefix, suffix});
+    let result = [];
+    if (delta === false) {
+        delta = fromIndex < toIndex ? 1:-1
+    }
+    if (!delta || fromIndex == toIndex) return [];
+
+    let index = fromIndex;
+    while (true) {
+        let name = nameToIndex(prefix, index);
+        result.push(prefix === '' ? name.slice(1,-1) : (name + suffix));
+        index += delta;
+        if ((delta > 0 && index > toIndex) || (delta < 0 && index < toIndex)) break;
+    }
+    return result;
+}
+
 function expandArrayRange (value) {
     const regex = /\[([0-9]+)\.\.([0-9]+)\]/gm;
 
     let m = regex.exec(value);
 
     if (m !== null) {
+        return expandArrayRangeIndex(value.substring(0, m.index), value.substring(m.index + m[0].length), 
+                     parseInt(m[1]), parseInt(m[2]));
+    }
+    
+    const arithRange = /\[([0-9]+),([0-9]+)\.\.\+\.\.([0-9]+)\]/gm;
+    m = arithRange.exec(value);
+
+    if (m !== null) {
+        console.log(m);
         let result = [];
         let fromIndex = parseInt(m[1]);
-        let toIndex = parseInt(m[2]);
-        if (fromIndex != toIndex) {
-            let index = fromIndex;
-            const delta = fromIndex < toIndex ? 1:-1;
-            while (true) {
-                let name = nameToIndex(value.substring(0, m.index), index);
-                result.push(name + value.substring(m.index + m[0].length));
-                if (index === toIndex) break;
-                index += delta;
-            }
-        }
-        return result;
+        const delta = parseInt(m[2]) - fromIndex;
+        return expandArrayRangeIndex(value.substring(0, m.index), value.substring(m.index + m[0].length), 
+                     fromIndex, parseInt(m[3]), delta);
     }
+
     return [value];
 }
 

@@ -35,6 +35,8 @@
 	EQ17:  x1 - x2 - x3 + (q1 * p2)                              - selEq[10]
 	EQ18:  y1 - y2 - y3 + (q2 * p2)                              - selEq[10]
 
+	EQ19:  256to384                                              - selEq[11]
+
 
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
@@ -45,8 +47,6 @@ include "global.pil";
 
 namespace Arith(%N);
 
-    pol constant BYTE2_BIT21;
-    pol constant SEL_BYTE2_BIT21;
     pol constant GL_SIGNED_22BITS;
 
     pol commit x1[16];
@@ -61,9 +61,8 @@ namespace Arith(%N);
     pol commit q1[16];
     pol commit q2[16];
 
-    pol commit y2clock;
-    pol commit x3clock;
-    pol commit y3clock;
+    pol commit y2_clock;
+    pol commit x3y3_clock;
 
     pol commit resultEq;
 
@@ -135,159 +134,23 @@ namespace Arith(%N);
 
     // COST:   2 commit, 2 im, 0 constant, 4 constraints
 
+    // FEATURE: x3,y3 range verification
+    //
+    // This feature is used on big finite field operations to verify that the result is alias-free, which means 
+    // that the results are less than the prime number. Also, this feature is used in modular arithmetic to check 
+    // that the result is less than a module.
 
-    // FEATURE:
-    //
-    // Verify that the result of Secp256k1 addition (EQ1/EQ2,EQ3,EQ4) is free of aliases, i.e. that x3,y3 ∊ [0, p-1]
-    // Verify that the result of 𝔽p² = 𝔽p[u]/(u² + 1) multiplication, addition and subtraction (EQ5,EQ6 || EQ7,EQ8 || EQ9,EQ10)
-    // is free of aliases, i.e. that x3,y3 ∊ [0, p-1]
-    //
-    // Here, p refers, respectively, to the base field order of any of the following elliptic curves:
-    //
-    // Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
-    // BN254:      0x3064 4E72 E131 A029 B850 45B6 8181 585D 9781 6A91 6871 CA8D 3C20 8C16 D87C FD47
-    //
-    // Strategy: Compare from the most significant chunk to the least significant chunk of x3 and y3 (A). On each chunk,
-    // chunkLtPrime indicates whether the chunk is smaller than the FPEC chunk. valueLtPrime indicates if any
-    // previous chunk was smaller than the FPEC chunk, which implies that x3 and y3 are smaller than prime.
-    //
-    // (A) In the first 16 clocks of 32-clock cycle, it is verified that x3 ∊ [0, p-1]
-    //     In the last  16 clocks of 32-clock cycle, it is verified that y3 ∊ [0, p-1]
-    //
-    //    k x chunks equals (B) ==> 1 x chunk lower ==> (15 - k) x any 16 bits value
-    //
-    // (B) I must verify that the chunks are equal or smaller, never greater at this point. If a malicious prover (MP)
-    // claims they are equal when they are actually smaller, that's its issue. At the end, there must be at least one
-    // smaller chunk to ensure a smaller value.
-    //
-    //    k x chunks = chunkPrime ==> 1 x chunk ∊ [0, chunkPrime-1] ==> (15 - k) x chunk ∊ [0, 0xFFFF]
-    //
-    //                             CLK0    CLK1    CLK2    CLK3    CLK4    CLK5    CLK6    CLK7    CLK8    CLK9   CLK10   CLK11   CLK12   CLK13   CLK14   CLK15
-    //   chunkPrime(0..15)     = [0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFE, 0xFFFF, 0xFC2F]
-    //   chunkPrime(0..15) - 1 = [0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFD, 0xFFFE, 0xFC2E]
-    //   chunkPrime(0..15)     = [0x3064, 0x4e72, 0xe131, 0xa029, 0xb850, 0x45b6, 0x8181, 0x585d, 0x9781, 0x6a91, 0x6871, 0xca8d, 0x3c20, 0x8c16, 0xd87c, 0xfd47]
-    //   chunkPrime(0..15) - 1 = [0x3063, 0x4e71, 0xe130, 0xa028, 0xb84f, 0x45b5, 0x8180, 0x585c, 0x9780, 0x6a90, 0x6870, 0xca8c, 0x3c1f, 0x8c15, 0xd87b, 0xfd46]
-    //
-    //   different Secp256k1 prime chunks [0xFFFF, 0xFFFE, 0xFFFD, 0xFC2F, 0xFC2E]
-    //   different BN254 prime chunks [0x3064, 0x4e72, 0xe131, 0xa029, 0xb850, 0x45b6, 0x8181, 0x585d, 0x9781, 0x6a91, 0x6871, 0xca8d, 0x3c20, 0x8c16, 0xd87c, 0xfd47,
-    //                                 0x3063, 0x4e71, 0xe130, 0xa028, 0xb84f, 0x45b5, 0x8180, 0x585c, 0x9780, 0x6a90, 0x6870, 0xca8c, 0x3c1f, 0x8c15, 0xd87b, 0xfd46]
-
-    //              CLK0   CLK1  CLK2  CLK3  CLK4  CLK5  CLK6  CLK7  CLK8  CLK9  CLK10 CLK11 CLK12 CLK13 CLK14 CLK15
-    // Secp256k1:  0xFFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  fffe  FFFF  fc2f
-    // BN254:      0x3064  4e72  e131  a029  b850  45b6  8181  585d  9781  6a91  6871  ca8d  3c20  8c16  d87c  fd47
-    //
-    //                 RANGE_SEL  P_RANGE     BASE
-    //              /      0      [0,0xFFFF]  CLK0, ..., CLK12, CLK14
-    //              |      1      [0,0xFFFE]  CLK13
-    //   Secp256k1  |      2      [0,0xFFFD]
-    //              |      3      [0,0xFC2F]  CLK15
-    //              \      4      [0,0xFC2E]
-    //              /      5      [0,0x3064]  CLK0
-    //              |      6      [0,0x3063]
-    //              |      7      [0,0x4e72]  CLK1
-    //              |      8      [0,0x4e71]
-    //              |      9      [0,0xe131]  CLK2
-    //              |     10      [0,0xe130]
-    //              |     11      [0,0xa029]  CLK3
-    //              |     12      [0,0xa028]
-    //              |     13      [0,0xb850]  CLK4
-    //              |     14      [0,0xb84f]
-    //              |     15      [0,0x45b6]  CLK5
-    //              |     16      [0,0x45b5]
-    //              |     17      [0,0x8181]  CLK6
-    //              |     18      [0,0x8180]
-    //              |     19      [0,0x585d]  CLK7
-    //    BN254     |     20      [0,0x585c]
-    //              |     21      [0,0x9781]  CLK8
-    //              |     22      [0,0x9780]
-    //              |     23      [0,0x6a91]  CLK9
-    //              |     24      [0,0x6a90]
-    //              |     25      [0,0x6871]  CLK10
-    //              |     26      [0,0x6870]
-    //              |     27      [0,0xca8d]  CLK11
-    //              |     28      [0,0xca8c]
-    //              |     29      [0,0x3c20]  CLK12
-    //              |     30      [0,0x3c1f]
-    //              |     31      [0,0x8c16]  CLK13
-    //              |     32      [0,0x8c15]
-    //              |     33      [0,0xd87c]  CLK14
-    //              |     34      [0,0xd87b]
-    //              |     35      [0,0xfd47]  CLK15
-    //              \     36      [0,0xfd46]
-    //
-    //   pRangeSecp256k1 = (CLK13 + 3 * CLK15 + chunkLtPrime) * (selEq[1] + selEq[2])
-    //   pRangeBN254 = (5 * CLK0 + 7 * CLK1 + 9 * CLK2 + 11 * CLK3 + 13 * CLK4 + 15 * CLK5 + 17 * CLK6 + 19 * CLK7 + 21 * CLK8 + 23 * CLK9 + 25 * CLK10 + 27 * CLK11 + 29 * CLK12 + 31 * CLK13 + 33 * CLK14 + 35 * CLK15) * (selEq[4] + selEq[5] + selEq[6])
-    //   pRange =  (pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime)
-    //
-    //   CLK                pRange                            pRange
-    //           [selEq[1] + selEq[2] = 1, chunkLtPrime = 0]   [selEq[1] + selEq[2] = 1, chunkLtPrime = 1]
-    //
-    //
-    //   0              0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
-    //   :                      :                               :
-    //   12             0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
-    //   13             1 + 3 * 0 + 0 = 1               1 + 3 * 0 + 1 = 2
-    //   14             0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
-    //   15             0 + 3 * 1 + 0 = 3               0 + 3 * 1 + 1 = 4
-    //
-    //   valueLtPrime' = valueLtPrime * (1 - CLK0 - CLK16) + chunkLtPrime
-    //
-    //   valueLtPrime  chunkLtPrime  CLK0+CLK16  valueLtPrime'
-    //
-    //         0             0           0            0            OK
-    //         0             1           0            1            OK
-    //         1             0           0            1            OK
-    //         1             1           0            2            FAILS, valueLtPrime not binary (D)
-    //
-    //         0             0           1            0            OK
-    //         0             1           1            1            OK
-    //         1             0           1            0            OK
-    //         1             1           1            1            OK (E)
-    //
-    //   (D) when valueLtPrime = 0 ==> chunkLtPrime must be zero, if not it FAILS
-    //   (E) on clocks 0 and 16, current value of valueLtPrime isn't considered
-    //
-    //
-    //    Examples (Secp256k1 prime):
-    //                                ┌──────── pRange
-    //              ┌── max_value     │  ┌───── chunkLtPrime
-    //              │     ┌─ example  │  │  ┌── valueLtPrime
-    //              │     │           │  │  │
-    //    CLK0    0xFFFF  0xFFFF      0  0  0
-    //    CLK1    0xFFFF  0xFF00      1  1  0  // RANGE [0, 0xFFFE]
-    //    CLK2    0xFFFF  0x0000      0  0  1
-    //    CLK3    0xFFFF  0x0000      0  0  1
-    //    CLK4    0xFFFF  0xFFFF      0  0  1
-    //    :
-    //    CLK15   0xFC2F  0xFFFF      0  0  1
-    //    CLK16   0xFFFF  0xFFFF      0  0  1
-    //
-    //
-    //                                ┌──────── pRange
-    //              ┌── max_value     │  ┌───── chunkLtPrime
-    //              │     ┌─ example  │  │  ┌── valueLtPrime
-    //              │     │           │  │  │
-    //    CLK0    0xFFFF  0xFFFF      0  0  0
-    //    CLK1    0xFFFF  0xFFFF      0  0  0
-    //    CLK2    0xFFFF  0xFFFF      0  0  0
-    //    :
-    //    CLK12   0xFFFF  0xFFFF      0  0  0
-    //    CLK13   0xFFFE  0xFFFF      1  0  0    // CLK13 == 1 RANGE [0, 0xFFFE]
-    //    CLK14   0xFFFF  0xFFFF      0  0  0
-    //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
-    //    CLK16   0xFFFF  0xFFFF      0  0  1
-
-    // valueLtPrime indicates whether we know that the value is smaller than the prime.
-    // If selEq[1]+selEq[2],selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
+    // valueLtPrime indicates whether we know that the value is smaller than the prime. When the current equation 
+    // doesn't use this feature, valueLtPrime must be zero.
     pol commit valueLtPrime;
 
-    // chunkLtPrime indicates whether the current value chunk is smaller than the prime chunk.
-    // If selEq[1]+selEq[2],selEq[3],selEq[4],selEq[5],selEq[6] = 0 or valueLtPrime = 1, it must be 0.
+    // chunkLtPrime is a binary column that indicates that the current primeChunk is less than the current x3y3 chunk. 
+    // When the current equation doesn't use this feature or the valueLtPrime is 1, chunkLtPrime must be zero.
     pol commit chunkLtPrime;
 
     // binary constraints
-    chunkLtPrime * (1 - chunkLtPrime) = 0;
     valueLtPrime * (1 - valueLtPrime) = 0;
+    chunkLtPrime * (1 - chunkLtPrime) = 0;
 
     // This constraint applies to the next value of valueLtPrime. At the beginning of each 16-clock cycle,
     // valueLtPrime is ignored because it refers to the previous value.
@@ -295,66 +158,11 @@ namespace Arith(%N);
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
     // This constraint is applied when one of selEq[1..6] equals 1.
-    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
-    pol constant RANGE_SEL; // 0:2**16,
-                            // 1:2**16-1,0
-                            // 2:2**16-2,0:2
-                            // 3:2**16-976,0:976
-                            // 4:2**16-977,0:977
-                            // -----------------------------------------------------------------------
-                            // 5:2**16-53147,0:53147    16:2**16-47688,0:47688  27:2**16-13682,0:13682
-                            // 6:2**16-53146,0:53146    17:2**16-32382,0:32382  28:2**16-13681,0:13681
-                            // 7:2**16-45453,0:45453    18:2**16-32381,0:32381  29:2**16-50143,0:50143
-                            // 8:2**16-45452,0:45452    19:2**16-42914,0:42914  30:2**16-50142,0:50142
-                            // 9:2**16-7886,0:7886      20:2**16-42913,0:42913  31:2**16-29673,0:29673
-                            // 10:2**16-7885,0:7885     21:2**16-26750,0:26750  32:2**16-29672,0:29672
-                            // 11:2**16-24534,0:24534   22:2**16-26749,0:26749  33:2**16-10115,0:10115
-                            // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
-                            // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
-                            // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
-                            // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
-
-    // range to be looked up for each chunk and for each prime
-    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[1] + selEq[2]);
-    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18])
-                        + 11 * (Global.CLK32[3] + Global.CLK32[19]) + 13 * (Global.CLK32[4] + Global.CLK32[20]) + 15 * (Global.CLK32[5] + Global.CLK32[21])
-                        + 17 * (Global.CLK32[6] + Global.CLK32[22]) + 19 * (Global.CLK32[7] + Global.CLK32[23]) + 21 * (Global.CLK32[8] + Global.CLK32[24])
-                        + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
-                        + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
-                        + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[3] + selEq[4] + selEq[5]);
-
-    // Correctness of the y2clock, x3clock and y3clock
-    0 = (y2[15]-y2clock)*Global.CLK32[0] + (y2[14]-y2clock)*Global.CLK32[1] + (y2[13]-y2clock)*Global.CLK32[2] + (y2[12]-y2clock)*Global.CLK32[3] + (y2[11]-y2clock)*Global.CLK32[4] + (y2[10]-y2clock)*Global.CLK32[5] + (y2[9]-y2clock)*Global.CLK32[6] + (y2[8]-y2clock)*Global.CLK32[7]
-	   + (y2[7]-y2clock)*Global.CLK32[8] + (y2[6]-y2clock)*Global.CLK32[9] + (y2[5]-y2clock)*Global.CLK32[10] + (y2[4]-y2clock)*Global.CLK32[11] + (y2[3]-y2clock)*Global.CLK32[12] + (y2[2]-y2clock)*Global.CLK32[13] + (y2[1]-y2clock)*Global.CLK32[14] + (y2[0]-y2clock)*Global.CLK32[15]
-	   + (y2[15]-y2clock)*Global.CLK32[16] + (y2[14]-y2clock)*Global.CLK32[17] + (y2[13]-y2clock)*Global.CLK32[18] + (y2[12]-y2clock)*Global.CLK32[19] + (y2[11]-y2clock)*Global.CLK32[20] + (y2[10]-y2clock)*Global.CLK32[21] + (y2[9]-y2clock)*Global.CLK32[22] + (y2[8]-y2clock)*Global.CLK32[23]
-	   + (y2[7]-y2clock)*Global.CLK32[24] + (y2[6]-y2clock)*Global.CLK32[25] + (y2[5]-y2clock)*Global.CLK32[26] + (y2[4]-y2clock)*Global.CLK32[27] + (y2[3]-y2clock)*Global.CLK32[28] + (y2[2]-y2clock)*Global.CLK32[29] + (y2[1]-y2clock)*Global.CLK32[30] + (y2[0]-y2clock)*Global.CLK32[31];
-    0 = (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[0] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[1] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[2] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[3] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[4] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[5] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[6] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[7]
-	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[8] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[9] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[10] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[11] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[12] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[13] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[14] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[15]
-	   + (2**16-1+y3[15]-y2[15]+chunkLtPrime-x3clock)*Global.CLK32[16] + (2**16-1+y3[14]-y2[14]+chunkLtPrime-x3clock)*Global.CLK32[17] + (2**16-1+y3[13]-y2[13]+chunkLtPrime-x3clock)*Global.CLK32[18] + (2**16-1+y3[12]-y2[12]+chunkLtPrime-x3clock)*Global.CLK32[19] + (2**16-1+y3[11]-y2[11]+chunkLtPrime-x3clock)*Global.CLK32[20] + (2**16-1+y3[10]-y2[10]+chunkLtPrime-x3clock)*Global.CLK32[21] + (2**16-1+y3[9]-y2[9]+chunkLtPrime-x3clock)*Global.CLK32[22] + (2**16-1+y3[8]-y2[8]+chunkLtPrime-x3clock)*Global.CLK32[23]
-	   + (2**16-1+y3[7]-y2[7]+chunkLtPrime-x3clock)*Global.CLK32[24] + (2**16-1+y3[6]-y2[6]+chunkLtPrime-x3clock)*Global.CLK32[25] + (2**16-1+y3[5]-y2[5]+chunkLtPrime-x3clock)*Global.CLK32[26] + (2**16-1+y3[4]-y2[4]+chunkLtPrime-x3clock)*Global.CLK32[27] + (2**16-1+y3[3]-y2[3]+chunkLtPrime-x3clock)*Global.CLK32[28] + (2**16-1+y3[2]-y2[2]+chunkLtPrime-x3clock)*Global.CLK32[29] + (2**16-1+y3[1]-y2[1]+chunkLtPrime-x3clock)*Global.CLK32[30] + (2**16-1+y3[0]-y2[0]+chunkLtPrime-x3clock)*Global.CLK32[31];
-    0 = (y3[15]-y3clock)*Global.CLK32[0] + (y3[14]-y3clock)*Global.CLK32[1] + (y3[13]-y3clock)*Global.CLK32[2] + (y3[12]-y3clock)*Global.CLK32[3] + (y3[11]-y3clock)*Global.CLK32[4] + (y3[10]-y3clock)*Global.CLK32[5] + (y3[9]-y3clock)*Global.CLK32[6] + (y3[8]-y3clock)*Global.CLK32[7]
-	   + (y3[7]-y3clock)*Global.CLK32[8] + (y3[6]-y3clock)*Global.CLK32[9] + (y3[5]-y3clock)*Global.CLK32[10] + (y3[4]-y3clock)*Global.CLK32[11] + (y3[3]-y3clock)*Global.CLK32[12] + (y3[2]-y3clock)*Global.CLK32[13] + (y3[1]-y3clock)*Global.CLK32[14] + (y3[0]-y3clock)*Global.CLK32[15]
-	   + (y3[15]-y3clock)*Global.CLK32[16] + (y3[14]-y3clock)*Global.CLK32[17] + (y3[13]-y3clock)*Global.CLK32[18] + (y3[12]-y3clock)*Global.CLK32[19] + (y3[11]-y3clock)*Global.CLK32[20] + (y3[10]-y3clock)*Global.CLK32[21] + (y3[9]-y3clock)*Global.CLK32[22] + (y3[8]-y3clock)*Global.CLK32[23]
-	   + (y3[7]-y3clock)*Global.CLK32[24] + (y3[6]-y3clock)*Global.CLK32[25] + (y3[5]-y3clock)*Global.CLK32[26] + (y3[4]-y3clock)*Global.CLK32[27] + (y3[3]-y3clock)*Global.CLK32[28] + (y3[2]-y3clock)*Global.CLK32[29] + (y3[1]-y3clock)*Global.CLK32[30] + (y3[0]-y3clock)*Global.CLK32[31];
-
-    // Now, prove that x3 == 2**16 - 1 + y3 - y2 + chunkLtPrime (1)
-    // Since we ensure that x3 ∈ [0, 2¹⁶) we have that (2**16 - 1 + y3 - y2 + chunkLtPrime) ∈ [0, 2¹⁶).
-    // Moreover, we also make sure that y2,y3 ∈ [0, 2¹⁶). Both checks imply that y3 is smaller than y2, as needed.
-    pol y3LTy2InEq7 = selEq[6] * (1 - valueLtPrime);
-    y3LTy2InEq7 * (2**16 - 1 + y3clock - y2clock + chunkLtPrime - x3clock) = 0;
-
-    //      ┌── y3clock       ┌───── chunkLtPrime (y3[i] < y2[i], i ∈ [15..0])
-    //      │     ┌─ y2clock  │     ┌─── (1) value
-    //      │     │           │     |
-    //    0xFFFF  0xFFFF      0  0xFFFF            OK
-    //    0x8584  0x968E      1  0xEEf6            OK
-    //    0xFFFF  0xFFFE      x  0x10000 > 0xFFFF  KO
-
-    // Note: In the (mathematical) undefined case where y2 = 0, we have y3 = chunkLtPrime = 0 and therefore that x3 = 0xFFFF
-
-    // lookup with RANGE_SEL as first column and BYTE2 as second column
-    {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
+    // Correctness of the y2_clock, x3_clock and y3_clock
+    <%- clksel(['y2[15..0]','y2[15..0]'], 'Global.CLK32') %> - y2_clock = 0;
+    <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %> - x3y3_clock = 0;
 
     /****
     *
@@ -382,37 +190,97 @@ namespace Arith(%N);
 
     <%- latch('q2[0..15]','Global.CLK32[31]') %>
 
-    /****
-    *
-    * RANGE CHECK x1,y1,x2,y2,s,q0,q1,q2
-    *
-    *****/
+    //  RANGE CHECK x1,y1,x2,y2,s,q0,q1,q2
 
-    pol commit hrc0, lrc0;
-    pol commit hrc1, lrc1;
-    pol commit hrc2, lrc2;
-    pol commit hrc3, lrc3;
+    pol commit hsc_x1y1, lsc_x1y1;
+    pol commit hsc_x2y2, lsc_x2y2;
+    pol commit hsc_sq0q1,  lsc_sq0q1;
+    pol commit hsc_q1q2qh, lsc_q1q2qh;
+    pol commit hsc_x3y3, lsc_x3y3;   
+    
+    // divide range check in two chunks of high significant chunk (hsc_xx) and less significant chunk (lsc_xx)
+    // constrints to 
+    
+    <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hsc_x1y1 * 2**16 + lsc_x1y1;
+    <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> = hsc_x2y2 * 2**16 + lsc_x2y2;
+    <%- clksel(['x3[0..15]','y3[0..15]'], 'Global.CLK32') %> = hsc_x3y3 * 2**16 + lsc_x3y3;
+    <%- clksel([ 's[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> = hsc_sq0q1 * 2**16 + lsc_sq0q1;
+    <%- clksel(['q1[1..14]','q2[0..15]','q0[15]', 'q1[15]'], 'Global.CLK32') %> = hsc_q1q2qh * 2**16 + lsc_q1q2qh;
 
-    <%- clksel(['x1[0..15]','y1[0..15]'], 'Global.CLK32') %> = hrc0 * 2**16 + lrc0;
-    <%- clksel(['x2[0..15]','y2[0..15]'], 'Global.CLK32') %> = hrc1 * 2**16 + lrc1;
-    <%- clksel(['s[0..15]','q0[0..14]','q1[0]'], 'Global.CLK32') %> = hrc2 * 2**16 + lrc2;
-    <%- clksel(['q1[1..14]','q2[0..14]','q0[15]','q1[15]','q2[15]'], 'Global.CLK32') %> = hrc3 * 2**16 + lrc3;
+    pol commit hs_bit_delta, ls_bits_delta;
+    pol commit primeChunk;
 
-     
-    {hrc0,hrc1} in {Global.BYTE2,Global.BYTE2};
-    // hrc1 in Global.BYTE2;
-    // hrc2 in Global.BYTE2;
-    // hrc3 in Global.BYTE2;
-    // TODO
-    { Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], hrc2, hrc3} in {SEL_BYTE2_BIT21,Global.BYTE2, BYTE2_BIT21};
-    lrc0 in Global.BYTE2;
-    lrc1 in Global.BYTE2;
-    lrc2 in Global.BYTE2;
-    lrc3 in Global.BYTE2;
+    pol constant PRIME_SECP256K1_CHUNKS; // cycle: 16 chunks x 16 bits of prime curve Secp256k1 from high significant chunk to less significant chunk
+                                         // [0xFFFF:13, 0xFFFE, 0xFFFF, 0xFC2F]
+
+    pol constant PRIME_BN254_CHUNKS;     // cycle: 16 chunks x 16 bits of prime curve BN254 from high significant chunk to less significant chunk
+                                         // [0x3064, 0x4E72, 0xE131, 0xA029, 0xB850, 0x45B6, 0x8181, 0x585D, 
+                                         //  0x9781, 0x6A91, 0x6871, 0xCA8D, 0x3C20, 0x8C16, 0xD87C, 0xFD47]...
+
+    pol constant PRIME_BLS12381_CHUNKS;  // cycle: 16 chunks x 24 bits of prime curve BLS12-381 from high significant chunk to less significant chunk
+                                         // [0x1A0111, 0xEA397F, 0xE69A4B, 0x1BA7B6, 0x434BAC, 0xD76477, 0x4B84F3, 0x8512BF, 
+                                         //  0x6730D2, 0xA0F6B0, 0xF6241E, 0xABFFFE, 0xB153FF, 0xFFB9FE, 0xFFFFFF, 0xFFAAAB]...
+
+    primeChunk = (selEq[1] + selEq[2]) * PRIME_SECP256K1_CHUNKS + 
+                 (selEq[3] + selEq[4] + selEq[5]) * PRIME_BN254_CHUNKS + 
+                 (selEq[8] + selEq[9] + selEq[10]) * PRIME_BLS12381_CHUNKS + 
+                 (selEq[6] + selEq[7]) * y2_clock + 
+                 (selEq[0] + selEq[11]) * x3y3_clock;
+
+    // selEq[0] o selEq[11] => chunkLtPrime = 0, prime_chunk = x3y3_clock, hs_bit_delta = 0, ls_bits_delta = 0
+
+    // delta = limit - x3y3_clock - chunkLtPrime ==> delta - limit + x3y3_clock + chunkLtPrime = 0
+    // delta >= 0 ==> delta € [0, 2**24)
+
+    (1 - valueLtPrime) * (hs_bit_delta * 2**23 + ls_bits_delta - primeChunk + x3y3_clock + chunkLtPrime) = 0;
+        
+    // check valueLtPrime is one at end of each 16 clocks for all operations that control limit of x3,y3.
+    (valueLtPrime' - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7] - selEq[8] - selEq[9] - selEq[10]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+
+    ls_bits_delta in Global.STEP;
+    hs_bit_delta * (1 - hs_bit_delta) = 0;
+
+    // check less significant chunks are 16 bits chunk
+    lsc_x1y1 in Global.BYTE2;
+    lsc_x2y2 in Global.BYTE2;
+    lsc_x3y3 in Global.BYTE2;
+    lsc_sq0q1  in Global.BYTE2;
+    lsc_q1q2qh in Global.BYTE2;
+
+    // BLS12-381 arith + modular 384 (no includes 256To384)
+    pol arith384 = selEq[7] + selEq[8] + selEq[9] + selEq[10];
+
+    // when operation no use fully (*) 384 bits, high part must be 0, because value must be < 2**16 
+    hsc_x1y1 * (1 - arith384) = 0;
+    hsc_x2y2 * (1 - arith384) = 0; 
+
+
+    // s,q0,q1,q2 could be 24 bits ¿enought for arith384 ?
+    hsc_sq0q1 * (1 - arith384) = 0;  
+
+
+    // (*) in case of arith to prove 256TO384 no use fully 384 bits, because only op (x3) work with 384 bits.
+    // 256TO384 don't use x3, for this reason not matter that it's 256 or 384 bits.
+    hsc_x3y3 * (1 - arith384 - selEq[11]) = 0;  
+
+    pol constant BYTE_2A_BIT14_SEL;
+    pol constant BYTE_2A_BIT14;
+
+    // BITS7_BYTE2: 7 bits + Global.BYTE: 8 bits + Global.BYTE_2A: 8 bits = 23 bits 
+    // hsc_x1y1 has only 7 bits, the 8th bit was on hs_bit_x1y1
+    // NOTE: done in this way because it's more cheaper 3 lookup in only one
+    {hsc_x2y2, hsc_x3y3} in {Global.BYTE, Global.BYTE_2A};
+
+    
+    // TODO: review range checks of Qs
+    // BYTE_2A_BIT14_SEL: 1 bit + Global.BYTE: 8 bits + BYTE_2A_BIT14: 14 bits = 23 bits 
+    // low part: 16 + high part: 14 bits = 30 bits (REVIEW for 384 aritmetics)
+    { Global.CLK32[29] + Global.CLK32[30] + Global.CLK32[31], hsc_sq0q1, hsc_q1q2qh} in {BYTE_2A_BIT14_SEL, Global.BYTE, BYTE_2A_BIT14};
+
 
     /*******
     *
-    * EQ0: A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)
+    * EQ0: A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)  # selEq[0] [256 bits]
     *
     *******/
 
@@ -420,7 +288,7 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ1: s * x2 - s * x1 - y2 + y1 - p * (q0 - offset) = 0
+    * EQ1: s * x2 - s * x1 - y2 + y1 - p * (q0 - offset) = 0    # selEq[1] [SECP256K1, 256 bits]
     *
     *******/
 
@@ -429,7 +297,7 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ2:  2 * s * y1 - 3 * x1 * x1 + p * (q0 - offset) = 0
+    * EQ2:  2 * s * y1 - 3 * x1 * x1 + p * (q0 - offset) = 0    # selEq[2] [SECP256K1, 256 bits]
     *
     *******/
 
@@ -438,7 +306,7 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ3:  s * s - x1 - x2 - x3 - p * (q1 - offset) = 0
+    * EQ3:  s * s - x1 - x2 - x3 - p * (q1 - offset) = 0        # selEq[1]+selEq[2] [SECP256K1, 256 bits]
     *
     *******/
 
@@ -447,7 +315,7 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ4:  s * x1 - s * x3 - y1 - y3 + p * (q2 - offset) = 0
+    * EQ4:  s * x1 - s * x3 - y1 - y3 + p * (q2 - offset) = 0   # selEq[1]+selEq[2] [SECP256K1, 256 bits]
     *
     *******/
 
@@ -456,7 +324,15 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ5:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset) = 0
+    * EQ5:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset) = 0      # selEq[3] [BN254, 256 bits]
+    *
+    * EQ: x1 * x2 - y1 * y2
+    * MAX: (2**256-1)**2 < 2**512
+    * MIN: -((2**256-1)**2) < -(2**512)
+    * Q1 NEGATIVE: ((2**256-1)**2) / P_BN254 < 2**259
+    * Q1 OFFSET: 2**259
+    * Q1 MAX + OFFSET: < 2**260 (+ 4 bits)
+    * Q1 MIN + OFFSET: < 2**258 (+ 2 bits)
     *
     *******/
 
@@ -465,118 +341,233 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ6:  y1 * x2 + x1 * y2 - y3 - p * (q2 - offset) = 0
+    * EQ6:  y1 * x2 + x1 * y2 - y3 - p * q2 = 0                  # selEq[3] [BN254, 256 bits]
     *
-    *******/
+    * EQ: y1 * x2 + x1 * y2
+    * MAX: 2*((2**256-1)**2) < 2**513
+    * MIN: 0
+    * Q1 MAX: < 2**260 (+ 4 bits)
+    * Q1 MIN: 0
+    ********/
 
-    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3-p*q2+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                                  offset: 0x8n}) %>
-
-    /*******
-    *
-    * EQ7:  x1 + x2 - x3 - p * (q1 - offset) = 0
-    *
-    *******/
-
-    <%- equation('pol eq7_## =', 'x1+x2-x3-p*q1+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                            offset: 0x8n}) %>
+    <%- equation('pol eq6_## =', 'y1*x2+x1*y2-y3-p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
     /*******
     *
-    * EQ8:  y1 + y2 - y3 - p * (q2 - offset) = 0
+    * EQ7:  x1 + x2 - x3 - p * q1 = 0                           # selEq[4] [BN254, 256 bits]
+    *
+    * EQ: x1 + x2
+    * MAX: 2*(2**256-1) < 2**257
+    * MIN: 0
+    * QMAX: 2*(2**256-1) / P_BN254 = 10
     *
     *******/
 
-    <%- equation('pol eq8_## =', 'y1+y2-y3-p*q2+p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                            offset: 0x8n}) %>
+    <%- equation('pol eq7_## =', 'x1+x2-x3-p*q1', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
 
     /*******
     *
-    * EQ9:  x1 - x2 - x3 + p * (q1 - offset) = 0
+    * EQ8:  y1 + y2 - y3 - p * q2 = 0                           # selEq[4] [BN254, 256 bits]
+    *
+    * EQ: y1 + y2
+    * MAX: 2*(2**256-1) < 2**257
+    * MIN: 0
+    * QMAX: 2*(2**256-1) / P_BN254 = 10
+    *
+    *******/
+
+    <%- equation('pol eq8_## =', 'y1+y2-y3-p*q2', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n}) %>
+
+    /*******
+    *
+    * EQ9:  x1 - x2 - x3 + p * (q1 - offset) = 0                # selEq[5] [BN254, 256 bits]
+    *
+    * EQ: x1 - x2
+    * MAX: 2**256-1
+    * MIN: -(2**256-1)
+    * Q1 NEGATIVE: (2**256-1)/ P_BN254 = 5
+    * Q1 OFFSET: 8 
+    * Q1 MAX + OFFSET: 5 + 8 = 13
+    * Q1 MIN + OFFSET: -5 + 8 = 3
     *
     *******/
 
     <%- equation('pol eq9_## =', 'x1-x2-x3+p*q1-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                            offset: 0x8n}) %>
+                                                            offset: 8n}) %>
 
     /*******
     *
-    * EQ10:  y1 - y2 - y3 + p * (q2 - offset) = 0
+    * EQ10:  y1 - y2 - y3 + p * (q2 - offset) = 0               # selEq[5] [BN254, 256 bits]
+    *
+    * EQ: y1 - y2
+    * MAX: 2**256-1
+    * MIN: -(2**256-1)
+    * Q1 NEGATIVE: (2**256-1)/ P_BN254 = 5
+    * Q1 OFFSET: 8 
+    * Q1 MAX + OFFSET: 5 + 8 = 13
+    * Q1 MIN + OFFSET: -5 + 8 = 3
     *
     *******/
 
     <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-                                                             offset: 0x8n}) %>
+                                                             offset: 8n}) %>
 
     /*******
     *
-    * EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - q1 * D(y2) * 2**256 - q0 * D(y2)
+    * EQ11:  A(x1) * B(y1) + C(x2) - op(y3) - q1 * D(y2) * 2**256 - q0 * D(y2) # selEq[6] [256 bits]
+    *
+    * EQ: x1 * y1 + x2
+    * MAX: (2**256-1)**2+(2**256-1) < 2**512
+    * MIN: 0
+    * (WC) D2 = 1 ==> q1 * 2**256 + q0 ==> q1,q0 < 2**256 
     *
     *******/
+
     <%- equation('pol eq11_## =', 'x1*y1+x2-y3-q1*y2*powOfTwo-q0*y2', {powOfTwo: 0x10000000000000000000000000000000000000000000000000000000000000000n}) %>
 
 
     /*******
     *
-    * EQ12:  A(x1) * B(y1) + C(x2) - op(y3) - q1 * D(y2) * 2**256 - q0 * D(y2)
+    * EQ12:  A(x1) * B(y1) + C(x2) - op(y3) - q1 * D(y2) * 2**384 - q0 * D(y2) # selEq[7] [384 bits]
+    *
+    * EQ: x1 * y1 + x2
+    * MAX: (2**384-1)**2+(2**384-1) < 2**768
+    * MIN: 0
+    * (WC) D2 = 1 ==> q1 * 2**384 + q0 ==> q1,q0 < 2**384 
     *
     *******/
-    <%- equation('pol eq12_## =', 'x1*y1+x2-y3-q1*y2*powOfTwo-q0*y2', {powOfTwo: 0x10000000000000000000000000000000000000000000000000000000000000000n}, {chunkBits: 24}) %>
 
+    <%- equation('pol eq12_## =', 'x1*y1+x2-y3-q1*y2*powOfTwo-q0*y2', {powOfTwo: 0x1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n}, {chunkBits: 24}) %>
+
+    
     /*******
     *
-    * EQ5:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset) = 0
+    * EQ13:  x1 * x2 - y1 * y2 - x3 + p * (q1 - offset) = 0     # selEq[8] [BLS12-381, 384 bits]
+    *
+    * EQ: x1 * x2 - y1 * y2
+    * MAX: (2**384-1)**2 < 2**768
+    * MIN: -((2**384-1)**2) < -(2**768)
+    * Q1 NEGATIVE: ((2**384-1)**2) / P_BLS12_381-381 < 2**388 
+    * Q1 OFFSET: 2**388
+    * Q1 MAX + OFFSET: < 2**389 (+ 5 bits)
+    * Q1 MIN + OFFSET: < 2**387 (+ 3 bits)
     *
     *******/
 
     <%- equation('pol eq13_## =', 'x1*x2-y1*y2-x3+p*q1-p*offset', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn,
-                                                                  offset:0x80000000000000000000000000000000000000000000000000000000000000000n}, {chunkBits: 24}) %>
+                                                                   offset:0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n}, {chunkBits: 24}) %>
 
     /*******
     *
-    * EQ6:  y1 * x2 + x1 * y2 - y3 - p * (q2 - offset) = 0
+    * EQ14:  y1 * x2 + x1 * y2 - y3 - p * (q2 - offset) = 0     # selEq[8] [BLS12-381, 384 bits]
+    *
+    * EQ: y1 * x2 + x1 * y2
+    * MAX: 2*((2**384-1)**2) < 2**769
+    * MIN: 0
+    * QMAX: 2*((2**384-1)**2) / P_BLS12_381 < 2**389 (+ 5 bits)
     *
     *******/
 
-    <%- equation('pol eq14_## =', 'y1*x2+x1*y2-y3-p*q2+p*offset', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn,
-                                                                  offset: 0x8n}, {chunkBits: 24}) %>
+    <%- equation('pol eq14_## =', 'y1*x2+x1*y2-y3-p*q2', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn}, 
+                                                         {chunkBits: 24}) %>
 
     /*******
     *
-    * EQ7:  x1 + x2 - x3 - p * (q1 - offset) = 0
+    * EQ15:  x1 + x2 - x3 - p * q1 = 0                    # selEq[9] [BLS12-381, 384 bits]
+    *
+    * EQ: x1 + x2
+    * MAX: 2*(2**384-1) < 2**385
+    * MIN: 0
+    * QMAX: 2*(2**384-1) / P_BLS12_381 = 19
     *
     *******/
 
-    <%- equation('pol eq15_## =', 'x1+x2-x3-p*q1+p*offset', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn,
-                                                            offset: 0x8n}, {chunkBits: 24}) %>
+    <%- equation('pol eq15_## =', 'x1+x2-x3-p*q1', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn},
+                                                   {chunkBits: 24}) %>
 
     /*******
     *
-    * EQ8:  y1 + y2 - y3 - p * (q2 - offset) = 0
+    * EQ16:  y1 + y2 - y3 - p * q2 = 0                    # selEq[9] [BLS12-381, 384 bits]
+    *
+    * EQ: y1 + y2
+    * MAX: 2*(2**384-1) < 2**385
+    * MIN: 0
+    * QMAX: 2*(2**384-1) / P_BLS12_381 = 19
     *
     *******/
 
-    <%- equation('pol eq16_## =', 'y1+y2-y3-p*q2+p*offset', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn,
-                                                            offset: 0x8n}, {chunkBits: 24}) %>
+    <%- equation('pol eq16_## =', 'y1+y2-y3-p*q2', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn},
+                                                   {chunkBits: 24}) %>
 
     /*******
     *
-    * EQ9:  x1 - x2 - x3 + p * (q1 - offset) = 0
+    * EQ17:  x1 - x2 - x3 + p * (q1 - offset) = 0               # selEq[10] [BLS12-381, 384 bits]
+    *
+    * EQ: x1 - x2
+    * MAX: (2**384-1) < 2**384
+    * MIN: -(2**384-1)
+    * Q1 NEGATIVE: (2**384-1)/ P_BLS12-381 = 9
+    * Q1 OFFSET: 16
+    * Q1 MAX + OFFSET: 9 + 16 = 25
+    * Q1 MIN + OFFSET: -9 + 16 = 7
     *
     *******/
 
     <%- equation('pol eq17_## =', 'x1-x2-x3+p*q1-p*offset', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn,
-                                                            offset: 0x8n}, {chunkBits: 24}) %>
+                                                            offset: 16n}, {chunkBits: 24}) %>
 
     /*******
     *
-    * EQ10:  y1 - y2 - y3 + p * (q2 - offset) = 0
+    * EQ18:  y1 - y2 - y3 + p * (q2 - offset) = 0               # selEq[10] [BLS12-381, 384 bits]
+    *
+    * EQ: y1 - y2
+    * MAX: (2**384-1) < 2**384
+    * MIN: -(2**384-1)
+    * Q1 NEGATIVE: (2**384-1)/ P_BLS12-381 = 9
+    * Q1 OFFSET: 16 (0x10)
+    * Q1 MAX + OFFSET: 9 + 16 = 25
+    * Q1 MIN + OFFSET: -9 + 16 = 7
     *
     *******/
 
     <%- equation('pol eq18_## =', 'y1-y2-y3+p*q2-p*offset', {p: 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn,
-                                                             offset: 0x8n}, {chunkBits: 24}) %>
+                                                             offset: 16n}, {chunkBits: 24}) %>
+    
+    /*******
+    *
+    * EQ19:  A(x1) + 2 ** 256 * B(y1)  = op (y3)                # selEq[11] [A,B: 256 bits / op: 384 bits]
+    *
+    *******/
 
+
+    pol eq19_0 = x1[0] + 2**16 * x1[1] - y3[0];
+    pol eq19_1 = 2**8 * x1[2] - y3[1];
+    pol eq19_2 = x1[3] + 2**16 * x1[4] - y3[2];
+    pol eq19_3 = 2**8 * x1[5] - y3[3];
+    pol eq19_4 = x1[6] + 2**16 * x1[7] - y3[4];
+    pol eq19_5 = 2**8 * x1[8] - y3[5];
+    pol eq19_6 = x1[9] + 2**16 * x1[10] - y3[6];
+    pol eq19_7 = 2**8 * x1[11] - y3[7];
+    pol eq19_8 = x1[12] + 2**16 * x1[13] - y3[8];
+    pol eq19_9 = 2**8 * x1[14] - y3[9];
+    pol eq19_10 = x1[15] + 2**16 * y1[0] - y3[10];
+    pol eq19_11 = 2**8 * y1[1] - y3[11];
+    pol eq19_12 = y1[2] + 2**16 * y1[3] - y3[12];
+    pol eq19_13 = 2**8 * y1[4] - y3[13];
+    pol eq19_14 = y1[5] + 2**16 * y1[6] - y3[14];
+    pol eq19_15 = 2**8 * y1[7] - y3[15];
+
+    pol eq19_16 = 0;     // carry clean
+    pol eq19_17 = 0;
+    pol eq19_18 = 0;
+    pol eq19_19 = y1[8];
+    pol eq19_20 = y1[9];
+    pol eq19_21 = y1[10];
+    pol eq19_22 = y1[11];
+    pol eq19_23 = y1[12];
+    pol eq19_24 = y1[13];
+    pol eq19_25 = y1[14];
+    pol eq19_26 = y1[15];
 
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
@@ -597,43 +588,65 @@ namespace Arith(%N);
     pol eq16 = <%- clksel(['eq16_[0..31]'], 'Global.CLK32') %>;
     pol eq17 = <%- clksel(['eq17_[0..31]'], 'Global.CLK32') %>;
     pol eq18 = <%- clksel(['eq18_[0..31]'], 'Global.CLK32') %>;
+    pol eq19 = <%- clksel(['eq19_[0..26]'], 'Global.CLK32') %>;
+
 
     // Equation selectors. Must be binary, constant during the operation and operation-exclusive
-    pol commit selEq[11];
+    pol commit selEq[12];
 
-    <%- latch(['selEq[0..10]'],'Global.CLK32[31]') %>
-    <%- binary(['selEq[0..10]']) %>
-    pol allSelEq = selEq[0] + selEq[1] + selEq[2] + selEq[3] + selEq[4] + selEq[5] + selEq[6] + selEq[7] + selEq[8] + selEq[9] + selEq[10];
+    <%- latch(['selEq[0..11]'],'Global.CLK32[31]') %>
+    <%- binary(['selEq[0..11]']) %>
+    pol allSelEq = selEq[0] + selEq[1] + selEq[2] + selEq[3] + selEq[4] + selEq[5] + selEq[6] + selEq[7] + selEq[8] + selEq[9] + selEq[10] + selEq[11];
 
     <%- binary(['allSelEq']) %>
-    pol commit carry[3];
 
-    carry[0] * Global.CLK32[0] = 0;
-    carry[1] * Global.CLK32[0] = 0;
-    carry[2] * Global.CLK32[0] = 0;
+    pol commit ls_carry0, hs_carry0, ls_carry1, hs_carry1, carry2;
 
-    // TODO: review with 384
-    carry[0] in GL_SIGNED_22BITS;
-    carry[1] in GL_SIGNED_22BITS;
-    carry[2] in GL_SIGNED_22BITS;
+    pol carry0 = ls_carry0 + 2**23 * hs_carry0 - 2**28;
+    pol carry1 = ls_carry1 + 2**23 * hs_carry1 - 2**28;
 
-    selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
-    selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
-    selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
-    (selEq[1] + selEq[2]) * (eq3 + carry[1]) = (selEq[1] + selEq[2]) * carry[1]' * 2**16;
-    (selEq[1] + selEq[2]) * (eq4 + carry[2]) = (selEq[1] + selEq[2]) * carry[2]' * 2**16;
-    selEq[3] * (eq5 + carry[1]) = selEq[3] * carry[1]' * 2**16;
-    selEq[3] * (eq6 + carry[2]) = selEq[3] * carry[2]' * 2**16;
-    selEq[4] * (eq7 + carry[1]) = selEq[4] * carry[1]' * 2**16;
-    selEq[4] * (eq8 + carry[2]) = selEq[4] * carry[2]' * 2**16;
-    selEq[5] * (eq9 + carry[1]) = selEq[5] * carry[1]' * 2**16;
-    selEq[5] * (eq10 + carry[2]) = selEq[5] * carry[2]' * 2**16;
-    selEq[6] * (eq11 + carry[0]) = selEq[6] * carry[0]' * 2**16;
+    carry0 * Global.CLK32[0] = 0;
+    carry1 * Global.CLK32[0] = 0;
+    carry2 * Global.CLK32[0] = 0;
 
-    selEq[7] * (eq12 + carry[0]) = selEq[7] * carry[0]' * 2**24;
-    selEq[8] * (eq13 + carry[1]) = selEq[8] * carry[1]' * 2**24;
-    selEq[8] * (eq14 + carry[2]) = selEq[8] * carry[2]' * 2**24;
-    selEq[9] * (eq15 + carry[1]) = selEq[9] * carry[1]' * 2**24;
-    selEq[9] * (eq16 + carry[2]) = selEq[9] * carry[2]' * 2**24;
-    selEq[10] * (eq17 + carry[1]) = selEq[10] * carry[1]' * 2**24;
-    selEq[10] * (eq18 + carry[2]) = selEq[10] * carry[2]' * 2**24;
+    // range check 23 bits
+    ls_carry0 in Global.STEP;
+    ls_carry1 in Global.STEP;
+
+    carry2  in GL_SIGNED_22BITS;
+
+    pol constant BITS7_C256; // [0:256...127:256,]
+    pol constant BITS7_C32K; // [0:2**15...127:2**15]
+
+    {hs_carry0, hs_carry1, hsc_x1y1} in {BITS7_C32K, BITS7_C256, Global.BYTE};
+
+    selEq[0] * (eq0 + carry0) = selEq[0] * carry0' * 2**16;
+
+    selEq[1] * (eq1 + carry0) = selEq[1] * carry0' * 2**16;
+    selEq[2] * (eq2 + carry0) = selEq[2] * carry0' * 2**16;
+    (selEq[1] + selEq[2]) * (eq3 + carry1) = (selEq[1] + selEq[2]) * carry1' * 2**16;
+    (selEq[1] + selEq[2]) * (eq4 + carry2) = (selEq[1] + selEq[2]) * carry2' * 2**16;
+
+    selEq[3] * (eq5 + carry0) = selEq[3] * carry0' * 2**16;
+    selEq[3] * (eq6 + carry1) = selEq[3] * carry1' * 2**16;
+
+    selEq[4] * (eq7 + carry0) = selEq[4] * carry0' * 2**16;
+    selEq[4] * (eq8 + carry1) = selEq[4] * carry1' * 2**16;
+
+    selEq[5] * (eq9 + carry0) = selEq[5] * carry0' * 2**16;
+    selEq[5] * (eq10 + carry1) = selEq[5] * carry1' * 2**16;
+
+    selEq[6] * (eq11 + carry0) = selEq[6] * carry0' * 2**16;
+
+    selEq[7] * (eq12 + carry0) = selEq[7] * carry0' * 2**24;
+
+    selEq[8] * (eq13 + carry0) = selEq[8] * carry0' * 2**24;
+    selEq[8] * (eq14 + carry1) = selEq[8] * carry1' * 2**24;
+
+    selEq[9] * (eq15 + carry0) = selEq[9] * carry0' * 2**24;
+    selEq[9] * (eq16 + carry1) = selEq[9] * carry1' * 2**24;
+
+    selEq[10] * (eq17 + carry0) = selEq[10] * carry0' * 2**24;
+    selEq[10] * (eq18 + carry1) = selEq[10] * carry1' * 2**24;
+
+    selEq[11] * (eq19 + carry0) = selEq[11] * carry0' * 2**24;
