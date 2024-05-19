@@ -20,10 +20,10 @@ template Main() {
     signal input s0_vals4[64][12];
     signal input s0_valsC[64][52];
 
-    signal input s0_siblings1[64][22][4];
-    signal input s0_siblings3[64][22][4];
-    signal input s0_siblings4[64][22][4];
-    signal input s0_siblingsC[64][22][4];
+    signal input s0_siblings1[64][23][4];
+    signal input s0_siblings3[64][23][4];
+    signal input s0_siblings4[64][23][4];
+    signal input s0_siblingsC[64][23][4];
 
     signal input s1_root[4];
     signal input s2_root[4];
@@ -31,12 +31,12 @@ template Main() {
     signal input s4_root[4];
 
     signal input s1_vals[64][48];
-    signal input s1_siblings[64][18][4];
+    signal input s1_siblings[64][19][4];
     signal input s2_vals[64][48];
-    signal input s2_siblings[64][14][4];
+    signal input s2_siblings[64][15][4];
     signal input s3_vals[64][48];
-    signal input s3_siblings[64][10][4];
-    signal input s4_vals[64][48];
+    signal input s3_siblings[64][11][4];
+    signal input s4_vals[64][96];
     signal input s4_siblings[64][6][4];
 
     signal input finalPol[64][3];
