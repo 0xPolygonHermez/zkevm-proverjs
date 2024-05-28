@@ -154,7 +154,9 @@ if [ $CP_ZKEVM -eq 1 ]; then
     makedir $FULLDST
     cpfile $BDIR/zkevm.const                                   $FULLDST
     cpfile $BDIR/zkevm.verifier_cpp/zkevm.verifier.dat         $FULLDST/zkevm.verifier.dat
-    cpfile $BDIR/zkevm.consttree                               $FULLDST
+    if [ ! -f "$1" ]; then
+        cpfile $BDIR/zkevm.consttree                           $FULLDST
+    fi
     cpfile $BDIR/zkevm.starkinfo.json                          $FULLDST
     cpfile $BDIR/zkevm.verkey.json        		               $FULLDST
     cpfile $BDIR/zkevm.chelpers.bin                            $FULLDST
@@ -172,7 +174,9 @@ if [ $CP_C12A -eq 1 ]; then
     makedir $FULLDST
     cpfile $BDIR/c12a.const                    $FULLDST
     cpfile $BDIR/c12a.exec                     $FULLDST
-    cpfile $BDIR/c12a.consttree                $FULLDST
+    if [ ! -f "$1" ]; then
+        cpfile $BDIR/c12a.consttree            $FULLDST
+    fi
     cpfile $BDIR/c12a.verkey.json              $FULLDST
     cpfile $BDIR/c12a.starkinfo.json           $FULLDST
     cpfile $BDIR/c12a.chelpers.bin             $FULLDST
@@ -189,7 +193,9 @@ if [ $CP_RECURSIVE1 -eq 1 ]; then
     makedir $FULLDST
     cpfile $BDIR/recursive1.const                $FULLDST
     cpfile $BDIR/recursive1_cpp/recursive1.dat   $FULLDST/recursive1.verifier.dat
-    cpfile $BDIR/recursive1.consttree            $FULLDST
+    if [ ! -f "$1" ]; then
+        cpfile $BDIR/recursive1.consttree        $FULLDST
+    fi
     cpfile $BDIR/recursive1.exec                 $FULLDST
     cpfile $BDIR/recursive.starkstruct.json      $FULLDST/recursive1.starkstruct.json
     cpfile $BDIR/recursive1.starkinfo.json       $FULLDST
@@ -212,7 +218,9 @@ if [ $CP_RECURSIVE2 -eq 1 ]; then
     cpfile $BDIR/recursive2.exec                 $FULLDST
     cpfile $BDIR/recursive2_cpp/recursive2.dat   $FULLDST/recursive2.verifier.dat
     cpfile $BDIR/recursive2.verkey.json          $FULLDST
-    cpfile $BDIR/recursive2.consttree            $FULLDST
+    if [ ! -f "$1" ]; then
+        cpfile $BDIR/recursive2.consttree        $FULLDST
+    fi
     cpfile $BDIR/recursive2.const                $FULLDST
     cpfile $BDIR/recursive2.chelpers.bin         $FULLDST
     cpfile $BDIR/recursive2.chelpers_generic.bin $FULLDST
@@ -228,7 +236,9 @@ if [ $CP_RECURSIVEF -eq 1 ]; then
     FULLDST=$DST/config/recursivef
     makedir $FULLDST
     cpfile $BDIR/recursivef.verkey.json          $FULLDST
-    cpfile $BDIR/recursivef.consttree            $FULLDST
+    if [ ! -f "$1" ]; then
+        cpfile $BDIR/recursivef.consttree        $FULLDST
+    fi
     cpfile $BDIR/recursivef.starkinfo.json       $FULLDST
     cpfile $BDIR/recursivef.exec                 $FULLDST
     cpfile $BDIR/recursivef.const                $FULLDST
