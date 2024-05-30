@@ -328,7 +328,7 @@ class FullTracer {
         this.currentBlock.logs.sort((a, b) => a.index - b.index);
 
         this.verbose.printBlock(`${'finish'.padEnd(10)} ${this.currentBlock.block_number}`);
-        fs.writeFileSync(`${this.pathLogFile}_BLOCK_${this.currentBlock.block_number}.json`, JSON.stringify(this.currentBlock, null, 2));
+        //fs.writeFileSync(`${this.pathLogFile}_BLOCK_${this.currentBlock.block_number}.json`, JSON.stringify(this.currentBlock, null, 2));
     }
 
     /**
@@ -1025,6 +1025,13 @@ class FullTracer {
         if (!fs.existsSync(this.folderLogs)) {
             fs.mkdirSync(this.folderLogs);
         }
+
+        const { responses } = this.finalTrace.block_responses[0];
+        this.finalTrace.block_responses[0].logs = "deleted in zkevm-proverjs/src/sm/sm_main/debug/full-tracer.js";
+        responses.forEach(function (res) {
+            res["full_trace"] = "deleted in zkevm-proverjs/src/sm/sm_main/debug/full-tracer.js";
+            res["logs"] = "deleted in zkevm-proverjs/src/sm/sm_main/debug/full-tracer.js";
+        });
 
         fs.writeFileSync(`${this.pathLogFile}_FULL_BATCH.json`, JSON.stringify(this.finalTrace, null, 2));
     }
