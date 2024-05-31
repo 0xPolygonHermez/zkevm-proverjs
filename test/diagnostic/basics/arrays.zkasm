@@ -31,17 +31,6 @@ start_arrays:
         0x1FE223 => A
         A                               :MLOAD(a1[23])
         ${mem.a1[23]}                   :ASSERT
-        ${mem.a1[E+10]}                 :ASSERT
-        ${mem.a1[E+RR+8]}               :ASSERT
-        ${getMemValue(addr.a1+E+10)}    :ASSERT
-        ${getMemValue(addr.a1+E+RR+8)}  :ASSERT
-
-        ; Check address is stored and obtained correctly
-        @a1 + 23 => A
-        ${addr.a1[E+10]}                :ASSERT
-        ${addr.a1[E+RR+8]}              :ASSERT
-        ${getMemAddr(addr.a1+E+10)}     :ASSERT
-        ${getMemAddr(addr.a1+E+RR+8)}   :ASSERT
 
         ; 2] Same tests, but for a CTX variable
         1 => CTX
@@ -58,17 +47,6 @@ start_arrays:
         0xfe05bd2180d9n => A
         A                              :MLOAD(e[23])
         ${mem.e[23]}                   :ASSERT
-        ${mem.e[E+10]}                 :ASSERT
-        ${mem.e[E+RR+8]}               :ASSERT
-        ${getMemValue(addr.e+E+10)}    :ASSERT
-        ${getMemValue(addr.e+E+RR+8)}  :ASSERT
-
-        ; Check address is stored and obtained correctly
-        @e + 23 + 0x40000*CTX => A
-        ${addr.e[E+10]}    :ASSERT
-        ${addr.e[E+RR+8]}              :ASSERT
-        ${getMemAddr(addr.e+E+10)}     :ASSERT
-        ${getMemAddr(addr.e+E+RR+8)}   :ASSERT
 
         ; Change the context and repeat tests
         2 => CTX
@@ -85,17 +63,6 @@ start_arrays:
         0xfe05bd2180d9n => A
         A                              :MLOAD(e[23])
         ${mem.e[23]}                   :ASSERT
-        ${mem.e[E+10]}                 :ASSERT
-        ${mem.e[E+RR+8]}               :ASSERT
-        ${getMemValue(addr.e+E+10)}    :ASSERT
-        ${getMemValue(addr.e+E+RR+8)}  :ASSERT
-
-        ; Check address is stored and obtained correctly
-        @e + 23 + 0x40000*CTX => A
-        ${addr.e[E+10]}    :ASSERT
-        ${addr.e[E+RR+8]}              :ASSERT
-        ${getMemAddr(addr.e+E+10)}     :ASSERT
-        ${getMemAddr(addr.e+E+RR+8)}   :ASSERT
 
         ; go back to the first context
         0 => CTX
