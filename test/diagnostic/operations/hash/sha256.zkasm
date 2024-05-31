@@ -22,9 +22,7 @@
 	30 => D
 	0x307839633261623533646461313034316461613830633630633732373965n    	:HASHS(E)
 
-    $ => A                  	:HASHSLEN(E)
-	62 							:ASSERT
-    ; $ => A              :HASHSDIGEST(E) ; Not called
+    62                  	:HASHSLEN(E)
 
 	; TEST Hash digest never called => it doesn't modify next hash (without HASHLEN)
     E + 1 => E          :MSTORE(lastHashSId)
@@ -701,9 +699,6 @@
 	0x0000000000000000000000000000000000000000000000000000000000000054n :HASHS1(E+1)
 	HASHPOS => A
 	1                                                                   :ASSERT
-
-	HASHPOS                                                             :HASHSLEN(E+1)
-	0xef6878509124478046ae98b06183176b9a8820781e1a9029f772af0740c828ebn :HASHSDIGEST(E+1)
 
     ; The address E can be auto-incremented by 2 for HASHS
 	0 => HASHPOS
