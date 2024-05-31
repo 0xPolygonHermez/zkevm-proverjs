@@ -1,0 +1,21 @@
+VAR GLOBAL _var
+
+mode:
+        0x6b0963e07c7e92d29c00b824b227014056b034bfn => A                                :MODE_256_BITS
+
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => A        :MODE_256_BITS ; 2^256-1
+
+        ; 0x10000000000000000000000000000000000000000000000000000000000000000n => A :MODE_256_BITS ; ERROR! Too large 2^256
+
+        ${A >> 2} => B                                                                  :MODE_256_BITS
+
+        0x543496743da3fb9de67ff7edc6812c05765c16253ce9ae77d0ecb0555e6103can => _var,C   :MODE_256_BITS
+
+        _var => B                                                                       :MODE_256_BITS
+
+        $                                                                               :LT, MODE_256_BITS, JMPNZ(failAssert)
+
+
+        0x6b0963e07c7e92d29c00b824b227014056b034bfn => A                                :MODE_256_BITS
+        A => B                                                                          :MODE_384_BITS
+        ${dumphex(A,B)}

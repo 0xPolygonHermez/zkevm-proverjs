@@ -1,5 +1,3 @@
-const { fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
-
 module.exports = class myHelper {
     base = 1n << 256n;
 
@@ -23,8 +21,8 @@ module.exports = class myHelper {
         const len = tag.params[2] ? Number(this.evalCommand(ctx, tag.params[2])) : 1;
 
         for (let i = len - 1; i >= 0; i--) {
-            const input1i = fea2scalar(ctx.Fr, ctx.mem[addr1 + i]);
-            const input2i = fea2scalar(ctx.Fr, ctx.mem[addr2 + i]);
+            const input1i = this.multiBaseFea2Scalar(ctx, ctx.mem[addr1 + i]);
+            const input2i = this.multiBaseFea2Scalar(ctx, ctx.mem[addr2 + i]);
 
             if (input1i !== input2i) {
                 return [ctx.Fr.e(input1i < input2i ? -i-1 : i+1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
@@ -41,7 +39,7 @@ module.exports = class myHelper {
      */
     eval_signedComparisonWithConst(ctx, tag) {
         const addr = Number(this.evalCommand(ctx, tag.params[0]));
-        const input = fea2scalar(ctx.Fr, ctx.mem[addr]);
+        const input = this.multiBaseFea2Scalar(ctx, ctx.mem[addr]);
         const constant = BigInt(this.evalCommand(ctx, tag.params[1]));
         if (input !== constant) {
             return [ctx.Fr.e(input < constant ? -1 : 1), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
@@ -62,7 +60,7 @@ module.exports = class myHelper {
         const rem = ctx.remainder;
 
         for (let i = len - 1; i >= 0; i--) {
-            const inputi = fea2scalar(ctx.Fr, ctx.mem[addr + i]);
+            const inputi = this.multiBaseFea2Scalar(ctx, ctx.mem[addr + i]);
 
             if (inputi[i] !== rem[i]) {
                 return i;
@@ -315,10 +313,10 @@ module.exports = class myHelper {
         let input1 = [];
         let input2 = [];
         for (let i = 0; i < len1; ++i) {
-            input1.push(fea2scalar(ctx.Fr, ctx.mem[addr1 + i]));
+            input1.push(this.multiBaseFea2Scalar(ctx, ctx.mem[addr1 + i]));
         }
         for (let i = 0; i < len2; ++i) {
-            input2.push(fea2scalar(ctx.Fr, ctx.mem[addr2 + i]));
+            input2.push(this.multiBaseFea2Scalar(ctx, ctx.mem[addr2 + i]));
         }
 
         const [quo, rem] = this._MPdiv(input1, input2);
@@ -384,7 +382,7 @@ module.exports = class myHelper {
 
         let input1 = [];
         for (let i = 0; i < len1; ++i) {
-            input1.push(fea2scalar(ctx.Fr, ctx.mem[addr1 + i]));
+            input1.push(this.multiBaseFea2Scalar(ctx,ctx.Fr, ctx.mem[addr1 + i]));
         }
 
         const [quo, rem] = this._MPdiv_short(input1, input2);

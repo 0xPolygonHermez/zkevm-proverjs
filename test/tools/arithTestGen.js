@@ -1,7 +1,58 @@
-const two256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935n; // 2^256-1
-const P_BN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
 
-const eqs = ['ARITH','ARITH_MOD','ARITH_BN254_ADDFP2','ARITH_BN254_SUBFP2','ARITH_BN254_MULFP2'];
+const argv = require("yargs")
+    .usage("arithTestGen -z")
+    .alias("z", "zkasm")
+    .argv;
+
+const two256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935n; // 2^256-1
+const P2_384 = (2n ** 384n) - 1n;
+const P_BN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+const P_BLS12381 = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn;
+
+const eqs = { ARITH: { eq: 1, file: 'standard',  rcheck: ['$${var _arithComp = A*B + C}', 
+                                                          '${_arithComp >> 256} => D', 
+                                                          '${_arithComp} => E  :ARITH']},
+
+              ARITH_BN254_ADDFP2: { eq: 5, rcheck: ['${(A+C) % const.BN254_P} => E', 
+                                                    '${(B+D) % const.BN254_P} :ARITH_BN254_ADDFP2', 
+                                                    '${ARITH_BN254_ADDFP2(A,C)} => E',
+                                                    '${ARITH_BN254_ADDFP2(B,D)} :ARITH_BN254_ADDFP2']},
+
+              ARITH_BN254_SUBFP2: { eq: 6, rcheck: ['${(A + const.BN254_P - C) % const.BN254_P} => E', 
+                                                    '${(B + const.BN254_P - D) % const.BN254_P} :ARITH_BN254_SUBFP2',
+                                                    '${ARITH_BN254_SUBFP2(A,C)} => E',
+                                                    '${ARITH_BN254_SUBFP2(B,D)} :ARITH_BN254_SUBFP2']},
+
+              ARITH_BN254_MULFP2: { eq: 4, rcheck: ['${(A*C) >= (B*D) ? (((A*C)-(B*D)) % const.BN254_P) : (const.BN254_P - (((B*D)-(A*C)) % const.BN254_P))} => E', 
+                                                    '${((A*D)+(B*C)) % const.BN254_P} :ARITH_BN254_MULFP2', 
+                                                    '${ARITH_BN254_MULFP2_X(A,B,C,D)} => E',
+                                                    '${ARITH_BN254_MULFP2_Y(A,B,C,D)} :ARITH_BN254_MULFP2']},
+
+              ARITH_MOD: { eq: 7, file: 'modular', rcheck: ['${(A*B + C) % D} :ARITH_MOD', 
+                                                            '$ :ARITH_MOD']},
+
+              ARITH_384_MOD: { eq: 8, file: 'modular_384', rcheck: ['${(A*B + C) % D} :ARITH_384_MOD', 
+                                                                    '$ :ARITH_384_MOD']},
+
+              ARITH_BLS12381_ADDFP2: { eq: 10, rcheck: ['${(A+C) % const.BLS12381_P} => E', 
+                                                       '${(B+D) % const.BLS12381_P} :ARITH_BLS12381_ADDFP2', 
+                                                       '${ARITH_BLS12381_ADDFP2(A,C)} => E',
+                                                       '${ARITH_BLS12381_ADDFP2(B,D)} :ARITH_BLS12381_ADDFP2']},
+
+              ARITH_BLS12381_SUBFP2: { eq: 11, rcheck: ['${(A + const.BLS12381_P - C) % const.BLS12381_P} => E', 
+                                                        '${(B + const.BLS12381_P - D) % const.BLS12381_P} :ARITH_BLS12381_SUBFP2',
+                                                        '${ARITH_BLS12381_SUBFP2(A,C)} => E',
+                                                        '${ARITH_BLS12381_SUBFP2(B,D)} :ARITH_BLS12381_SUBFP2']},
+
+              ARITH_BLS12381_MULFP2: { eq: 9, rcheck: ['${(A*C) >= (B*D) ? (((A*C)-(B*D)) % const.BLS12381_P) : (const.BLS12381_P - (((B*D)-(A*C)) % const.BLS12381_P))} => E', 
+                                                        '${((A*D)+(B*C)) % const.BLS12381_P} :ARITH_BLS12381_MULFP2', 
+                                                        '${ARITH_BLS12381_MULFP2_X(A,B,C,D)} => E',
+                                                        '${ARITH_BLS12381_MULFP2_Y(A,B,C,D)} :ARITH_BLS12381_MULFP2']}
+};
+
+//  
+// node test/tools/arithTestGen.js -z | awk '/; redirect:/{F="test/diagnostic/operations/arith/"$3; print "">F;next}{print $0>>F}'
+// 
 
 let values = [
     {
@@ -12,8 +63,78 @@ let values = [
     },{
         A: 0n,
         B: 0n,
+        C: 0n,
+        D: 1n,
+    },{
+        A: 0n,
+        B: 0n,
         C: 1n,
         D: 0n,
+    },{
+        A: 0n,
+        B: 0n,
+        C: 1n,
+        D: 1n,
+    },{
+        A: 0n,
+        B: 1n,
+        C: 0n,
+        D: 0n,
+    },{
+        A: 0n,
+        B: 1n,
+        C: 0n,
+        D: 1n,
+    },{
+        A: 0n,
+        B: 1n,
+        C: 1n,
+        D: 0n,
+    },{
+        A: 0n,
+        B: 1n,
+        C: 1n,
+        D: 1n,
+    },{
+        A: 1n,
+        B: 0n,
+        C: 0n,
+        D: 0n,
+    },{
+        A: 1n,
+        B: 0n,
+        C: 0n,
+        D: 1n,
+    },{
+        A: 1n,
+        B: 0n,
+        C: 1n,
+        D: 0n,
+    },{
+        A: 1n,
+        B: 0n,
+        C: 1n,
+        D: 1n,
+    },{
+        A: 1n,
+        B: 1n,
+        C: 0n,
+        D: 0n,
+    },{
+        A: 1n,
+        B: 1n,
+        C: 0n,
+        D: 1n,
+    },{
+        A: 1n,
+        B: 1n,
+        C: 1n,
+        D: 0n,
+    },{
+        A: 1n,
+        B: 1n,
+        C: 1n,
+        D: 1n,
     },{
         A: 2132730398305190967668080390814n,
         B: 54292886400143341927280054073980425823246656081n,
@@ -134,18 +255,44 @@ let values = [
         B: 0n,
         C: two256,
         D: 0n,
-    },
+    },{
+        _mode384: true,
+        A: P_BLS12381 - 1n,
+        B: P_BLS12381 - 1n,
+        C: P_BLS12381 - 1n,
+        D: P_BLS12381 - 1n,
+    },{
+        _mode384: true,
+        A: P2_384,
+        B: P2_384,
+        C: P2_384,
+        D: P2_384,
+    },{
+        _mode384: true,
+        A: P2_384,
+        B: P2_384,
+        C: 0n,
+        D: 0n,
+    },{
+        _mode384: true,
+        A: P2_384,
+        B: 0n,
+        C: P2_384,
+        D: 0n,
+    }
 ]
 
 class ArithEqs {
     ARITH(A,B,C) {
         const value = A*B + C;
+        // console.log(`; A:${A} B:${B} C:${C} D:${value >> 256n} op:${value & two256}`);
         return [value >> 256n, value & two256];
     }
 
     ARITH_MOD(A,B,C,D) {
-        const val = A*B + C;
-        return [D, D === 0n ? val : val % D];
+        if (D === 0n) D = 1n;
+        const val = (A*B + C) % D;
+        return [D, val];
     }
 
     ARITH_BN254_ADDFP2(A,B,C,D) {
@@ -159,11 +306,31 @@ class ArithEqs {
     ARITH_BN254_MULFP2(A,B,C,D) {
         return [(A*C-((B*D) %P_BN254)+P_BN254) % P_BN254, (A*D+B*C) % P_BN254];
     }
+
+    ARITH_384_MOD(A,B,C,D) {
+        if (D === 0n) D = 1n;
+        const val = (A*B + C) % D;
+        return [D, val];
+    }
+
+    ARITH_BLS12381_ADDFP2(A,B,C,D) {
+        return [(A + C) % P_BLS12381, (B + D) % P_BLS12381];
+    }
+
+    ARITH_BLS12381_SUBFP2(A,B,C,D) {
+        return [(A + (P_BLS12381 - C)) % P_BLS12381, (B + (P_BLS12381 - D)) % P_BLS12381];
+    }
+
+    ARITH_BLS12381_MULFP2(A,B,C,D) {
+        return [(A*C-((B*D) %P_BLS12381)+P_BLS12381) % P_BLS12381, (A*D+B*C) % P_BLS12381];
+    }
 }
 
-arithEqs = new ArithEqs();
 
-for (const eq of eqs) {
+arithEqs = new ArithEqs();
+for (const eq in eqs) {
+    const eqInfo = eqs[eq];
+    const arithEquation = eqInfo.eq;
     let input = {
         x1: 0n,
         y1: 0n,
@@ -171,60 +338,68 @@ for (const eq of eqs) {
         y2: 0n,
         x3: 0n,
         y3: 0n,
-        selEq0: 0n,
-        selEq1: 0n,
-        selEq2: 0n,
-        selEq3: 0n,
-        selEq4: 0n,
-        selEq5: 0n,
-        selEq6: 0n,
+        arithEquation
     };
-    console.log(eq.toLowerCase() + "_tests:");
-    switch (eq) {
-        case 'ARITH':
-            input.selEq0 = 1n;
-            break;
-        case 'ARITH_BN254_MULFP2':
-            input.selEq3 = 1n;
-            break;
-        case 'ARITH_BN254_ADDFP2':
-            input.selEq4 = 1n;
-            break;
-        case 'ARITH_BN254_SUBFP2':
-            input.selEq5 = 1n;
-            break;
-        case 'ARITH_MOD':
-            input.selEq6 = 1n;
-            break;
-        default:
-            throw new Error('Unknown equation');
+    const zkasm = argv.zkasm ?? false;
+
+    if (zkasm) {
+        const outputFile = eqInfo.file ?? eq.toLowerCase().slice(6);
+        const label = `_${eq.toLowerCase()}_tests`;
+        console.log(`; redirect: ${outputFile}.zkasm`);
+        if (arithEquation >= 8) {
+            console.log('PRAGMA MODE_384_BITS\n');
+        }
+        console.log(`\t:JMP(${label})\n`);
+        console.log(`__REDUNDANT_${eq}_CHECK:\n`);
+        for (const line of eqInfo.rcheck) {
+            console.log('\t'+line);
+        }
+        console.log('\t\t\t:RETURN\n');
+        console.log(`${label}:\n`);
     }
+    let done = {};
     for (const value of values) {
+        if (value._mode384 && arithEquation < 8) continue;
+        if (arithEquation === 2 && value.A == value.C) continue;
         input.x1 = value.A;
         input.y1 = value.B;
         input.x2 = value.C;
+        input.arithEquation = BigInt(arithEquation);
 
         let E = 0n;
         let D = 0n;
         let op = 0n;
         let regs = {A: value.A, B: value.B, C: value.C};
-        if (eq.startsWith('ARITH_BN254')) {
-            input.y2 = value.D;
-            [E, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
-            input.x3 = E;
-            regs.D = value.D;
-            regs.E = E;
-        } else {
-            [D, op] = arithEqs[eq].apply(arithEqs, Object.values(value));
+        const params = Object.keys(value).filter(x => !x.startsWith('_')).map(x => value[x]);
+        if (eq.endsWith('_MOD')) {
+            [D, op] = arithEqs[eq].apply(arithEqs, params);
             input.y2 = D;
             input.x3 = 0n; // E register is not used
             regs.D = D;
+        } else if (eq === 'ARITH') {
+            [D, op] = arithEqs[eq].apply(arithEqs, params);
+            input.y2 = D;
+            input.x3 = 0n;
+            regs.D = D;
+            regs.E = 0n;
+        } else {
+            input.y2 = value.D;
+            [E, op] = arithEqs[eq].apply(arithEqs, params);
+            input.x3 = E;
+            regs.D = value.D;
+            regs.E = E;
         }
+        const key = 'K' + Object.entries(regs).map(x => x.join(':')).join('|');
+        if (done[key]) continue;
+        done[key] = true;
         input.y3 = op;
-        // console.log(input,","); // This is for the arithmetic tests
-        for (const reg in regs) {
-            console.log(`\t${regs[reg]}n => ${reg}`);
+        if (zkasm) {
+            for (const reg in regs) {
+                console.log(`\t${regs[reg]}n => ${reg}`);
+            }
+            console.log(`\t${op}n :${eq}\n\t:CALL(__REDUNDANT_${eq}_CHECK)\n`);
+        } else {
+            console.log(input,","); // This is for the arithmetic tests
         }
-        console.log(`\t${op}n :${eq}\n\t:CALL(REDUNDANT_${eq}_CHECK)\n`);
     }
 }

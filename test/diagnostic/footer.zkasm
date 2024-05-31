@@ -1,3 +1,8 @@
+:JMP(end)
+
+failAssert:
+        A+1             :ASSERT
+
 end:
 
         $ => A           :MLOAD(initial_A)
