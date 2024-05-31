@@ -8,7 +8,7 @@
       "buildrom buildpil buildstoragerom buildconstants exec"
     ],
     "steps": [
-      "buildrom buildpil buildstoragerom buildconstants exec pilverify buildstarkinfo buildchelpers buildconstanttree prove verify gencircom compilecircom",
+      "buildrom buildpil buildstoragerom buildconstants exec pilverify preparepil calculateimpols genpilcode buildchelpers buildconstanttree prove verify gencircom compilecircom",
       "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_exec c12a_pilverify c12a_buildconstanttree c12a_prove c12a_verify c12a_gencircom",
       "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
       "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
@@ -18,7 +18,7 @@
       "fflonk_setup fflonk_evk fflonk_solidity"
     ],
     "steps_setup": [
-      "buildrom buildpil buildstoragerom buildconstants buildstarkinfo buildchelpers buildconstanttree gencircom compilecircom",
+      "buildrom buildpil buildstoragerom buildconstants preparepil calculateimpols genpilcode buildchelpers buildconstanttree gencircom compilecircom",
       "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
       "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
       "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
@@ -45,7 +45,9 @@
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const -p $PIL",
-    "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm${MODE_TAG}.starkstruct.json $BDIR/zkevm.starkstruct.json; fi",
+    "preparepil": ". ./pre.sh && $PILSTARK/main_preparepil.js -p $PIL -s $BDIR/zkevm.starkstruct.json -f $BDIR/zkevm.infopil.json",
+    "calculateimpols": ". ./pre.sh && python3 -B node_modules/pil-stark/src/pil_info/imPolsCalculation/calculateImPols.py $BDIR/zkevm.infopil.json $BDIR/zkevm.impols.json",
+    "genpilcode": ". ./pre.sh && $PILSTARK/main_genpilcode.js -p $PIL -m $BDIR/zkevm.impols.json -f $BDIR/zkevm.infopil.json -i $BDIR/zkevm.starkinfo.json",
     "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
     "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -s $BDIR/zkevm.starkinfo.json -c $BDIR/zkevm.chelpers -b $BDIR/zkevm.chelpers.bin -g $BDIR/zkevm.chelpers_generic.bin -C Zkevm",
     "buildconstanttree": ". ./pre.sh && $BCTREE -c $BDIR/zkevm.const -p $PIL -s $BDIR/zkevm.starkinfo.json -v $BDIR/zkevm.verkey.json",
@@ -92,6 +94,8 @@
     "fflonk_evk": ". ./pre.sh && $SNARKJS zkev $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verkey.json",
     "fflonk_solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verifier.sol",
     "prefflonk_setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
+    "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm${MODE_TAG}.starkstruct.json $BDIR/zkevm.starkstruct.json; fi",
+    "prepreparepil": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm${MODE_TAG}.starkstruct.json $BDIR/zkevm.starkstruct.json; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/c12a.pil -s $BDIR/c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR/c12a.starkstruct.json; fi",
     "buildarith": "node tools/arith/parse tools/arith/arith.ejs.pil -o pil/arith.pil && node tools/arith/arith_eq_gen tools/arith/arith.ejs.pil -o src/sm/sm_arith/sm_arith_##.js",
     "prerecursive1_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json; else cp src/recursive.starkstruct.json $BDIR; fi",
@@ -143,7 +147,7 @@
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
-    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#feature/new_parser",
+    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#feature/imPolsIntegration",
     "pilcom": "0.0.24",
     "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
