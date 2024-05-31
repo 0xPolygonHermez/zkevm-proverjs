@@ -1,0 +1,6 @@
+INCLUDE "operations/arith.zkasm"
+INCLUDE "operations/binary.zkasm"
+INCLUDE "operations/hash.zkasm"
+INCLUDE "operations/mem_align.zkasm"
+INCLUDE "operations/mem.zkasm"
+INCLUDE "operations/storage.zkasm"
