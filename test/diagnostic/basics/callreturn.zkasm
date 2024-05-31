@@ -1,0 +1,37 @@
+VAR GLOBAL OpCallReturn_V1
+VAR GLOBAL OpCallReturn_V2
+VAR GLOBAL OnCallReturn_RR
+
+        3 => A
+        :CALL(OpCallReturn_MyFunc)
+        9 :ASSERT
+
+        49 :MSTORE(OpCallReturn_V1),CALL(OpCallReturn_MyFunc)
+        21 :ASSERT
+
+        $ => A :MLOAD(OpCallReturn_V1),CALL(OpCallReturn_MyFunc)
+        101 :ASSERT
+
+        $ => A :MLOAD(OpCallReturn_V2)
+        101 :ASSERT
+
+
+        :CALL(OpCallReturn_CheckRRNext)
+
+        :JMP(OpCallReturn_End)
+
+OpCallReturn_MyFunc:
+        A * 2 + 3 => A :MSTORE(OpCallReturn_V2),RETURN
+
+OpCallReturn_CheckRRNext:
+        RR              :MSTORE(OnCallReturn_RR)
+        A => B          :CALL(OpCallReturn_AeqB)
+        A + 1 => B
+
+        ; check return uses RR'
+        $ => RR         :MLOAD(OnCallReturn_RR),RETURN
+
+OpCallReturn_AeqB:
+        B        :ASSERT, RETURN
+
+OpCallReturn_End:
