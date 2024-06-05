@@ -246,6 +246,10 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
         }
 
+    const P2_BITS = 25;
+    const JMPN_COND_MASK = (2n ** BigInt(P2_BITS)) - 1n;
+    const JMPN_COND_VALUE_BITS = BigInt(P2_BITS);
+
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
@@ -2296,9 +2300,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else {
                 throw new Error(`On JMPN value ${o} not a valid 32bit value ${sourceRef}`);
             }
-            pols.lJmpnCondValue[i] = jmpnCondValue & 0x7FFFFFn;
-            jmpnCondValue = jmpnCondValue >> 23n;
-            for (let index = 0; index < 9; ++index) {
+            pols.lJmpnCondValue[i] = jmpnCondValue & JMPN_COND_MASK;
+            jmpnCondValue = jmpnCondValue >> JMPN_COND_VALUE_BITS;
+            for (let index = 0; index < 8; ++index) {
                 pols.hJmpnCondValueBit[index][i] = jmpnCondValue & 0x01n;
                 jmpnCondValue = jmpnCondValue >> 1n;
             }
