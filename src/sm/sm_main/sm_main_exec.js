@@ -246,7 +246,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
         }
 
-    const P2_BITS = 25;
+    const TOTAL_STEPS_LIMIT = (rom.constants && rom.constants.TOTAL_STEPS_LIMIT) ? BigInt(rom.constants.TOTAL_STEPS_LIMIT): 2n ** 24n;
+    const P2_BITS = TOTAL_STEPS_LIMIT === 33554432n ? 25 : 24;
+    console.log(`\x1B[33mBITS: ${P2_BITS}  TOTAL_STEPS_LIMIT: ${TOTAL_STEPS_LIMIT}\x1B[0m`)
     const JMPN_COND_MASK = (2n ** BigInt(P2_BITS)) - 1n;
     const JMPN_COND_VALUE_BITS = BigInt(P2_BITS);
 
@@ -2310,7 +2312,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.isNeg[i] = 0n;
             pols.lJmpnCondValue[i] = 0n;
-            for (let index = 0; index < 9; ++index) {
+            for (let index = 0; index < 8; ++index) {
                 pols.hJmpnCondValueBit[index][i] = 0n;
             }
             if (l.JMPC) {
