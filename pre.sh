@@ -51,9 +51,11 @@ fi
 echo "Using ${MEM} MB"
 NODE="--max-old-space-size=$MEM"
 if [ "${npm_config_mode:=24}" = "24" ]; then
+    MODE_TAG=""
     ROM="${npm_config_rom:=zkevm-rom}"
     PIL_MAIN="${npm_config_pil:=pil/main.pil}"
 elif [ "${npm_config_mode}" = "25" ]; then
+    MODE_TAG="_25"
     ROM="${npm_config_rom:=zkevm-rom-25}"
     PIL_MAIN="${npm_config_pil:=pil/main_2_25.pil}"
 else
