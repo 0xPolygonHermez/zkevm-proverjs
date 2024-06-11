@@ -246,7 +246,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
         }
 
-    const TOTAL_STEPS_LIMIT = (rom.constants && rom.constants.TOTAL_STEPS_LIMIT) ? BigInt(rom.constants.TOTAL_STEPS_LIMIT): 2n ** 24n;
+    const TOTAL_STEPS_LIMIT = BigInt(rom.constants.TOTAL_STEPS_LIMIT.value);
     const P2_BITS = TOTAL_STEPS_LIMIT === 33554432n ? 25 : 24;
     console.log(`\x1B[33mBITS: ${P2_BITS}  TOTAL_STEPS_LIMIT: ${TOTAL_STEPS_LIMIT}\x1B[0m`)
     const JMPN_COND_MASK = (2n ** BigInt(P2_BITS)) - 1n;
