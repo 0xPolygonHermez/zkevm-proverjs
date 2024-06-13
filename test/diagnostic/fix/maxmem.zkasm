@@ -1,16 +1,24 @@
+; Testing the limit of the following code:
+;
+; if ( addrRel >= ( ( (rom.line[zkPC].isMem==1) ? 0x20000 : 0x10000) - 2048 ) ) {
+;         proverRequest.result = ZKR_SM_MAIN_ADDRESS_OUT_OF_RANGE;
+;         logError(ctx, "addrRel too big addrRel=" + to_string(addrRel));
+;         pHashDB->cancelBatch(proverRequest.uuid);
+;         return;
+; }
 
         0x40000 => E
-        0x20000 - 2048 => E
+        0x20000 - 2049 => E
         3141592 :MSTORE(MEM:E)
 
         0x40000 => E
-        0x20000 - 2048 => RR
+        0x20000 - 2049 => RR
         3141592 :MSTORE(MEM:RR)
 
         0x40000 => RR
-        0x20000 - 2048 + 100 => E
+        0x20000 - 2049 + 100 => E
         3141592 :MSTORE(MEM:E - 100)
 
         0x40000 => E
-        0x20000 - 2048 + 100 => RR
+        0x20000 - 2049 + 100 => RR
         3141592 :MSTORE(MEM:RR - 100)
