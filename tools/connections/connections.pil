@@ -1,4 +1,2 @@
-constant %N = 2**24;
-
 include "../../pil/padding_kk.pil";
 include "../../pil/padding_sha256.pil";
