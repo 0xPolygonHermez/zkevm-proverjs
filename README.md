@@ -83,7 +83,7 @@ npm run buildsetup --steps
 ```sh
 npm run buildsetup --rom=node_modules/@0xpolygonhermez/zkevm-rom-25
 ```
-**mode**: syntax is --mode=\<24\> where 24 define version of buildsetup, 2^24 or 2^25 (default: 24). Using 25, the default rom_dir is node_modules/@0xpolygonhermez/zkevm-rom-25 and the default pil is pil/main_2_25.pil
+**mode**: syntax is --mode=\<24\> where 24 define version of buildsetup: 2^23, 2^24 or 2^25 (default: 24). Using 25, the default rom_dir is node_modules/@0xpolygonhermez/zkevm-rom-25 and the default pil is pil/main_2_25.pil
 ```sh
 npm run buildsetup --mode=25
 ```
