@@ -1,0 +1,22 @@
+constant %N = 2**23;
+include "main_common.pil";
+
+namespace Main(%N);    
+    
+    lJmpnCondValue in Global.STEP;
+
+    pol commit hJmpnCondValueBit[9];
+
+    hJmpnCondValueBit[8] * (1-hJmpnCondValueBit[8]) = 0;
+    hJmpnCondValueBit[7] * (1-hJmpnCondValueBit[7]) = 0;
+    hJmpnCondValueBit[6] * (1-hJmpnCondValueBit[6]) = 0;
+    hJmpnCondValueBit[5] * (1-hJmpnCondValueBit[5]) = 0;
+    hJmpnCondValueBit[4] * (1-hJmpnCondValueBit[4]) = 0;
+    hJmpnCondValueBit[3] * (1-hJmpnCondValueBit[3]) = 0;
+    hJmpnCondValueBit[2] * (1-hJmpnCondValueBit[2]) = 0;
+    hJmpnCondValueBit[1] * (1-hJmpnCondValueBit[1]) = 0;
+    hJmpnCondValueBit[0] * (1-hJmpnCondValueBit[0]) = 0;
+
+    jmpnCondValue = 2**31*hJmpnCondValueBit[8] + 2**30*hJmpnCondValueBit[7] + 2**29*hJmpnCondValueBit[6] + 2**28*hJmpnCondValueBit[5] +
+        2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
+        2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
