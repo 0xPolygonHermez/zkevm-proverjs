@@ -88,11 +88,6 @@ git checkout test_2_25
 npm install
 ```
 
-To generate setup for N=2^23
-```bash
-tmux -c "npm run buildsetup --build=build/setup_23 --bctree=../zkevm-prover/build/bctree --fflonksetup=../zkevm-prover/build/fflonkSetup --mode=23"
-```
-
 To generate setup for N=2^24
 ```bash
 tmux -c "npm run buildsetup --build=build/setup_24 --bctree=../zkevm-prover/build/bctree --fflonksetup=../zkevm-prover/build/fflonkSetup"
@@ -116,10 +111,7 @@ rm -rf config
 ln -s ../zkevm-proverjs/build/setup_24/config config
 ```
 
-To generate proofs for N = 23, the setup files will need to be copied to the prover. If preferred, this can also be done for N=24 and N=25.
-To do so, `tools/copy_generate_files.sh` inside `zkevm-prover` needs to be modified.
-
-For N=23 and N=24, only `WORKING_DIR` version needs to be modified by specifying the directory in which the setup has been built.
+For N=24, only `WORKING_DIR` version needs to be modified by specifying the directory in which the setup has been built.
 ```bash
 WORKING_DIR=../zkevm-proverjs/build/setup_24/
 ```
