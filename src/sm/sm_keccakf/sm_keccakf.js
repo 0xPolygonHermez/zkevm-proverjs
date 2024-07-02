@@ -1,7 +1,5 @@
 const { assert } = require("console");
-const { fstat } = require("fs");
 const fs = require("fs");
-const { connect } = require("http2");
 const path = require("path");
 const { log2 } = require("@0xpolygonhermez/zkevm-commonjs").utils;
 const { F1Field } = require("ffjavascript");
