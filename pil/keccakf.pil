@@ -17,5 +17,8 @@ namespace KeccakF(%N);
     { GateType, a[2], b[2], c[2] } in { kGateType, kA, kB, kC } ;
     { GateType, a[3], b[3], c[3] } in { kGateType, kA, kB, kC } ;
 
+    // on first row a must be zero and b must be one for all bits used
+    // to introduce zeros or ones in a gate input.
+
     Global.L1 * a44 = 0;
     Global.L1 * (2**44-1-b44) = 0;
