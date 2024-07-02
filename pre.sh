@@ -57,15 +57,11 @@ if [ "${npm_config_mode:=24}" = "24" ]; then
     ROM="${npm_config_rom:=zkevm-rom}"
     PIL_MAIN="${npm_config_pil:=pil/main.pil}"
 elif [ "${npm_config_mode}" = "25" ]; then
-    MODE_TAG="_2_25"
+    MODE_TAG="_25"
     ROM="${npm_config_rom:=zkevm-rom-25}"
     PIL_MAIN="${npm_config_pil:=pil/main_2_25.pil}"
-elif [ "${npm_config_mode}" = "23" ]; then
-    MODE_TAG="_2_23"
-    ROM="${npm_config_rom:=zkevm-rom-23}"
-    PIL_MAIN="${npm_config_pil:=pil/main_2_23.pil}"
 else
-    echo "unknown mode: ${npm_config_mode} (only 23, 24 and 25 modes)"
+    echo "unknown mode: ${npm_config_mode} (only 24 and 25 modes)"
     exit 1
 fi        
 PIL_JSON="`basename $PIL_MAIN`.json"
