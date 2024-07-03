@@ -4,8 +4,11 @@
 SKIP=0
 STEP_BY_STEP=0
 START_OPTIONS=`env|grep -wE 'npm_config_(pil|pilconfig|continue|from|build|starkstruct)'|sed 's/npm_config_//g'|xargs`
-echo "####### START $(date +'%Y-%m-%d %H:%M:%S') $START_OPTIONS ########" >> $BDIR/steps.log
-LAST_STEP_FILE=$BDIR/last_step.txt
+mkdir -p $BDIR/build
+cp -f $PWD/package.json $BDIR/build
+cp -f $PWD/package-lock.json $BDIR/build
+echo "####### START $(date +'%Y-%m-%d %H:%M:%S') $START_OPTIONS ########" >> $BDIR/build/steps.log
+LAST_STEP_FILE=$BDIR/build/last_step.txt
 [ ! -z $npm_config_from ] && SKIP=1
 [ ! -z $npm_config_step ] && npm_config_from=$npm_config_step && npm_config_to=$npm_config_step && SKIP=1
 [ ! -z $npm_config_step_by_step ] && STEP_BY_STEP=1
@@ -18,12 +21,12 @@ while [ $# -gt 0 ]; do
     [ "$npm_config_from" = "$STEP" ] && SKIP=0
     [ ! -z "$PREV_STEP" ] && [ "$PREV_STEP" = "$LAST_STEP" ] && SKIP=0
     [ $SKIP -eq 1 ] && continue
-    mkdir -p $BDIR/steps
+    mkdir -p $BDIR/build/steps
     COMMIT=`git log --pretty=format:'%H' -n 1`
     CIRCOM_BIN=`whereis -b circom | tr ' ' "\n" | tail -1`
     CIRCOM_HASH=`sha256sum $CIRCOM_BIN|cut -d' ' -f1`
     CIRCOM_VERSION=`circom --version`
-    (echo "COMMIT: $COMMIT" && echo "$CIRCOM_VERSION ($CIRCOM_HASH)" && npm ls) | tee $BDIR/dependencies.txt > $BDIR/steps/$STEP
+    (echo "COMMIT: $COMMIT" && echo "$CIRCOM_VERSION ($CIRCOM_HASH)" && npm ls) | tee $BDIR/build/dependencies.txt > $BDIR/build/steps/$STEP
     echo "\e[35;1m####### $STEP #######\e[0m"
     START_STEP_TIME=$(date +%s)
     npm run $STEP
@@ -34,15 +37,15 @@ while [ $# -gt 0 ]; do
     TOT_ELAPSED_SECONDS=$((END_STEP_TIME - START_TIME))
     TOT_ELAPSED=$(date -ud "@$TOT_ELAPSED_SECONDS" +"$((TOT_ELAPSED_SECONDS/3600)):%M:%S")
     if [ $RES -ne 0 ]; then
-        echo "$STEP FAIL $ELAPSED / $TOT_ELAPSED" >> $BDIR/steps.log
+        echo "$STEP FAIL $ELAPSED / $TOT_ELAPSED" >> $BDIR/build/steps.log
         echo "$STEP ...[\e[31;1mFAIL\e[0m] $ELAPSED / $TOT_ELAPSED\n"
         break
     fi
-    echo "$STEP OK $ELAPSED / $TOT_ELAPSED" >> $BDIR/steps.log
+    echo "$STEP OK $ELAPSED / $TOT_ELAPSED" >> $BDIR/build/steps.log
     echo "$STEP ...[\e[32;1mOK\e[0m] $ELAPSED / $TOT_ELAPSED\n"
     echo $STEP > $LAST_STEP_FILE
     [ "$npm_config_to" = "$STEP" ] && break
     [ $STEP_BY_STEP -eq 1 ] && break
     sleep 1
 done
-echo "####### END $(date +'%Y-%m-%d %H:%M:%S') ########" >> $BDIR/steps.log
+echo "####### END $(date +'%Y-%m-%d %H:%M:%S') ########" >> $BDIR/build/steps.log
