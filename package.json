@@ -117,7 +117,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#v5.0.0-fork.8",
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.0-fork.9",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.1-fork.9",
     "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#feature/24",
     "@0xpolygonhermez/zkevm-rom-25": "github:0xPolygonHermez/zkevm-rom#feature/25",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
@@ -146,5 +146,8 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-mocha": "^10.1.0",
     "mocha": "^9.1.3"
+  },
+  "overrides": {
+    "ws": "7.5.10"
   }
 }
