@@ -3292,7 +3292,7 @@ function eval_getL1InfoTimestamp(ctx, tag) {
 function eval_getTimestampLimit(ctx, tag) {
     if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
 
-    return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+    return scalar2fea(ctx.Fr, Scalar.e(ctx.input.timestampLimit));
 }
 
 function eval_getForcedBlockHashL1(ctx, tag) {
