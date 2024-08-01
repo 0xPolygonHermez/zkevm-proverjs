@@ -133,7 +133,7 @@
     "fs": "^0.0.1-security",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
-    "pil-stark": "https://github.com/0xPolygonHermez/pil-stark.git#develop",
+    "pil-stark": "0.0.58",
     "pilcom": "0.0.24",
     "snarkjs": "0.7.0",
     "yargs": "^17.4.0"
