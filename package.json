@@ -114,7 +114,7 @@
     "eslint": "npm run eslint:tracer && npm run eslint:sm_main"
   },
   "author": "Jordi Baylina",
-  "license": "UNLICENSED",
+  "license": "AGPL3",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#v5.0.0-fork.8",
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.1-fork.9",
