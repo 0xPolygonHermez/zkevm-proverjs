@@ -4,20 +4,8 @@
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "config": {
-    "steps_piltoolfiles": [
-      "buildrom buildpil buildstoragerom buildconstants exec"
-    ],
-    "steps_setup": [
-      "buildrom buildpil buildstoragerom buildconstants preparepil calculateimpols genpilcode buildchelpers buildconstanttree gencircom compilecircom",
-      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
-      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-      "recursive_pil_check recursive_verifier_check ",
-      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-      "final_gencircom final_compile",
-      "fflonk_setup fflonk_evk fflonk_solidity",
-      "sha256"
-    ]
+    "steps_piltoolfiles": "buildrom buildpil buildstoragerom buildconstants exec",
+    "steps_setup": "buildrom buildpil buildstoragerom buildconstants preparepil calculateimpols genpilcode buildchelpers buildconstanttree gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom recursive_pil_check recursive_verifier_check recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom final_gencircom final_compile fflonk_setup fflonk_evk fflonk_solidity sha256"
   },
   "scripts": {
     "build:input": "node tools/build-genesis/build_genesis.js",
@@ -73,8 +61,8 @@
     "fflonk_solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/config/final/final.fflonk.zkey $BDIR/build/final.fflonk.verifier.sol",
     "sha256": ". ./pre.sh && echo 'Executing sha256 command...' && LC_ALL=C; cd $BDIR; find * -type f ! -name \"steps.log\" ! -path \"steps*\" ! -name \"sha256.txt*\" ! -name \"last_step.txt\"|sort | xargs sha256sum | tee build/sha256.txt && echo 'sha256 command executed successfully.'",
     "prefflonk_setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
-    "prebuildstarkinfo": ". ./pre.sh && mkdir -p $BDIR/build/ && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/build/zkevm.starkstruct.json; else cp src/zkevm${MODE_TAG}.starkstruct.json $BDIR/build/zkevm.starkstruct.json; fi",
-    "prepreparepil": ". ./pre.sh && mkdir -p $BDIR/build/ && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/build/zkevm.starkstruct.json; else cp src/zkevm${MODE_TAG}.starkstruct.json $BDIR/build/zkevm.starkstruct.json; fi",
+    "prebuildstarkinfo": ". ./pre.sh && mkdir -p $BDIR/build/ && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/build/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR/build/zkevm.starkstruct.json; fi",
+    "prepreparepil": ". ./pre.sh && mkdir -p $BDIR/build/ && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/build/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR/build/zkevm.starkstruct.json; fi",
     "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/pil/c12a.pil -s $BDIR/build/c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR/build/c12a.starkstruct.json; fi",
     "buildarith": "node tools/arith/parse tools/arith/arith.ejs.pil -o pil/arith.pil && node tools/arith/arith_eq_gen tools/arith/arith.ejs.pil -o src/sm/sm_arith/sm_arith_##.js",
     "prerecursive1_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/pil/recursive1.pil -s $BDIR/build/recursive.starkstruct.json; else cp src/recursive.starkstruct.json $BDIR/build/recursive.starkstruct.json; fi",
@@ -118,9 +106,7 @@
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#v5.0.0-fork.8",
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.1-fork.9",
-    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#feature/banana-24",
-    "@0xpolygonhermez/zkevm-rom-25": "github:0xPolygonHermez/zkevm-rom#feature/banana-25",
-    "@0xpolygonhermez/zkevm-rom-23": "github:0xPolygonHermez/zkevm-rom#feature/banana-23",
+    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#v8.0.0-rc.1-fork.12",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
     "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v6.0.1-fork.9",
     "@grpc/grpc-js": "^1.8.14",
