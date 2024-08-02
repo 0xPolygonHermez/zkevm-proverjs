@@ -2311,7 +2311,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.isNeg[i] = 0n;
             pols.lJmpnCondValue[i] = 0n;
-            for (let index = 0; index < 8; ++index) {
+            for (let index = 0; index < 7; ++index) {
                 pols.hJmpnCondValueBit[index][i] = 0n;
             }
             if (l.JMPC) {
