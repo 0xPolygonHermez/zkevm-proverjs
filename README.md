@@ -81,11 +81,7 @@ npm run buildsetup --steps
 ```
 **rom**: syntax is --rom=\<rom_dir\> where rom_dir is path where found rom project (default: node_modules/@0xpolygonhermez/zkevm-rom).
 ```sh
-npm run buildsetup --rom=node_modules/@0xpolygonhermez/zkevm-rom-25
-```
-**mode**: syntax is --mode=\<24\> where 24 define version of buildsetup, 2^24 or 2^25 (default: 24). Using 25, the default rom_dir is node_modules/@0xpolygonhermez/zkevm-rom-25 and the default pil is pil/main_2_25.pil
-```sh
-npm run buildsetup --mode=25
+npm run buildsetup --rom=node_modules/@0xpolygonhermez/zkevm-rom
 ```
 
 **pil**: syntax is --pil=\<main.pil\> where main.pil is name of pil to compile. For debugging could use basic_main.pil. See --starkstruct option

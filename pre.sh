@@ -52,18 +52,8 @@ else
 fi
 echo "Using ${MEM} MB"
 NODE="--max-old-space-size=$MEM"
-if [ "${npm_config_mode:=24}" = "24" ]; then
-    MODE_TAG=""
-    ROM="${npm_config_rom:=zkevm-rom}"
-    PIL_MAIN="${npm_config_pil:=pil/main.pil}"
-elif [ "${npm_config_mode}" = "25" ]; then
-    MODE_TAG="_25"
-    ROM="${npm_config_rom:=zkevm-rom-25}"
-    PIL_MAIN="${npm_config_pil:=pil/main_2_25.pil}"
-else
-    echo "unknown mode: ${npm_config_mode} (only 24 and 25 modes)"
-    exit 1
-fi        
+ROM="${npm_config_rom:=zkevm-rom}"
+PIL_MAIN="${npm_config_pil:=pil/main.pil}"
 PIL_JSON="`basename $PIL_MAIN`.json"
 PIL_DIR="`dirname $PIL_MAIN`"
 PIL="$PIL_MAIN`[ ! -z $npm_config_pilconfig ] && echo \" -P $npm_config_pilconfig\"`"
