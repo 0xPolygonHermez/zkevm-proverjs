@@ -9,6 +9,7 @@ checkAllMandatoryOptArgs() {
     checkMandatoryOptArg pil $npm_config_pil file.pil
     checkMandatoryOptArg pilconfig $npm_config_pilconfig pilconfig.json
     checkMandatoryOptArg bctree $npm_config_bctree constanttreebuilder
+    checkMandatoryOptArg fflonksetup $npm_config_fflonk_setup fflonksetupbuilder
     checkMandatoryOptArg nth $npm_config_nth
     checkMandatoryOptArg starkstruct $npm_config_starkstruct debug
     checkMandatoryOptArg input $npm_config_input input
@@ -24,6 +25,7 @@ usage() {
     echo " --pil=<file.pil>"
     echo " --pilconfig=<pilconfig.json>"
     echo " --bctree=<builder>                alternative binary to generate constanttree (ex: ../zkevm-prover/build/bctree)"
+    echo " --fflonksetup=<builder>           alternative binary to generate fflonksetup (ex: ../zkevm-prover/build/fflonksetup)"
     echo " --nth=<sufix>                     suffix used on commited files and derivated (ex: _0)"
     echo " --starkstruct=debug               auto-generate starkstruct, used in non-stardard pil as basic."
     echo " --input=<input.json>              input used in execution/proof."
@@ -50,13 +52,25 @@ else
 fi
 echo "Using ${MEM} MB"
 NODE="--max-old-space-size=$MEM"
-PIL_MAIN="${npm_config_pil:=pil/main.pil}"
+if [ "${npm_config_mode:=24}" = "24" ]; then
+    MODE_TAG=""
+    ROM="${npm_config_rom:=zkevm-rom}"
+    PIL_MAIN="${npm_config_pil:=pil/main.pil}"
+elif [ "${npm_config_mode}" = "25" ]; then
+    MODE_TAG="_25"
+    ROM="${npm_config_rom:=zkevm-rom-25}"
+    PIL_MAIN="${npm_config_pil:=pil/main_2_25.pil}"
+else
+    echo "unknown mode: ${npm_config_mode} (only 24 and 25 modes)"
+    exit 1
+fi        
 PIL_JSON="`basename $PIL_MAIN`.json"
 PIL_DIR="`dirname $PIL_MAIN`"
 PIL="$PIL_MAIN`[ ! -z $npm_config_pilconfig ] && echo \" -P $npm_config_pilconfig\"`"
 PILSTARK="node $NODE node_modules/pil-stark/src"
 PILCOM="node $NODE node_modules/.bin/pilcom"
 SNARKJS="node $NODE node_modules/snarkjs/cli.js"
+FFLONKSETUP="${npm_config_fflonksetup:=$SNARKJS --verbose ffs}"
 BCTREE="${npm_config_bctree:=$PILSTARK/main_buildconsttree.js}"
 # [ ! -z $npm_config_nth ] &&
 NTH="${npm_config_nth}"

@@ -246,6 +246,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             ctx.mem[addressMem] = scalar2fea(ctx.Fr, Scalar.e(res.value));
         }
 
+    const TOTAL_STEPS_LIMIT = BigInt(rom.constants.TOTAL_STEPS_LIMIT.value);
+    const P2_BITS = TOTAL_STEPS_LIMIT === 33554432n ? 25 : 24;
+    console.log(`\x1B[33mBITS: ${P2_BITS}  TOTAL_STEPS_LIMIT: ${TOTAL_STEPS_LIMIT}\x1B[0m`)
+    const JMPN_COND_MASK = (2n ** BigInt(P2_BITS)) - 1n;
+    const JMPN_COND_VALUE_BITS = BigInt(P2_BITS);
+
     for (let step = 0; step < stepsN; step++) {
         const i = step % N;
         ctx.ln = Fr.toObject(pols.zkPC[i]);
@@ -2296,9 +2302,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             } else {
                 throw new Error(`On JMPN value ${o} not a valid 32bit value ${sourceRef}`);
             }
-            pols.lJmpnCondValue[i] = jmpnCondValue & 0x7FFFFFn;
-            jmpnCondValue = jmpnCondValue >> 23n;
-            for (let index = 0; index < 9; ++index) {
+            pols.lJmpnCondValue[i] = jmpnCondValue & JMPN_COND_MASK;
+            jmpnCondValue = jmpnCondValue >> JMPN_COND_VALUE_BITS;
+            for (let index = 0; index < 8; ++index) {
                 pols.hJmpnCondValueBit[index][i] = jmpnCondValue & 0x01n;
                 jmpnCondValue = jmpnCondValue >> 1n;
             }
@@ -2306,7 +2312,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.isNeg[i] = 0n;
             pols.lJmpnCondValue[i] = 0n;
-            for (let index = 0; index < 9; ++index) {
+            for (let index = 0; index < 8; ++index) {
                 pols.hJmpnCondValueBit[index][i] = 0n;
             }
             if (l.JMPC) {
