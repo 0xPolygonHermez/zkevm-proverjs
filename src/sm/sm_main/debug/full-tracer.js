@@ -934,7 +934,7 @@ class FullTracer {
         }
         // If is an ether transfer, don't add stop opcode to trace
         if (singleInfo.opcode === 'STOP'
-            && (typeof prevStep === 'undefined' || (opCreate.includes(prevStep.opcode) && Number(prevStep.gas_cost) <= 32000))
+            && (typeof prevStep === 'undefined' || (opCreate.includes(prevStep.opcode) && Number(prevStep.gas_cost) <= 32000 && prevStep.error === ''))
             && Number(getVarFromCtx(ctx, false, 'bytecodeLength')) === 0) {
             this.full_trace.pop();
         }

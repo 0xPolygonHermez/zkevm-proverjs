@@ -8,7 +8,7 @@ on:
     branches:
       - main
       - develop
-      - develop-eldelberry
+      - develop-banana
   push:
     branches:
       - main
