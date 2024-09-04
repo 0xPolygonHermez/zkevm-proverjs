@@ -4,20 +4,8 @@
   "description": "JS version of the zkProver.",
   "main": "index.js",
   "config": {
-    "steps_piltoolfiles": [
-      "buildrom buildpil buildstoragerom buildconstants exec"
-    ],
-    "steps_setup": [
-      "buildrom buildpil buildstoragerom buildconstants preparepil calculateimpols genpilcode buildchelpers buildconstanttree gencircom compilecircom",
-      "c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom",
-      "recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom",
-      "recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom",
-      "recursive_pil_check recursive_verifier_check ",
-      "recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom",
-      "final_gencircom final_compile",
-      "fflonk_setup fflonk_evk fflonk_solidity",
-      "sha256"
-    ]
+    "steps_piltoolfiles": "buildrom buildpil buildstoragerom buildconstants exec",
+    "steps_setup": "buildrom buildpil buildstoragerom buildconstants preparepil calculateimpols genpilcode buildchelpers buildconstanttree gencircom compilecircom c12a_setup c12a_buildstarkinfo c12a_buildchelpers c12a_buildconstanttree c12a_gencircom recursive1_gencircom recursive1_compile recursive1_setup recursive1_buildstarkinfo recursive1_buildchelpers recursive1_buildconstanttree recursive1_verifier_gencircom recursive2_gencircom recursive2_compile recursive2_setup recursive2_buildstarkinfo recursive2_buildchelpers recursive2_buildconstanttree recursive2_verifier_gencircom recursive_pil_check recursive_verifier_check recursivef_gencircom recursivef_compile recursivef_setup recursivef_buildstarkinfo recursivef_buildchelpers recursivef_buildconstanttree  recursivef_verifier_gencircom final_gencircom final_compile fflonk_setup fflonk_evk fflonk_solidity sha256"
   },
   "scripts": {
     "build:input": "node tools/build-genesis/build_genesis.js",
@@ -118,8 +106,8 @@
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#v5.0.0-fork.8",
     "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.1-fork.9",
-    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#feature/24",
-    "@0xpolygonhermez/zkevm-rom-25": "github:0xPolygonHermez/zkevm-rom#feature/25",
+    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#feature/24-update",
+    "@0xpolygonhermez/zkevm-rom-25": "github:0xPolygonHermez/zkevm-rom#feature/25-update",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
     "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v6.0.1-fork.9",
     "@grpc/grpc-js": "^1.8.14",
