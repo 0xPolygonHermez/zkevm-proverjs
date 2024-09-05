@@ -1,0 +1,14 @@
+{
+            "nBits": 23,
+            "nBitsExt": 24,
+            "nQueries": 128,
+            "verificationHashType": "GL",
+            "steps": [
+                {"nBits": 24},
+                {"nBits": 20},
+                {"nBits": 16},
+                {"nBits": 11},
+                {"nBits": 6}
+            ]
+}
+
