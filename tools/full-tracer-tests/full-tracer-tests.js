@@ -436,6 +436,10 @@ async function compareCallTracer(geth, fullTracer, i) {
                 // }
                 // Detect failed create2
             } else if (opCreate.includes(previousStep.opcode) && previousStep.depth === step.depth) {
+                if (previousStep.error === 'invalidAddressCollision') {
+                    currentStep++;
+                    continue;
+                }
                 callData[ctx + 1] = {
                     from: previousStep.contract.address,
                     gas: `0x${Number(step.gas).toString(16)}`,
@@ -709,7 +713,7 @@ async function getFtTrace(test, txsCount, rom, isEthereumTest) {
     const ftTraces = [];
     for (let i = 0; i < txsCount; i++) {
         const blockNum = isEthereumTest ? [1, i] : getBlockNumFromTxCount(test, i);
-        const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_${blockNum[0]}_${blockNum[1]}.json`), 'utf8'));
+        const ftTrace = JSON.parse(fs.readFileSync(path.join(__dirname, `../../src/sm/sm_main/logs-full-trace/${test.testName}__full_trace_TX_${blockNum[0]}_${blockNum[1]}.json`), 'utf8'));
         ftTraces.push(ftTrace);
     }
 

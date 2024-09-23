@@ -105,10 +105,10 @@
   "license": "AGPL3",
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "github:0xPolygonHermez/zkasmcom#v5.0.0-fork.8",
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v6.0.1-fork.9",
-    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#v8.0.0-rc.1-fork.12",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xpolygonhermez/zkevm-commonjs#v8.0.0-fork.12",
+    "@0xpolygonhermez/zkevm-rom": "github:0xPolygonHermez/zkevm-rom#v8.0.0-rc.3-fork.12",
     "@0xpolygonhermez/zkevm-storage-rom": "https://github.com/0xPolygonHermez/zkevm-storage-rom.git#v4.0.0-fork.7",
-    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v6.0.1-fork.9",
+    "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v8.0.0-rc.3-fork.12",
     "@grpc/grpc-js": "^1.8.14",
     "chalk": "^3.0.0",
     "circomlib": "^2.0.3",
