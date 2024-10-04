@@ -27,12 +27,10 @@ const smPaddingSha256 = require("../src/sm/sm_padding_sha256.js");
 const smPaddingSha256Bit = require("../src/sm/sm_padding_sha256bit/sm_padding_sha256bit.js");
 const smBits2FieldSha256 = require("../src/sm/sm_bits2field_sha256.js");
 const smSha256F = require("../src/sm/sm_sha256f/sm_sha256f.js");
-const { config } = require("yargs");
 
-module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {}, mainConfig = {}) {
+module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, pilConfig = {},  mainConfig = {}, zkasmConfig = {}) {
 
     const Fr = new F1Field("0xFFFFFFFF00000001");
-    const brief = false;
 
     /*
         pilConfig example:
@@ -53,12 +51,11 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     const cmPols =  newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
     const N = polDeg;
-    console.log('Pil N = 2 ** '+Math.log2(polDeg));
+    console.log('PIL N = 2 ** '+Math.log2(polDeg));
 
     const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
-    const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
-    console.log(zkasmFinalFilename);
-    const rom = await zkasm.compile(zkasmFinalFilename);
+    const zkasmFinalFilename = (zkasmFile.startsWith('/') || zkasmConfig.compileFromString) ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
+    const rom = await zkasm.compile(zkasmFinalFilename, null, zkasmConfig);
 
     if (mainConfig && mainConfig.romFilename) {
         await fs.promises.writeFile(mainConfig.romFilename, JSON.stringify(rom, null, 1) + "\n");
