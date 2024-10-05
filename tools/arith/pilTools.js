@@ -47,6 +47,9 @@ function nameToIndex(name, index, config = {}, cls = '')
     else if (name.endsWith('_')) {
         name += index;
     }
+    else if (name === '') {
+        name += index;
+    }
     else {
         name += '[' + index + ']';
     }
