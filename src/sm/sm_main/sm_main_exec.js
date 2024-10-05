@@ -98,6 +98,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fr = poseidon.F;
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
+    const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
+    const Fsecp256r1 = new F1Field(pSecp256r1);
 
     let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
     const FpBN254 = new F1Field(pBN254);
@@ -133,6 +135,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fec: Fec,
         Fnec: Fnec,
         FpBN254,
+        Fsecp256r1,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -1051,7 +1054,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.assert[i] = 0n;
         }
-
+        
+        pols.assumeFree[i] = l.assumeFree ? 1n : 0n;
 
         if (l.mOp) {
             pols.mOp[i] = 1n;
@@ -1066,12 +1070,14 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
                 });
             } else {
+                const value = l.assumeFree ? [pols.FREE0[i], pols.FREE1[i], pols.FREE2[i], pols.FREE3[i], pols.FREE4[i], pols.FREE5[i], pols.FREE6[i], pols.FREE7[i]]:
+                                             [op0, op1, op2, op3, op4, op5, op6, op7];
                 pols.mWR[i] = 0n;
                 required.Mem.push({
                     bIsWrite: false,
                     address: addr,
                     pc: step,
-                    fe0:op0, fe1:op1, fe2:op2, fe3:op3, fe4:op4, fe5:op5, fe6:op6, fe7:op7
+                    fe0:value[0], fe1:value[1], fe2:value[2], fe3:value[3], fe4:value[4], fe5:value[5], fe6:value[6], fe7:value[7]
                 });
                 if (ctx.mem[addr]) {
                     if ((!Fr.eq(ctx.mem[addr][0],  op0)) ||
@@ -1560,8 +1566,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             required.Binary.push({a: op, b: 0xFFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001FFFFFFFF00000001n, c: 1n, opcode: 8, type: 2});
         }
 
-        if (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5) {
-            if (l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3 && !l.arithEq4 && !l.arithEq5) {
+        if (l.arith) {
+            pols.arith[i] = 1n;
+            pols.arithSame12[i] = (l.arithEq == 3 || l.arithEq == 9) ? 1n : 0n;
+            pols.arithUseE[i] = (l.arithEq == 1 || l.arithEq == 7) ? 0n : 1n;
+            pols.arithEq[i] = BigInt(l.arithEq);
+            if (l.arithEq == 1) {
                 const A = safeFea2scalar(Fr, ctx.A);
                 const B = safeFea2scalar(Fr, ctx.B);
                 const C = safeFea2scalar(Fr, ctx.C);
@@ -1579,14 +1589,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                                                 + ' (0x' + right.toString(16)+')');
                     throw new Error(`Arithmetic(Eq0) does not match ${sourceRef}`);
                 }
-                pols.arithEq0[i] = 1n;
-                pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = pols.arithEq4[i] = pols.arithEq5[i] = 0n;
                 required.Arith.push({ x1: ctx.A, y1: ctx.B,
                                       x2: ctx.C, y2: ctx.D,
-                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
-                                      selEq0: 1, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 0});
+                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7], airthEq: Number(l.arithEq)});
             }
-            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && l.arithEq3 && !l.arithEq4 && !l.arithEq5) {
+            else if (l.arithEq == 4) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
                 const y1 = safeFea2scalar(Fr, ctx.B);
                 const x2 = safeFea2scalar(Fr, ctx.C);
@@ -1614,14 +1621,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic FP2 multiplication point does not match: ${sourceRef}`);
                 }
 
-                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq4[i] = pols.arithEq5[i] = 0n;
-                pols.arithEq3[i] = 1n;
                 required.Arith.push({x1:ctx.A, y1:ctx.B,
                                      x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 1, selEq5: 0, selEq6: 0});
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], arithEq: 4});
             }
-            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3 && l.arithEq4 && !l.arithEq5) {
+            else if (l.arithEq == 5) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
                 const y1 = safeFea2scalar(Fr, ctx.B);
                 const x2 = safeFea2scalar(Fr, ctx.C);
@@ -1648,14 +1652,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic FP2 addition does not match: ${sourceRef}`);
                 }
 
-                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = pols.arithEq5[i] = 0n;
-                pols.arithEq4[i] = 1n;
                 required.Arith.push({x1:ctx.A, y1:ctx.B,
                                      x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 1, selEq6: 0});
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], arithEq: 5});
             }
-            else if (!l.arithEq0 && !l.arithEq1 && !l.arithEq2 && !l.arithEq3 && !l.arithEq4 && l.arithEq5) {
+            else if (l.arithEq == 6) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
                 const y1 = safeFea2scalar(Fr, ctx.B);
                 const x2 = safeFea2scalar(Fr, ctx.C);
@@ -1682,14 +1683,12 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic FP2 subtraction does not match: ${sourceRef}`);
                 }
 
-                pols.arithEq0[i] = pols.arithEq1[i] = pols.arithEq2[i] = pols.arithEq3[i] = pols.arithEq4[i] = 0n;
-                pols.arithEq5[i] = 1n;
+                pols.arithEq[i] = 6n;
                 required.Arith.push({x1:ctx.A, y1:ctx.B,
                                      x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: 0, selEq2: 0, selEq3: 0, selEq4: 0, selEq5: 0, selEq6: 1});
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], airthEq: 6});
             }
-            else {
+            else if (l.arithEq == 2 || l.arithEq == 3 || l.arithEq == 7 || l.arithEq == 8) {                
                 const x1 = safeFea2scalar(Fr, ctx.A);
                 const y1 = safeFea2scalar(Fr, ctx.B);
                 const x2 = safeFea2scalar(Fr, ctx.C);
@@ -1697,34 +1696,35 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 const x3 = safeFea2scalar(Fr, ctx.E);
                 const y3 = safeFea2scalar(Fr, [op0, op1, op2, op3, op4, op5, op6, op7]);
                 let dbl = false;
-                if ((!l.arithEq0) && l.arithEq1 && (!l.arithEq2) && (!l.arithEq3) && (!l.arithEq4) && (!l.arithEq5)) {
+                if (l.arithEq == 2 || l.arithEq == 7) {
                     dbl = false;
-                } else if ((!l.arithEq0) && (!l.arithEq1) && l.arithEq2 && (!l.arithEq3) && (!l.arithEq4) && (!l.arithEq5)) {
+                } else if (l.arithEq == 3 || l.arithEq == 8) {
                     dbl = true;
                 } else {
-                    throw new Error(`Invalid arithmetic op (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}, aritEq3:${l.arithEq3}, aritEq4:${l.arithEq4}, aritEq5:${l.arithEq5}) ${sourceRef}`);
+                    throw new Error(`Invalid arithmetic op (aritEq:${l.arithEq}) ${sourceRef}`);
                 }
 
+                let arithFp = (l.arithEq > 3) ? Fsecp256r1 : Fec;
                 let s;
                 if (dbl) {
                     // Division by zero must be managed by ROM before call ARITH
-                    const divisor = Fec.add(Fec.e(y1), Fec.e(y1));
-                    if (Fec.isZero(divisor)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}, aritEq3:${l.arithEq3}, aritEq4:${l.arithEq4}, aritEq5:${l.arithEq5}) ${sourceRef}`);
+                    const divisor = arithFp.add(arithFp.e(y1), arithFp.e(y1));
+                    if (arithFp.isZero(divisor)) {
+                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq:${l.arithEq}) ${sourceRef}`);
                     }
-                    s = Fec.div(Fec.mul(3n, Fec.mul(Fec.e(x1), Fec.e(x1))), divisor);
+                    s = arithFp.div(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))), divisor);
                 }
                 else {
                     // Division by zero must be managed by ROM before call ARITH
-                    const deltaX = Fec.sub(Fec.e(x2), Fec.e(x1))
-                    if (Fec.isZero(deltaX)) {
-                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq0:${l.arithEq0}, aritEq1:${l.arithEq1}, aritEq2:${l.arithEq2}, aritEq3:${l.arithEq3}, aritEq4:${l.arithEq4}, aritEq5:${l.arithEq5}) ${sourceRef}`);
+                    const deltaX = arithFp.sub(arithFp.e(x2), arithFp.e(x1))
+                    if (arithFp.isZero(deltaX)) {
+                        throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq:${l.arithEq}) ${sourceRef}`);
                     }
-                    s = Fec.div(Fec.sub(Fec.e(y2), Fec.e(y1)), deltaX);
+                    s = arithFp.div(arithFp.sub(arithFp.e(y2), arithFp.e(y1)), deltaX);
                 }
 
-                const _x3 = Fec.sub(Fec.mul(s, s), Fec.add(Fec.e(x1), dbl ? Fec.e(x1) : Fec.e(x2)));
-                const _y3 = Fec.sub(Fec.mul(s, Fec.sub(Fec.e(x1),x3)), Fec.e(y1));
+                const _x3 = arithFp.sub(arithFp.mul(s, s), arithFp.add(arithFp.e(x1), dbl ? arithFp.e(x1) : arithFp.e(x2)));
+                const _y3 = arithFp.sub(arithFp.mul(s, arithFp.sub(arithFp.e(x1),x3)), arithFp.e(y1));
                 const x3eq = Scalar.eq(x3, _x3);
                 const y3eq = Scalar.eq(y3, _y3);
 
@@ -1740,24 +1740,15 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error('Arithmetic curve '+(dbl?'dbl':'add')+` point does not match: ${sourceRef}`);
                 }
 
-                pols.arithEq0[i] = 0n;
-                pols.arithEq1[i] = dbl ? 0n : 1n;
-                pols.arithEq2[i] = dbl ? 1n : 0n;
-                pols.arithEq3[i] = 0n;
-                pols.arithEq4[i] = 0n;
-                pols.arithEq5[i] = 0n;
                 required.Arith.push({x1: ctx.A, y1: ctx.B,
                                      x2: dbl ? ctx.A:ctx.C, y2: dbl? ctx.B:ctx.D,
-                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7],
-                                     selEq0: 0, selEq1: dbl ? 0 : 1, selEq2: dbl ? 1 : 0, selEq3: 1, selEq4: 0, selEq5: 0, selEq6: 0});
+                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7], airthEq: l.arithEq});
             }
         } else {
-            pols.arithEq0[i] = 0n;
-            pols.arithEq1[i] = 0n;
-            pols.arithEq2[i] = 0n;
-            pols.arithEq3[i] = 0n;
-            pols.arithEq4[i] = 0n;
-            pols.arithEq5[i] = 0n;
+            pols.arith[i] = 0n;
+            pols.arithSame12[i] = 0n;
+            pols.arithUseE[i] = 0n;
+            pols.arithEq[i] = 0n;
         }
 
         if (l.bin) {
@@ -1947,6 +1938,17 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     //////////
 
         const nexti = (i+1) % N;
+
+        [ pols.op0[i],
+          pols.op1[i],
+          pols.op2[i],
+          pols.op3[i],
+          pols.op4[i],
+          pols.op5[i],
+          pols.op6[i],
+          pols.op7[i]
+        ] = [op0, op1, op2, op3, op4, op5, op6, op7];
+
 
         if (l.setA == 1) {
             pols.setA[i]=1n;
@@ -2216,7 +2218,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             pols.RR[nexti] = l.call ? (ctx.zkPC + 1n) : pols.RR[i];
         }
 
-        if (!skipCounters && (l.arithEq0 || l.arithEq1 || l.arithEq2 || l.arithEq3 || l.arithEq4 || l.arithEq5)) {
+        if (!skipCounters && l.arith) {
             pols.cntArith[nexti] = pols.cntArith[i] + 1n;
         } else {
             pols.cntArith[nexti] = pols.cntArith[i];
@@ -3194,6 +3196,14 @@ function eval_functionCall(ctx, tag) {
         return eval_yDblPointEc(ctx, tag);
     } else if (tag.funcName == "beforeLast") {
         return eval_beforeLast(ctx, tag)
+    } else if (tag.funcName == "xAddPointEc_secp256r1") {
+        return eval_xAddPointEc_secp256r1(ctx, tag);
+    } else if (tag.funcName == "yAddPointEc_secp256r1") {
+        return eval_yAddPointEc_secp256r1(ctx, tag);
+    } else if (tag.funcName == "xDblPointEc_secp256r1") {
+        return eval_xDblPointEc_secp256r1(ctx, tag);
+    } else if (tag.funcName == "yDblPointEc_secp256r1") {
+        return eval_yDblPointEc_secp256r1(ctx, tag);
     } else if (tag.funcName.includes("bitwise")) {
         return eval_bitwise(ctx, tag);
     } else if (tag.funcName.includes("comp") && tag.funcName.split('_')[0] === "comp") {
@@ -3562,47 +3572,63 @@ function eval_sqrtFpEcParity(ctx, tag) {
 }
 
 function eval_xAddPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, false)[0];
+    return eval_AddPointEc(ctx, ctx.Fec, tag, false)[0];
 }
 
 function eval_yAddPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, false)[1];
+    return eval_AddPointEc(ctx, ctx.Fec, tag, false)[1];
 }
 
 function eval_xDblPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, true)[0];
+    return eval_AddPointEc(ctx, ctx.Fec, tag, true)[0];
 }
 
 function eval_yDblPointEc(ctx, tag) {
-    return eval_AddPointEc(ctx, tag, true)[1];
+    return eval_AddPointEc(ctx, ctx.Fec, tag, true)[1];
 }
 
-function eval_AddPointEc(ctx, tag, dbl)
+function eval_xAddPointEc_secp256r1(ctx, tag) {
+    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, false)[0];
+}
+
+function eval_yAddPointEc_secp256r1(ctx, tag) {
+    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, false)[1];
+}
+
+function eval_xDblPointEc_secp256r1(ctx, tag) {
+    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true)[0];
+}
+
+function eval_yDblPointEc_secp256r1(ctx, tag) {
+    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true)[1];
+}
+
+function eval_AddPointEc(ctx, Fp, tag, dbl)
 {
-    const x1 = ctx.Fec.e(evalCommand(ctx, tag.params[0]));
-    const y1 = ctx.Fec.e(evalCommand(ctx, tag.params[1]));
-    const x2 = ctx.Fec.e(evalCommand(ctx, tag.params[dbl ? 0 : 2]));
-    const y2 = ctx.Fec.e(evalCommand(ctx, tag.params[dbl ? 1 : 3]));
+    const x1 = Fp.e(evalCommand(ctx, tag.params[0]));
+    const y1 = Fp.e(evalCommand(ctx, tag.params[1]));
+    const x2 = Fp.e(evalCommand(ctx, tag.params[dbl ? 0 : 2]));
+    const y2 = Fp.e(evalCommand(ctx, tag.params[dbl ? 1 : 3]));
 
     let s;
     if (dbl) {
         // Division by zero must be managed by ROM before call ARITH
-        const divisor = ctx.Fec.add(y1, y1)
-        if (ctx.Fec.isZero(divisor)) {
+        const divisor = Fp.add(y1, y1)
+        if (Fp.isZero(divisor)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
         }
-        s = ctx.Fec.div(ctx.Fec.mul(3n, ctx.Fec.mul(x1, x1)), divisor);
+        s = Fp.div(Fp.mul(3n, Fp.mul(x1, x1)), divisor);
     }
     else {
-        const deltaX = ctx.Fec.sub(x2, x1)
-        if (ctx.Fec.isZero(deltaX)) {
+        const deltaX = Fp.sub(x2, x1)
+        if (Fp.isZero(deltaX)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
         }
-        s = ctx.Fec.div(ctx.Fec.sub(y2, y1), deltaX );
+        s = Fp.div(Fp.sub(y2, y1), deltaX );
     }
 
-    const x3 = ctx.Fec.sub(ctx.Fec.mul(s, s), ctx.Fec.add(x1, x2));
-    const y3 = ctx.Fec.sub(ctx.Fec.mul(s, ctx.Fec.sub(x1,x3)), y1);
+    const x3 = Fp.sub(Fp.mul(s, s), Fp.add(x1, x2));
+    const y3 = Fp.sub(Fp.mul(s, Fp.sub(x1,x3)), y1);
 
     return [x3, y3];
 }
