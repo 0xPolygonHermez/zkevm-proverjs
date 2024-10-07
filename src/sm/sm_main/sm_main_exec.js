@@ -98,9 +98,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fr = poseidon.F;
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
-    const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
     const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
-    const Fsecp256r1 = new F1Field(pSecp256r1);
+    const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
+    const nSecp256r1 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
+    const FpSecp256r1 = new F1Field(pSecp256r1);
+    const FnSecp256r1 = new F1Field(nSecp256r1);
 
     let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
     const FpBN254 = new F1Field(pBN254);
@@ -137,7 +139,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fnec: Fnec,
         FpBN254,
         aSecp256r1,
-        Fsecp256r1,
+        FpSecp256r1,
+        FnSecp256r1,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -1706,7 +1709,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Invalid arithmetic op (aritEq:${l.arithEq}) ${sourceRef}`);
                 }
 
-                let arithFp = (l.arithEq > 3) ? Fsecp256r1 : Fec;
+                let arithFp = (l.arithEq > 3) ? FpSecp256r1 : Fec;
                 let s;
                 if (dbl) {
                     // Division by zero must be managed by ROM before call ARITH
@@ -3184,6 +3187,8 @@ function eval_functionCall(ctx, tag) {
         return eval_inverseFpEc(ctx, tag);
     } else if (tag.funcName == "inverseFnEc") {
         return eval_inverseFnEc(ctx, tag);
+    } else if (tag.funcName == "inverseFnEc_secp256r1") {
+        return eval_inverseFnEc_secp256r1(ctx, tag);
     } else if (tag.funcName == "sqrtFpEcParity") {
         return eval_sqrtFpEcParity(ctx, tag);
     } else if (tag.funcName == "dumpRegs") {
@@ -3564,6 +3569,14 @@ function eval_inverseFnEc(ctx, tag) {
     return ctx.Fnec.inv(a);
 }
 
+function eval_inverseFnEc_secp256r1(ctx, tag) {
+    const a = ctx.FnSecp256r1.e(evalCommand(ctx, tag.params[0]));
+    if (ctx.FnSecp256r1.isZero(a)) {
+        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
+    }
+    return ctx.FnSecp256r1.inv(a);
+}
+
 function eval_sqrtFpEcParity(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
     const parity = evalCommand(ctx, tag.params[1]);
@@ -3594,21 +3607,19 @@ function eval_yDblPointEc(ctx, tag) {
 }
 
 function eval_xAddPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, false)[0];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, false)[0];
 }
 
 function eval_yAddPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, false)[1];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, false)[1];
 }
 
 function eval_xDblPointEc_secp256r1(ctx, tag) {
-    console.log("HOOOLAAAA");
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true, ctx.aSecp256r1)[0];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, true, ctx.aSecp256r1)[0];
 }
 
 function eval_yDblPointEc_secp256r1(ctx, tag) {
-    console.log("HOOOLAAAA");
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true, ctx.aSecp256r1)[1];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, true, ctx.aSecp256r1)[1];
 }
 
 function eval_AddPointEc(ctx, Fp, tag, dbl, a = 0n)
