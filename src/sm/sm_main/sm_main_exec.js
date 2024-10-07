@@ -99,6 +99,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
     const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
+    const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
     const Fsecp256r1 = new F1Field(pSecp256r1);
 
     let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
@@ -135,6 +136,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fec: Fec,
         Fnec: Fnec,
         FpBN254,
+        aSecp256r1,
         Fsecp256r1,
         sto: input.keys,
         rom: rom,
@@ -1568,8 +1570,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.arith) {
             pols.arith[i] = 1n;
-            pols.arithSame12[i] = (l.arithEq == 3 || l.arithEq == 9) ? 1n : 0n;
-            pols.arithUseE[i] = (l.arithEq == 1 || l.arithEq == 7) ? 0n : 1n;
+            pols.arithSame12[i] = (l.arithEq == 3 || l.arithEq == 8) ? 1n : 0n;
+            pols.arithUseE[i] = (l.arithEq != 1) ? 1n : 0n;
             pols.arithEq[i] = BigInt(l.arithEq);
             if (l.arithEq == 1) {
                 const A = safeFea2scalar(Fr, ctx.A);
@@ -1712,7 +1714,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (arithFp.isZero(divisor)) {
                         throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq:${l.arithEq}) ${sourceRef}`);
                     }
-                    s = arithFp.div(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))), divisor);
+                    if (l.arithEq == 8) {
+                        s = arithFp.div(arithFp.add(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))),ctx.aSecp256r1), divisor);
+                    } else {
+                        s = arithFp.div(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))), divisor);
+                    }
                 }
                 else {
                     // Division by zero must be managed by ROM before call ARITH
@@ -3596,14 +3602,16 @@ function eval_yAddPointEc_secp256r1(ctx, tag) {
 }
 
 function eval_xDblPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true)[0];
+    console.log("HOOOLAAAA");
+    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true, ctx.aSecp256r1)[0];
 }
 
 function eval_yDblPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true)[1];
+    console.log("HOOOLAAAA");
+    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true, ctx.aSecp256r1)[1];
 }
 
-function eval_AddPointEc(ctx, Fp, tag, dbl)
+function eval_AddPointEc(ctx, Fp, tag, dbl, a = 0n)
 {
     const x1 = Fp.e(evalCommand(ctx, tag.params[0]));
     const y1 = Fp.e(evalCommand(ctx, tag.params[1]));
@@ -3617,7 +3625,7 @@ function eval_AddPointEc(ctx, Fp, tag, dbl)
         if (Fp.isZero(divisor)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
         }
-        s = Fp.div(Fp.mul(3n, Fp.mul(x1, x1)), divisor);
+        s = Fp.div(Fp.add(Fp.mul(3n, Fp.mul(x1, x1)), a), divisor);
     }
     else {
         const deltaX = Fp.sub(x2, x1)
