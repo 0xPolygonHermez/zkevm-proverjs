@@ -51,6 +51,7 @@ const pSecp256k1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefff
 const Fsecp256k1 = new F1Field(pSecp256k1);
 
 // Field Elliptic Curve secp256r1
+const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
 const pSecp256r1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
 const Fsecp256r1 = new F1Field(pSecp256r1);
 
@@ -260,6 +261,7 @@ function getArithInfo(arithEq) {
                 checkAliasFree: true,
                 checkDifferent: false,
                 prime: pSecp256r1,
+                a: aSecp256r1,
                 fp: Fsecp256r1,
                 name: 'ARITH_SECP256R1_ECADD_SAME',
                 curve: 'SECP256R1',
@@ -365,7 +367,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].airthEq == ARITH_ECADD_SAME || input[i].arithEq == ARITH_SECP256R1_ECADD_SAME) {
+        else if (input[i].airthEq == ARITH_ECADD_SAME) {
             calculateS = true;
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];
@@ -374,6 +376,32 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
             let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2}
                                                   // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
+            q0 = -(pq0/pFec);
+            nDivErrors = errorHandler(
+                (pq0 + pFec*q0) != 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (same point)`,
+                continueOnError,
+                nDivErrors
+            );
+            // offset
+            q0 += 2n ** 258n;
+            nNegErrors = errorHandler(
+                q0 < 0n,
+                `For input ${i}, the q0 with offset is negative (same point). Actual value: ${q0}, previous value: ${q0 - 2n ** 258n}`,
+                continueOnError,
+                nNegErrors
+            );
+        }
+        else if (input[i].arithEq == ARITH_SECP256R1_ECADD_SAME) {
+            calculateS = true;
+            const a = arithInfo.a;
+            if (typeof input[i]["s"] !== 'undefined') {
+                s = input[i]["s"];
+            } else {
+                s = Fec.div(Fec.add(Fec.mul(3n, Fec.mul(x1, x1)), a), Fec.add(y1, y1));
+            }
+            let pq0 = s * 2n * y1 - 3n * x1 * x1 - a; // Worst values are {-3*(2^256-1)**2 - a,2*(2^256-1)**2 - a}
+                                                      // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
             q0 = -(pq0/pFec);
             nDivErrors = errorHandler(
                 (pq0 + pFec*q0) != 0n,
