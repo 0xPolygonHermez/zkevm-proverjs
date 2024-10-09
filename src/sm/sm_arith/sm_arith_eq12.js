@@ -1,7 +1,8 @@
 /*
 * code generated with arith_eq_gen.js
-* equation: s*y1+s*y1-x1*x1-x1*x1-x1*x1+p*q0-p*offset
+* equation: s*y1+s*y1-x1*x1-x1*x1-x1*x1-a+p*q0-p*offset
 * 
+* a=0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc
 * p=0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
 * offset=0x40000000000000000000000000000000000000000000000000000000000000000
 */
@@ -10,29 +11,34 @@ module.exports.calculate = function (p, step, _o)
 {
 	switch(step) {
 		case 0: return (
-			(p.s[0][_o]   * p.y1[0][_o]  + p.s[0][_o]   * p.y1[0][_o]  - p.x1[0][_o]  * p.x1[0][_o]  - p.x1[0][_o]  * p.x1[0][_o]  - p.x1[0][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] ));
+			(p.s[0][_o]   * p.y1[0][_o]  + p.s[0][_o]   * p.y1[0][_o]  - p.x1[0][_o]  * p.x1[0][_o]  - p.x1[0][_o]  * p.x1[0][_o]  - p.x1[0][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
+			 - 0xfffcn );
 
 		case 1: return (
 			(p.s[0][_o]   * p.y1[1][_o]  + p.s[0][_o]   * p.y1[1][_o]  - p.x1[0][_o]  * p.x1[1][_o]  - p.x1[0][_o]  * p.x1[1][_o]  - p.x1[0][_o]  * p.x1[1][_o]  + 0xffffn  * p.q0[1][_o] ) +
-			(p.s[1][_o]   * p.y1[0][_o]  + p.s[1][_o]   * p.y1[0][_o]  - p.x1[1][_o]  * p.x1[0][_o]  - p.x1[1][_o]  * p.x1[0][_o]  - p.x1[1][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] ));
+			(p.s[1][_o]   * p.y1[0][_o]  + p.s[1][_o]   * p.y1[0][_o]  - p.x1[1][_o]  * p.x1[0][_o]  - p.x1[1][_o]  * p.x1[0][_o]  - p.x1[1][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
+			 - 0xffffn );
 
 		case 2: return (
 			(p.s[0][_o]   * p.y1[2][_o]  + p.s[0][_o]   * p.y1[2][_o]  - p.x1[0][_o]  * p.x1[2][_o]  - p.x1[0][_o]  * p.x1[2][_o]  - p.x1[0][_o]  * p.x1[2][_o]  + 0xffffn  * p.q0[2][_o] ) +
 			(p.s[1][_o]   * p.y1[1][_o]  + p.s[1][_o]   * p.y1[1][_o]  - p.x1[1][_o]  * p.x1[1][_o]  - p.x1[1][_o]  * p.x1[1][_o]  - p.x1[1][_o]  * p.x1[1][_o]  + 0xffffn  * p.q0[1][_o] ) +
-			(p.s[2][_o]   * p.y1[0][_o]  + p.s[2][_o]   * p.y1[0][_o]  - p.x1[2][_o]  * p.x1[0][_o]  - p.x1[2][_o]  * p.x1[0][_o]  - p.x1[2][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] ));
+			(p.s[2][_o]   * p.y1[0][_o]  + p.s[2][_o]   * p.y1[0][_o]  - p.x1[2][_o]  * p.x1[0][_o]  - p.x1[2][_o]  * p.x1[0][_o]  - p.x1[2][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
+			 - 0xffffn );
 
 		case 3: return (
 			(p.s[0][_o]   * p.y1[3][_o]  + p.s[0][_o]   * p.y1[3][_o]  - p.x1[0][_o]  * p.x1[3][_o]  - p.x1[0][_o]  * p.x1[3][_o]  - p.x1[0][_o]  * p.x1[3][_o]  + 0xffffn  * p.q0[3][_o] ) +
 			(p.s[1][_o]   * p.y1[2][_o]  + p.s[1][_o]   * p.y1[2][_o]  - p.x1[1][_o]  * p.x1[2][_o]  - p.x1[1][_o]  * p.x1[2][_o]  - p.x1[1][_o]  * p.x1[2][_o]  + 0xffffn  * p.q0[2][_o] ) +
 			(p.s[2][_o]   * p.y1[1][_o]  + p.s[2][_o]   * p.y1[1][_o]  - p.x1[2][_o]  * p.x1[1][_o]  - p.x1[2][_o]  * p.x1[1][_o]  - p.x1[2][_o]  * p.x1[1][_o]  + 0xffffn  * p.q0[1][_o] ) +
-			(p.s[3][_o]   * p.y1[0][_o]  + p.s[3][_o]   * p.y1[0][_o]  - p.x1[3][_o]  * p.x1[0][_o]  - p.x1[3][_o]  * p.x1[0][_o]  - p.x1[3][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] ));
+			(p.s[3][_o]   * p.y1[0][_o]  + p.s[3][_o]   * p.y1[0][_o]  - p.x1[3][_o]  * p.x1[0][_o]  - p.x1[3][_o]  * p.x1[0][_o]  - p.x1[3][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
+			 - 0xffffn );
 
 		case 4: return (
 			(p.s[0][_o]   * p.y1[4][_o]  + p.s[0][_o]   * p.y1[4][_o]  - p.x1[0][_o]  * p.x1[4][_o]  - p.x1[0][_o]  * p.x1[4][_o]  - p.x1[0][_o]  * p.x1[4][_o]  + 0xffffn  * p.q0[4][_o] ) +
 			(p.s[1][_o]   * p.y1[3][_o]  + p.s[1][_o]   * p.y1[3][_o]  - p.x1[1][_o]  * p.x1[3][_o]  - p.x1[1][_o]  * p.x1[3][_o]  - p.x1[1][_o]  * p.x1[3][_o]  + 0xffffn  * p.q0[3][_o] ) +
 			(p.s[2][_o]   * p.y1[2][_o]  + p.s[2][_o]   * p.y1[2][_o]  - p.x1[2][_o]  * p.x1[2][_o]  - p.x1[2][_o]  * p.x1[2][_o]  - p.x1[2][_o]  * p.x1[2][_o]  + 0xffffn  * p.q0[2][_o] ) +
 			(p.s[3][_o]   * p.y1[1][_o]  + p.s[3][_o]   * p.y1[1][_o]  - p.x1[3][_o]  * p.x1[1][_o]  - p.x1[3][_o]  * p.x1[1][_o]  - p.x1[3][_o]  * p.x1[1][_o]  + 0xffffn  * p.q0[1][_o] ) +
-			(p.s[4][_o]   * p.y1[0][_o]  + p.s[4][_o]   * p.y1[0][_o]  - p.x1[4][_o]  * p.x1[0][_o]  - p.x1[4][_o]  * p.x1[0][_o]  - p.x1[4][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] ));
+			(p.s[4][_o]   * p.y1[0][_o]  + p.s[4][_o]   * p.y1[0][_o]  - p.x1[4][_o]  * p.x1[0][_o]  - p.x1[4][_o]  * p.x1[0][_o]  - p.x1[4][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
+			 - 0xffffn );
 
 		case 5: return (
 			(p.s[0][_o]   * p.y1[5][_o]  + p.s[0][_o]   * p.y1[5][_o]  - p.x1[0][_o]  * p.x1[5][_o]  - p.x1[0][_o]  * p.x1[5][_o]  - p.x1[0][_o]  * p.x1[5][_o]  + 0xffffn  * p.q0[5][_o] ) +
@@ -40,7 +46,8 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[2][_o]   * p.y1[3][_o]  + p.s[2][_o]   * p.y1[3][_o]  - p.x1[2][_o]  * p.x1[3][_o]  - p.x1[2][_o]  * p.x1[3][_o]  - p.x1[2][_o]  * p.x1[3][_o]  + 0xffffn  * p.q0[3][_o] ) +
 			(p.s[3][_o]   * p.y1[2][_o]  + p.s[3][_o]   * p.y1[2][_o]  - p.x1[3][_o]  * p.x1[2][_o]  - p.x1[3][_o]  * p.x1[2][_o]  - p.x1[3][_o]  * p.x1[2][_o]  + 0xffffn  * p.q0[2][_o] ) +
 			(p.s[4][_o]   * p.y1[1][_o]  + p.s[4][_o]   * p.y1[1][_o]  - p.x1[4][_o]  * p.x1[1][_o]  - p.x1[4][_o]  * p.x1[1][_o]  - p.x1[4][_o]  * p.x1[1][_o]  + 0xffffn  * p.q0[1][_o] ) +
-			(p.s[5][_o]   * p.y1[0][_o]  + p.s[5][_o]   * p.y1[0][_o]  - p.x1[5][_o]  * p.x1[0][_o]  - p.x1[5][_o]  * p.x1[0][_o]  - p.x1[5][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] ));
+			(p.s[5][_o]   * p.y1[0][_o]  + p.s[5][_o]   * p.y1[0][_o]  - p.x1[5][_o]  * p.x1[0][_o]  - p.x1[5][_o]  * p.x1[0][_o]  - p.x1[5][_o]  * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
+			 - 0xffffn );
 
 		case 6: return (
 			(p.s[0][_o]   * p.y1[6][_o]  + p.s[0][_o]   * p.y1[6][_o]  - p.x1[0][_o]  * p.x1[6][_o]  - p.x1[0][_o]  * p.x1[6][_o]  - p.x1[0][_o]  * p.x1[6][_o]  + 0xffffn  * p.q0[6][_o] ) +
@@ -125,7 +132,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[10][_o]  * p.y1[2][_o]  + p.s[10][_o]  * p.y1[2][_o]  - p.x1[10][_o] * p.x1[2][_o]  - p.x1[10][_o] * p.x1[2][_o]  - p.x1[10][_o] * p.x1[2][_o] ) +
 			(p.s[11][_o]  * p.y1[1][_o]  + p.s[11][_o]  * p.y1[1][_o]  - p.x1[11][_o] * p.x1[1][_o]  - p.x1[11][_o] * p.x1[1][_o]  - p.x1[11][_o] * p.x1[1][_o] ) +
 			(p.s[12][_o]  * p.y1[0][_o]  + p.s[12][_o]  * p.y1[0][_o]  - p.x1[12][_o] * p.x1[0][_o]  - p.x1[12][_o] * p.x1[0][_o]  - p.x1[12][_o] * p.x1[0][_o] )
-			    + p.q0[0][_o] );
+			    + p.q0[0][_o]  - 0x1n    );
 
 		case 13: return (
 			(p.s[0][_o]   * p.y1[13][_o] + p.s[0][_o]   * p.y1[13][_o] - p.x1[0][_o]  * p.x1[13][_o] - p.x1[0][_o]  * p.x1[13][_o] - p.x1[0][_o]  * p.x1[13][_o] + 0xffffn  * p.q0[13][_o]) +
@@ -160,7 +167,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[12][_o]  * p.y1[2][_o]  + p.s[12][_o]  * p.y1[2][_o]  - p.x1[12][_o] * p.x1[2][_o]  - p.x1[12][_o] * p.x1[2][_o]  - p.x1[12][_o] * p.x1[2][_o] ) +
 			(p.s[13][_o]  * p.y1[1][_o]  + p.s[13][_o]  * p.y1[1][_o]  - p.x1[13][_o] * p.x1[1][_o]  - p.x1[13][_o] * p.x1[1][_o]  - p.x1[13][_o] * p.x1[1][_o] ) +
 			(p.s[14][_o]  * p.y1[0][_o]  + p.s[14][_o]  * p.y1[0][_o]  - p.x1[14][_o] * p.x1[0][_o]  - p.x1[14][_o] * p.x1[0][_o]  - p.x1[14][_o] * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
-			    + p.q0[2][_o] );
+			    + p.q0[2][_o]  - 0xffffn );
 
 		case 15: return (
 			(p.s[0][_o]   * p.y1[15][_o] + p.s[0][_o]   * p.y1[15][_o] - p.x1[0][_o]  * p.x1[15][_o] - p.x1[0][_o]  * p.x1[15][_o] - p.x1[0][_o]  * p.x1[15][_o] + 0xffffn  * p.q0[15][_o]) +
@@ -179,7 +186,7 @@ module.exports.calculate = function (p, step, _o)
 			(p.s[13][_o]  * p.y1[2][_o]  + p.s[13][_o]  * p.y1[2][_o]  - p.x1[13][_o] * p.x1[2][_o]  - p.x1[13][_o] * p.x1[2][_o]  - p.x1[13][_o] * p.x1[2][_o] ) +
 			(p.s[14][_o]  * p.y1[1][_o]  + p.s[14][_o]  * p.y1[1][_o]  - p.x1[14][_o] * p.x1[1][_o]  - p.x1[14][_o] * p.x1[1][_o]  - p.x1[14][_o] * p.x1[1][_o]  + 0xffffn  * p.q0[1][_o] ) +
 			(p.s[15][_o]  * p.y1[0][_o]  + p.s[15][_o]  * p.y1[0][_o]  - p.x1[15][_o] * p.x1[0][_o]  - p.x1[15][_o] * p.x1[0][_o]  - p.x1[15][_o] * p.x1[0][_o]  + 0xffffn  * p.q0[0][_o] )
-			    + p.q0[3][_o] );
+			    + p.q0[3][_o]  - 0xffffn );
 
 		case 16: return (
 			(p.s[1][_o]   * p.y1[15][_o] + p.s[1][_o]   * p.y1[15][_o] - p.x1[1][_o]  * p.x1[15][_o] - p.x1[1][_o]  * p.x1[15][_o] - p.x1[1][_o]  * p.x1[15][_o] + 0xffffn  * p.q0[15][_o]) +
