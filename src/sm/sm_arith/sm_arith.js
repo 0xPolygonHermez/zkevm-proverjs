@@ -66,11 +66,11 @@ module.exports.buildConstants = async function(pols) {
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
-    const chunks = buildRangeChunks(PRIMES, pols.RANGE_SEL, N);
+    const chunks = buildRangeChunks(pols.RANGE_SEL, N);
     buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, chunks);
 }
 
-function buildRangeChunks(values, pol, N) {
+function buildRangeChunks(pol, N) {
     let rangeSel = 0n;
     const cycle = 2**16;
     let irow = 0n;
