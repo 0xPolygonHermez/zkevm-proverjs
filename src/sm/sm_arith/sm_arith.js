@@ -17,6 +17,7 @@ const arithEq10 = require('./sm_arith_eq10');
 const arithEq11 = require('./sm_arith_eq11');
 const arithEq12 = require('./sm_arith_eq12');
 const arithEq13 = require('./sm_arith_eq13');
+const arithEq14 = require('./sm_arith_eq14');
 
 const F1Field = require("ffjavascript").F1Field;
 
@@ -35,7 +36,7 @@ const PRIME_SECP256K1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0x
 const PRIME_BN254_CHUNKS = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
                              0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
 
-const PRIME_SECP256R1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0x0000n, 0x0001n, 0x0000n, 0x0000n, 0x0000n, 0x0000n, 
+const PRIME_SECP256R1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0x0000n, 0x0001n, 0x0000n, 0x0000n, 0x0000n, 0x0000n,
                                  0x0000n, 0x0000n, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn ];
 
 const PRIME_SECP256K1_INDEX = 0;
@@ -78,7 +79,7 @@ function buildRangeChunks(values, pol, N) {
             let chunkValue = (value >> (240n - 16n * ichunk)) & 0xFFFFn;
             // two loops, first with value and after that one with value - 1,
             // to be used when flag "less than" is set.
-            for (let i = 0; i < 2; i++) {                    
+            for (let i = 0; i < 2; i++) {
                 // values inside the range use identifier rangeSel
                 for (let j = 0; j <= chunkValue; ++j) {
                     pol[irow] = rangeSel;
@@ -161,8 +162,8 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
 }
 
 function getArithInfo(arithEq) {
-    switch (arithEq) { 
-        case ARITH: 
+    switch (arithEq) {
+        case ARITH:
             return {
                 selEq: [1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n],
                 eqIndexes: [0],
@@ -285,7 +286,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
                         arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
-                        arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate];   
+                        arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate, arithEq14.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -619,7 +620,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
 
             // selEq1 (addition different points) is select need to check that points are diferent
-            if (arithInfo.checkDifferent & step < 16) {
+            if (arithInfo.checkDifferent && step < 16) {
                 if (xAreDifferent === false) {
                     const delta = Fr.sub(pols.x2[step][index], pols.x1[step][index]);
                     pols.xDeltaChunkInverse[index] = Fr.isZero(delta) ? 0n : Fr.inv(delta);
@@ -628,7 +629,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
             }
 
-            // If either checkAliasFree is selected, we need to ensure that x3, y3 is alias free 
+            // If either checkAliasFree is selected, we need to ensure that x3, y3 is alias free
             if (arithInfo.checkAliasFree) {
                 const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
                 const chunkPrime = PRIMES[arithInfo.primeIndex][step16];
