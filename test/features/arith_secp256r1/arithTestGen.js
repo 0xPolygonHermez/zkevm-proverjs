@@ -498,6 +498,7 @@ let values = [
 ];
 
 const pFp = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
+const aFp = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
 const Fp = new F1Field(pFp);
 
 function addPointEc(x1, y1, x2, y2, dbl, reference = '')
@@ -509,7 +510,8 @@ function addPointEc(x1, y1, x2, y2, dbl, reference = '')
         if (Fp.isZero(divisor)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) at ${reference}`);
         }
-        s = Fp.div(Fp.mul(3n, Fp.mul(x1, x1)), divisor);
+        // s = Fp.div(Fp.mul(3n, Fp.mul(x1, x1)), divisor);
+        s = Fp.div(Fp.add(Fp.mul(3n, Fp.mul(x1, x1)),aFp), divisor);
     }
     else {
         const deltaX = Fp.sub(x2, x1)
@@ -530,7 +532,7 @@ const __constants = {
     }
 
 function replace_constants(values) {
-    return values.map(x => typeof x === 'string' ? __constants[x] : x);    
+    return values.map(x => typeof x === 'string' ? __constants[x] : x);
 }
 for (const value of values) {
     const [x1, y1, x2, y2] = replace_constants([value.A, value.B, value.C, value.D]);
