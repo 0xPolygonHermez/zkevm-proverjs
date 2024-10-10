@@ -222,7 +222,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             // console.log(`  found helper ${method.substring(5)} => ${method}`);
         }
     }
-    
+
     ctx.helpers = helpers;
     try {
 
@@ -1059,7 +1059,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.assert[i] = 0n;
         }
-        
+
         pols.assumeFree[i] = l.assumeFree ? 1n : 0n;
 
         if (l.mOp) {
@@ -1688,12 +1688,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic FP2 subtraction does not match: ${sourceRef}`);
                 }
 
-                pols.arithEq[i] = 6n;
                 required.Arith.push({x1:ctx.A, y1:ctx.B,
                                      x2:ctx.C, y2:ctx.D,
                                      x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], airthEq: 6});
             }
-            else if (l.arithEq == 2 || l.arithEq == 3 || l.arithEq == 7 || l.arithEq == 8) {                
+            else if (l.arithEq == 2 || l.arithEq == 3 || l.arithEq == 7 || l.arithEq == 8) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
                 const y1 = safeFea2scalar(Fr, ctx.B);
                 const x2 = safeFea2scalar(Fr, ctx.C);
@@ -1709,7 +1708,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Invalid arithmetic op (aritEq:${l.arithEq}) ${sourceRef}`);
                 }
 
-                let arithFp = (l.arithEq > 3) ? FpSecp256r1 : Fec;
+                let arithFp = (l.arithEq == 7 || l.arithEq == 8) ? FpSecp256r1 : Fec;
                 let s;
                 if (dbl) {
                     // Division by zero must be managed by ROM before call ARITH
