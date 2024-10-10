@@ -324,12 +324,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let x3 = fea2scalar(Fr, input[i]["x3"]);
         let y3 = fea2scalar(Fr, input[i]["y3"]);
 
-        console.log([i, input[i].arithEq]);
         const arithInfo = getArithInfo(input[i].arithEq);
         const Fec = arithInfo.fp;
         const pFec = arithInfo.prime;
 
-        console.log(arithInfo);
 
         // In the following, recall that we can only work with unsiged integers of 256 bits.
         // Therefore, as the quotient needs to be represented in our VM, we need to know
@@ -343,7 +341,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let calculateS = false;
 
         if (input[i].arithEq == ARITH_ECADD_DIFFERENT || input[i].arithEq == ARITH_SECP256R1_ECADD_DIFFERENT) {
-            console.log('ECADD_DIFFERENT', input[i].arithEq, pFec.toString(16));
             calculateS = true;
             let pq0;
             if (Fec.eq(x2, x1) && !continueOnError) {
@@ -649,7 +646,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         for (let step = 0; step < 32; ++step) {
             arithInfo.eqIndexes.forEach((eqIndex) => {
                 let carryIndex = EQ_INDEX_TO_CARRY_INDEX[eqIndex];
-                console.log(carryIndex, eqIndex);
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
