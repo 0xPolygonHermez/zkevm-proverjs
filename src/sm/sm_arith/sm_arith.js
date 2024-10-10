@@ -45,7 +45,7 @@ const PRIME_SECP256R1_INDEX = 2;
 
 const PRIME_CHUNKS = [PRIME_SECP256K1_CHUNKS, PRIME_BN254_CHUNKS, PRIME_SECP256R1_CHUNKS];
 
-const EQ_INDEX_TO_CARRY_INDEX = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 2];
+const EQ_INDEX_TO_CARRY_INDEX = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1, 2];
 
 // Field Elliptic Curve secp256k1
 const pSecp256k1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
@@ -618,7 +618,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.q0[j][index] = BigInt(input[i]["_q0"][j])
                 pols.q1[j][index] = BigInt(input[i]["_q1"][j])
                 pols.q2[j][index] = BigInt(input[i]["_q2"][j])
-                if (j < selEq.length) {
+                if (j < arithInfo.selEq.length) {
                     pols.selEq[j][index] = BigInt(arithInfo.selEq[j]);
                 }
             }
@@ -636,7 +636,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             // If either checkAliasFree is selected, we need to ensure that x3, y3 is alias free
             if (arithInfo.checkAliasFree) {
                 const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
-                const chunkPrime = PRIMES[arithInfo.primeIndex][step16];
+                const chunkPrime = PRIME_CHUNKS[arithInfo.primeIndex][step16];
                 const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
                 valueLtPrime = valueLtPrime || chunkLtPrime;
                 pols.chunkLtPrime[index] = chunkLtPrime ? 1n : 0n;
@@ -649,6 +649,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         for (let step = 0; step < 32; ++step) {
             arithInfo.eqIndexes.forEach((eqIndex) => {
                 let carryIndex = EQ_INDEX_TO_CARRY_INDEX[eqIndex];
+                console.log(carryIndex, eqIndex);
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
