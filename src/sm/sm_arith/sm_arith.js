@@ -66,17 +66,16 @@ module.exports.buildConstants = async function(pols) {
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
-    const chunks = buildRangeChunks(pols.RANGE_SEL, N);
-    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, chunks);
+    buildRangeChunks(pols.RANGE_SEL, N);
 }
 
 function buildRangeChunks(pol, N) {
     let rangeSel = 0n;
     const cycle = 2**16;
     let irow = 0n;
-    for (const value of PRIME_CHUNKS) {
+    for (const prime of PRIME_CHUNKS) {
         for (let ichunk = 0n; ichunk < 16n; ++ichunk) {
-            let chunkValue = (value >> (240n - 16n * ichunk)) & 0xFFFFn;
+            let chunkValue = (prime[ichunk] >> (240n - 16n * BigInt(ichunk))) & 0xFFFFn;
             // two loops, first with value and after that one with value - 1,
             // to be used when flag "less than" is set.
             for (let i = 0; i < 2; i++) {
