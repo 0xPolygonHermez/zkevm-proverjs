@@ -1,3 +1,13 @@
+                    :JMP(init_secp256r1_ecadd_same)
+
+REDUNDANT_ARITH_SECP256R1_ECADD_SAME_CHECK:
+
+        ${xDblPointEc_secp256r1(A,B,C,D)} => E
+        ${yDblPointEc_secp256r1(A,B,C,D)}         :ARITH_SECP256R1_ECADD_SAME
+        :RETURN
+
+init_secp256r1_ecadd_same:
+
 		0xfff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556n => A
 		0xae12777aacfbb620f3be96017f45c560de80f0f6518fe4a03c870c36b075f297n => B
 		0xfff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556n => C
