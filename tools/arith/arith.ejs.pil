@@ -117,7 +117,7 @@ namespace Arith(%N);
     // (A) forbidden, executor must control this situation, because expending an
     // unnecessary inverse.
 
-    (xAreDifferent - selEq[1]) * Global.CLK32[16] = 0;
+    (xAreDifferent - selEq[1] - selEq[7]) * Global.CLK32[16] = 0;
 
     // COST:   2 commit, 2 im, 0 constant, 4 constraints
 

@@ -1,2 +1,3 @@
 INCLUDE "special/infree0.zkasm"
 INCLUDE "special/sp_offset.zkasm"
+INCLUDE "special/assume_free.zkasm"

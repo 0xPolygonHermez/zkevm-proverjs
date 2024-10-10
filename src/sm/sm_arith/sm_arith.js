@@ -73,9 +73,18 @@ function buildRangeChunks(pol, N) {
     let rangeSel = 0n;
     const cycle = 2**16;
     let irow = 0n;
+
+    // 0 - 15 rangeSel used for "stantard" ranges [0,0xFFFF]
+    for (let ichunk = 0n; ichunk < 16n; ++ichunk) {
+        for (let j = 0; j < cycle; ++j) {
+            pol[irow++] = rangeSel;
+        }
+        ++rangeSel;
+    }
+
     for (const prime of PRIME_CHUNKS) {
         for (let ichunk = 0n; ichunk < 16n; ++ichunk) {
-            let chunkValue = (prime[ichunk] >> (240n - 16n * BigInt(ichunk))) & 0xFFFFn;
+            let chunkValue = prime[ichunk];
             // two loops, first with value and after that one with value - 1,
             // to be used when flag "less than" is set.
             for (let i = 0; i < 2; i++) {
@@ -538,7 +547,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].aritEq == ARITH_BN254_SUBFP2) {
+        else if (input[i].arithEq == ARITH_BN254_SUBFP2) {
             let pq1 = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
             q1 = -(pq1/pBN254);
@@ -596,6 +605,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let xAreDifferent = false;
         let valueLtPrime;
         const arithInfo = getArithInfo(input[i].arithEq);
+        console.log(`#${i} ${input[i].arithEq} ${arithInfo.name} .....`);
         for (let step = 0; step < 32; ++step) {
             const index = offset + step;
             const nextIndex = (index + 1) % N;
@@ -640,7 +650,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
         }
         let carry = [0n, 0n, 0n];
-        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
 
         for (let step = 0; step < 32; ++step) {
             arithInfo.eqIndexes.forEach((eqIndex) => {
@@ -648,7 +658,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
-                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
+                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶ (step ${step}).`);
                 }
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
