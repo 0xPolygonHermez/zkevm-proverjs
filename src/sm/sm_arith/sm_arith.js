@@ -53,7 +53,7 @@ const Fsecp256k1 = new F1Field(pSecp256k1);
 
 // Field Elliptic Curve secp256r1
 const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
-const pSecp256r1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
 const Fsecp256r1 = new F1Field(pSecp256r1);
 
 // Field Complex Multiplication
@@ -270,7 +270,7 @@ function getArithInfo(arithEq) {
             break;
 
         default:
-            throw new Error(`Unknown arithEq value ${value}`);
+            throw new Error(`Unknown arithEq value ${arithEq}`);
     }
     return selEq;
 }
@@ -324,9 +324,12 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let x3 = fea2scalar(Fr, input[i]["x3"]);
         let y3 = fea2scalar(Fr, input[i]["y3"]);
 
+        console.log([i, input[i].arithEq]);
         const arithInfo = getArithInfo(input[i].arithEq);
         const Fec = arithInfo.fp;
         const pFec = arithInfo.prime;
+
+        console.log(arithInfo);
 
         // In the following, recall that we can only work with unsiged integers of 256 bits.
         // Therefore, as the quotient needs to be represented in our VM, we need to know
@@ -339,7 +342,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
 
         let calculateS = false;
 
-        if (input[i].airthEq == ARITH_ECADD_DIFFERENT || input[i].arithEq == ARITH_SECP256R1_ECADD_DIFFERENT) {
+        if (input[i].arithEq == ARITH_ECADD_DIFFERENT || input[i].arithEq == ARITH_SECP256R1_ECADD_DIFFERENT) {
+            console.log('ECADD_DIFFERENT', input[i].arithEq, pFec.toString(16));
             calculateS = true;
             let pq0;
             if (Fec.eq(x2, x1) && !continueOnError) {
@@ -368,7 +372,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].airthEq == ARITH_ECADD_SAME) {
+        else if (input[i].arithEq == ARITH_ECADD_SAME) {
             calculateS = true;
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];

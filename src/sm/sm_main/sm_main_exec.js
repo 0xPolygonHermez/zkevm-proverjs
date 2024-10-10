@@ -1596,7 +1596,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 required.Arith.push({ x1: ctx.A, y1: ctx.B,
                                       x2: ctx.C, y2: ctx.D,
-                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7], airthEq: Number(l.arithEq)});
+                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7], arithEq: Number(l.arithEq)});
             }
             else if (l.arithEq == 4) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
@@ -1690,7 +1690,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
                 required.Arith.push({x1:ctx.A, y1:ctx.B,
                                      x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], airthEq: 6});
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], arithEq: 6});
             }
             else if (l.arithEq == 2 || l.arithEq == 3 || l.arithEq == 7 || l.arithEq == 8) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
@@ -1750,7 +1750,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
                 required.Arith.push({x1: ctx.A, y1: ctx.B,
                                      x2: dbl ? ctx.A:ctx.C, y2: dbl? ctx.B:ctx.D,
-                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7], airthEq: l.arithEq});
+                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7], arithEq: l.arithEq});
             }
         } else {
             pols.arith[i] = 0n;

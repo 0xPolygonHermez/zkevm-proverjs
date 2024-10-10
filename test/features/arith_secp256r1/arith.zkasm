@@ -73,6 +73,7 @@ init:
         ${dump(CNT_ARITH)}
 
 INCLUDE "arith_secp256r1_ecadd.zkasm"
+; INCLUDE "arith_secp256r1_ecdbl.zkasm"
 
         ${dumpRegs()}
         ${dump(CNT_ARITH)}

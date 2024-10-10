@@ -143,7 +143,7 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
         pols.binOpcode[i] = rom.program[pIndex].binOpcode ? BigInt(rom.program[pIndex].binOpcode) : 0n;
         pols.jmpAddr[i] = rom.program[pIndex].jmpAddr ? BigInt(rom.program[pIndex].jmpAddr) : 0n;
         pols.elseAddr[i] = rom.program[pIndex].elseAddr ? BigInt(rom.program[pIndex].elseAddr) : 0n;
-        pols.airthEq[i] = rom.program[pIndex].airthEq ? BigInt(rom.program[pIndex].airthEq) : 0n;
+        pols.arithEq[i] = rom.program[pIndex].arithEq ? BigInt(rom.program[pIndex].arithEq) : 0n;
         pols.line[i] = BigInt(pIndex);
     }
 }
