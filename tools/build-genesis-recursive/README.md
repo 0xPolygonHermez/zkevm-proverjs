@@ -1,5 +1,5 @@
 ## Flow to build recursive test
-1. Copy from `zkevm-testvectors-server/tools-inputs/data/calldata/input-recursive-prover.json` to `testvecotr-gen-recursive`
+1. Copy from `zkevm-testvectors/tools-inputs/data/calldata/input-recursive-prover.json` (branch `feature/add-recursive-e2e`) to `testvector-gen-recursive`
 2. `npm run build:input-recursive`
 
 ## Information
