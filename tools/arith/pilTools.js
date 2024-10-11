@@ -367,7 +367,9 @@ function extractPilEquations(pil)
         },
         latch: () => {},
         clksel: () => {},
-        binary: () => {}
+        binary: () => {},
+        join: () => {},
+        expandTerms: () => {}
     });
 
     return equations;
