@@ -76,6 +76,9 @@ function fillRange(pol, irow, rangeSel, from, to, label = '') {
     }
     const fromRowH = irow.toString(16).padStart(8,'0').toUpperCase();
     for (let j = from; j <= to; ++j) {
+        if (irow & 0xFFFF != from) {
+            throw new Error(`Inconsistent value ${from} with byte2 ${irow & 0xFFFF}`);
+        }
         pol[irow++] = rangeSel;
     }
     const fromH = from.toString(16).padStart(4,'0').toUpperCase();
@@ -104,32 +107,15 @@ function buildRangeChunks(pol, N) {
                 let chunkValue = prime[ichunk] - BigInt(i);
                 // values inside the range use identifier rangeSel
                 const label = `${name}[${ichunk}] = 0x${prime[ichunk].toString(16).toUpperCase().padStart(4, '0')}`
-                irow = fillRange(pol, irow, rangeSel, 0n, chunkValue, `${label} (allowed values${i?' for LT':''})`);
+                irow = fillRange(pol, irow, rangeSel++, 0n, chunkValue, `${label} (allowed values${i?' for LT':''})`);
                 // values outside the range use identifier 0, that it's for the full range
-                irow = fillRange(pol, irow, rangeSel++, chunkValue + 1n, limit, '');
+                irow = fillRange(pol, irow, 0n, chunkValue + 1n, limit, '');
             }
         }
     }
     while (irow < N) {
         pol[irow] = 0n;
         ++irow;
-    }
-}
-
-function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
-    let i = 0;
-    let valueIndex = 0;
-    while (i < N) {
-        const from = i;
-        while ((i - from) <= maxValues[valueIndex] && i < N) {
-            pol[i] = BigInt(valueIndex);
-            ++i;
-        }
-        while ((i - from) < cycle && i < N) {
-            pol[i] = paddingValue;
-            ++i;
-        }
-        valueIndex = valueIndex < maxValues.length ? valueIndex + 1: 0;
     }
 }
 
@@ -155,13 +141,6 @@ function buildByte2Bits16(pols, N) {
     }
 }
 
-function buildBitsRange(pols, N, name, bits) {
-    let moduleBase = (2 ** bits);
-    for (let i = 0; i < N; i++) {
-        pols[name][i] = BigInt(i % moduleBase);
-    }
-}
-
 function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
     let value = fromValue;
     let csteps = steps;
@@ -180,7 +159,7 @@ function getArithInfo(arithEq) {
     switch (arithEq) {
         case ARITH:
             return {
-                selEq: [1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n],
+                selEq: [1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n],
                 eqIndexes: [0],
                 primeIndex: false,
                 checkAliasFree: false,
@@ -193,7 +172,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_ECADD_DIFFERENT:
             return {
-                selEq: [0n, 1n, 0n, 1n, 0n, 0n, 0n, 0n, 0n, 0n],
+                selEq: [0n, 1n, 0n, 0n, 0n, 0n, 0n, 0n],
                 eqIndexes: [1,3,4],   // s.diff, x3, y3
                 primeIndex: PRIME_SECP256K1_INDEX,
                 checkAliasFree: true,
@@ -206,7 +185,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_ECADD_SAME:
             return {
-                selEq: [0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n],
+                selEq: [0n, 0n, 1n, 0n, 0n, 0n, 0n, 0n],
                 eqIndexes: [2,3,4],   // s.diff, x3, y3
                 primeIndex: PRIME_SECP256K1_INDEX,
                 checkAliasFree: true,
@@ -219,7 +198,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_BN254_MULFP2:
             return {
-                selEq: [0n, 0n, 0n, 0n, 1n, 0n, 0n, 0n, 0n, 0n],
+                selEq: [0n, 0n, 0n, 1n, 0n, 0n, 0n, 0n],
                 eqIndexes: [5, 6],   // x3, y3
                 primeIndex: PRIME_BN254_INDEX,
                 checkAliasFree: true,
@@ -232,7 +211,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_BN254_ADDFP2:
             return {
-                selEq: [0n, 0n, 0n, 0n, 0n, 1n, 0n, 0n, 0n, 0n],
+                selEq: [0n, 0n, 0n, 0n, 1n, 0n, 0n, 0n],
                 eqIndexes: [7, 8],   // x3, y3
                 primeIndex: PRIME_BN254_INDEX,
                 checkAliasFree: true,
@@ -245,7 +224,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_BN254_SUBFP2:
             return {
-                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 1n, 0n, 0n, 0n],
+                selEq: [0n, 0n, 0n, 0n, 0n, 1n, 0n, 0n],
                 eqIndexes: [9, 10],   // x3, y3
                 primeIndex: PRIME_BN254_INDEX,
                 checkAliasFree: true,
@@ -258,7 +237,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_SECP256R1_ECADD_DIFFERENT:
             return {
-                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 0n, 1n, 0n, 1n],
+                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 1n, 0n],
                 eqIndexes: [11,13,14],   // s.diff, x3, y3
                 primeIndex: PRIME_SECP256R1_INDEX,
                 checkAliasFree: true,
@@ -271,7 +250,7 @@ function getArithInfo(arithEq) {
 
         case ARITH_SECP256R1_ECADD_SAME:
             return {
-                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 1n, 1n],
+                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 0n, 1n],
                 eqIndexes: [12,13,14],   // s.diff, x3, y3
                 primeIndex: PRIME_SECP256R1_INDEX,
                 checkAliasFree: true,

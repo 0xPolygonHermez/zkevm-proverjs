@@ -6,8 +6,8 @@
 
     EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)    lambda - ADD     1         2    ARITH_ECADD_DIFFERENT
     EQ2:   2 * s * y1 - 3 * x1 * x1 + (q0 * p1)     lambda - DBL     2         3    ARITH_ECADD_SAME
-    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)         x3               3       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
-    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)    y3               3       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
+    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)         x3             1+2       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
+    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)    y3             1+2       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
 
     EQ5:   x1 * x2 - y1 * y2 - x3 + (q1 * p2)                        4         4    ARITH_BN254_MULFP2
     EQ6:   y1 * x2 + x1 * y2 - y3 + (q2 * p2)                        4         4    ARITH_BN254_MULFP2
@@ -20,8 +20,8 @@
 
     EQ11:  s * x2 - s * x1 - y2 + y1 + (q0 * p3)    lambda - ADD     7         7    ARITH_SECP256R1_ECADD_DIFFERENT
     EQ12:  2 * s * y1 - 3 * x1 * x1 - a + (q0 * p3) lambda - DBL     8         8    ARITH_SECP256R1_ECADD_SAME
-    EQ13:  s * s - x1 - x2 - x3 + (q1 * p3)         x3               9       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
-    EQ14:  s * x1 - s * x3 - y1 - y3 + (q2 * p3)    y3               9       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
+    EQ13:  s * s - x1 - x2 - x3 + (q1 * p3)         x3             7+8       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
+    EQ14:  s * x1 - s * x3 - y1 - y3 + (q2 * p3)    y3             7+8       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
 
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
@@ -54,6 +54,13 @@ namespace Arith(%N);
     pol commit resultEq;
 
     resultEq * (1 - resultEq) = 0;
+
+    pol sel_secp256k1 = selEq[1] + selEq[2];
+    pol sel_bn254 = selEq[3] + selEq[4] + selEq[5];
+    pol sel_secp256r1 = selEq[6] + selEq[7];
+
+    pol sel_check_diff = selEq[1] + selEq[7];
+    pol sel_check_lt_prime = sel_secp256k1 + sel_bn254 + sel_secp256r1;
 
     // FEATURE:
     //      · Verify that the x1,x2 are different when adding different elliptic curve points (EQ1,EQ3,EQ4).
@@ -119,7 +126,7 @@ namespace Arith(%N);
     // (A) forbidden, executor must control this situation, because expending an
     // unnecessary inverse.
 
-    (xAreDifferent - selEq[1] - selEq[7]) * Global.CLK32[16] = 0;
+    (xAreDifferent - sel_check_diff) * Global.CLK32[16] = 0;
 
     // COST:   2 commit, 2 im, 0 constant, 4 constraints
 
@@ -241,11 +248,11 @@ namespace Arith(%N);
     //    CLK16   0xFFFF  0xFFFF      0  0  1
 
     // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime.
-    // If selEq[3],selEq[4],selEq[5],selEq[6],selEq[9] == 0, it must be 0.
+    // For regular ARITH (selEq[0] = 1), it must be 0.
     pol commit valueLtPrime;
 
     // chunkLtPrime indicates whether the current value chunk is smaller than the prime chunk.
-    // If selEq[3],selEq[4],selEq[5],selEq[6],selEq[9] == 0 or valueLtPrime = 1, it must be 0.
+    // For regular ARITH (selEq[0] = 1) or if valueLtPrime =1, it must be 0.
     pol commit chunkLtPrime;
 
     // binary constraints
@@ -257,8 +264,8 @@ namespace Arith(%N);
     valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
-    // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6],selEq[9] equals 1.
-    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[9]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    // This constraint is applied on SECP256K1(1,2), BN254(3,4,5), SECP256R1(6,7) equals 1.
+    (valueLtPrime' - sel_check_lt_prime) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
     pol constant RANGE_SEL;
 
@@ -267,7 +274,8 @@ namespace Arith(%N);
 	   + 8*Global.CLK32[8] + 9*Global.CLK32[9] + 10*Global.CLK32[10] + 11*Global.CLK32[11] + 12*Global.CLK32[12] + 13*Global.CLK32[13] + 14*Global.CLK32[14] + 15*Global.CLK32[15]
 	   + 0*Global.CLK32[16] + 1*Global.CLK32[17] + 2*Global.CLK32[18] + 3*Global.CLK32[19] + 4*Global.CLK32[20] + 5*Global.CLK32[21] + 6*Global.CLK32[22] + 7*Global.CLK32[23]
 	   + 8*Global.CLK32[24] + 9*Global.CLK32[25] + 10*Global.CLK32[26] + 11*Global.CLK32[27] + 12*Global.CLK32[28] + 13*Global.CLK32[29] + 14*Global.CLK32[30] + 15*Global.CLK32[31]
-        + 16 * selEq[3] + 48 * selEq[4] + 48 * selEq[5] + 48 *selEq[6] + 80 * selEq[9] + 16 * chunkLtPrime) * (1 - valueLtPrime), x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
+        + 16 * sel_secp256k1 + 48 * sel_bn254 + 80 * sel_secp256r1 + 16 * chunkLtPrime) * (1 - valueLtPrime),
+      x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
 	   + x3[7]*Global.CLK32[8] + x3[6]*Global.CLK32[9] + x3[5]*Global.CLK32[10] + x3[4]*Global.CLK32[11] + x3[3]*Global.CLK32[12] + x3[2]*Global.CLK32[13] + x3[1]*Global.CLK32[14] + x3[0]*Global.CLK32[15]
 	   + y3[15]*Global.CLK32[16] + y3[14]*Global.CLK32[17] + y3[13]*Global.CLK32[18] + y3[12]*Global.CLK32[19] + y3[11]*Global.CLK32[20] + y3[10]*Global.CLK32[21] + y3[9]*Global.CLK32[22] + y3[8]*Global.CLK32[23]
 	   + y3[7]*Global.CLK32[24] + y3[6]*Global.CLK32[25] + y3[5]*Global.CLK32[26] + y3[4]*Global.CLK32[27] + y3[3]*Global.CLK32[28] + y3[2]*Global.CLK32[29] + y3[1]*Global.CLK32[30] + y3[0]*Global.CLK32[31]} in {RANGE_SEL, Global.BYTE2};
@@ -5803,9 +5811,9 @@ namespace Arith(%N);
 	   + eq14_16*Global.CLK32[16] + eq14_17*Global.CLK32[17] + eq14_18*Global.CLK32[18] + eq14_19*Global.CLK32[19] + eq14_20*Global.CLK32[20] + eq14_21*Global.CLK32[21] + eq14_22*Global.CLK32[22] + eq14_23*Global.CLK32[23]
 	   + eq14_24*Global.CLK32[24] + eq14_25*Global.CLK32[25] + eq14_26*Global.CLK32[26] + eq14_27*Global.CLK32[27] + eq14_28*Global.CLK32[28] + eq14_29*Global.CLK32[29] + eq14_30*Global.CLK32[30] + eq14_31*Global.CLK32[31];
 
-    pol commit selEq[10];
+    pol commit selEq[8];
 
-    (selEq[0] + selEq[1] + selEq[2] + selEq[3] + selEq[4] + selEq[5] + selEq[6] + selEq[7] + selEq[8] + selEq[9]) * (1 - selEq[0] - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7] - selEq[8] - selEq[9]) = 0;
+    (selEq[0] + selEq[1] + selEq[2] + selEq[3] + selEq[4] + selEq[5] + selEq[6] + selEq[7]) * (1 - selEq[0] - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7]) = 0;
 
     selEq[0]' * (1-Global.CLK32[31]) = selEq[0] * (1-Global.CLK32[31]);
 	selEq[1]' * (1-Global.CLK32[31]) = selEq[1] * (1-Global.CLK32[31]);
@@ -5815,8 +5823,6 @@ namespace Arith(%N);
 	selEq[5]' * (1-Global.CLK32[31]) = selEq[5] * (1-Global.CLK32[31]);
 	selEq[6]' * (1-Global.CLK32[31]) = selEq[6] * (1-Global.CLK32[31]);
 	selEq[7]' * (1-Global.CLK32[31]) = selEq[7] * (1-Global.CLK32[31]);
-	selEq[8]' * (1-Global.CLK32[31]) = selEq[8] * (1-Global.CLK32[31]);
-	selEq[9]' * (1-Global.CLK32[31]) = selEq[9] * (1-Global.CLK32[31]);
 
 
     selEq[0] * (1-selEq[0]) = 0;
@@ -5827,8 +5833,6 @@ namespace Arith(%N);
 	selEq[5] * (1-selEq[5]) = 0;
 	selEq[6] * (1-selEq[6]) = 0;
 	selEq[7] * (1-selEq[7]) = 0;
-	selEq[8] * (1-selEq[8]) = 0;
-	selEq[9] * (1-selEq[9]) = 0;
 
 
     pol commit carry[3];
@@ -5842,17 +5846,20 @@ namespace Arith(%N);
     carry[2] in GL_SIGNED_22BITS;
 
     selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+
     selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
     selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
-    selEq[3] * (eq3 + carry[1]) = selEq[3] * carry[1]' * 2**16;
-    selEq[3] * (eq4 + carry[2]) = selEq[3] * carry[2]' * 2**16;
-    selEq[4] * (eq5 + carry[1]) = selEq[4] * carry[1]' * 2**16;
-    selEq[4] * (eq6 + carry[2]) = selEq[4] * carry[2]' * 2**16;
-    selEq[5] * (eq7 + carry[1]) = selEq[5] * carry[1]' * 2**16;
-    selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;
-    selEq[6] * (eq9 + carry[1]) = selEq[6] * carry[1]' * 2**16;
-    selEq[6] * (eq10 + carry[2]) = selEq[6] * carry[2]' * 2**16;
-    selEq[7] * (eq11 + carry[0]) = selEq[7] * carry[0]' * 2**16;
-    selEq[8] * (eq12 + carry[0]) = selEq[8] * carry[0]' * 2**16;
-    selEq[9] * (eq13 + carry[1]) = selEq[9] * carry[1]' * 2**16;
-    selEq[9] * (eq14 + carry[2]) = selEq[9] * carry[2]' * 2**16;
+    sel_secp256k1 * (eq3 + carry[1]) = sel_secp256k1 * carry[1]' * 2**16;
+    sel_secp256k1 * (eq4 + carry[2]) = sel_secp256k1 * carry[2]' * 2**16;
+
+    selEq[3] * (eq5 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+    selEq[3] * (eq6 + carry[2]) = selEq[3] * carry[2]' * 2**16;
+    selEq[4] * (eq7 + carry[1]) = selEq[4] * carry[1]' * 2**16;
+    selEq[4] * (eq8 + carry[2]) = selEq[4] * carry[2]' * 2**16;
+    selEq[5] * (eq9 + carry[1]) = selEq[5] * carry[1]' * 2**16;
+    selEq[5] * (eq10 + carry[2]) = selEq[5] * carry[2]' * 2**16;
+
+    selEq[6] * (eq11 + carry[0]) = selEq[6] * carry[0]' * 2**16;
+    selEq[7] * (eq12 + carry[0]) = selEq[7] * carry[0]' * 2**16;
+    sel_secp256r1 * (eq13 + carry[1]) = sel_secp256r1 * carry[1]' * 2**16;
+    sel_secp256r1 * (eq14 + carry[2]) = sel_secp256r1 * carry[2]' * 2**16;
