@@ -1085,20 +1085,20 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     fe0:value[0], fe1:value[1], fe2:value[2], fe3:value[3], fe4:value[4], fe5:value[5], fe6:value[6], fe7:value[7]
                 });
                 if (ctx.mem[addr]) {
-                    if ((!Fr.eq(ctx.mem[addr][0],  value[0])) ||
-                        (!Fr.eq(ctx.mem[addr][1],  value[1])) ||
-                        (!Fr.eq(ctx.mem[addr][2],  value[2])) ||
-                        (!Fr.eq(ctx.mem[addr][3],  value[3])) ||
-                        (!Fr.eq(ctx.mem[addr][4],  value[4])) ||
-                        (!Fr.eq(ctx.mem[addr][5],  value[5])) ||
-                        (!Fr.eq(ctx.mem[addr][6],  value[6])) ||
-                        (!Fr.eq(ctx.mem[addr][7],  value[7])))
+                    if ((!Fr.eq(ctx.mem[addr][0], value[0])) ||
+                        (!Fr.eq(ctx.mem[addr][1], value[1])) ||
+                        (!Fr.eq(ctx.mem[addr][2], value[2])) ||
+                        (!Fr.eq(ctx.mem[addr][3], value[3])) ||
+                        (!Fr.eq(ctx.mem[addr][4], value[4])) ||
+                        (!Fr.eq(ctx.mem[addr][5], value[5])) ||
+                        (!Fr.eq(ctx.mem[addr][6], value[6])) ||
+                        (!Fr.eq(ctx.mem[addr][7], value[7])))
                     {
                         const memdata = ctx.mem[addr].slice().reverse().join(',');
                         const hmemdata = ctx.mem[addr].slice().reverse().map((x)=>x.toString(16).padStart(8,'0')).join('');
-                        const opdata = value.join(',');
-                        const hopdata = value.map((x)=>x.toString(16).padStart(8,'0')).join('');
-                        throw new Error(`Memory Read does not match MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}\n${hmemdata}\n${hopdata}`);
+                        const opdata = value.slice().reverse().join(',');
+                        const hopdata = value.slice().reverse().map((x)=>x.toString(16).padStart(8,'0')).join('');
+                        throw new Error(`Memory Read does not match MEM[${addr}]=[${memdata}] ${l.assumeFree ? "FREE" : "OP"}=[${opdata}] ${sourceRef}\n${hmemdata}\n${hopdata}`);
                     }
                 } else {
                     if ((!Fr.isZero(value[0])) ||
@@ -1111,8 +1111,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                         (!Fr.isZero(value[7])))
                     {
                         const memdata = ctx.mem[addr].slice().reverse().join(',');
-                        const opdata = value.join(',');
-                        throw new Error(`Memory Read does not match with non-initialized MEM[${addr}]=[${memdata}] OP=[${opdata}] ${sourceRef}`);
+                        const opdata = value.slice().reverse().join(',');
+                        throw new Error(`Memory Read does not match with non-initialized MEM[${addr}]=[${memdata}] ${l.assumeFree ? "FREE" : "OP"}=[${opdata}] ${sourceRef}`);
                     }
                 }
 
