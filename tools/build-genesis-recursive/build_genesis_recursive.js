@@ -22,6 +22,7 @@ async function main() {
 
     // get from test-vector, input_gen_recursive
     generateData.genesis = testVectorData.genesis;
+    generateData.forkID = testVectorData.forkID;
 
     const tx0 = {
         "type": 11,
