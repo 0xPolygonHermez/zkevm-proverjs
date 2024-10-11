@@ -76,7 +76,7 @@ function fillRange(pol, irow, rangeSel, from, to, label = '') {
     }
     const fromRowH = irow.toString(16).padStart(8,'0').toUpperCase();
     for (let j = from; j <= to; ++j) {
-        if (irow & 0xFFFF != j) {
+        if ((irow & 0xFFFF) != j) {
             throw new Error(`Inconsistent value ${j} with byte2 ${irow & 0xFFFF} on row ${irow} at ${label}`);
         }
         pol[irow++] = rangeSel;
