@@ -59,7 +59,7 @@ namespace Arith(%N);
     pol sel_bn254 = selEq[3] + selEq[4] + selEq[5];
     pol sel_secp256r1 = selEq[6] + selEq[7];
 
-    pol sel_check_diff = selEq[1] + selEq[7];
+    pol sel_check_diff = selEq[1] + selEq[6];
     pol sel_check_lt_prime = sel_secp256k1 + sel_bn254 + sel_secp256r1;
 
     // FEATURE:
