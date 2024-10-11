@@ -44,6 +44,7 @@ const PRIME_BN254_INDEX = 1;
 const PRIME_SECP256R1_INDEX = 2;
 
 const PRIME_CHUNKS = [PRIME_SECP256K1_CHUNKS, PRIME_BN254_CHUNKS, PRIME_SECP256R1_CHUNKS];
+const PRIME_NAMES = ['SECP256K1', 'BN254', 'SECP256R1'];
 
 const EQ_INDEX_TO_CARRY_INDEX = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1, 2];
 
@@ -69,37 +70,43 @@ module.exports.buildConstants = async function(pols) {
     buildRangeChunks(pols.RANGE_SEL, N);
 }
 
+function fillRange(pol, irow, rangeSel, from, to, label = '') {
+    if (from > to) {
+        return irow;
+    }
+    const fromRowH = irow.toString(16).padStart(8,'0').toUpperCase();
+    for (let j = from; j <= to; ++j) {
+        pol[irow++] = rangeSel;
+    }
+    const fromH = from.toString(16).padStart(4,'0').toUpperCase();
+    const toH = to.toString(16).padStart(4,'0').toUpperCase();
+    const toRowH = (irow-1).toString(16).padStart(8,'0').toUpperCase();
+    console.log(`RANGE ${rangeSel.toString().padStart(3)} [0x${fromH},0x${toH}] [${from.toString().padStart(5)},${to.toString().padStart(5)}] #0x${fromRowH}:0x${toRowH} ${label}`);
+    return irow;
+}
 function buildRangeChunks(pol, N) {
     let rangeSel = 0n;
-    const cycle = 2**16;
-    let irow = 0n;
+    const limit = 2n**16n - 1n;
+    let irow = 0;
 
     // 0 - 15 rangeSel used for "stantard" ranges [0,0xFFFF]
-    for (let ichunk = 0n; ichunk < 16n; ++ichunk) {
-        for (let j = 0; j < cycle; ++j) {
-            pol[irow++] = rangeSel;
-        }
-        ++rangeSel;
+    for (let ichunk = 0; ichunk < 16; ++ichunk) {
+        irow = fillRange(pol, irow, rangeSel++, 0, limit, 'FULL');
     }
 
-    for (const prime of PRIME_CHUNKS) {
-        for (let ichunk = 0n; ichunk < 16n; ++ichunk) {
-            let chunkValue = prime[ichunk];
-            // two loops, first with value and after that one with value - 1,
-            // to be used when flag "less than" is set.
-            for (let i = 0; i < 2; i++) {
+    for (let iprime = 0; iprime < PRIME_CHUNKS.length; ++iprime) {
+        const prime = PRIME_CHUNKS[iprime];
+        const name = PRIME_NAMES[iprime];
+        // two loops by prime, first with value and after that one with value - 1,
+        // to be used when flag "chunkLtPrime" is set.
+        for (let i = 0; i < 2; i++) {
+            for (let ichunk = 0; ichunk < 16; ++ichunk) {
+                let chunkValue = prime[ichunk] - BigInt(i);
                 // values inside the range use identifier rangeSel
-                for (let j = 0; j <= chunkValue; ++j) {
-                    pol[irow] = rangeSel;
-                    irow++;
-                }
+                const label = `${name}[${ichunk}] = 0x${prime[ichunk].toString(16).toUpperCase().padStart(4, '0')}`
+                irow = fillRange(pol, irow, rangeSel, 0n, chunkValue, `${label} (allowed values${i?' for LT':''})`);
                 // values outside the range use identifier 0, that it's for the full range
-                for (let j = chunkValue; j < cycle; ++j) {
-                    pol[irow] = 0n;
-                    irow++;
-                }
-                ++rangeSel;
-                --chunkValue;
+                irow = fillRange(pol, irow, rangeSel++, chunkValue + 1n, limit, '');
             }
         }
     }
