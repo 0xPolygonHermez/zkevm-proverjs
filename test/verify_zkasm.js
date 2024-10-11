@@ -47,6 +47,10 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
     }
 
+    if (mainConfig && mainConfig.pilJsonFilename) {
+        fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
+    }
+
     const constPols =  (mainConfig && mainConfig.constants === false) ? false : newConstantPolsArray(pil);
     const cmPols =  newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
@@ -151,6 +155,9 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
                     }
                 }
             }
+        }
+        if (mainConfig && mainConfig.constFilename && constPols !== false) {
+            await constPols.saveToFile(mainConfig.constFilename);
         }
     }
 
@@ -259,17 +266,10 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             }
         }
 
-        if (mainConfig && mainConfig.constFilename && constPols !== false) {
-            await constPols.saveToFile(mainConfig.constFilename);
-        }
-
         if (mainConfig && mainConfig.commitFilename) {
             await cmPols.saveToFile(mainConfig.commitFilename);
         }
 
-        if (mainConfig && mainConfig.pilJsonFilename) {
-            fs.writeFileSync(mainConfig.pilJsonFilename, JSON.stringify(pil));
-        }
     }
 
     if (mainConfig && mainConfig.externalPilVerification) {

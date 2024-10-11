@@ -4,31 +4,31 @@
                                                                  selEq   arithEq
     EQ0:   A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)       0         1    ARITH
 
-    EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)   lambda - ADD      1         2    ARITH_ECADD_DIFFERENT
-    EQ2:   2 * s * y1 - 3 * x1 * x1 + (q0 * p1)    lambda - DBL      2         3    ARITH_ECADD_SAME
-    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)        x3                3       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
-    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)   y3                3       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
+    EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)    lambda - ADD     1         2    ARITH_ECADD_DIFFERENT
+    EQ2:   2 * s * y1 - 3 * x1 * x1 + (q0 * p1)     lambda - DBL     2         3    ARITH_ECADD_SAME
+    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)         x3               3       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
+    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)    y3               3       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
 
     EQ5:   x1 * x2 - y1 * y2 - x3 + (q1 * p2)                        4         4    ARITH_BN254_MULFP2
     EQ6:   y1 * x2 + x1 * y2 - y3 + (q2 * p2)                        4         4    ARITH_BN254_MULFP2
-                                                                                
+
 	EQ7:   x1 + x2 - x3 + (q1 * p2)                                  5         5    ARITH_BN254_ADDFP2
 	EQ8:   y1 + y2 - y3 + (q2 * p2)                                  5         5    ARITH_BN254_ADDFP2
 
 	EQ9:   x1 - x2 - x3 + (q1 * p2)                                  6         6    ARITH_BN254_SUBFP2
 	EQ10:  y1 - y2 - y3 + (q2 * p2)                                  6         6    ARITH_BN254_SUBFP2
 
-    EQ11:  s * x2 - s * x1 - y2 + y1 + (q0 * p3)   lambda - ADD      7         7    ARITH_SECP256R1_ECADD_DIFFERENT
-    EQ12:  2 * s * y1 - 3 * x1 * x1 + (q0 * p3)    lambda - DBL      8         8    ARITH_SECP256R1_ECADD_SAME
-    EQ13:  s * s - x1 - x2 - x3 + (q1 * p3)        x3                9       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
-    EQ14:  s * x1 - s * x3 - y1 - y3 + (q2 * p3)   y3                9       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
+    EQ11:  s * x2 - s * x1 - y2 + y1 + (q0 * p3)    lambda - ADD     7         7    ARITH_SECP256R1_ECADD_DIFFERENT
+    EQ12:  2 * s * y1 - 3 * x1 * x1 - a + (q0 * p3) lambda - DBL     8         8    ARITH_SECP256R1_ECADD_SAME
+    EQ13:  s * s - x1 - x2 - x3 + (q1 * p3)         x3               9       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
+    EQ14:  s * x1 - s * x3 - y1 - y3 + (q2 * p3)    y3               9       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
 
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
     and p2 refers to the base field order of:
         · BN254:      0x3064 4E72 E131 A029 B850 45B6 8181 585D 9781 6A91 6871 CA8D 3C20 8C16 D87C FD47
     and p3 refers to the base field order of:
-        · secp256r1:  0xFFFF FFFF 0000 0001 0000 0000 0000 0000 0000 0000 FFFF FFFF FFFF FFFF FFFF FFFF
+        · Secp256r1:  0xFFFF FFFF 0000 0001 0000 0000 0000 0000 0000 0000 FFFF FFFF FFFF FFFF FFFF FFFF
 
 */
 include "global.pil";
@@ -119,7 +119,7 @@ namespace Arith(%N);
     // (A) forbidden, executor must control this situation, because expending an
     // unnecessary inverse.
 
-    (xAreDifferent - selEq[1]) * Global.CLK32[16] = 0;
+    (xAreDifferent - selEq[1] - selEq[7]) * Global.CLK32[16] = 0;
 
     // COST:   2 commit, 2 im, 0 constant, 4 constraints
 
@@ -157,8 +157,8 @@ namespace Arith(%N);
     //
     //   N/A: means there aren't valid values, if prover said that this chunk is smaller it's false.
     //   NOTE: first block of 2^16 values are all valid, This is convenient because the range selector 0 then indicates any valid 16-bit value
-    //  
-    //   RANGE_SEL   BYTE2    
+    //
+    //   RANGE_SEL   BYTE2
     //          0    0..2**16-1
     //   ----------------------------
     //          1    0..2**16-2
@@ -176,21 +176,23 @@ namespace Arith(%N);
     //
     //   -----------------------------
     //        2*K    0                 <--- this block check a value is 0.
-    //          0    1..2**16-1             
+    //          0    1..2**16-1
     //   -----------------------------
     //          0    1..2**16-1        <--- no values less than 0.
     //   -----------------------------
     //
-    //   BLOCKS (2**16) x 16 clocks/chunks = 2**20 values * 7 blocks = (2**22 - 2**20) < 2**23 
+    //   BLOCKS (2**16) x 16 clocks/chunks = 2**20 values * 7 blocks = (2**22 - 2**20) < 2**23
     //   -------------------------------------------------------------------------------------
-    //   0:     FULL            (0,1,2,3,4,5,6,7,8,...,14,15)
-    //   1:     pSecp256k1      (16 + 0,2,4,6,8,....,28,30)
-    //   2:     LT(pSecp256k1)  (16 + 1,3,5,7,9,....,29,31)         
-    //   3:     BN254           (48 + 0,2,4,6,8,....,28,30)
-    //   4:     LT(BN254)       (48 + 1,3,5,7,9,....,29,31)
-    //   5:     pSecp256r1      (80 + 0,2,4,6,8,....,28,30) 
-    //   6:     LT(pSecp256r1)  (80 + 1,3,5,7,9,....,29,31) 
-    // 
+    //                               (clp)
+    //   0:     FULL            ( 0 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   1:     pSecp256k1      (16 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   2:     LT(pSecp256k1)  (16 + 16 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   3:     BN254           (48 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   4:     LT(BN254)       (48 + 16 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   5:     pSecp256r1      (80 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   6:     LT(pSecp256r1)  (80 + 16 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //
+    //                              clp = chunkLtPrime * 16
     //
     //   valueLtPrime' = valueLtPrime * (1 - CLK0 - CLK16) + chunkLtPrime
     //
@@ -258,14 +260,14 @@ namespace Arith(%N);
     // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6],selEq[9] equals 1.
     (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[9]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
-    pol constant RANGE_SEL; 
+    pol constant RANGE_SEL;
 
     // lookup with RANGE_SEL as first column and BYTE2 as second column
     {(0*Global.CLK32[0] + 1*Global.CLK32[1] + 2*Global.CLK32[2] + 3*Global.CLK32[3] + 4*Global.CLK32[4] + 5*Global.CLK32[5] + 6*Global.CLK32[6] + 7*Global.CLK32[7]
 	   + 8*Global.CLK32[8] + 9*Global.CLK32[9] + 10*Global.CLK32[10] + 11*Global.CLK32[11] + 12*Global.CLK32[12] + 13*Global.CLK32[13] + 14*Global.CLK32[14] + 15*Global.CLK32[15]
 	   + 0*Global.CLK32[16] + 1*Global.CLK32[17] + 2*Global.CLK32[18] + 3*Global.CLK32[19] + 4*Global.CLK32[20] + 5*Global.CLK32[21] + 6*Global.CLK32[22] + 7*Global.CLK32[23]
-	   + 8*Global.CLK32[24] + 9*Global.CLK32[25] + 10*Global.CLK32[26] + 11*Global.CLK32[27] + 12*Global.CLK32[28] + 13*Global.CLK32[29] + 14*Global.CLK32[30] + 15*Global.CLK32[31] 
-        + 16 * selEq[3] + 48 * selEq[4] + 48 * selEq[5] + 48 *selEq[6] + 80 * selEq[9] + chunkLtPrime) * (1 - valueLtPrime), x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
+	   + 8*Global.CLK32[24] + 9*Global.CLK32[25] + 10*Global.CLK32[26] + 11*Global.CLK32[27] + 12*Global.CLK32[28] + 13*Global.CLK32[29] + 14*Global.CLK32[30] + 15*Global.CLK32[31]
+        + 16 * selEq[3] + 48 * selEq[4] + 48 * selEq[5] + 48 *selEq[6] + 80 * selEq[9] + 16 * chunkLtPrime) * (1 - valueLtPrime), x3[15]*Global.CLK32[0] + x3[14]*Global.CLK32[1] + x3[13]*Global.CLK32[2] + x3[12]*Global.CLK32[3] + x3[11]*Global.CLK32[4] + x3[10]*Global.CLK32[5] + x3[9]*Global.CLK32[6] + x3[8]*Global.CLK32[7]
 	   + x3[7]*Global.CLK32[8] + x3[6]*Global.CLK32[9] + x3[5]*Global.CLK32[10] + x3[4]*Global.CLK32[11] + x3[3]*Global.CLK32[12] + x3[2]*Global.CLK32[13] + x3[1]*Global.CLK32[14] + x3[0]*Global.CLK32[15]
 	   + y3[15]*Global.CLK32[16] + y3[14]*Global.CLK32[17] + y3[13]*Global.CLK32[18] + y3[12]*Global.CLK32[19] + y3[11]*Global.CLK32[20] + y3[10]*Global.CLK32[21] + y3[9]*Global.CLK32[22] + y3[8]*Global.CLK32[23]
 	   + y3[7]*Global.CLK32[24] + y3[6]*Global.CLK32[25] + y3[5]*Global.CLK32[26] + y3[4]*Global.CLK32[27] + y3[3]*Global.CLK32[28] + y3[2]*Global.CLK32[29] + y3[1]*Global.CLK32[30] + y3[0]*Global.CLK32[31]} in {RANGE_SEL, Global.BYTE2};
@@ -4676,34 +4678,39 @@ namespace Arith(%N);
 
     /*******
     *
-    * EQ12:  2 * s * y1 - 3 * x1 * x1 + p * (q0 - offset) = 0
+    * EQ12:  2 * s * y1 - 3 * x1 * x1 - a + (q0 * offset) = 0
     *
     *******/
 
     pol eq12_0 =
-		(s[0] * y1[0] + s[0] * y1[0] - x1[0] * x1[0] - x1[0] * x1[0] - x1[0] * x1[0] + 65535 * q0[0]);
+		(s[0] * y1[0] + s[0] * y1[0] - x1[0] * x1[0] - x1[0] * x1[0] - x1[0] * x1[0] + 65535 * q0[0])
+		 - 65532;
 
 	pol eq12_1 =
 		(s[0] * y1[1] + s[0] * y1[1] - x1[0] * x1[1] - x1[0] * x1[1] - x1[0] * x1[1] + 65535 * q0[1]) +
-		(s[1] * y1[0] + s[1] * y1[0] - x1[1] * x1[0] - x1[1] * x1[0] - x1[1] * x1[0] + 65535 * q0[0]);
+		(s[1] * y1[0] + s[1] * y1[0] - x1[1] * x1[0] - x1[1] * x1[0] - x1[1] * x1[0] + 65535 * q0[0])
+		 - 65535;
 
 	pol eq12_2 =
 		(s[0] * y1[2] + s[0] * y1[2] - x1[0] * x1[2] - x1[0] * x1[2] - x1[0] * x1[2] + 65535 * q0[2]) +
 		(s[1] * y1[1] + s[1] * y1[1] - x1[1] * x1[1] - x1[1] * x1[1] - x1[1] * x1[1] + 65535 * q0[1]) +
-		(s[2] * y1[0] + s[2] * y1[0] - x1[2] * x1[0] - x1[2] * x1[0] - x1[2] * x1[0] + 65535 * q0[0]);
+		(s[2] * y1[0] + s[2] * y1[0] - x1[2] * x1[0] - x1[2] * x1[0] - x1[2] * x1[0] + 65535 * q0[0])
+		 - 65535;
 
 	pol eq12_3 =
 		(s[0] * y1[3] + s[0] * y1[3] - x1[0] * x1[3] - x1[0] * x1[3] - x1[0] * x1[3] + 65535 * q0[3]) +
 		(s[1] * y1[2] + s[1] * y1[2] - x1[1] * x1[2] - x1[1] * x1[2] - x1[1] * x1[2] + 65535 * q0[2]) +
 		(s[2] * y1[1] + s[2] * y1[1] - x1[2] * x1[1] - x1[2] * x1[1] - x1[2] * x1[1] + 65535 * q0[1]) +
-		(s[3] * y1[0] + s[3] * y1[0] - x1[3] * x1[0] - x1[3] * x1[0] - x1[3] * x1[0] + 65535 * q0[0]);
+		(s[3] * y1[0] + s[3] * y1[0] - x1[3] * x1[0] - x1[3] * x1[0] - x1[3] * x1[0] + 65535 * q0[0])
+		 - 65535;
 
 	pol eq12_4 =
 		(s[0] * y1[4] + s[0] * y1[4] - x1[0] * x1[4] - x1[0] * x1[4] - x1[0] * x1[4] + 65535 * q0[4]) +
 		(s[1] * y1[3] + s[1] * y1[3] - x1[1] * x1[3] - x1[1] * x1[3] - x1[1] * x1[3] + 65535 * q0[3]) +
 		(s[2] * y1[2] + s[2] * y1[2] - x1[2] * x1[2] - x1[2] * x1[2] - x1[2] * x1[2] + 65535 * q0[2]) +
 		(s[3] * y1[1] + s[3] * y1[1] - x1[3] * x1[1] - x1[3] * x1[1] - x1[3] * x1[1] + 65535 * q0[1]) +
-		(s[4] * y1[0] + s[4] * y1[0] - x1[4] * x1[0] - x1[4] * x1[0] - x1[4] * x1[0] + 65535 * q0[0]);
+		(s[4] * y1[0] + s[4] * y1[0] - x1[4] * x1[0] - x1[4] * x1[0] - x1[4] * x1[0] + 65535 * q0[0])
+		 - 65535;
 
 	pol eq12_5 =
 		(s[0] * y1[5] + s[0] * y1[5] - x1[0] * x1[5] - x1[0] * x1[5] - x1[0] * x1[5] + 65535 * q0[5]) +
@@ -4711,7 +4718,8 @@ namespace Arith(%N);
 		(s[2] * y1[3] + s[2] * y1[3] - x1[2] * x1[3] - x1[2] * x1[3] - x1[2] * x1[3] + 65535 * q0[3]) +
 		(s[3] * y1[2] + s[3] * y1[2] - x1[3] * x1[2] - x1[3] * x1[2] - x1[3] * x1[2] + 65535 * q0[2]) +
 		(s[4] * y1[1] + s[4] * y1[1] - x1[4] * x1[1] - x1[4] * x1[1] - x1[4] * x1[1] + 65535 * q0[1]) +
-		(s[5] * y1[0] + s[5] * y1[0] - x1[5] * x1[0] - x1[5] * x1[0] - x1[5] * x1[0] + 65535 * q0[0]);
+		(s[5] * y1[0] + s[5] * y1[0] - x1[5] * x1[0] - x1[5] * x1[0] - x1[5] * x1[0] + 65535 * q0[0])
+		 - 65535;
 
 	pol eq12_6 =
 		(s[0] * y1[6] + s[0] * y1[6] - x1[0] * x1[6] - x1[0] * x1[6] - x1[0] * x1[6] + 65535 * q0[6]) +
@@ -4796,7 +4804,7 @@ namespace Arith(%N);
 		(s[10] * y1[2] + s[10] * y1[2] - x1[10] * x1[2] - x1[10] * x1[2] - x1[10] * x1[2]) +
 		(s[11] * y1[1] + s[11] * y1[1] - x1[11] * x1[1] - x1[11] * x1[1] - x1[11] * x1[1]) +
 		(s[12] * y1[0] + s[12] * y1[0] - x1[12] * x1[0] - x1[12] * x1[0] - x1[12] * x1[0])
-		    + q0[0];
+		    + q0[0] - 1;
 
 	pol eq12_13 =
 		(s[0] * y1[13] + s[0] * y1[13] - x1[0] * x1[13] - x1[0] * x1[13] - x1[0] * x1[13] + 65535 * q0[13]) +
@@ -4831,7 +4839,7 @@ namespace Arith(%N);
 		(s[12] * y1[2] + s[12] * y1[2] - x1[12] * x1[2] - x1[12] * x1[2] - x1[12] * x1[2]) +
 		(s[13] * y1[1] + s[13] * y1[1] - x1[13] * x1[1] - x1[13] * x1[1] - x1[13] * x1[1]) +
 		(s[14] * y1[0] + s[14] * y1[0] - x1[14] * x1[0] - x1[14] * x1[0] - x1[14] * x1[0] + 65535 * q0[0])
-		    + q0[2];
+		    + q0[2] - 65535;
 
 	pol eq12_15 =
 		(s[0] * y1[15] + s[0] * y1[15] - x1[0] * x1[15] - x1[0] * x1[15] - x1[0] * x1[15] + 65535 * q0[15]) +
@@ -4850,7 +4858,7 @@ namespace Arith(%N);
 		(s[13] * y1[2] + s[13] * y1[2] - x1[13] * x1[2] - x1[13] * x1[2] - x1[13] * x1[2]) +
 		(s[14] * y1[1] + s[14] * y1[1] - x1[14] * x1[1] - x1[14] * x1[1] - x1[14] * x1[1] + 65535 * q0[1]) +
 		(s[15] * y1[0] + s[15] * y1[0] - x1[15] * x1[0] - x1[15] * x1[0] - x1[15] * x1[0] + 65535 * q0[0])
-		    + q0[3];
+		    + q0[3] - 65535;
 
 	pol eq12_16 =
 		(s[1] * y1[15] + s[1] * y1[15] - x1[1] * x1[15] - x1[1] * x1[15] - x1[1] * x1[15] + 65535 * q0[15]) +

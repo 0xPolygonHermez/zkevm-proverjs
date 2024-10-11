@@ -17,6 +17,7 @@ const arithEq10 = require('./sm_arith_eq10');
 const arithEq11 = require('./sm_arith_eq11');
 const arithEq12 = require('./sm_arith_eq12');
 const arithEq13 = require('./sm_arith_eq13');
+const arithEq14 = require('./sm_arith_eq14');
 
 const F1Field = require("ffjavascript").F1Field;
 
@@ -35,7 +36,7 @@ const PRIME_SECP256K1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0x
 const PRIME_BN254_CHUNKS = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
                              0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
 
-const PRIME_SECP256R1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0x0000n, 0x0001n, 0x0000n, 0x0000n, 0x0000n, 0x0000n, 
+const PRIME_SECP256R1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0x0000n, 0x0001n, 0x0000n, 0x0000n, 0x0000n, 0x0000n,
                                  0x0000n, 0x0000n, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn ];
 
 const PRIME_SECP256K1_INDEX = 0;
@@ -43,15 +44,17 @@ const PRIME_BN254_INDEX = 1;
 const PRIME_SECP256R1_INDEX = 2;
 
 const PRIME_CHUNKS = [PRIME_SECP256K1_CHUNKS, PRIME_BN254_CHUNKS, PRIME_SECP256R1_CHUNKS];
+const PRIME_NAMES = ['SECP256K1', 'BN254', 'SECP256R1'];
 
-const EQ_INDEX_TO_CARRY_INDEX = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 2];
+const EQ_INDEX_TO_CARRY_INDEX = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1, 2];
 
 // Field Elliptic Curve secp256k1
 const pSecp256k1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
 const Fsecp256k1 = new F1Field(pSecp256k1);
 
 // Field Elliptic Curve secp256r1
-const pSecp256r1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
+const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
 const Fsecp256r1 = new F1Field(pSecp256r1);
 
 // Field Complex Multiplication
@@ -64,32 +67,46 @@ module.exports.buildConstants = async function(pols) {
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
-    const chunks = buildRangeChunks(PRIMES, pols.RANGE_SEL, N);
-    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, chunks);
+    buildRangeChunks(pols.RANGE_SEL, N);
 }
 
-function buildRangeChunks(values, pol, N) {
+function fillRange(pol, irow, rangeSel, from, to, label = '') {
+    if (from > to) {
+        return irow;
+    }
+    const fromRowH = irow.toString(16).padStart(8,'0').toUpperCase();
+    for (let j = from; j <= to; ++j) {
+        pol[irow++] = rangeSel;
+    }
+    const fromH = from.toString(16).padStart(4,'0').toUpperCase();
+    const toH = to.toString(16).padStart(4,'0').toUpperCase();
+    const toRowH = (irow-1).toString(16).padStart(8,'0').toUpperCase();
+    console.log(`RANGE ${rangeSel.toString().padStart(3)} [0x${fromH},0x${toH}] [${from.toString().padStart(5)},${to.toString().padStart(5)}] #0x${fromRowH}:0x${toRowH} ${label}`);
+    return irow;
+}
+function buildRangeChunks(pol, N) {
     let rangeSel = 0n;
-    const cycle = 2**16;
-    let irow = 0n;
-    for (const value of PRIME_CHUNKS) {
-        for (let ichunk = 0n; ichunk < 16n; ++ichunk) {
-            let chunkValue = (value >> (240n - 16n * ichunk)) & 0xFFFFn;
-            // two loops, first with value and after that one with value - 1,
-            // to be used when flag "less than" is set.
-            for (let i = 0; i < 2; i++) {                    
+    const limit = 2n**16n - 1n;
+    let irow = 0;
+
+    // 0 - 15 rangeSel used for "stantard" ranges [0,0xFFFF]
+    for (let ichunk = 0; ichunk < 16; ++ichunk) {
+        irow = fillRange(pol, irow, rangeSel++, 0, limit, 'FULL');
+    }
+
+    for (let iprime = 0; iprime < PRIME_CHUNKS.length; ++iprime) {
+        const prime = PRIME_CHUNKS[iprime];
+        const name = PRIME_NAMES[iprime];
+        // two loops by prime, first with value and after that one with value - 1,
+        // to be used when flag "chunkLtPrime" is set.
+        for (let i = 0; i < 2; i++) {
+            for (let ichunk = 0; ichunk < 16; ++ichunk) {
+                let chunkValue = prime[ichunk] - BigInt(i);
                 // values inside the range use identifier rangeSel
-                for (let j = 0; j <= chunkValue; ++j) {
-                    pol[irow] = rangeSel;
-                    irow++;
-                }
+                const label = `${name}[${ichunk}] = 0x${prime[ichunk].toString(16).toUpperCase().padStart(4, '0')}`
+                irow = fillRange(pol, irow, rangeSel, 0n, chunkValue, `${label} (allowed values${i?' for LT':''})`);
                 // values outside the range use identifier 0, that it's for the full range
-                for (let j = chunkValue; j < cycle; ++j) {
-                    pol[irow] = 0n;
-                    irow++;
-                }
-                ++rangeSel;
-                --chunkValue;
+                irow = fillRange(pol, irow, rangeSel++, chunkValue + 1n, limit, '');
             }
         }
     }
@@ -160,8 +177,8 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
 }
 
 function getArithInfo(arithEq) {
-    switch (arithEq) { 
-        case ARITH: 
+    switch (arithEq) {
+        case ARITH:
             return {
                 selEq: [1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n],
                 eqIndexes: [0],
@@ -260,6 +277,7 @@ function getArithInfo(arithEq) {
                 checkAliasFree: true,
                 checkDifferent: false,
                 prime: pSecp256r1,
+                a: aSecp256r1,
                 fp: Fsecp256r1,
                 name: 'ARITH_SECP256R1_ECADD_SAME',
                 curve: 'SECP256R1',
@@ -267,7 +285,7 @@ function getArithInfo(arithEq) {
             break;
 
         default:
-            throw new Error(`Unknown arithEq value ${value}`);
+            throw new Error(`Unknown arithEq value ${arithEq}`);
     }
     return selEq;
 }
@@ -283,7 +301,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
                         arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
-                        arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate];   
+                        arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate, arithEq14.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -325,6 +343,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         const Fec = arithInfo.fp;
         const pFec = arithInfo.prime;
 
+
         // In the following, recall that we can only work with unsiged integers of 256 bits.
         // Therefore, as the quotient needs to be represented in our VM, we need to know
         // the worst negative case and add an offset so that the resulting name is never negative.
@@ -336,7 +355,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
 
         let calculateS = false;
 
-        if (input[i].airthEq == ARITH_ECADD_DIFFERENT || input[i].arithEq == ARITH_SECP256R1_ECADD_DIFFERENT) {
+        if (input[i].arithEq == ARITH_ECADD_DIFFERENT || input[i].arithEq == ARITH_SECP256R1_ECADD_DIFFERENT) {
             calculateS = true;
             let pq0;
             if (Fec.eq(x2, x1) && !continueOnError) {
@@ -365,7 +384,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].airthEq == ARITH_ECADD_SAME || input[i].arithEq == ARITH_SECP256R1_ECADD_SAME) {
+        else if (input[i].arithEq == ARITH_ECADD_SAME) {
             calculateS = true;
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];
@@ -374,6 +393,32 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
             let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2}
                                                   // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
+            q0 = -(pq0/pFec);
+            nDivErrors = errorHandler(
+                (pq0 + pFec*q0) != 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (same point)`,
+                continueOnError,
+                nDivErrors
+            );
+            // offset
+            q0 += 2n ** 258n;
+            nNegErrors = errorHandler(
+                q0 < 0n,
+                `For input ${i}, the q0 with offset is negative (same point). Actual value: ${q0}, previous value: ${q0 - 2n ** 258n}`,
+                continueOnError,
+                nNegErrors
+            );
+        }
+        else if (input[i].arithEq == ARITH_SECP256R1_ECADD_SAME) {
+            calculateS = true;
+            const a = arithInfo.a;
+            if (typeof input[i]["s"] !== 'undefined') {
+                s = input[i]["s"];
+            } else {
+                s = Fec.div(Fec.add(Fec.mul(3n, Fec.mul(x1, x1)), a), Fec.add(y1, y1));
+            }
+            let pq0 = s * 2n * y1 - 3n * x1 * x1 - a; // Worst values are {-3*(2^256-1)**2 - a,2*(2^256-1)**2 - a}
+                                                      // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
             q0 = -(pq0/pFec);
             nDivErrors = errorHandler(
                 (pq0 + pFec*q0) != 0n,
@@ -509,7 +554,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].aritEq == ARITH_BN254_SUBFP2) {
+        else if (input[i].arithEq == ARITH_BN254_SUBFP2) {
             let pq1 = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
             q1 = -(pq1/pBN254);
@@ -585,13 +630,13 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.q0[j][index] = BigInt(input[i]["_q0"][j])
                 pols.q1[j][index] = BigInt(input[i]["_q1"][j])
                 pols.q2[j][index] = BigInt(input[i]["_q2"][j])
-                if (j < selEq.length) {
+                if (j < arithInfo.selEq.length) {
                     pols.selEq[j][index] = BigInt(arithInfo.selEq[j]);
                 }
             }
 
             // selEq1 (addition different points) is select need to check that points are diferent
-            if (arithInfo.checkDifferent & step < 16) {
+            if (arithInfo.checkDifferent && step < 16) {
                 if (xAreDifferent === false) {
                     const delta = Fr.sub(pols.x2[step][index], pols.x1[step][index]);
                     pols.xDeltaChunkInverse[index] = Fr.isZero(delta) ? 0n : Fr.inv(delta);
@@ -600,10 +645,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
             }
 
-            // If either checkAliasFree is selected, we need to ensure that x3, y3 is alias free 
+            // If either checkAliasFree is selected, we need to ensure that x3, y3 is alias free
             if (arithInfo.checkAliasFree) {
                 const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
-                const chunkPrime = PRIMES[arithInfo.primeIndex][step16];
+                const chunkPrime = PRIME_CHUNKS[arithInfo.primeIndex][step16];
                 const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
                 valueLtPrime = valueLtPrime || chunkLtPrime;
                 pols.chunkLtPrime[index] = chunkLtPrime ? 1n : 0n;
@@ -611,7 +656,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             }
         }
         let carry = [0n, 0n, 0n];
-        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
 
         for (let step = 0; step < 32; ++step) {
             arithInfo.eqIndexes.forEach((eqIndex) => {
@@ -619,7 +664,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
-                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
+                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶ (step ${step}).`);
                 }
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });

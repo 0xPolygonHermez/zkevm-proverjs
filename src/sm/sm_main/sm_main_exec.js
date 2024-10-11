@@ -98,8 +98,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
     const Fr = poseidon.F;
     const Fec = new F1Field(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn);
     const Fnec = new F1Field(0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n);
+    const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
     const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
-    const Fsecp256r1 = new F1Field(pSecp256r1);
+    const nSecp256r1 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
+    const FpSecp256r1 = new F1Field(pSecp256r1);
+    const FnSecp256r1 = new F1Field(nSecp256r1);
 
     let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
     const FpBN254 = new F1Field(pBN254);
@@ -135,7 +138,9 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         Fec: Fec,
         Fnec: Fnec,
         FpBN254,
-        Fsecp256r1,
+        aSecp256r1,
+        FpSecp256r1,
+        FnSecp256r1,
         sto: input.keys,
         rom: rom,
         outLogs: {},
@@ -217,7 +222,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
             // console.log(`  found helper ${method.substring(5)} => ${method}`);
         }
     }
-    
+
     ctx.helpers = helpers;
     try {
 
@@ -1054,7 +1059,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
         } else {
             pols.assert[i] = 0n;
         }
-        
+
         pols.assumeFree[i] = l.assumeFree ? 1n : 0n;
 
         if (l.mOp) {
@@ -1568,8 +1573,8 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
         if (l.arith) {
             pols.arith[i] = 1n;
-            pols.arithSame12[i] = (l.arithEq == 3 || l.arithEq == 9) ? 1n : 0n;
-            pols.arithUseE[i] = (l.arithEq == 1 || l.arithEq == 7) ? 0n : 1n;
+            pols.arithSame12[i] = (l.arithEq == 3 || l.arithEq == 8) ? 1n : 0n;
+            pols.arithUseE[i] = (l.arithEq != 1) ? 1n : 0n;
             pols.arithEq[i] = BigInt(l.arithEq);
             if (l.arithEq == 1) {
                 const A = safeFea2scalar(Fr, ctx.A);
@@ -1591,7 +1596,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                 }
                 required.Arith.push({ x1: ctx.A, y1: ctx.B,
                                       x2: ctx.C, y2: ctx.D,
-                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7], airthEq: Number(l.arithEq)});
+                                      x3: Fr8zero, y3: [op0, op1, op2, op3, op4, op5, op6, op7], arithEq: Number(l.arithEq)});
             }
             else if (l.arithEq == 4) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
@@ -1683,12 +1688,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Arithmetic FP2 subtraction does not match: ${sourceRef}`);
                 }
 
-                pols.arithEq[i] = 6n;
                 required.Arith.push({x1:ctx.A, y1:ctx.B,
                                      x2:ctx.C, y2:ctx.D,
-                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], airthEq: 6});
+                                     x3:ctx.E, y3:[op0, op1, op2, op3, op4, op5, op6, op7], arithEq: 6});
             }
-            else if (l.arithEq == 2 || l.arithEq == 3 || l.arithEq == 7 || l.arithEq == 8) {                
+            else if (l.arithEq == 2 || l.arithEq == 3 || l.arithEq == 7 || l.arithEq == 8) {
                 const x1 = safeFea2scalar(Fr, ctx.A);
                 const y1 = safeFea2scalar(Fr, ctx.B);
                 const x2 = safeFea2scalar(Fr, ctx.C);
@@ -1704,7 +1708,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     throw new Error(`Invalid arithmetic op (aritEq:${l.arithEq}) ${sourceRef}`);
                 }
 
-                let arithFp = (l.arithEq > 3) ? Fsecp256r1 : Fec;
+                let arithFp = (l.arithEq == 7 || l.arithEq == 8) ? FpSecp256r1 : Fec;
                 let s;
                 if (dbl) {
                     // Division by zero must be managed by ROM before call ARITH
@@ -1712,7 +1716,11 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
                     if (arithFp.isZero(divisor)) {
                         throw new Error(`Invalid arithmetic op, DivisionByZero (aritEq:${l.arithEq}) ${sourceRef}`);
                     }
-                    s = arithFp.div(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))), divisor);
+                    if (l.arithEq == 8) {
+                        s = arithFp.div(arithFp.add(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))),ctx.aSecp256r1), divisor);
+                    } else {
+                        s = arithFp.div(arithFp.mul(3n, arithFp.mul(arithFp.e(x1), arithFp.e(x1))), divisor);
+                    }
                 }
                 else {
                     // Division by zero must be managed by ROM before call ARITH
@@ -1742,7 +1750,7 @@ module.exports = async function execute(pols, input, rom, config = {}, metadata 
 
                 required.Arith.push({x1: ctx.A, y1: ctx.B,
                                      x2: dbl ? ctx.A:ctx.C, y2: dbl? ctx.B:ctx.D,
-                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7], airthEq: l.arithEq});
+                                     x3: ctx.E, y3: [op0, op1, op2, op3, op4, op5, op6, op7], arithEq: l.arithEq});
             }
         } else {
             pols.arith[i] = 0n;
@@ -3178,6 +3186,8 @@ function eval_functionCall(ctx, tag) {
         return eval_inverseFpEc(ctx, tag);
     } else if (tag.funcName == "inverseFnEc") {
         return eval_inverseFnEc(ctx, tag);
+    } else if (tag.funcName == "inverseFnEc_secp256r1") {
+        return eval_inverseFnEc_secp256r1(ctx, tag);
     } else if (tag.funcName == "sqrtFpEcParity") {
         return eval_sqrtFpEcParity(ctx, tag);
     } else if (tag.funcName == "dumpRegs") {
@@ -3558,6 +3568,14 @@ function eval_inverseFnEc(ctx, tag) {
     return ctx.Fnec.inv(a);
 }
 
+function eval_inverseFnEc_secp256r1(ctx, tag) {
+    const a = ctx.FnSecp256r1.e(evalCommand(ctx, tag.params[0]));
+    if (ctx.FnSecp256r1.isZero(a)) {
+        throw new Error(`inverseFpEc: Division by zero ${ctx.sourceRef}`);
+    }
+    return ctx.FnSecp256r1.inv(a);
+}
+
 function eval_sqrtFpEcParity(ctx, tag) {
     const a = evalCommand(ctx, tag.params[0]);
     const parity = evalCommand(ctx, tag.params[1]);
@@ -3588,22 +3606,22 @@ function eval_yDblPointEc(ctx, tag) {
 }
 
 function eval_xAddPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, false)[0];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, false)[0];
 }
 
 function eval_yAddPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, false)[1];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, false)[1];
 }
 
 function eval_xDblPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true)[0];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, true, ctx.aSecp256r1)[0];
 }
 
 function eval_yDblPointEc_secp256r1(ctx, tag) {
-    return eval_AddPointEc(ctx, ctx.Fsecp256r1, tag, true)[1];
+    return eval_AddPointEc(ctx, ctx.FpSecp256r1, tag, true, ctx.aSecp256r1)[1];
 }
 
-function eval_AddPointEc(ctx, Fp, tag, dbl)
+function eval_AddPointEc(ctx, Fp, tag, dbl, a = 0n)
 {
     const x1 = Fp.e(evalCommand(ctx, tag.params[0]));
     const y1 = Fp.e(evalCommand(ctx, tag.params[1]));
@@ -3617,7 +3635,7 @@ function eval_AddPointEc(ctx, Fp, tag, dbl)
         if (Fp.isZero(divisor)) {
             throw new Error(`Invalid AddPointEc (divisionByZero) ${ctx.sourceRef}`);
         }
-        s = Fp.div(Fp.mul(3n, Fp.mul(x1, x1)), divisor);
+        s = Fp.div(Fp.add(Fp.mul(3n, Fp.mul(x1, x1)), a), divisor);
     }
     else {
         const deltaX = Fp.sub(x2, x1)
