@@ -460,8 +460,11 @@ namespace Arith(%N);
 
     pol commit selEq[10];
 
-    <%- latch(['selEq[0..6]'],'Global.CLK32[31]') %>
-    <%- binary(['selEq[0..6]']) %>
+    (<%- join('selEq[0..9]',' + ') %>) * (1 - <%- join('selEq[0..9]',' - ') %>) = 0;
+
+    <%- latch(['selEq[0..9]'],'Global.CLK32[31]') %>
+
+    <%- binary(['selEq[0..9]']) %>
 
     pol commit carry[3];
 

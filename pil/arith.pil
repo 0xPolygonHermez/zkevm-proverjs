@@ -5805,6 +5805,8 @@ namespace Arith(%N);
 
     pol commit selEq[10];
 
+    (selEq[0] + selEq[1] + selEq[2] + selEq[3] + selEq[4] + selEq[5] + selEq[6] + selEq[7] + selEq[8] + selEq[9]) * (1 - selEq[0] - selEq[1] - selEq[2] - selEq[3] - selEq[4] - selEq[5] - selEq[6] - selEq[7] - selEq[8] - selEq[9]) = 0;
+
     selEq[0]' * (1-Global.CLK32[31]) = selEq[0] * (1-Global.CLK32[31]);
 	selEq[1]' * (1-Global.CLK32[31]) = selEq[1] * (1-Global.CLK32[31]);
 	selEq[2]' * (1-Global.CLK32[31]) = selEq[2] * (1-Global.CLK32[31]);
@@ -5812,6 +5814,10 @@ namespace Arith(%N);
 	selEq[4]' * (1-Global.CLK32[31]) = selEq[4] * (1-Global.CLK32[31]);
 	selEq[5]' * (1-Global.CLK32[31]) = selEq[5] * (1-Global.CLK32[31]);
 	selEq[6]' * (1-Global.CLK32[31]) = selEq[6] * (1-Global.CLK32[31]);
+	selEq[7]' * (1-Global.CLK32[31]) = selEq[7] * (1-Global.CLK32[31]);
+	selEq[8]' * (1-Global.CLK32[31]) = selEq[8] * (1-Global.CLK32[31]);
+	selEq[9]' * (1-Global.CLK32[31]) = selEq[9] * (1-Global.CLK32[31]);
+
 
     selEq[0] * (1-selEq[0]) = 0;
 	selEq[1] * (1-selEq[1]) = 0;
@@ -5820,6 +5826,9 @@ namespace Arith(%N);
 	selEq[4] * (1-selEq[4]) = 0;
 	selEq[5] * (1-selEq[5]) = 0;
 	selEq[6] * (1-selEq[6]) = 0;
+	selEq[7] * (1-selEq[7]) = 0;
+	selEq[8] * (1-selEq[8]) = 0;
+	selEq[9] * (1-selEq[9]) = 0;
 
 
     pol commit carry[3];
