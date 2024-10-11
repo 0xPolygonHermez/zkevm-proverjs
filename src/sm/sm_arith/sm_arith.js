@@ -612,7 +612,6 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let xAreDifferent = false;
         let valueLtPrime;
         const arithInfo = getArithInfo(input[i].arithEq);
-        console.log(`#${i} ${input[i].arithEq} ${arithInfo.name} .....`);
         for (let step = 0; step < 32; ++step) {
             const index = offset + step;
             const nextIndex = (index + 1) % N;
