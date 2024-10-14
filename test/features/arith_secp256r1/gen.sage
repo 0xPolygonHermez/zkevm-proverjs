@@ -17,12 +17,12 @@ f_same = open(Path.joinpath(source_dir, diagnostic_dir, "secp256r1_ecadd_same_op
 
 def output_operation(f, p1, p2, operation_type):
     pr = p1 + p2
-    f.write("\t" + format(int(p1[0]),"#066x") + " => A\n")
-    f.write("\t" + format(int(p1[1]),"#066x") + " => B\n")
-    f.write("\t" + format(int(p2[0]),"#066x") + " => C\n")
-    f.write("\t" + format(int(p2[1]),"#066x") + " => D\n")
-    f.write("\t" + format(int(pr[0]),"#066x") + " => E\n")
-    f.write("\t" + format(int(pr[1]),"#066x") + " : ARITH_SECP256R1_ECADD_" + operation_type + "\n")
+    f.write("\t" + format(int(p1[0]),"#066x") + "n => A\n")
+    f.write("\t" + format(int(p1[1]),"#066x") + "n => B\n")
+    f.write("\t" + format(int(p2[0]),"#066x") + "n => C\n")
+    f.write("\t" + format(int(p2[1]),"#066x") + "n => D\n")
+    f.write("\t" + format(int(pr[0]),"#066x") + "n => E\n")
+    f.write("\t" + format(int(pr[1]),"#066x") + "n : ARITH_SECP256R1_ECADD_" + operation_type + "\n")
     f.write("\n\t\t\t:CALL(REDUNDANT_ARITH_SECP256R1_ECADD_" + operation_type + "_CHECK)\n\n\n")
 
 special_points = (
