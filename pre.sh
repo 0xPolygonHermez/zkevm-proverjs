@@ -37,6 +37,24 @@ checkAllMandatoryOptArgs
 
 [ ! -z $npm_config_help ] && usage && exit 1
 
+# Check if circom is installed and its version is lower or equal to 2.1.8
+if command -v circom >/dev/null 2>&1; then
+    CIRCOM_VERSION=$(circom --version | awk '{print $NF}')
+    REQUIRED_VERSION="2.1.8"
+
+    echo "Detected circom version: $CIRCOM_VERSION"
+    # Compare version numbers
+    if [ "$(printf '%s\n' "$CIRCOM_VERSION" "$REQUIRED_VERSION" | sort -V | head -n1)" = "$CIRCOM_VERSION" ]; then
+        echo "Using circom version $CIRCOM_VERSION."
+    else
+        echo "ERROR: Using circom version $CIRCOM_VERSION, but required version is <= $REQUIRED_VERSION."
+        exit 1
+    fi
+else
+    echo "ERROR: circom is not installed."
+    exit 1
+fi
+
 BDIR="${npm_config_build:=build/proof}"
 mkdir -p $BDIR
 # NODE="--trace-gc --trace-gc-ignore-scavenger --max-semi-space-size=1024 --max-old-space-size=524288"
