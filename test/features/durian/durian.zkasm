@@ -44,8 +44,8 @@ start:
         -1          :MSTORE(lastHashPId)
         -1          :MSTORE(lastHashSId)
 
-INCLUDE "constants.zkasm"
-INCLUDE "lvalues.zkasm"
+INCLUDE "../../diagnostic/constants.zkasm"
+INCLUDE "../../diagnostic/lvalues.zkasm"
 
 INCLUDE "../../../node_modules/@0xpolygonhermez/zkevm-rom/main/constants.zkasm"
 
@@ -105,9 +105,9 @@ REDUNDANT_ARITH_SECP256R1_ECADD_DIFFERENT_CHECK:
 
 REDUNDANT_ARITH_SECP256R1_ECADD_SAME_CHECK:
 
-        ${xDblPointEc_secp256r1(A,B,C,D)} => E
-        ${yDblPointEc_secp256r1(A,B,C,D)}   :ARITH_SECP256R1_ECADD_SAME
-                                            :RETURN
+        ${xDblPointEc_secp256r1(A,B)} => E
+        ${yDblPointEc_secp256r1(A,B)}   :ARITH_SECP256R1_ECADD_SAME
+                                        :RETURN
 
 assume_free_start:
         ;;
@@ -383,6 +383,37 @@ assume_free_start:
         0x6916fac45e568b6b9e2e2ecd611b282e5fcc40a3067d601057f879ce5a8a73ccn => E
         0xffffffff00000001000000000000000000000000fffffffffffffffffffffffen : ARITH_SECP256R1_ECADD_DIFFERENT
         :CALL(REDUNDANT_ARITH_SECP256R1_ECADD_DIFFERENT_CHECK)
+
+
+        0x9b09703235204c5107fbfde0699bb9d99335a5d71fbcbf0d8ad05dfa7e95f809n => A
+        0x739c8f31333aeed1fbcbd4312dd4a735ee7409071995b2b1457b21f343454d64n => B
+        0x9b09703235204c5107fbfde0699bb9d99335a5d71fbcbf0d8ad05dfa7e95f809n => C
+        0x739c8f31333aeed1fbcbd4312dd4a735ee7409071995b2b1457b21f343454d64n => D
+        0xd340cf8faf00eb6dc57efe3434673941a3016a6cf070d0b8562fbd75a1931411n => E
+        0xe41118cc49d7457b08dc63c505cb329d3623aa8d443050cd74606f348755df5cn : ARITH_SECP256R1_ECADD_SAME
+
+    	:CALL(REDUNDANT_ARITH_SECP256R1_ECADD_SAME_CHECK)
+
+
+        0xfc6c194044b07efdd0abd9a9ae12f5506afa47381211f5b09ee0a371666afd6dn => A
+        0x826d12e63bc33ab066a1991d0c2e08c5512a6312a9461815c49b3983f88ce45en => B
+        0xfc6c194044b07efdd0abd9a9ae12f5506afa47381211f5b09ee0a371666afd6dn => C
+        0x826d12e63bc33ab066a1991d0c2e08c5512a6312a9461815c49b3983f88ce45en => D
+        0x3ace81f19275390017eb1d767cf0e284e26563a7073c661a8033309370ce8bf8n => E
+        0x5a01eb286257703d7babc3b8f3b6e206b99735fb03eabcdb19c328da124775dbn : ARITH_SECP256R1_ECADD_SAME
+
+		:CALL(REDUNDANT_ARITH_SECP256R1_ECADD_SAME_CHECK)
+
+
+        0xf374f93d33e90700da7b6e4ce21d222d3522ef70c031d03156146275d5264befn => A
+        0x0c753a0e4d05ead857678cefd1c90fbdbbf3ff45ebb8d10f9120e7656f52b7adn => B
+        0xf374f93d33e90700da7b6e4ce21d222d3522ef70c031d03156146275d5264befn => C
+        0x0c753a0e4d05ead857678cefd1c90fbdbbf3ff45ebb8d10f9120e7656f52b7adn => D
+        0x7f80e2e3b4eb2c082b06e283e74ea8b895b4f6f7db9a64c55ac274b0b344ddfcn => E
+        0xa08aec378d16c8ea6c611780af280e66cb9332f4fb39b6888efedc1e3783cd52n : ARITH_SECP256R1_ECADD_SAME
+
+    	:CALL(REDUNDANT_ARITH_SECP256R1_ECADD_SAME_CHECK)
+
 
         :JMP(end)
 
