@@ -20,3 +20,4 @@ tracer-options.json
 main.pil.json
 tools/full-tracer-tests/ft-traces/
 batch-l2-data.json
+*.sage.py
