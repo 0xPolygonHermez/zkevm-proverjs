@@ -1,0 +1,104 @@
+VAR GLOBAL v0[8]
+VAR GLOBAL v1[12]
+VAR GLOBAL padding[7]
+VAR GLOBAL g7_8[8]
+VAR GLOBAL g15
+VAR CTX lpadding[10]
+VAR CTX l10_80[80]
+VAR CTX l90
+CONST %CS1 = 10
+CONST %CS2 = 2
+CONST %CS3 = 3
+CONSTL %CL1 = 100
+
+VAR GLOBAL assumef_var1
+VAR GLOBAL assumef_var2
+VAR GLOBAL assumef_var3
+VAR GLOBAL assumef_var4
+VAR GLOBAL assumef_var5
+
+        :JMP(assume_free_start)
+        ; This is used for calls
+        assume_free_label_call:
+        1 => A
+        1 => A
+        1 => A
+        :RETURN
+
+        assume_free_label_no_call:
+        :RETURN
+
+assume_free_start:
+        ;;
+        ; F_MLOAD
+        ;;
+        ; small test
+        10                      :MSTORE(assumef_var1)
+        $ + 3 => A              :F_MLOAD(assumef_var1)
+        13                      :ASSERT
+
+        10                      :MLOAD(assumef_var1)
+
+        ; 2^32-1 (maximum allowed value for freeinput computations)
+        0xfffffffen             :MSTORE(assumef_var1)
+        $ + 1 => A              :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+
+        ; random value
+        0x9334b875              :MSTORE(assumef_var1)
+        $ + 0x6ccb478a => A     :F_MLOAD(assumef_var1)
+        0xffffffffn             :ASSERT
+
+        ; zero value
+        0x0                     :MSTORE(assumef_var1)
+        $ + 0x6ccb478a => A     :F_MLOAD(assumef_var1)
+        0x6ccb478a              :ASSERT
+
+        ; large value
+        1                       :MSTORE(assumef_var1)
+        $ + 0xF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFn => A :F_MLOAD(assumef_var1)
+        0xF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEF0n: ASSERT
+
+        ; large values
+        0xB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFA0A1A2A3A4A5A6A7A8A9AAABACADAEAFn :MSTORE(assumef_var1)
+        $ + 0x4040404040404040404040404040404040404040404040404040404040404040n => A :F_MLOAD(assumef_var1)
+        0xF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFn: ASSERT
+
+        ; large2 values
+
+        0xB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFA0A1A2A3A4A5A6A7A8A9AAABACADAEAFn :MSTORE(assumef_var1)
+        $ + 0x4F4E4D4C4B4A494847464544434241405F5E5D5C5B5A59585756555453525150n => A :F_MLOAD(assumef_var1)
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn: ASSERT
+
+
+        0x1111111111111111111111111111111111111111111111111111111111111111n :MSTORE(g15)
+        0x2222222222222222222222222222222222222222222222222222222222222222n :MSTORE(l90)
+        0x3333333333333333333333333333333333333333333333333333333333333333n :MSTORE(g7_8)
+        0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAn :MSTORE(g7_8+1)
+        0x5555555555555555555555555555555555555555555555555555555555555555n :MSTORE(g7_8+3)
+        0x6666666666666666666666666666666666666666666666666666666666666666n :MSTORE(g7_8+5)
+        0x4444444444444444444444444444444444444444444444444444444444444444n :MSTORE(l10_80)
+
+        2 * $ + 8 => A                                                      :F_MLOAD(g15)
+        0x222222222222222222222222222222222222222222222222222222222222222An :ASSERT
+        2 * $ + 8 => A                                                      :F_MLOAD(l90)
+        0x444444444444444444444444444444444444444444444444444444444444444Cn :ASSERT
+        2 * $ + 8 => A                                                      :F_MLOAD(g7_8)
+        0x666666666666666666666666666666666666666666666666666666666666666En :ASSERT
+        2 * $ + 8 => A                                                      :F_MLOAD(l10_80)
+        0x8888888888888888888888888888888888888888888888888888888888888890n :ASSERT
+
+        0 => E
+        $ => A               :MLOAD(g7_8[E+2])
+        0                    :ASSERT
+
+        2 * $ + 8 => A       :F_MLOAD(g7_8[E+2])
+        8                    :ASSERT
+
+        1 => E
+        2 * $ + 1 => A       :F_MLOAD(g7_8[E+2])
+        0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABn :ASSERT
+
+        6 => E
+        $ + 1 => A           :F_MLOAD(g7_8[E-1])
+        0x6666666666666666666666666666666666666666666666666666666666666667n :ASSERT
