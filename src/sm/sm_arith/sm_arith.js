@@ -261,12 +261,10 @@ function getArithInfo(arithEq) {
                 name: 'ARITH_SECP256R1_ECADD_SAME',
                 curve: 'SECP256R1',
             }
-            break;
 
         default:
             throw new Error(`Unknown arithEq value ${arithEq}`);
     }
-    return selEq;
 }
 module.exports.execute = async function(pols, input, continueOnError = false) {
     // Get N from definitions
