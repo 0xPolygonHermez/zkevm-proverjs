@@ -10,12 +10,6 @@ module.exports.buildConstants = async function buildConstants(pols, rom) {
 
     const N = pols.offset.length;
 
-    const twoTo31 = Scalar.e(0x80000000);
-    const maxInt = 2147483647;
-    const minInt = -2147483648;
-    const maxUInt = 0xFFFFFFFF;
-    const minUInt = 0;
-
     if (rom.program.length>N) throw new Error("Rom is too big for this N");
 
     for (let i=0; i<N; i++) {
