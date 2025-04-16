@@ -56,7 +56,7 @@
     "final_gencircom": ". ./pre.sh && cp recursive/final.circom $BDIR/circom/final.circom",
     "final_compile": ". ./pre.sh && mkdir -p $BDIR/config/final/ && circom --O1 --r1cs --sym --wasm --c --verbose $BDIR/circom/final.circom -o $BDIR/build/ -l node_modules/pil-stark/circuits.bn128 -l node_modules/circomlib/circuits",
     "downloadptaw": "wget -P build https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final.ptau",
-    "fflonk_setup": ". ./pre.sh && [ \"`b2sum build/powersOfTau28_hez_final.ptau|cut -d' ' -f1`\" == \"55c77ce8562366c91e7cda394cf7b7c15a06c12d8c905e8b36ba9cf5e13eb37d1a429c589e8eaba4c591bc4b88a0e2828745a53e170eac300236f5c1a326f41a\" ] && $FFLONKSETUP $BDIR/build/final.r1cs build/powersOfTau28_hez_final.ptau $BDIR/config/final/final.fflonk.zkey",
+    "fflonk_setup": ". ./pre.sh && echo \"verifying signature powersOfTau28_hez_final.ptau (it takes 8-12 minutes) ....\" && [ \"`b2sum build/powersOfTau28_hez_final.ptau|cut -d' ' -f1`\" = \"55c77ce8562366c91e7cda394cf7b7c15a06c12d8c905e8b36ba9cf5e13eb37d1a429c589e8eaba4c591bc4b88a0e2828745a53e170eac300236f5c1a326f41a\" ] && $FFLONKSETUP $BDIR/build/final.r1cs build/powersOfTau28_hez_final.ptau $BDIR/config/final/final.fflonk.zkey",
     "fflonk_evk": ". ./pre.sh && $SNARKJS zkev $BDIR/config/final/final.fflonk.zkey $BDIR/config/final/final.fflonk.verkey.json",
     "fflonk_solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/config/final/final.fflonk.zkey $BDIR/build/final.fflonk.verifier.sol",
     "sha256": ". ./pre.sh && echo 'Executing sha256 command...' && LC_ALL=C; cd $BDIR; find * -type f ! -name \"steps.log\" ! -path \"steps*\" ! -name \"sha256.txt*\" ! -name \"last_step.txt\"|sort | xargs sha256sum | tee build/sha256.txt && echo 'sha256 command executed successfully.'",
