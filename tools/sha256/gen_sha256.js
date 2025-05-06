@@ -1,7 +1,23 @@
+// NOTE: This is BIG ENDIAN
+
 const fs = require('fs');
 const path = require('path');
 
-const BitsPerField = 7;
+const BitsPerSlot = 1;
+const ChunksPerSlot = 1; // Original value: 1 // TODO: With 9 it does not fit in the circuit, find a solution!!!
+const Sha256fPerSlot = BitsPerSlot * ChunksPerSlot;
+const BitsInParallel = 1; // Original value: 1
+
+const StateInputSizeBits = 256;
+const HashInputSizeBits = 512;
+const InputSizeBits = StateInputSizeBits + HashInputSizeBits;
+const StateOutputSizeBits = 256;
+const TotalSizeBits = InputSizeBits + StateOutputSizeBits;
+
+const StateInFirstRef = Sha256fPerSlot + 1; // Original value: Sha256fPerSlot
+const StateInRefDistance = Sha256fPerSlot;
+const StateOutFirstRef = StateInFirstRef + InputSizeBits * StateInRefDistance / BitsInParallel;
+const StateOutRefDistance = Sha256fPerSlot;
 
 function generateK(ctx) {
     const K = [
@@ -39,12 +55,24 @@ function newWire(ctx) {
 
 function isNextAvailable(ctx) {
     // In first 1024 cycles of BitsPerField, last position inside cycle
-    // are reserved for bit inputs.
-    if ((ctx.gatesUsed - 1) % BitsPerField !== (BitsPerField - 1)) return true;
-    const b = Math.floor((ctx.gatesUsed - 1) / BitsPerField);
-    if (b >= 1024) return true;
-
-    return false;
+    // is reserved for bit inputs.
+    // X X X X X X Y | X X X X X X Y | ... (This is repeated 1024 times, the Y'th positions are reserved for inputs)
+    // The first 256 Y's are reserved for state inputs, the next 256 Y's are reserved for state outputs
+    // and the last 512 Y's are reserved for hash inputs.
+    // This ranges from [7, 7·2, ..., 7·1023, 7·1024] = [7, 14, ..., 7161, 7168]
+    let next_gate = ctx.gatesUsed;
+    if ((next_gate >= StateInFirstRef) && 
+        (next_gate <= StateInFirstRef + (InputSizeBits - BitsInParallel) * StateInRefDistance / BitsInParallel + (BitsInParallel - 1)) &&
+        ((next_gate - StateInFirstRef) % StateInRefDistance < BitsInParallel)) {
+        return false;
+    } else if
+       ((next_gate >= StateOutFirstRef) && 
+        (next_gate <= StateOutFirstRef + (StateOutputSizeBits - BitsInParallel) * StateOutRefDistance / BitsInParallel + (BitsInParallel - 1)) &&
+        ((next_gate - StateOutFirstRef) % StateOutRefDistance < BitsInParallel)) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 function getNextAvailableGate(ctx) {
@@ -93,6 +121,8 @@ function add32(ctx, a, b) {
     for (let i = 30; i >= 0; i--) {
         const l = getNextAvailableGate(ctx);
         if (l === lprev + 1) {
+            // If the next gate is not an "input" gate, we feed the carry wire
+            // from the "outside"
             ctx.program.push({
                 in1: a[i],
                 in2: b[i],
@@ -111,7 +141,9 @@ function add32(ctx, a, b) {
                 wire: ctx.gates[l].connections[3],
             };
         } else {
-            // lprev + 1 is ether an input or a output
+            // lprev + 1 is ether a state input, a state output or a hash input
+            // If it is a state input, we feed the carry wire using the free wire
+            // in the "input" gate
             const carryWire = newWire(ctx);
             ctx.gates[lprev + 1].connections[2] = carryWire;
             ctx.program.push({
@@ -264,7 +296,7 @@ function generateCircuit() {
     ctx.gates = [
         {
             type: 'xor',
-            connections: [ctx.zero.wire, ctx.one.wire, ctx.zero.wire, ctx.one.wire],
+            connections: [ctx.zero.wire, ctx.one.wire, ctx.zero.wire, ctx.one.wire], // XOR(0,1,0) = 1
         },
     ];
 
@@ -333,33 +365,45 @@ function generateCircuit() {
     stOut[6] = add32(ctx, stIn[6], g);
     stOut[7] = add32(ctx, stIn[7], h);
 
-    for (let i = 0; i < 1024; i++) {
-        const p = i * BitsPerField + (BitsPerField - 1) + 1;
-        const word = Math.floor(i / 32);
-        const bit = i % 32;
-        let s;
-        if (i < 256) {
-            s = stIn[word][bit];
-        } else if (i < 512) {
-            s = stOut[word - 8][bit];
-        } else {
-            s = w[word - 16][bit];
+    // Locate the state input (256), the state output (256) and the hash input (512)
+    for (let i = 0; i < TotalSizeBits / BitsInParallel; i++) {
+        for (let j = 0; j < BitsInParallel; j++) {
+            const idx = i * BitsInParallel + j;
+            const word = Math.floor(idx / 32);
+            const bit = idx % 32;
+            let s;
+            // In the original code, the state ouput was before the hash input
+            // if (idx < StateInputSizeBits) {
+            //     s = stIn[word][bit];
+            // } else if (idx < StateInputSizeBits + StateOutputSizeBits) {
+            //     s = stOut[word - 8][bit];
+            // } else {
+            //     s = w[word - 16][bit];
+            // }
+            if (idx < StateInputSizeBits) {
+                s = stIn[word][bit];
+            } else if (idx < StateInputSizeBits + HashInputSizeBits) {
+                s = w[word - 8][bit];
+            } else {
+                s = stOut[word - 24][bit];
+            }
+            const p = StateInFirstRef + i * StateInRefDistance + j;
+            ctx.gates[p].connections[0] = s.wire;
+            ctx.gates[p].connections[1] = ctx.zero.wire;
+            ctx.gates[p].connections[3] = newWire(ctx);
+            ctx.gates[p].type = 'xor';
+            const inst = {
+                in1: s,
+                in2: ctx.zero,
+                op: 'xor',
+                ref: p,
+            };
+            if (ctx.gates[p].connections[2] === null) {
+                inst.in3 = ctx.zero;
+                ctx.gates[p].connections[2] = ctx.zero.wire;
+            }
+            ctx.program.push(inst);
         }
-        ctx.gates[p].connections[0] = s.wire;
-        ctx.gates[p].connections[1] = ctx.zero.wire;
-        ctx.gates[p].connections[3] = newWire(ctx);
-        ctx.gates[p].type = 'xor';
-        const inst = {
-            in1: s,
-            in2: ctx.zero,
-            op: 'xor',
-            ref: p,
-        };
-        if (ctx.gates[p].connections[2] === null) {
-            inst.in3 = ctx.zero;
-            ctx.gates[p].connections[2] = ctx.zero.wire;
-        }
-        ctx.program.push(inst);
     }
 
     return [ctx.gates, ctx.program];
@@ -379,7 +423,4 @@ const sums = gates.reduce((acc, v) => {
 fs.writeFileSync(circuitFile, JSON.stringify(gates, null, 1), 'utf8');
 fs.writeFileSync(programFile, JSON.stringify({ program, sums, total: gates.length - 1 }, null, 1), 'utf8');
 
-console.log('Files generated correctly');
-console.log(JSON.stringify(sums, null, 1));
-// gates.length - 1 because first row is reserved to 0,1 constant signals.
-console.log(`total gates: ${gates.length - 1}`);
+console.log(`${circuitFile.split('/').pop()} and ${programFile.split('/').pop()} generated`);
