@@ -1,12 +1,10 @@
-// NOTE: This is BIG ENDIAN
-
 const fs = require('fs');
 const path = require('path');
 
-const BitsPerSlot = 1;
-const ChunksPerSlot = 1; // Original value: 1 // TODO: With 9 it does not fit in the circuit, find a solution!!!
+const BitsPerSlot = 7; // Original value: 7
+const ChunksPerSlot = 8; // Original value: 1 // TODO: With 9 it does not fit in the circuit, find a solution!!!
 const Sha256fPerSlot = BitsPerSlot * ChunksPerSlot;
-const BitsInParallel = 1; // Original value: 1
+const BitsInParallel = 2; // Original value: 1
 
 const StateInputSizeBits = 256;
 const HashInputSizeBits = 512;
@@ -365,14 +363,14 @@ function generateCircuit() {
     stOut[6] = add32(ctx, stIn[6], g);
     stOut[7] = add32(ctx, stIn[7], h);
 
-    // Locate the state input (256), the state output (256) and the hash input (512)
+    // Locate the state input (256), the hash input (512) and the state output (256)
     for (let i = 0; i < TotalSizeBits / BitsInParallel; i++) {
         for (let j = 0; j < BitsInParallel; j++) {
             const idx = i * BitsInParallel + j;
             const word = Math.floor(idx / 32);
             const bit = idx % 32;
             let s;
-            // In the original code, the state ouput was before the hash input
+            // // In the original code, the state ouput was before the hash input
             // if (idx < StateInputSizeBits) {
             //     s = stIn[word][bit];
             // } else if (idx < StateInputSizeBits + StateOutputSizeBits) {
