@@ -1,0 +1,11 @@
+                    :JMP(init_secp256r1_ecadd_same)
+
+REDUNDANT_ARITH_SECP256R1_ECADD_SAME_CHECK:
+
+        ${xDblPointEc_secp256r1(A,B)} => E
+        ${yDblPointEc_secp256r1(A,B)}         :ARITH_SECP256R1_ECADD_SAME
+        :RETURN
+
+init_secp256r1_ecadd_same:
+
+INCLUDE "secp256r1_ecadd_same_ops.zkasm"
