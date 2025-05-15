@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const BitsPerSlot = 7; // Original value: 7
-const ChunksPerSlot = 8; // Original value: 1 // TODO: With 9 it does not fit in the circuit, find a solution!!!
+const BitsPerSlot = 7;
+const ChunksPerSlot = 1; // TODO: With 9 it does not fit in the circuit, find a solution!!!
 const Sha256fPerSlot = BitsPerSlot * ChunksPerSlot;
-const BitsInParallel = 2; // Original value: 1
+const BitsInParallel = 1;
 
 const StateInputSizeBits = 256;
 const HashInputSizeBits = 512;
@@ -12,7 +12,7 @@ const InputSizeBits = StateInputSizeBits + HashInputSizeBits;
 const StateOutputSizeBits = 256;
 const TotalSizeBits = InputSizeBits + StateOutputSizeBits;
 
-const StateInFirstRef = Sha256fPerSlot + 1; // Original value: Sha256fPerSlot
+const StateInFirstRef = Sha256fPerSlot; // Sha256fPerSlot + 1;
 const StateInRefDistance = Sha256fPerSlot;
 const StateOutFirstRef = StateInFirstRef + InputSizeBits * StateInRefDistance / BitsInParallel;
 const StateOutRefDistance = Sha256fPerSlot;
@@ -370,21 +370,21 @@ function generateCircuit() {
             const word = Math.floor(idx / 32);
             const bit = idx % 32;
             let s;
-            // // In the original code, the state ouput was before the hash input
-            // if (idx < StateInputSizeBits) {
-            //     s = stIn[word][bit];
-            // } else if (idx < StateInputSizeBits + StateOutputSizeBits) {
-            //     s = stOut[word - 8][bit];
-            // } else {
-            //     s = w[word - 16][bit];
-            // }
+            // In the original code, the state ouput was before the hash input
             if (idx < StateInputSizeBits) {
                 s = stIn[word][bit];
-            } else if (idx < StateInputSizeBits + HashInputSizeBits) {
-                s = w[word - 8][bit];
+            } else if (idx < StateInputSizeBits + StateOutputSizeBits) {
+                s = stOut[word - 8][bit];
             } else {
-                s = stOut[word - 24][bit];
+                s = w[word - 16][bit];
             }
+            // if (idx < StateInputSizeBits) {
+            //     s = stIn[word][bit];
+            // } else if (idx < StateInputSizeBits + HashInputSizeBits) {
+            //     s = w[word - 8][bit];
+            // } else {
+            //     s = stOut[word - 24][bit];
+            // }
             const p = StateInFirstRef + i * StateInRefDistance + j;
             ctx.gates[p].connections[0] = s.wire;
             ctx.gates[p].connections[1] = ctx.zero.wire;
