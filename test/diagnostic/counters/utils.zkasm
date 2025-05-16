@@ -1,0 +1,22 @@
+VAR GLOBAL v_cnt_arith
+VAR GLOBAL v_cnt_binary
+VAR GLOBAL v_cnt_keccak_f
+VAR GLOBAL v_cnt_sha256_f
+VAR GLOBAL v_cnt_mem_align
+VAR GLOBAL v_cnt_poseidon_g
+VAR GLOBAL v_cnt_padding_pg
+VAR GLOBAL v_cnt_step
+
+                :JMP(CountersUtilsEnd)
+SaveCounters:
+    CNT_ARITH       :MSTORE(v_cnt_arith)
+    CNT_BINARY      :MSTORE(v_cnt_binary)
+    CNT_KECCAK_F    :MSTORE(v_cnt_keccak_f)
+    CNT_SHA256_F    :MSTORE(v_cnt_sha256_f)
+    CNT_MEM_ALIGN   :MSTORE(v_cnt_mem_align)
+    CNT_POSEIDON_G  :MSTORE(v_cnt_poseidon_g)
+    CNT_PADDING_PG  :MSTORE(v_cnt_padding_pg)
+    STEP            :MSTORE(v_cnt_step)
+                    :RETURN
+
+CountersUtilsEnd:

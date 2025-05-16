@@ -1,3 +1,5 @@
+CONST %NUM = 100
+
 start:
 
         STEP => A

@@ -1,0 +1,185 @@
+
+CONST  %MIN = -(1 << 31)
+        -2147483648 => A
+        %MIN :ASSERT
+        ; commands always return a CONSTL, it does not work with negatives
+        ${const.MIN} => A
+        115792089237316195423570985008687907853269984665640564039457584007910982156288n :ASSERT
+
+CONST  %MAX = (1 << 32) - 1
+        4294967295 => A
+        %MAX :ASSERT
+        ${const.MAX} :ASSERT
+        ${4294967295}  :ASSERT
+
+CONSTL %MAXL = (1n << 256n) - 1n ; It also works with (1 << 256) - 1
+        115792089237316195423570985008687907853269984665640564039457584007913129639935n => A
+        %MAXL :ASSERT
+        ${const.MAXL} :ASSERT
+        ${115792089237316195423570985008687907853269984665640564039457584007913129639935}   :ASSERT
+
+CONSTL %ARITH1 = (2 + 3 * 13 + 5) * 11 ; 506
+        %ARITH1 => A
+        506n :ASSERT
+
+CONSTL %ARITH2 = 10 / 3 ; 3
+        %ARITH2 => A
+        3n :ASSERT
+
+CONSTL %ARITH3 = 11 % 3 ; 2
+        %ARITH3 => A
+        2n :ASSERT
+
+CONSTL %ARITH4 = 10 ** 3 ; 1000
+        %ARITH4 => A
+        1000n :ASSERT
+
+CONSTL %ARITH5 = -3 + 10 ; 7
+        %ARITH5 => A
+        7n :ASSERT
+
+CONSTL %ARITH6 = 10 - 3 ; 7
+        %ARITH6 => A
+        7n :ASSERT
+
+CONSTL %SHL1 = 0x10000000 << 3
+        %SHL1 => A
+        0x80000000n :ASSERT
+
+CONSTL %SHR1 = 0x10000000 >> (3+2)
+        %SHR1 => A
+        0x800000n :ASSERT
+
+CONSTL %LOGICAL2 = (10 <= 25) ; true
+        %LOGICAL2 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL3 = (10 <= 10) ; true
+        %LOGICAL3 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL4 = (10 > 25) ; false
+        %LOGICAL4 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL5 = (10 < 25) ; true
+        %LOGICAL5 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL6 = (10 < 10) ; false
+        %LOGICAL6 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL7 = (10 >= 25) ; false
+        %LOGICAL7 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL8 = (10 != 25) ; true
+        %LOGICAL8 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL9 = (10 == 25) ; false
+        %LOGICAL9 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL10 = (10 == 10) ; true
+        %LOGICAL10 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL11 = !(10 == 25) ; true
+        %LOGICAL11 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL12 = (1 == 2) || (1 == 1); true
+        %LOGICAL12 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL13 = (1 == 2) || (1 == 3); false
+        %LOGICAL13 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL14 = (1 != 2) || (1 != 3); true
+        %LOGICAL14 => A
+        1n :ASSERT
+
+CONSTL %LOGICAL15 = (1 == 2) && (1 == 1); false
+        %LOGICAL15 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL16 = (1 == 2) && (1 == 3); false
+        %LOGICAL16 => A
+        0n :ASSERT
+
+CONSTL %LOGICAL17 = (1 != 2) && (1 != 3); true
+        %LOGICAL17 => A
+        1n :ASSERT
+
+CONSTL %COND1 = (10 == 10) ? (10 + 3) : 5 ; 13
+        %COND1 => A
+        13n :ASSERT
+
+CONSTL %COND2 = (10 != 10) ? (10 + 3) : 5 ; 5
+        %COND2 => A
+        5n :ASSERT
+
+CONSTL %REF1 = %COND1 || %COND2
+        %REF1 => A
+        1n :ASSERT
+
+CONSTL %NULLCOALESCING1 = %NONDEFINED ?? 10
+       %NULLCOALESCING1 => A
+       10n :ASSERT
+
+CONSTL %DEFINED = 13
+CONSTL %NULLCOALESCING2 = %DEFINED ?? 10
+       %NULLCOALESCING2 => A
+       13n :ASSERT
+
+CONSTL %A = 10
+CONST  %B = 128
+CONSTL %REF2 = %A + 3 * %B
+        %REF2 => A
+        394n :ASSERT
+
+CONSTL %BIT1 = 0xFFFFFFFF0Fn & 0xF000FFFFFFn
+        %BIT1 => A
+        0xF000FFFF0Fn : ASSERT
+
+CONSTL %BIT2 = 0x123456789ABCDEF0n & 0
+        %BIT2 => A
+        0n : ASSERT
+
+CONSTL %BIT3 = 0x123456789ABCDEF0n & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn
+        %BIT3 => A
+        0x123456789ABCDEF0n : ASSERT
+
+CONSTL %BIT4 = 0x8FFFFFFF0Fn | 0x1000FFFFFFn
+        %BIT4 => A
+        0x9FFFFFFFFFn : ASSERT
+
+CONSTL %BIT5 = 0x123456789ABCDEF0n | 0
+        %BIT5 => A
+        0x123456789ABCDEF0n : ASSERT
+
+CONSTL %BIT6 = 0x123456789ABCDEF0n | 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn
+        %BIT6 => A
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn : ASSERT
+
+CONSTL %BIT7 = 0x123456789ABCDEF0n ^ 0xFFFFFFFFFFFFFFFFn
+        %BIT7 => A
+        0xEDCBA9876543210Fn : ASSERT
+
+CONSTL %BIT8 = 0x123456789ABCDEF0n ^ 0n
+        %BIT8 => A
+        0x123456789ABCDEF0n : ASSERT
+
+
+        2n ** 128n => B
+        2n * 1923n => B
+        2n + 1923n => B
+
+        2 ** 31 => C
+        2 * 31 => C
+        2 + 1923 => C
+        -2 => C
+        0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn => B

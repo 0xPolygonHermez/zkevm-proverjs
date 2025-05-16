@@ -1,0 +1,12 @@
+                    :JMP(init_secp256r1_ecadd_different)
+
+REDUNDANT_ARITH_SECP256R1_ECADD_DIFFERENT_CHECK:
+
+        ${xAddPointEc_secp256r1(A,B,C,D)} => E
+        ${yAddPointEc_secp256r1(A,B,C,D)}         :ARITH_SECP256R1_ECADD_DIFFERENT
+
+        :RETURN
+
+init_secp256r1_ecadd_different:
+
+INCLUDE "secp256r1_ecadd_different_ops.zkasm"
