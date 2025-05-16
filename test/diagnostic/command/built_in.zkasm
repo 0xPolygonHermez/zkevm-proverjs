@@ -1,0 +1,190 @@
+
+VAR GLOBAL bi_a
+VAR GLOBAL bi_b[2]
+
+        ; Declare Vars
+        2 => B,C
+        ${var built_in_BC = B*C} => A
+        4       :ASSERT
+        ${var built_in_three = 3} => A
+        3       :ASSERT
+
+        ; Set Vars
+        ${built_in_three = B} => A
+        2      :ASSERT
+        ${built_in_BC = B*B*B} => A
+        8       :ASSERT
+
+        ; Get Vars and Get Registries
+        ${built_in_three + A} => A
+        10      :ASSERT
+
+        ; Operations
+        1 => B
+        9 => C,D
+
+        ${B + C} => A
+        10      :ASSERT
+        ${built_in_three + C} => A
+        11      :ASSERT
+        ${built_in_three + C + 20} => A
+        31      :ASSERT
+
+        ${C - B} => A
+        8       :ASSERT
+        ${C - built_in_three} => A
+        7       :ASSERT
+        ${C - built_in_three + 6} => A
+        13      :ASSERT
+
+        ${C*B} => A
+        9       :ASSERT
+        ${C*built_in_three} => A
+        18      :ASSERT
+        ${C*built_in_three*2} => A
+        36      :ASSERT
+
+        4 => B
+        ${C/B} => A
+        2       :ASSERT
+        ${C/built_in_three} => A
+        4      :ASSERT
+        ${C/2} => A
+        4      :ASSERT
+        ${built_in_three/2} => A
+        1      :ASSERT
+
+        ${C%B} => A
+        1       :ASSERT
+        ${C%built_in_three} => A
+        1      :ASSERT
+        ${C%2} => A
+        1      :ASSERT
+        ${built_in_three%2} => A
+        0      :ASSERT
+
+        ; Logical operations
+        1 => B
+        0 => C
+
+        ${C || B} => A
+        1       :ASSERT
+        ${B || C} => A
+        1       :ASSERT
+        ${C || 0} => A
+        0       :ASSERT
+        ${1 || B} => A
+        1       :ASSERT
+
+        ${C && B} => A
+        0       :ASSERT
+        ${B && C} => A
+        0       :ASSERT
+        ${C && 0} => A
+        0       :ASSERT
+        ${1 && B} => A
+        1       :ASSERT
+
+        ${C > B} => A
+        0       :ASSERT
+        ${B > C} => A
+        1       :ASSERT
+        ${2 > 2} => A
+        0       :ASSERT
+
+        ${C >= B} => A
+        0       :ASSERT
+        ${B >= C} => A
+        1       :ASSERT
+        ${2 >= 2} => A
+        1       :ASSERT
+
+        ${C < B} => A
+        1       :ASSERT
+        ${B < C} => A
+        0       :ASSERT
+        ${2 < 2} => A
+        0       :ASSERT
+
+        ${C <= B} => A
+        1       :ASSERT
+        ${B <= C} => A
+        0       :ASSERT
+        ${2 <= 2} => A
+        1       :ASSERT
+
+        ${C == B} => A
+        0       :ASSERT
+        ${B == C} => A
+        0       :ASSERT
+        ${2 == 2} => A
+        1       :ASSERT
+
+        ${C != B} => A
+        1       :ASSERT
+        ${B != C} => A
+        1       :ASSERT
+        ${2 != 2} => A
+        0       :ASSERT
+
+        ${!C} => A
+        1       :ASSERT
+        ${!B} => A
+        0       :ASSERT
+        ${!0} => A
+        1       :ASSERT
+        ${!1} => A
+        0       :ASSERT
+
+        5 => A
+        10 => B
+        7 => C
+        12 => D
+        ${((A > B) && (B <= C)) || !((C >= D) && (D == A)) || (A != B && B < C && C >= D)} => A
+        1       :ASSERT
+
+        ; Bitwise operations
+        5 => B
+        6 => C
+        10 => D
+
+        ${B & C} => A
+        4       :ASSERT
+
+        ${B | C} => A
+        7       :ASSERT
+
+        ${B ^ C} => A
+        3       :ASSERT
+
+        ${~B} => A
+        115792089237316195423570985008687907853269984665640564039457584007913129639930n        :ASSERT
+
+        ${B << 2} => A
+        20       :ASSERT
+
+        ${D >> 1} => A
+        5       :ASSERT
+
+        3 => A
+        ${(A & B) | (C ^ D) ^ ~(A << 2) & (B >> 1)} => A
+        2       :ASSERT
+
+        ; Conditional operator
+        40 => B
+        3 => D
+        ${(5 > D) ? B : 39} => A
+        40     :ASSERT
+        ${(5 < D) ? B : 39} => A
+        39     :ASSERT
+
+        ; Getmemvalue and getmemaddress
+        40                              :MSTORE(bi_a)
+
+        ${mem.bi_a} => A
+        40      :ASSERT
+
+        ${addr.bi_a} => A
+        ${addr.bi_b + 1} => B
+        B - A => A
+        2       :ASSERT

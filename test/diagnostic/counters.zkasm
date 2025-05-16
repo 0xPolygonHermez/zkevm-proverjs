@@ -1,0 +1,11 @@
+INCLUDE "counters/utils.zkasm"
+
+INCLUDE "counters/arith.zkasm"
+INCLUDE "counters/binary.zkasm"
+INCLUDE "counters/keccak.zkasm"
+INCLUDE "counters/mem_align.zkasm"
+INCLUDE "counters/padding_pg.zkasm"
+INCLUDE "counters/poseidon.zkasm"
+INCLUDE "counters/sha256.zkasm"
+INCLUDE "counters/storage_keys.zkasm"
+INCLUDE "counters/storage.zkasm"

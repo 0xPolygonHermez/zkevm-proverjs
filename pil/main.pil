@@ -1,4 +1,5 @@
-include "config.pil";
+constant %N = 2**25;
+
 include "global.pil";
 include "rom.pil";
 include "mem_align.pil";
@@ -55,11 +56,12 @@ namespace Main(%N);
     pol commit ind, indRR;
     pol commit useCTX;
     pol commit carry;
+    pol commit assumeFree;
 
     // operations
     pol commit mOp, mWR;
     pol commit sWR, sRD;
-    pol commit arithEq0, arithEq1, arithEq2, arithEq3, arithEq4, arithEq5;
+    pol commit arith, arithEq, arithSame12, arithUseE;
     pol commit memAlignRD, memAlignWR, memAlignWR8;
     pol commit hashK, hashK1, hashKLen, hashKDigest;
     pol commit hashP, hashP1, hashPLen, hashPDigest;
@@ -81,9 +83,8 @@ namespace Main(%N);
 // Intermediary calculations and checks
 ///////////
 
-
-    /////// op
-    pol op0 =
+    pol commit op0;
+    op0 =
         A0 * inA +
         B0 * inB +
         C0 * inC +
@@ -109,7 +110,8 @@ namespace Main(%N);
         RCX * inRCX +
         CONST0;
 
-    pol op1 =
+    pol commit op1;
+    op1 =
         A1 * inA +
         B1 * inB +
         C1 * inC +
@@ -120,7 +122,8 @@ namespace Main(%N);
         FREE1 * inFREE +
         CONST1;
 
-    pol op2 =
+    pol commit op2;
+    op2 =
         A2 * inA +
         B2 * inB +
         C2 * inC +
@@ -131,7 +134,8 @@ namespace Main(%N);
         FREE2 * inFREE +
         CONST2;
 
-    pol op3 =
+    pol commit op3;
+    op3 =
         A3 * inA +
         B3 * inB +
         C3 * inC +
@@ -142,7 +146,8 @@ namespace Main(%N);
         FREE3 * inFREE +
         CONST3;
 
-    pol op4 =
+    pol commit op4;
+    op4 =
         A4 * inA +
         B4 * inB +
         C4 * inC +
@@ -153,7 +158,8 @@ namespace Main(%N);
         FREE4 * inFREE +
         CONST4;
 
-    pol op5 =
+    pol commit op5;
+    op5 =
         A5 * inA +
         B5 * inB +
         C5 * inC +
@@ -164,7 +170,8 @@ namespace Main(%N);
         FREE5 * inFREE +
         CONST5;
 
-    pol op6 =
+    pol commit op6;
+    op6 =
         A6 * inA +
         B6 * inB +
         C6 * inC +
@@ -175,7 +182,8 @@ namespace Main(%N);
         FREE6 * inFREE +
         CONST6;
 
-    pol op7 =
+    pol commit op7;
+    op7 =
         A7 * inA +
         B7 * inB +
         C7 * inC +
@@ -210,10 +218,8 @@ namespace Main(%N);
 
     lJmpnCondValue in Global.STEP;
 
-    pol commit hJmpnCondValueBit[9];
+    pol commit hJmpnCondValueBit[7];
 
-    hJmpnCondValueBit[8] * (1-hJmpnCondValueBit[8]) = 0;
-    hJmpnCondValueBit[7] * (1-hJmpnCondValueBit[7]) = 0;
     hJmpnCondValueBit[6] * (1-hJmpnCondValueBit[6]) = 0;
     hJmpnCondValueBit[5] * (1-hJmpnCondValueBit[5]) = 0;
     hJmpnCondValueBit[4] * (1-hJmpnCondValueBit[4]) = 0;
@@ -222,10 +228,9 @@ namespace Main(%N);
     hJmpnCondValueBit[1] * (1-hJmpnCondValueBit[1]) = 0;
     hJmpnCondValueBit[0] * (1-hJmpnCondValueBit[0]) = 0;
 
-    jmpnCondValue = 2**31*hJmpnCondValueBit[8] + 2**30*hJmpnCondValueBit[7] + 2**29*hJmpnCondValueBit[6] + 2**28*hJmpnCondValueBit[5] +
-                    2**27*hJmpnCondValueBit[4] + 2**26*hJmpnCondValueBit[3] + 2**25*hJmpnCondValueBit[2] + 2**24*hJmpnCondValueBit[1] +
-                    2**23*hJmpnCondValueBit[0] + lJmpnCondValue;
-
+    jmpnCondValue = 2**31*hJmpnCondValueBit[6] + 2**30*hJmpnCondValueBit[5] + 2**29*hJmpnCondValueBit[4] + 2**28*hJmpnCondValueBit[3] +
+                    2**27*hJmpnCondValueBit[2] + 2**26*hJmpnCondValueBit[1] + 2**25*hJmpnCondValueBit[0] +
+                    lJmpnCondValue;
 
     /// RCX check zero
     pol commit RCXInv;
@@ -452,11 +457,11 @@ namespace Main(%N);
 
     /*
        code generated with:
-       node tools/pil_pol_table/bits_compose.js "arithEq0,arithEq1,arithEq2,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,arithEq3,arithEq4,arithEq5,hashS,hashSDigest,hashSLen,hashS1" -b
+       node tools/pil_pol_table/bits_compose.js "arith,arithSame12,arithUseE,assert,bin,hashK,hashKDigest,hashKLen,hashP,hashPDigest,hashPLen,ind,indRR,isMem,isStack,JMP,JMPC,JMPN,memAlignRD,memAlignWR,memAlignWR8,mOp,mWR,repeat,setA,setB,setC,setCTX,setD,setE,setGAS,setHASHPOS,setPC,setRCX,setRR,setSP,setSR,sRD,sWR,useCTX,useJmpAddr,JMPZ,call,return,hashK1,hashP1,useElseAddr,hashS,hashSDigest,hashSLen,hashS1,assumeFree" -b
     */
 
     pol operations =
-              2**0  * arithEq0      + 2**1  * arithEq1      + 2**2  * arithEq2      + 2**3  * assert
+              2**0  * arith         + 2**1  * arithSame12   + 2**2  * arithUseE     + 2**3  * assert
             + 2**4  * bin           + 2**5  * hashK         + 2**6  * hashKDigest   + 2**7  * hashKLen
             + 2**8  * hashP         + 2**9  * hashPDigest   + 2**10 * hashPLen      + 2**11 * ind
             + 2**12 * indRR         + 2**13 * isMem         + 2**14 * isStack       + 2**15 * JMP
@@ -467,13 +472,12 @@ namespace Main(%N);
             + 2**32 * setPC         + 2**33 * setRCX        + 2**34 * setRR         + 2**35 * setSP
             + 2**36 * setSR         + 2**37 * sRD           + 2**38 * sWR           + 2**39 * useCTX
             + 2**40 * useJmpAddr    + 2**41 * JMPZ          + 2**42 * call          + 2**43 * return
-            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * arithEq3
-            + 2**48 * arithEq4      + 2**49 * arithEq5      + 2**50 * hashS         + 2**51 * hashSDigest
-            + 2**52 * hashSLen      + 2**53 * hashS1;
+            + 2**44 * hashK1        + 2**45 * hashP1        + 2**46 * useElseAddr   + 2**47 * hashS
+            + 2**48 * hashSDigest   + 2**49 * hashSLen      + 2**50 * hashS1        + 2**51 * assumeFree;
 
-    (1 - arithEq0) * arithEq0 = 0;
-    (1 - arithEq1) * arithEq1 = 0;
-    (1 - arithEq2) * arithEq2 = 0;
+    (1 - arith) * arith = 0;
+    (1 - arithSame12) * arithSame12 = 0;
+    (1 - arithUseE) * arithUseE = 0;
     (1 - assert) * assert = 0;
     (1 - bin) * bin = 0;
     (1 - hashK) * hashK = 0;
@@ -518,24 +522,21 @@ namespace Main(%N);
     (1 - hashK1) * hashK1 = 0;
     (1 - hashP1) * hashP1 = 0;
     (1 - useElseAddr) * useElseAddr = 0;
-    (1 - arithEq3) * arithEq3 = 0;
-    (1 - arithEq4) * arithEq4 = 0;
-    (1 - arithEq5) * arithEq5 = 0;
     (1 - hashS) * hashS = 0;
     (1 - hashSDigest) * hashSDigest = 0;
     (1 - hashSLen) * hashSLen = 0;
     (1 - hashS1) * hashS1 = 0;
-
+    (1 - assumeFree) * assumeFree = 0;
     {
         CONST0, CONST1, CONST2, CONST3, CONST4, CONST5, CONST6, CONST7,
         inA, inB, inC, inROTL_C, inD, inE, inSR, inFREE, inFREE0,
-        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX,
+        inCTX, inSP, inPC, inGAS, inHASHPOS, inSTEP, inRR, inRCX, arithEq,
         inCntArith, inCntBinary, inCntKeccakF, inCntSha256F, inCntMemAlign, inCntPaddingPG, inCntPoseidonG,
         operations, offset, incStack, binOpcode, jmpAddr, elseAddr, zkPC
     } in {
         Rom.CONST0, Rom.CONST1, Rom.CONST2, Rom.CONST3, Rom.CONST4, Rom.CONST5, Rom.CONST6, Rom.CONST7,
         Rom.inA, Rom.inB, Rom.inC, Rom.inROTL_C, Rom.inD, Rom.inE, Rom.inSR, Rom.inFREE, Rom.inFREE0,
-        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX,
+        Rom.inCTX, Rom.inSP, Rom.inPC, Rom.inGAS, Rom.inHASHPOS, Rom.inSTEP, Rom.inRR, Rom.inRCX, Rom.arithEq,
         Rom.inCntArith, Rom.inCntBinary, Rom.inCntKeccakF, Rom.inCntSha256F, Rom.inCntMemAlign, Rom.inCntPaddingPG, Rom.inCntPoseidonG,
         Rom.operations, Rom.offset, Rom.incStack, Rom.binOpcode, Rom.jmpAddr, Rom.elseAddr, Rom.line
     };
@@ -601,61 +602,70 @@ namespace Main(%N);
     pol ay3_6 = Arith.y3[12] + Arith.y3[13]*2**16;
     pol ay3_7 = Arith.y3[14] + Arith.y3[15]*2**16;
 
-    // We group arithmetic operations by the number of inputs they have
-    // 1] 5 inputs (A * B + C = D * 2^256 + E)
-    arithEq0 {  1, 0, 0, 0, 0, 0, 0,
+    // List of arithmetic equations:                           Conversion Table:
+    //      EQ0:  x1·y1 + x2 = y2·2²⁵⁶ + y3                        A <--> x1
+    //      EQ1:  s·(x2 - x1) = (y2 - y1) - q0 · p1                B <--> y1
+    //      EQ2:  2s·y1 = 3x1² - q0·p1                             C <--> x2
+    //      EQ3:  s² - x1 - x2 = x3 - q1·p1                        D <--> y2
+    //      EQ4:  s·(x1 - x3) - y1 = y3 - q2·p1                    E <--> x3
+    //      EQ5:  x1·x2 - y1·y2 = x3 - q1·p2                      op <--> y3
+    //      EQ6:  y1·x2 + x1·y2 = y3 - q2·p2
+    //      EQ7:  x1 + x2 = x3 - q1·p2
+    //      EQ8:  y1 + y2 = y3 - q2·p2
+    //      EQ9:  x1 - x2 = x3 - q1·p2
+    //      EQ10: y1 - y2 = y3 - q2·p2
+    //      EQ11: s·(x2 - x1) = (y2 - y1) - q0 · p1
+    //      EQ12: 2s·y1 = 3x1² - q0·p1
+    //      EQ13: s² - x1 - x2 = x3 - q1·p1
+
+    arith {
+        arithEq,
         A0, A1, A2, A3, A4, A5, A6, A7,
         B0, B1, B2, B3, B4, B5, B6, B7,
-        C0, C1, C2, C3, C4, C5, C6, C7,
-        D0, D1, D2, D3, D4, D5, D6, D7,
+        arithSame12 * (A0 - C0) + C0, // This should be A iff EQ2 or EQ9 (point doubling)
+        arithSame12 * (A1 - C1) + C1,
+        arithSame12 * (A2 - C2) + C2,
+        arithSame12 * (A3 - C3) + C3,
+        arithSame12 * (A4 - C4) + C4,
+        arithSame12 * (A5 - C5) + C5,
+        arithSame12 * (A6 - C6) + C6,
+        arithSame12 * (A7 - C7) + C7,
+        arithSame12 * (B0 - D0) + D0, // This should be B iff EQ2 or EQ9 (point doubling)
+        arithSame12 * (B1 - D1) + D1,
+        arithSame12 * (B2 - D2) + D2,
+        arithSame12 * (B3 - D3) + D3,
+        arithSame12 * (B4 - D4) + D4,
+        arithSame12 * (B5 - D5) + D5,
+        arithSame12 * (B6 - D6) + D6,
+        arithSame12 * (B7 - D7) + D7,
+        arithUseE * E0, // This must be deactivated in EQ0 (standard)
+        arithUseE * E1,
+        arithUseE * E2,
+        arithUseE * E3,
+        arithUseE * E4,
+        arithUseE * E5,
+        arithUseE * E6,
+        arithUseE * E7,
         op0, op1, op2, op3, op4, op5, op6, op7 } is
-    Arith.resultEq0 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
+    Arith.resultEq {
+        Arith.selEq[0] + 2 * Arith.selEq[1] + 3 * Arith.selEq[2] + 4 * Arith.selEq[3] + 5 * Arith.selEq[4]
+                       + 6 * Arith.selEq[5] + 7 * Arith.selEq[6] + 8 * Arith.selEq[7],
         ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
         ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
         ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
         ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
+        ax3_0,
+        ax3_1,
+        ax3_2,
+        ax3_3,
+        ax3_4,
+        ax3_5,
+        ax3_6,
+        ax3_7,
         ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
     };
 
-    // 2] 6 inputs (Point addition, complex multiplication, complex addition, complex subtraction)
-    arithEq1 + arithEq3 + arithEq4 + arithEq5 {
-        0, arithEq1, 0, arithEq1, arithEq3, arithEq4, arithEq5,
-        A0, A1, A2, A3, A4, A5, A6, A7,
-        B0, B1, B2, B3, B4, B5, B6, B7,
-        C0, C1, C2, C3, C4, C5, C6, C7,
-        D0, D1, D2, D3, D4, D5, D6, D7,
-        E0, E1, E2, E3, E4, E5, E6, E7,
-        op0, op1, op2, op3, op4, op5, op6, op7 } is
-    Arith.resultEq1 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
-        ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
-        ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
-        ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
-        ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
-        ax3_0, ax3_1, ax3_2, ax3_3, ax3_4, ax3_5, ax3_6, ax3_7,
-        ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
-    };
-
-    // 3] 4 inputs (Point doubling)
-    arithEq2 { 0, 0, 1, 1, 0, 0, 0,
-        A0, A1, A2, A3, A4, A5, A6, A7,
-        B0, B1, B2, B3, B4, B5, B6, B7,
-        A0, A1, A2, A3, A4, A5, A6, A7,
-        B0, B1, B2, B3, B4, B5, B6, B7,
-        E0, E1, E2, E3, E4, E5, E6, E7,
-        op0, op1, op2, op3, op4, op5, op6, op7 } is
-    Arith.resultEq2 {
-        Arith.selEq[0], Arith.selEq[1], Arith.selEq[2], Arith.selEq[3], Arith.selEq[4], Arith.selEq[5], Arith.selEq[6],
-        ax1_0, ax1_1, ax1_2, ax1_3, ax1_4, ax1_5, ax1_6, ax1_7,
-        ay1_0, ay1_1, ay1_2, ay1_3, ay1_4, ay1_5, ay1_6, ay1_7,
-        ax2_0, ax2_1, ax2_2, ax2_3, ax2_4, ax2_5, ax2_6, ax2_7,
-        ay2_0, ay2_1, ay2_2, ay2_3, ay2_4, ay2_5, ay2_6, ay2_7,
-        ax3_0, ax3_1, ax3_2, ax3_3, ax3_4, ax3_5, ax3_6, ax3_7,
-        ay3_0, ay3_1, ay3_2, ay3_3, ay3_4, ay3_5, ay3_6, ay3_7
-    };
-
-    cntArith' = cntArith*(1-Global.L1) + arithEq0 + arithEq1 + arithEq2 + arithEq3 + arithEq4 + arithEq5;
+    cntArith' = cntArith*(1-Global.L1) + arith;
 
 /////////
 // Binary Plookpups
@@ -819,8 +829,8 @@ namespace Main(%N);
         addr,
         Global.STEP,
         mWR,
-        op0, op1, op2, op3,
-        op4, op5, op6, op7
+        assumeFree * (FREE0 - op0) + op0, assumeFree * (FREE1 - op1) + op1, assumeFree * (FREE2 - op2) + op2, assumeFree * (FREE3 - op3) + op3,
+        assumeFree * (FREE4 - op4) + op4, assumeFree * (FREE5 - op5) + op5, assumeFree * (FREE6 - op6) + op6, assumeFree * (FREE7 - op7) + op7
     } is
     Mem.mOp {
         Mem.addr,
@@ -1002,4 +1012,3 @@ namespace Main(%N);
     };
 
     cntMemAlign' = cntMemAlign*(1-Global.L1) + memAlignRD + memAlignWR + memAlignWR8;
-

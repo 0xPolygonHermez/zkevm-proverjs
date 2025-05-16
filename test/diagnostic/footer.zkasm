@@ -1,0 +1,26 @@
+end:
+
+        $ => A           :MLOAD(initial_A)
+        $ => B           :MLOAD(initial_B)
+        $ => C           :MLOAD(initial_C)
+        $ => D           :MLOAD(initial_D)
+        $ => E           :MLOAD(initial_E)
+        $ => CTX         :MLOAD(initial_CTX)
+        $ => SP          :MLOAD(initial_SP)
+        $ => PC          :MLOAD(initial_PC)
+        $ => GAS         :MLOAD(initial_GAS)
+        $ => SR          :MLOAD(initial_SR)
+        $ => RR          :MLOAD(initial_RR)
+        $ => HASHPOS     :MLOAD(initial_HASHPOS)
+        $ => RCX         :MLOAD(initial_RCX)
+
+; label finalizeExecution needed by executor C++
+finalizeExecution:
+                         :JMP(finalWait)
+finalWait:
+        ${beforeLast()}  :JMPN(finalWait)
+                         :JMP(start)
+opINVALID:
+; label checkAndSaveFrom needed by executor C++
+checkAndSaveFrom:
+                         :JMP(opINVALID)

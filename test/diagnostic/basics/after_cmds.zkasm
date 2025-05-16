@@ -1,0 +1,33 @@
+
+        3 => A
+        $${var total = total + A}
+        15 => B
+        $${total = total + B}
+        10000000000000000000000n => C
+        $${total = total + C}
+        26 => D :JMP(label1_cmds)
+        $${total = total + D}
+        8 => A
+
+label1_cmds:
+        ${total} => A
+        10000000000000000000018n :ASSERT
+        28 => D :JMPN(label2_never)
+        $${total = total + D}
+        8 => A
+        :JMP(label3)
+
+label2_never:
+        A - 1 :ASSERT
+
+label3:
+        ${total} => A
+        10000000000000000000046n :ASSERT
+
+        -1 => D :JMPN(label4)
+        $${total = total + D}
+        A - 1 :ASSERT
+
+label4:
+        ${total} => A
+        10000000000000000000046n :ASSERT

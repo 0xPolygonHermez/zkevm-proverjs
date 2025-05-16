@@ -1,27 +1,35 @@
 
 /*
     Equations:
+                                                                 selEq   arithEq
+    EQ0:   A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)       0         1    ARITH
 
-    EQ0:   A(x1) * B(y1) + C(x2) = D (y2) * 2 ** 256 + op (y3)   - selEq[0]
+    EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)    lambda - ADD     1         2    ARITH_ECADD_DIFFERENT
+    EQ2:   2 * s * y1 - 3 * x1 * x1 + (q0 * p1)     lambda - DBL     2         3    ARITH_ECADD_SAME
+    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)         x3             1+2       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
+    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)    y3             1+2       2,3    ARITH_ECADD_DIFFERENT, ARITH_ECADD_SAME
 
-    EQ1:   s * x2 - s * x1 - y2 + y1 + (q0 * p1)   lambda - ADD  - selEq[1]
-    EQ2:   2 * s * y1 - 3 * x1 * x1 + (q0 * p1)    lambda - DBL  - selEq[2]
-    EQ3:   s * s - x1 - x2 - x3 + (q1 * p1)        x3            - selEq[3]
-    EQ4:   s * x1 - s * x3 - y1 - y3 + (q2 * p1)   y3            - selEq[3]
+    EQ5:   x1 * x2 - y1 * y2 - x3 + (q1 * p2)                        3         4    ARITH_BN254_MULFP2
+    EQ6:   y1 * x2 + x1 * y2 - y3 + (q2 * p2)                        3         4    ARITH_BN254_MULFP2
 
-    EQ5:   x1 * x2 - y1 * y2 - x3 + (q1 * p2)                    - selEq[4]
-    EQ6:   y1 * x2 + x1 * y2 - y3 + (q2 * p2)                    - selEq[4]
+	EQ7:   x1 + x2 - x3 + (q1 * p2)                                  4         5    ARITH_BN254_ADDFP2
+	EQ8:   y1 + y2 - y3 + (q2 * p2)                                  4         5    ARITH_BN254_ADDFP2
 
-	EQ7:   x1 + x2 - x3 + (q1 * p2)                              - selEq[5]
-	EQ8:   y1 + y2 - y3 + (q2 * p2)                              - selEq[5]
+	EQ9:   x1 - x2 - x3 + (q1 * p2)                                  5         6    ARITH_BN254_SUBFP2
+	EQ10:  y1 - y2 - y3 + (q2 * p2)                                  5         6    ARITH_BN254_SUBFP2
 
-	EQ9:   x1 - x2 - x3 + (q1 * p2)                              - selEq[6]
-	EQ10:  y1 - y2 - y3 + (q2 * p2)                              - selEq[6]
+    EQ11:  s * x2 - s * x1 - y2 + y1 + (q0 * p3)    lambda - ADD     6         7    ARITH_SECP256R1_ECADD_DIFFERENT
+    EQ12:  2 * s * y1 - 3 * x1 * x1 - a + (q0 * p3) lambda - DBL     7         8    ARITH_SECP256R1_ECADD_SAME
+    EQ13:  s * s - x1 - x2 - x3 + (q1 * p3)         x3             6+7       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
+    EQ14:  s * x1 - s * x3 - y1 - y3 + (q2 * p3)    y3             6+7       7,8    ARITH_SECP256R1_ECADD_DIFFERENT, ARITH_SECP256R1_ECADD_SAME
 
     where p1 refers to the base field order of:
         · Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
     and p2 refers to the base field order of:
         · BN254:      0x3064 4E72 E131 A029 B850 45B6 8181 585D 9781 6A91 6871 CA8D 3C20 8C16 D87C FD47
+    and p3 refers to the base field order of:
+        · Secp256r1:  0xFFFF FFFF 0000 0001 0000 0000 0000 0000 0000 0000 FFFF FFFF FFFF FFFF FFFF FFFF
+
 */
 include "global.pil";
 
@@ -43,13 +51,16 @@ namespace Arith(%N);
     pol commit q1[16];
     pol commit q2[16];
 
-    pol commit resultEq0;
-    pol commit resultEq1;
-    pol commit resultEq2;
+    pol commit resultEq;
 
-    resultEq0 * (1 - resultEq0) = 0;
-    resultEq1 * (1 - resultEq1) = 0;
-    resultEq2 * (1 - resultEq2) = 0;
+    resultEq * (1 - resultEq) = 0;
+
+    pol sel_secp256k1 = selEq[1] + selEq[2];
+    pol sel_bn254 = selEq[3] + selEq[4] + selEq[5];
+    pol sel_secp256r1 = selEq[6] + selEq[7];
+
+    pol sel_check_diff = selEq[1] + selEq[6];
+    pol sel_check_lt_prime = sel_secp256k1 + sel_bn254 + sel_secp256r1;
 
     // FEATURE:
     //      · Verify that the x1,x2 are different when adding different elliptic curve points (EQ1,EQ3,EQ4).
@@ -113,21 +124,18 @@ namespace Arith(%N);
     // (A) forbidden, executor must control this situation, because expending an
     // unnecessary inverse.
 
-    (xAreDifferent - selEq[1]) * Global.CLK32[16] = 0;
+    (xAreDifferent - sel_check_diff) * Global.CLK32[16] = 0;
 
     // COST:   2 commit, 2 im, 0 constant, 4 constraints
 
-
     // FEATURE:
     //
-    // Verify that the result of Secp256k1 addition (EQ1/EQ2,EQ3,EQ4) is free of aliases, i.e. that x3,y3 ∊ [0, p-1]
-    // Verify that the result of 𝔽p² = 𝔽p[u]/(u² + 1) multiplication, addition and subtraction (EQ5,EQ6 || EQ7,EQ8 || EQ9,EQ10)
-    // is free of aliases, i.e. that x3,y3 ∊ [0, p-1]
-    //
+    // Verify that the result of Secp256k1, Secp256r1 and BN254 operations are free of aliases, i.e. that x3,y3 ∊ [0, p-1]
     // Here, p refers, respectively, to the base field order of any of the following elliptic curves:
     //
     // Secp256k1:  0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE FFFF FC2F
     // BN254:      0x3064 4E72 E131 A029 B850 45B6 8181 585D 9781 6A91 6871 CA8D 3C20 8C16 D87C FD47
+    // Secp256r1:  0xFFFF FFFF 0000 0001 0000 0000 0000 0000 0000 0000 FFFF FFFF FFFF FFFF FFFF FFFF
     //
     // Strategy: Compare from the most significant chunk to the least significant chunk of x3 and y3 (A). On each chunk,
     // chunkLtPrime indicates whether the chunk is smaller than the FPEC chunk. valueLtPrime indicates if any
@@ -149,68 +157,47 @@ namespace Arith(%N);
     //   chunkPrime(0..15) - 1 = [0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFD, 0xFFFE, 0xFC2E]
     //   chunkPrime(0..15)     = [0x3064, 0x4e72, 0xe131, 0xa029, 0xb850, 0x45b6, 0x8181, 0x585d, 0x9781, 0x6a91, 0x6871, 0xca8d, 0x3c20, 0x8c16, 0xd87c, 0xfd47]
     //   chunkPrime(0..15) - 1 = [0x3063, 0x4e71, 0xe130, 0xa028, 0xb84f, 0x45b5, 0x8180, 0x585c, 0x9780, 0x6a90, 0x6870, 0xca8c, 0x3c1f, 0x8c15, 0xd87b, 0xfd46]
+    //   chunkPrime(0..15)     = [0xFFFF, 0xFFFF, 0x0000, 0x0001, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF]
+    //   chunkPrime(0..15) - 1 = [0xFFFE, 0xFFFE,    N/A, 0x0000,    N/A,    N/A,    N/A,    N/A,    N/A,    N/A, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE, 0xFFFE]
     //
-    //   different Secp256k1 prime chunks [0xFFFF, 0xFFFE, 0xFFFD, 0xFC2F, 0xFC2E]
-    //   different BN254 prime chunks [0x3064, 0x4e72, 0xe131, 0xa029, 0xb850, 0x45b6, 0x8181, 0x585d, 0x9781, 0x6a91, 0x6871, 0xca8d, 0x3c20, 0x8c16, 0xd87c, 0xfd47,
-    //                                 0x3063, 0x4e71, 0xe130, 0xa028, 0xb84f, 0x45b5, 0x8180, 0x585c, 0x9780, 0x6a90, 0x6870, 0xca8c, 0x3c1f, 0x8c15, 0xd87b, 0xfd46]
-
-    //              CLK0   CLK1  CLK2  CLK3  CLK4  CLK5  CLK6  CLK7  CLK8  CLK9  CLK10 CLK11 CLK12 CLK13 CLK14 CLK15
-    // Secp256k1:  0xFFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  FFFF  fffe  FFFF  fc2f
-    // BN254:      0x3064  4e72  e131  a029  b850  45b6  8181  585d  9781  6a91  6871  ca8d  3c20  8c16  d87c  fd47
+    //   N/A: means there aren't valid values, if prover said that this chunk is smaller it's false.
+    //   NOTE: first block of 2^16 values are all valid, This is convenient because the range selector 0 then indicates any valid 16-bit value
     //
-    //                 RANGE_SEL  P_RANGE     BASE
-    //              /      0      [0,0xFFFF]  CLK0, ..., CLK12, CLK14
-    //              |      1      [0,0xFFFE]  CLK13
-    //   Secp256k1  |      2      [0,0xFFFD]
-    //              |      3      [0,0xFC2F]  CLK15
-    //              \      4      [0,0xFC2E]
-    //              /      5      [0,0x3064]  CLK0
-    //              |      6      [0,0x3063]
-    //              |      7      [0,0x4e72]  CLK1
-    //              |      8      [0,0x4e71]
-    //              |      9      [0,0xe131]  CLK2
-    //              |     10      [0,0xe130]
-    //              |     11      [0,0xa029]  CLK3
-    //              |     12      [0,0xa028]
-    //              |     13      [0,0xb850]  CLK4
-    //              |     14      [0,0xb84f]
-    //              |     15      [0,0x45b6]  CLK5
-    //              |     16      [0,0x45b5]
-    //              |     17      [0,0x8181]  CLK6
-    //              |     18      [0,0x8180]
-    //              |     19      [0,0x585d]  CLK7
-    //    BN254     |     20      [0,0x585c]
-    //              |     21      [0,0x9781]  CLK8
-    //              |     22      [0,0x9780]
-    //              |     23      [0,0x6a91]  CLK9
-    //              |     24      [0,0x6a90]
-    //              |     25      [0,0x6871]  CLK10
-    //              |     26      [0,0x6870]
-    //              |     27      [0,0xca8d]  CLK11
-    //              |     28      [0,0xca8c]
-    //              |     29      [0,0x3c20]  CLK12
-    //              |     30      [0,0x3c1f]
-    //              |     31      [0,0x8c16]  CLK13
-    //              |     32      [0,0x8c15]
-    //              |     33      [0,0xd87c]  CLK14
-    //              |     34      [0,0xd87b]
-    //              |     35      [0,0xfd47]  CLK15
-    //              \     36      [0,0xfd46]
+    //   RANGE_SEL   BYTE2
+    //          0    0..2**16-1
+    //   ----------------------------
+    //          1    0..2**16-2
+    //          0    2**16-1       (*)
+    //   -----------------------------
+    //          2    0..TO             <--- this block check a value from 0..TO
+    //          0    TO+1..2**16-1 (*)      (even range_sel was used to check a value not is greater than prime chunk)
+    //   -----------------------------
+    //          3    0..TO-1           <--- this block check a value less than TO
+    //          0    TO..2**16-1   (*)      (odd range_sel was used to check a value is less than prime chunk)
+    //   -----------------------------
     //
-    //   pRangeSecp256k1 = (CLK13 + 3 * CLK15 + chunkLtPrime) * selEq[3]
-    //   pRangeBN254 = (5 * CLK0 + 7 * CLK1 + 9 * CLK2 + 11 * CLK3 + 13 * CLK4 + 15 * CLK5 + 17 * CLK6 + 19 * CLK7 + 21 * CLK8 + 23 * CLK9 + 25 * CLK10 + 27 * CLK11 + 29 * CLK12 + 31 * CLK13 + 33 * CLK14 + 35 * CLK15) * (selEq[4] + selEq[5] + selEq[6])
-    //   pRange =  (pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime)
+    //   (*) it's possible compact table if invalid values are eleminated, but after it's necessary a constant pol to
+    //       indicate values. If this values remains with range_sel = 0, it's possible reuse BYTE2 for values.
     //
-    //   CLK                pRange                            pRange
-    //           [selEq[3] = 1, chunkLtPrime = 0]   [selEq[3] = 1, chunkLtPrime = 1]
+    //   -----------------------------
+    //        2*K    0                 <--- this block check a value is 0.
+    //          0    1..2**16-1
+    //   -----------------------------
+    //          0    1..2**16-1        <--- no values less than 0.
+    //   -----------------------------
     //
+    //   BLOCKS (2**16) x 16 clocks/chunks = 2**20 values * 7 blocks = (2**22 - 2**20) < 2**23
+    //   -------------------------------------------------------------------------------------
+    //                               (clp)
+    //   0:     FULL            ( 0 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   1:     pSecp256k1      (16 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   2:     LT(pSecp256k1)  (16 + 16 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   3:     BN254           (48 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   4:     LT(BN254)       (48 + 16 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   5:     pSecp256r1      (80 +  0 + 0,1,2,3,4,5,6,7,8,...,14,15)
+    //   6:     LT(pSecp256r1)  (80 + 16 + 0,1,2,3,4,5,6,7,8,...,14,15)
     //
-    //   0              0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
-    //   :                      :                               :
-    //   12             0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
-    //   13             1 + 3 * 0 + 0 = 1               1 + 3 * 0 + 1 = 2
-    //   14             0 + 3 * 0 + 0 = 0               0 + 3 * 0 + 1 = 1
-    //   15             0 + 3 * 1 + 0 = 3               0 + 3 * 1 + 1 = 4
+    //                              clp = chunkLtPrime * 16
     //
     //   valueLtPrime' = valueLtPrime * (1 - CLK0 - CLK16) + chunkLtPrime
     //
@@ -229,14 +216,13 @@ namespace Arith(%N);
     //   (D) when valueLtPrime = 0 ==> chunkLtPrime must be zero, if not it FAILS
     //   (E) on clocks 0 and 16, current value of valueLtPrime isn't considered
     //
-    //
-    //    Examples (Secp256k1 prime):
+    //    //    Examples (Secp256k1 prime):
     //                                ┌──────── pRange
     //              ┌── max_value     │  ┌───── chunkLtPrime
     //              │     ┌─ example  │  │  ┌── valueLtPrime
     //              │     │           │  │  │
-    //    CLK0    0xFFFF  0xFFFF      0  0  0
-    //    CLK1    0xFFFF  0xFF00      1  1  0  // RANGE [0, 0xFFFE]
+    //    CLK0    0xFFFF  0xFFFF     16  0  0  (16 = clock(0) + Secp256k1(16))
+    //    CLK1    0xFFFF  0xFF00     33  1  0  RANGE [0, 0xFFFE] (33 = clock(1) + Secp256k1(16) + chunkLtPrime(16))
     //    CLK2    0xFFFF  0x0000      0  0  1
     //    CLK3    0xFFFF  0x0000      0  0  1
     //    CLK4    0xFFFF  0xFFFF      0  0  1
@@ -249,22 +235,22 @@ namespace Arith(%N);
     //              ┌── max_value     │  ┌───── chunkLtPrime
     //              │     ┌─ example  │  │  ┌── valueLtPrime
     //              │     │           │  │  │
-    //    CLK0    0xFFFF  0xFFFF      0  0  0
-    //    CLK1    0xFFFF  0xFFFF      0  0  0
-    //    CLK2    0xFFFF  0xFFFF      0  0  0
+    //    CLK0    0xFFFF  0xFFFF     16  0  0  (16 = clock(0) + Secp256k1(16))
+    //    CLK1    0xFFFF  0xFFFF     17  0  0  (17 = clock(1) + Secp256k1(16))
+    //    CLK2    0xFFFF  0xFFFF     18  0  0  (18 = clock(2) + Secp256k1(16))
     //    :
-    //    CLK12   0xFFFF  0xFFFF      0  0  0
-    //    CLK13   0xFFFE  0xFFFF      1  0  0    // CLK13 == 1 RANGE [0, 0xFFFE]
-    //    CLK14   0xFFFF  0xFFFF      0  0  0
-    //    CLK15   0xFC2F  0xFC00      4  1  0    // CLK15 == 1 RANGE [0, 0xFC2F]
+    //    CLK12   0xFFFF  0xFFFF     28  0  0  (28 = clock(12) + Secp256k1(16))
+    //    CLK13   0xFFFE  0xFFFF     29  0  0  CLK13 == 1 RANGE [0, 0xFFFE] (29 = clock(13) + Secp256k1(16))
+    //    CLK14   0xFFFF  0xFFFF     30  0  0  (30 = clock(14) + Secp256k1(16))
+    //    CLK15   0xFC2F  0xFC00     47  1  0  CLK15 == 1 RANGE [0, 0xFC2F] 47 = 46+1 (47 = clock(15) + Secp256k1(16) + chunkLtPrime(16))
     //    CLK16   0xFFFF  0xFFFF      0  0  1
 
     // valueLtPrime indicates whether, at this point, we know that the value is smaller than the prime.
-    // If selEq[3],selEq[4],selEq[5],selEq[6] = 0, it must be 0.
+    // For regular ARITH (selEq[0] = 1), it must be 0.
     pol commit valueLtPrime;
 
     // chunkLtPrime indicates whether the current value chunk is smaller than the prime chunk.
-    // If selEq[3],selEq[4],selEq[5],selEq[6] = 0 or valueLtPrime = 1, it must be 0.
+    // For regular ARITH (selEq[0] = 1) or if valueLtPrime =1, it must be 0.
     pol commit chunkLtPrime;
 
     // binary constraints
@@ -276,38 +262,15 @@ namespace Arith(%N);
     valueLtPrime' = valueLtPrime * (1 - Global.CLK32[0] - Global.CLK32[16]) + chunkLtPrime;
 
     // This constraint is used to verify (and to enforce) that at the end of a 16-clock cycle, valueLtPrime is equal to 1.
-    // This constraint is applied when one of selEq[3],selEq[4],selEq[5],selEq[6] equals 1.
-    (valueLtPrime' - selEq[3] - selEq[4] - selEq[5] - selEq[6]) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
+    // This constraint is applied on SECP256K1(1,2), BN254(3,4,5), SECP256R1(6,7) equals 1.
+    (valueLtPrime' - sel_check_lt_prime) * (Global.CLK32[15] + Global.CLK32[31]) = 0;
 
-    pol constant RANGE_SEL; // 0:2**16,
-                            // 1:2**16-1,0
-                            // 2:2**16-2,0:2
-                            // 3:2**16-976,0:976
-                            // 4:2**16-977,0:977
-                            // -----------------------------------------------------------------------
-                            // 5:2**16-53147,0:53147    16:2**16-47688,0:47688  27:2**16-13682,0:13682
-                            // 6:2**16-53146,0:53146    17:2**16-32382,0:32382  28:2**16-13681,0:13681
-                            // 7:2**16-45453,0:45453    18:2**16-32381,0:32381  29:2**16-50143,0:50143
-                            // 8:2**16-45452,0:45452    19:2**16-42914,0:42914  30:2**16-50142,0:50142
-                            // 9:2**16-7886,0:7886      20:2**16-42913,0:42913  31:2**16-29673,0:29673
-                            // 10:2**16-7885,0:7885     21:2**16-26750,0:26750  32:2**16-29672,0:29672
-                            // 11:2**16-24534,0:24534   22:2**16-26749,0:26749  33:2**16-10115,0:10115
-                            // 12:2**16-24533,0:24533   23:2**16-38254,0:38254  34:2**16-10114,0:10114
-                            // 13:2**16-18351,0:18351   24:2**16-38253,0:38253  35:2**16-696,0:696
-                            // 14:2**16-18350,0:18350   25:2**16-38798,0:38798  36:2**16-695,0:695
-                            // 15:2**16-47689,0:47689   26:2**16-38797,0:38797
-
-    // range to be looked up for each chunk and for each prime
-    pol pRangeSecp256k1 = (Global.CLK32[13] + Global.CLK32[29] + 3 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * selEq[3];
-    pol pRangeBN254 =     (5 * (Global.CLK32[0] + Global.CLK32[16]) + 7 * (Global.CLK32[1] + Global.CLK32[17]) + 9 * (Global.CLK32[2] + Global.CLK32[18])
-                        + 11 * (Global.CLK32[3] + Global.CLK32[19]) + 13 * (Global.CLK32[4] + Global.CLK32[20]) + 15 * (Global.CLK32[5] + Global.CLK32[21])
-                        + 17 * (Global.CLK32[6] + Global.CLK32[22]) + 19 * (Global.CLK32[7] + Global.CLK32[23]) + 21 * (Global.CLK32[8] + Global.CLK32[24])
-                        + 23 * (Global.CLK32[9] + Global.CLK32[25]) + 25 * (Global.CLK32[10] + Global.CLK32[26]) + 27 * (Global.CLK32[11] + Global.CLK32[27])
-                        + 29 * (Global.CLK32[12] + Global.CLK32[28]) + 31 * (Global.CLK32[13] + Global.CLK32[29]) + 33 * (Global.CLK32[14] + Global.CLK32[30])
-                        + 35 * (Global.CLK32[15] + Global.CLK32[31]) + chunkLtPrime) * (selEq[4] + selEq[5] + selEq[6]);
+    pol constant RANGE_SEL;
 
     // lookup with RANGE_SEL as first column and BYTE2 as second column
-    {(pRangeSecp256k1 + pRangeBN254) * (1 - valueLtPrime), <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
+    {(<%- clksel(['[0..15]','[0..15]'], 'Global.CLK32') %>
+        + 16 * sel_secp256k1 + 48 * sel_bn254 + 80 * sel_secp256r1 + 16 * chunkLtPrime) * (1 - valueLtPrime),
+      <%- clksel(['x3[15..0]','y3[15..0]'], 'Global.CLK32') %>} in {RANGE_SEL, Global.BYTE2};
 
     /****
     *
@@ -448,6 +411,45 @@ namespace Arith(%N);
     <%- equation('pol eq10_## =', 'y1-y2-y3+p*q2-p*offset', {p: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
                                                              offset: 0x8n}) %>
 
+    /*******
+    *
+    * EQ11: s * x2 - s * x1 - y2 + y1 - p * (q0 - offset) = 0
+    *
+    *******/
+
+    <%- equation('pol eq11_## =', 's*x2-s*x1-y2+y1-p*q0+p*offset', {p: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+                                                                   offset:0x20000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ12:  2 * s * y1 - 3 * x1 * x1 - a + (q0 * offset) = 0
+    *
+    *******/
+
+    <%- equation('pol eq12_## =', 's*y1+s*y1-x1*x1-x1*x1-x1*x1-a+p*q0-p*offset', {a: 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn,
+                                                                                  p: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+                                                                                 offset:0x40000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+    /*******
+    *
+    * EQ13:  s * s - x1 - x2 - x3 - p * (q1 - offset) = 0
+    *
+    *******/
+
+    <%- equation('pol eq13_## =', 's*s-x1-x2-x3-p*q1+p*offset', {p: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+                                                                offset:0x4n}) %>
+
+    /*******
+    *
+    * EQ14:  s * x1 - s * x3 - y1 - y3 + p * (q2 - offset) = 0
+    *
+    *******/
+
+    <%- equation('pol eq14_## =', 's*x1-s*x3-y1-y3+p*q2-p*offset', {p: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+                                                                   offset:0x20000000000000000000000000000000000000000000000000000000000000000n}) %>
+
+
+
     pol eq0 = <%- clksel(['eq0_[0..31]'], 'Global.CLK32') %>;
     pol eq1 = <%- clksel(['eq1_[0..31]'], 'Global.CLK32') %>;
     pol eq2 = <%- clksel(['eq2_[0..31]'], 'Global.CLK32') %>;
@@ -459,11 +461,18 @@ namespace Arith(%N);
     pol eq8 = <%- clksel(['eq8_[0..31]'], 'Global.CLK32') %>;
     pol eq9 = <%- clksel(['eq9_[0..31]'], 'Global.CLK32') %>;
     pol eq10 = <%- clksel(['eq10_[0..31]'], 'Global.CLK32') %>;
+    pol eq11 = <%- clksel(['eq11_[0..31]'], 'Global.CLK32') %>;
+    pol eq12 = <%- clksel(['eq12_[0..31]'], 'Global.CLK32') %>;
+    pol eq13 = <%- clksel(['eq13_[0..31]'], 'Global.CLK32') %>;
+    pol eq14 = <%- clksel(['eq14_[0..31]'], 'Global.CLK32') %>;
 
-    pol commit selEq[7];
+    pol commit selEq[8];
 
-    <%- latch(['selEq[0..6]'],'Global.CLK32[31]') %>
-    <%- binary(['selEq[0..6]']) %>
+    (<%- join('selEq[0..7]',' + ') %>) * (1 - <%- join('selEq[0..7]',' - ') %>) = 0;
+
+    <%- latch(['selEq[0..7]'],'Global.CLK32[31]') %>
+
+    <%- binary(['selEq[0..7]']) %>
 
     pol commit carry[3];
 
@@ -476,13 +485,20 @@ namespace Arith(%N);
     carry[2] in GL_SIGNED_22BITS;
 
     selEq[0] * (eq0 + carry[0]) = selEq[0] * carry[0]' * 2**16;
+
     selEq[1] * (eq1 + carry[0]) = selEq[1] * carry[0]' * 2**16;
     selEq[2] * (eq2 + carry[0]) = selEq[2] * carry[0]' * 2**16;
-    selEq[3] * (eq3 + carry[1]) = selEq[3] * carry[1]' * 2**16;
-    selEq[3] * (eq4 + carry[2]) = selEq[3] * carry[2]' * 2**16;
-    selEq[4] * (eq5 + carry[1]) = selEq[4] * carry[1]' * 2**16;
-    selEq[4] * (eq6 + carry[2]) = selEq[4] * carry[2]' * 2**16;
-    selEq[5] * (eq7 + carry[1]) = selEq[5] * carry[1]' * 2**16;
-    selEq[5] * (eq8 + carry[2]) = selEq[5] * carry[2]' * 2**16;
-    selEq[6] * (eq9 + carry[1]) = selEq[6] * carry[1]' * 2**16;
-    selEq[6] * (eq10 + carry[2]) = selEq[6] * carry[2]' * 2**16;
+    sel_secp256k1 * (eq3 + carry[1]) = sel_secp256k1 * carry[1]' * 2**16;
+    sel_secp256k1 * (eq4 + carry[2]) = sel_secp256k1 * carry[2]' * 2**16;
+
+    selEq[3] * (eq5 + carry[1]) = selEq[3] * carry[1]' * 2**16;
+    selEq[3] * (eq6 + carry[2]) = selEq[3] * carry[2]' * 2**16;
+    selEq[4] * (eq7 + carry[1]) = selEq[4] * carry[1]' * 2**16;
+    selEq[4] * (eq8 + carry[2]) = selEq[4] * carry[2]' * 2**16;
+    selEq[5] * (eq9 + carry[1]) = selEq[5] * carry[1]' * 2**16;
+    selEq[5] * (eq10 + carry[2]) = selEq[5] * carry[2]' * 2**16;
+
+    selEq[6] * (eq11 + carry[0]) = selEq[6] * carry[0]' * 2**16;
+    selEq[7] * (eq12 + carry[0]) = selEq[7] * carry[0]' * 2**16;
+    sel_secp256r1 * (eq13 + carry[1]) = sel_secp256r1 * carry[1]' * 2**16;
+    sel_secp256r1 * (eq14 + carry[2]) = sel_secp256r1 * carry[2]' * 2**16;

@@ -1,0 +1,2 @@
+INCLUDE "fix/main_slt_fix.zkasm"
+INCLUDE "fix/maxmem.zkasm"

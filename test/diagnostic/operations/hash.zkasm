@@ -1,0 +1,3 @@
+INCLUDE "hash/keccak.zkasm"
+INCLUDE "hash/poseidon.zkasm"
+INCLUDE "hash/sha256.zkasm"
