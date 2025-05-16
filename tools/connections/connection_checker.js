@@ -110,10 +110,12 @@ function check_connections(type, final_trace, slot_size = 1, connections = null)
             for (let j = 1; j < connections.length; j++) {
                 for (let k = 0; k < 4; k++) {
                     const wire = connections[j].connections[k];
+                    let r1 = j;
+                    if (j > 0) r1 += offset;
                     if (wires[wire]) {
                         // next times that found a wire, connect the "end"
                         // saved previously with this "end"
-                        mark(wires[wire][0], wires[wire][1], k, j, offset);
+                        mark(wires[wire][0], wires[wire][1], k, r1)
                         wires[wire] = [k, j];
                     } else {
                         // first time that found a wire saves the "end"
