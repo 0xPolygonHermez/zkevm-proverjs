@@ -79,7 +79,12 @@ npm run buildsetup --step=c12setup
 ```sh
 npm run buildsetup --steps
 ```
-**pil**: syntax is --pil=\<main.pil\> where main.pil was name of pil to compile. For debugging could use basic_main.pil. See --starkstruct option
+**rom**: syntax is --rom=\<rom_dir\> where rom_dir is path where found rom project (default: node_modules/@0xpolygonhermez/zkevm-rom).
+```sh
+npm run buildsetup --rom=node_modules/@0xpolygonhermez/zkevm-rom
+```
+
+**pil**: syntax is --pil=\<main.pil\> where main.pil is name of pil to compile. For debugging could use basic_main.pil. See --starkstruct option
 ```sh
 npm run buildsetup --pil=pil/basic_main.pil --starkstruct=debug
 ```

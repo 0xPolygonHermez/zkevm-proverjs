@@ -1,0 +1,88 @@
+
+    ; Save the initial counters
+    :CALL(SaveCounters)
+
+    ; TEST Hash digest never called => counter doesn't change
+    $ => E              :MLOAD(lastHashSId)
+    E + 1 => E          :MSTORE(lastHashSId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+
+    32                  :HASHSLEN(E)
+    ; $ => A              :HASHSDIGEST(E) ; Not called
+
+    CNT_SHA256_F        :MLOAD(v_cnt_sha256_f)
+
+    ; TEST 55 bytes => counter increase 1
+    $ => E              :MLOAD(lastHashSId)
+    E + 1 => E          :MSTORE(lastHashSId)
+    0 => HASHPOS
+
+    32 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+    23 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA5965n :HASHS(E)
+
+    55                  :HASHSLEN(E)
+    $ => A              :HASHSDIGEST(E)
+
+    CNT_SHA256_F - 1    :MLOAD(v_cnt_sha256_f)
+
+    ; TEST 56 bytes => counter increase 2
+    E + 1  => E         :MSTORE(lastHashSId)
+    0 => HASHPOS
+    32 => D
+
+    32 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+    24 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511n :HASHS(E)
+
+    56                  :HASHSLEN(E)
+    $ => A              :HASHSDIGEST(E)
+
+    CNT_SHA256_F - 3    :MLOAD(v_cnt_sha256_f)
+
+    ; TEST 119 bytes => counter increase 2
+
+    E + 1 => E          :MSTORE(lastHashSId)
+    0 => HASHPOS
+
+    32 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E) ; 96
+    23 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511n :HASHS(E)
+
+    119                 :HASHSLEN(E)
+    $ => A              :HASHSDIGEST(E)
+
+    CNT_SHA256_F - 5    :MLOAD(v_cnt_sha256_f)
+
+    ; TEST 120 bytes => counter increase 3
+
+    E + 1 => E          :MSTORE(lastHashSId)
+    0 => HASHPOS
+
+    32 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHS(E) ; 96
+    24 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9n :HASHS(E)
+
+    120                 :HASHSLEN(E)
+    $ => A              :HASHSDIGEST(E)
+
+    CNT_SHA256_F - 8    :MLOAD(v_cnt_sha256_f)
+
+    ; Check the other counters have not changed
+    CNT_ARITH       :MLOAD(v_cnt_arith)
+    CNT_BINARY      :MLOAD(v_cnt_binary)
+    CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)
+    CNT_POSEIDON_G  :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG  :MLOAD(v_cnt_padding_pg)

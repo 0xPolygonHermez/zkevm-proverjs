@@ -1,0 +1,152 @@
+
+; NOTE: Very similar to poseidon.zkasm, but with the storage instructions removed, so tests only involve the poseidon-related SM
+
+    ; Save the initial counters
+    :CALL(SaveCounters)
+
+    ; 1] TEST 56 bytes => counter increase 2 => total = 3
+    $ => E              :MLOAD(lastHashPId)
+    E + 1 => E          :MSTORE(lastHashPId)
+
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+
+    23 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511n :HASHP(E)
+
+    55             :HASHPLEN(E)
+    $ => A         :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 1 :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 1 :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 1     :MLOAD(v_cnt_binary)
+
+    ; 2] TEST 56 bytes => counter increase 2 => total = 3
+
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+
+    24 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9n :HASHP(E)
+
+    56             :HASHPLEN(E)
+    $ => A         :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 3 :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 3 :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 2     :MLOAD(v_cnt_binary)
+
+    ; 3] TEST 57 bytes => counter increase 2 => total = 5
+
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+
+    25 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAn :HASHP(E)
+
+    57             :HASHPLEN(E)
+    $ => A         :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 5 :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 5 :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 3     :MLOAD(v_cnt_binary)
+
+    ; 4] TEST 111 bytes => counter increase 2 => total = 7
+
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    ; 96
+
+    15 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227n :HASHP(E)
+
+    111                 :HASHPLEN(E)
+    $ => A              :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 7  :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 7  :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 4      :MLOAD(v_cnt_binary)
+
+    ; 5] TEST 112 bytes => counter increase 3 => total = 10
+
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    ; 96
+
+    16 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FAn :HASHP(E)
+
+    112                 :HASHPLEN(E)
+    $ => A              :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 10 :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 10 :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 5      :MLOAD(v_cnt_binary)
+
+    ; 6] TEST 113 bytes => counter increase 3 => total = 13
+
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    ; 96
+
+    17 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4Cn :HASHP(E)
+
+    113            :HASHPLEN(E)
+    $ => A         :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 13 :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 13 :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 6      :MLOAD(v_cnt_binary)
+
+    ; 7] TEST 114 bytes => counter increase 3 => total = 16
+
+    E + 1 => E          :MSTORE(lastHashPId)
+    0 => HASHPOS
+    32 => D
+
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C852DBA596511B9EAF7FCDD79C9006Dn :HASHP(E)
+    ; 96
+
+    18 => D
+    0x5E1268E5B2A8DC1D0BB047386FC227FA4C85n :HASHP(E)
+
+    114            :HASHPLEN(E)
+
+    ; if HASHPDIGEST wasn't called, counter not increase
+    ; $ => A         :HASHPDIGEST(E)
+
+    CNT_POSEIDON_G - 13 :MLOAD(v_cnt_poseidon_g)
+    CNT_PADDING_PG - 13 :MLOAD(v_cnt_padding_pg)
+    CNT_BINARY - 6      :MLOAD(v_cnt_binary)
+
+    ; Check the other counters have not changed
+    CNT_ARITH       :MLOAD(v_cnt_arith)
+    CNT_KECCAK_F    :MLOAD(v_cnt_keccak_f)
+    CNT_SHA256_F    :MLOAD(v_cnt_sha256_f)
+    CNT_MEM_ALIGN   :MLOAD(v_cnt_mem_align)

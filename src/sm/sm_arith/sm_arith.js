@@ -14,35 +14,108 @@ const arithEq7 = require('./sm_arith_eq7');
 const arithEq8 = require('./sm_arith_eq8');
 const arithEq9 = require('./sm_arith_eq9');
 const arithEq10 = require('./sm_arith_eq10');
+const arithEq11 = require('./sm_arith_eq11');
+const arithEq12 = require('./sm_arith_eq12');
+const arithEq13 = require('./sm_arith_eq13');
+const arithEq14 = require('./sm_arith_eq14');
 
 const F1Field = require("ffjavascript").F1Field;
+
+const ARITH = 1;
+const ARITH_ECADD_DIFFERENT = 2;
+const ARITH_ECADD_SAME = 3;
+const ARITH_BN254_MULFP2 = 4;
+const ARITH_BN254_ADDFP2 = 5;
+const ARITH_BN254_SUBFP2 = 6;
+const ARITH_SECP256R1_ECADD_DIFFERENT = 7;
+const ARITH_SECP256R1_ECADD_SAME = 8;
+
+const PRIME_SECP256K1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
+                                 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn ];
+
+const PRIME_BN254_CHUNKS = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
+                             0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
+
+const PRIME_SECP256R1_CHUNKS = [ 0xFFFFn, 0xFFFFn, 0x0000n, 0x0001n, 0x0000n, 0x0000n, 0x0000n, 0x0000n,
+                                 0x0000n, 0x0000n, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn ];
+
+const PRIME_SECP256K1_INDEX = 0;
+const PRIME_BN254_INDEX = 1;
+const PRIME_SECP256R1_INDEX = 2;
+
+const PRIME_CHUNKS = [PRIME_SECP256K1_CHUNKS, PRIME_BN254_CHUNKS, PRIME_SECP256R1_CHUNKS];
+const PRIME_NAMES = ['SECP256K1', 'BN254', 'SECP256R1'];
+
+const EQ_INDEX_TO_CARRY_INDEX = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1, 2];
+
+// Field Elliptic Curve secp256k1
+const pSecp256k1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+const Fsecp256k1 = new F1Field(pSecp256k1);
+
+// Field Elliptic Curve secp256r1
+const aSecp256r1 = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffcn;
+const pSecp256r1 = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
+const Fsecp256r1 = new F1Field(pSecp256r1);
+
+// Field Complex Multiplication
+const pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+const FpBN254 = new F1Field(pBN254);
+
 
 module.exports.buildConstants = async function(pols) {
     const N = pols.SEL_BYTE2_BIT21.length;
 
     buildByte2Bits16(pols, N);
     buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
-    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, [0xFFFF,0xFFFE,0xFFFD,0xFC2F,0xFC2E,
-                        0x3064,0x3063,0x4E72,0x4E71,0xE131,0xE130,0xA029,0xA028,0xB850,
-                        0xB84F,0x45B6,0x45B5,0x8181,0x8180,0x585D,0x585C,0x9781,0x9780,
-                        0x6A91,0x6A90,0x6871,0x6870,0xCA8D,0xCA8C,0x3C20,0x3C1F,0x8C16,
-                        0x8C15,0xD87C,0xD87B,0xFD47,0xFD46]);
+    buildRangeChunks(pols.RANGE_SEL, N);
 }
 
-function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
-    let i = 0;
-    let valueIndex = 0;
-    while (i < N) {
-        const from = i;
-        while ((i - from) <= maxValues[valueIndex] && i < N) {
-            pol[i] = BigInt(valueIndex);
-            ++i;
+function fillRange(pol, irow, rangeSel, from, to, label = '') {
+    if (from > to) {
+        return irow;
+    }
+    const fromRowH = irow.toString(16).padStart(8,'0').toUpperCase();
+    for (let j = from; j <= to; ++j) {
+        if ((irow & 0xFFFF) != j) {
+            throw new Error(`Inconsistent value ${j} with byte2 ${irow & 0xFFFF} on row ${irow} at ${label}`);
         }
-        while ((i - from) < cycle && i < N) {
-            pol[i] = paddingValue;
-            ++i;
+        pol[irow++] = rangeSel;
+    }
+    const fromH = from.toString(16).padStart(4,'0').toUpperCase();
+    const toH = to.toString(16).padStart(4,'0').toUpperCase();
+    const toRowH = (irow-1).toString(16).padStart(8,'0').toUpperCase();
+    console.log(`RANGE ${rangeSel.toString().padStart(3)} [0x${fromH},0x${toH}] [${from.toString().padStart(5)},${to.toString().padStart(5)}] #0x${fromRowH}:0x${toRowH} ${label}`);
+    return irow;
+}
+function buildRangeChunks(pol, N) {
+    let rangeSel = 0n;
+    const limit = 2n**16n - 1n;
+    let irow = 0;
+
+    // 0 - 15 rangeSel used for "stantard" ranges [0,0xFFFF]
+    for (let ichunk = 0; ichunk < 16; ++ichunk) {
+        irow = fillRange(pol, irow, rangeSel++, 0, limit, 'FULL');
+    }
+
+    for (let iprime = 0; iprime < PRIME_CHUNKS.length; ++iprime) {
+        const prime = PRIME_CHUNKS[iprime];
+        const name = PRIME_NAMES[iprime];
+        // two loops by prime, first with value and after that one with value - 1,
+        // to be used when flag "chunkLtPrime" is set.
+        for (let i = 0; i < 2; i++) {
+            for (let ichunk = 0; ichunk < 16; ++ichunk) {
+                let chunkValue = prime[ichunk] - BigInt(i);
+                // values inside the range use identifier rangeSel
+                const label = `${name}[${ichunk}] = 0x${prime[ichunk].toString(16).toUpperCase().padStart(4, '0')}`
+                irow = fillRange(pol, irow, rangeSel++, 0n, chunkValue, `${label} (allowed values${i?' for LT':''})`);
+                // values outside the range use identifier 0, that it's for the full range
+                irow = fillRange(pol, irow, 0n, chunkValue + 1n, limit, '');
+            }
         }
-        valueIndex = valueIndex < maxValues.length ? valueIndex + 1: 0;
+    }
+    while (irow < N) {
+        pol[irow] = 0n;
+        ++irow;
     }
 }
 
@@ -68,13 +141,6 @@ function buildByte2Bits16(pols, N) {
     }
 }
 
-function buildBitsRange(pols, N, name, bits) {
-    let moduleBase = (2 ** bits);
-    for (let i = 0; i < N; i++) {
-        pols[name][i] = BigInt(i % moduleBase);
-    }
-}
-
 function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
     let value = fromValue;
     let csteps = steps;
@@ -89,17 +155,121 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
     }
 }
 
+function getArithInfo(arithEq) {
+    switch (arithEq) {
+        case ARITH:
+            return {
+                selEq: [1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n],
+                eqIndexes: [0],
+                primeIndex: false,
+                checkAliasFree: false,
+                checkDifferent: false,
+                prime: false,
+                fp: false,
+                name: 'ARITH',
+                curve: ''
+            }
+
+        case ARITH_ECADD_DIFFERENT:
+            return {
+                selEq: [0n, 1n, 0n, 0n, 0n, 0n, 0n, 0n],
+                eqIndexes: [1,3,4],   // s.diff, x3, y3
+                primeIndex: PRIME_SECP256K1_INDEX,
+                checkAliasFree: true,
+                checkDifferent: true,
+                prime: pSecp256k1,
+                fp: Fsecp256k1,
+                name: 'ARITH_ECADD_DIFFERENT',
+                curve: 'SECP256K1',
+            }
+
+        case ARITH_ECADD_SAME:
+            return {
+                selEq: [0n, 0n, 1n, 0n, 0n, 0n, 0n, 0n],
+                eqIndexes: [2,3,4],   // s.diff, x3, y3
+                primeIndex: PRIME_SECP256K1_INDEX,
+                checkAliasFree: true,
+                checkDifferent: false,
+                prime: pSecp256k1,
+                fp: Fsecp256k1,
+                name: 'ARITH_ECADD_SAME',
+                curve: 'SECP256K1',
+            }
+
+        case ARITH_BN254_MULFP2:
+            return {
+                selEq: [0n, 0n, 0n, 1n, 0n, 0n, 0n, 0n],
+                eqIndexes: [5, 6],   // x3, y3
+                primeIndex: PRIME_BN254_INDEX,
+                checkAliasFree: true,
+                checkDifferent: false,
+                prime: pBN254,
+                fp: FpBN254,
+                name: 'ARITH_BN254_MULFP2',
+                curve: 'BN254',
+            }
+
+        case ARITH_BN254_ADDFP2:
+            return {
+                selEq: [0n, 0n, 0n, 0n, 1n, 0n, 0n, 0n],
+                eqIndexes: [7, 8],   // x3, y3
+                primeIndex: PRIME_BN254_INDEX,
+                checkAliasFree: true,
+                checkDifferent: false,
+                prime: pBN254,
+                fp: FpBN254,
+                name: 'ARITH_BN254_ADDFP2',
+                curve: 'BN254',
+            }
+
+        case ARITH_BN254_SUBFP2:
+            return {
+                selEq: [0n, 0n, 0n, 0n, 0n, 1n, 0n, 0n],
+                eqIndexes: [9, 10],   // x3, y3
+                primeIndex: PRIME_BN254_INDEX,
+                checkAliasFree: true,
+                checkDifferent: false,
+                prime: pBN254,
+                fp: FpBN254,
+                name: 'ARITH_BN254_SUBFP2',
+                curve: 'BN254',
+            }
+
+        case ARITH_SECP256R1_ECADD_DIFFERENT:
+            return {
+                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 1n, 0n],
+                eqIndexes: [11,13,14],   // s.diff, x3, y3
+                primeIndex: PRIME_SECP256R1_INDEX,
+                checkAliasFree: true,
+                checkDifferent: true,
+                prime: pSecp256r1,
+                fp: Fsecp256r1,
+                name: 'ARITH_SECP256R1_ECADD_DIFFERENT',
+                curve: 'SECP256R1',
+            }
+
+        case ARITH_SECP256R1_ECADD_SAME:
+            return {
+                selEq: [0n, 0n, 0n, 0n, 0n, 0n, 0n, 1n],
+                eqIndexes: [12,13,14],   // s.diff, x3, y3
+                primeIndex: PRIME_SECP256R1_INDEX,
+                checkAliasFree: true,
+                checkDifferent: false,
+                prime: pSecp256r1,
+                a: aSecp256r1,
+                fp: Fsecp256r1,
+                name: 'ARITH_SECP256R1_ECADD_SAME',
+                curve: 'SECP256R1',
+            }
+
+        default:
+            throw new Error(`Unknown arithEq value ${arithEq}`);
+    }
+}
 module.exports.execute = async function(pols, input, continueOnError = false) {
     // Get N from definitions
     const N = pols.x1[0].length;
 
-    // Field Elliptic Curve
-    let pFec = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
-    const Fec = new F1Field(pFec);
-
-    // Field Complex Multiplication
-    let pBN254 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
-    const FpBN254 = new F1Field(pBN254);
 
     const Fr = new F1Field(0xffffffff00000001n);
 
@@ -108,7 +278,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
                         arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
-                        arithEq10.calculate];
+                        arithEq10.calculate, arithEq11.calculate, arithEq12.calculate, arithEq13.calculate, arithEq14.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -126,9 +296,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             if (j < pols.carry.length) pols.carry[j][i] = 0n;
             if (j < pols.selEq.length) pols.selEq[j][i] = 0n;
         }
-        pols.resultEq0[i] = 0n;
-        pols.resultEq1[i] = 0n;
-        pols.resultEq2[i] = 0n;
+        pols.resultEq[i] = 0n;
         pols.xDeltaChunkInverse[i] = 0n;
         pols.xAreDifferent[i] = 0n;
 
@@ -148,6 +316,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         let x3 = fea2scalar(Fr, input[i]["x3"]);
         let y3 = fea2scalar(Fr, input[i]["y3"]);
 
+        const arithInfo = getArithInfo(input[i].arithEq);
+        const Fec = arithInfo.fp;
+        const pFec = arithInfo.prime;
+
+
         // In the following, recall that we can only work with unsiged integers of 256 bits.
         // Therefore, as the quotient needs to be represented in our VM, we need to know
         // the worst negative case and add an offset so that the resulting name is never negative.
@@ -156,10 +329,14 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         //        that the added offset is the lowest.
         // Note2: x1,x2,y1,y2 can be assumed to be alias free, as this is the pre condition in the Arith SM.
         //        I.e, x1,x2,y1,y2 ∈ [0, 2^256-1].
-        if (input[i].selEq1) {
+
+        let calculateS = false;
+
+        if (input[i].arithEq == ARITH_ECADD_DIFFERENT || input[i].arithEq == ARITH_SECP256R1_ECADD_DIFFERENT) {
+            calculateS = true;
             let pq0;
             if (Fec.eq(x2, x1) && !continueOnError) {
-                throw new Error(`For input ${i}, x1 and x2 are equals, but ADD_EC_DIFFERENT is called`);
+                throw new Error(`For input ${i}, x1 and x2 are equals, but ${arithInfo.name} is called`);
             } else {
                 if (typeof input[i]["s"] !== 'undefined') {
                     s = input[i]["s"];
@@ -184,7 +361,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq2) {
+        else if (input[i].arithEq == ARITH_ECADD_SAME) {
+            calculateS = true;
             if (typeof input[i]["s"] !== 'undefined') {
                 s = input[i]["s"];
             } else {
@@ -208,12 +386,38 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
+        else if (input[i].arithEq == ARITH_SECP256R1_ECADD_SAME) {
+            calculateS = true;
+            const a = arithInfo.a;
+            if (typeof input[i]["s"] !== 'undefined') {
+                s = input[i]["s"];
+            } else {
+                s = Fec.div(Fec.add(Fec.mul(3n, Fec.mul(x1, x1)), a), Fec.add(y1, y1));
+            }
+            let pq0 = s * 2n * y1 - 3n * x1 * x1 - a; // Worst values are {-3*(2^256-1)**2 - a,2*(2^256-1)**2 - a}
+                                                      // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
+            q0 = -(pq0/pFec);
+            nDivErrors = errorHandler(
+                (pq0 + pFec*q0) != 0n,
+                `For input ${i}, with the calculated q0 the residual is not zero (same point)`,
+                continueOnError,
+                nDivErrors
+            );
+            // offset
+            q0 += 2n ** 258n;
+            nNegErrors = errorHandler(
+                q0 < 0n,
+                `For input ${i}, the q0 with offset is negative (same point). Actual value: ${q0}, previous value: ${q0 - 2n ** 258n}`,
+                continueOnError,
+                nNegErrors
+            );
+        }
         else {
             s = 0n;
             q0 = 0n;
         }
 
-        if (input[i].selEq3) {
+        if (calculateS)  {
             let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
                                             // with (2^256-1)**2 > |-3*(2^256-1)|
             q1 = pq1/pFec;
@@ -253,7 +457,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq4) {
+        else if (input[i].arithEq === ARITH_BN254_MULFP2) {
             let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
                                               // with |-2^256*(2^256-1)| > (2^256-1)**2
             q1 = -(pq1/pBN254);
@@ -290,7 +494,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq5) {
+        else if (input[i].arithEq === ARITH_BN254_ADDFP2) {
             let pq1 = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
                                     // with 2*(2^256-1) > |-(2^256-1)|
             q1 = pq1/pBN254;
@@ -327,7 +531,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 nNegErrors
             );
         }
-        else if (input[i].selEq6) {
+        else if (input[i].arithEq == ARITH_BN254_SUBFP2) {
             let pq1 = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
                                     // with |-2*(2^256-1)| > (2^256-1)
             q1 = -(pq1/pBN254);
@@ -380,14 +584,11 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         throw new Error(`There are ${nDivErrors} divisions errors`);
     }
 
-    const chunksPrimeSecp256k1 = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
-                            0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn ];
-    const chunksPrimeBN254     = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
-                            0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
     for (let i = 0; i < input.length; i++) {
         let offset = i * 32;
         let xAreDifferent = false;
         let valueLtPrime;
+        const arithInfo = getArithInfo(input[i].arithEq);
         for (let step = 0; step < 32; ++step) {
             const index = offset + step;
             const nextIndex = (index + 1) % N;
@@ -406,17 +607,13 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.q0[j][index] = BigInt(input[i]["_q0"][j])
                 pols.q1[j][index] = BigInt(input[i]["_q1"][j])
                 pols.q2[j][index] = BigInt(input[i]["_q2"][j])
+                if (j < arithInfo.selEq.length) {
+                    pols.selEq[j][index] = BigInt(arithInfo.selEq[j]);
+                }
             }
-            pols.selEq[0][index] = BigInt(input[i].selEq0);
-            pols.selEq[1][index] = BigInt(input[i].selEq1);
-            pols.selEq[2][index] = BigInt(input[i].selEq2);
-            pols.selEq[3][index] = BigInt(input[i].selEq3);
-            pols.selEq[4][index] = BigInt(input[i].selEq4);
-            pols.selEq[5][index] = BigInt(input[i].selEq5);
-            pols.selEq[6][index] = BigInt(input[i].selEq6);
 
             // selEq1 (addition different points) is select need to check that points are diferent
-            if (pols.selEq[1][index] && step < 16) {
+            if (arithInfo.checkDifferent && step < 16) {
                 if (xAreDifferent === false) {
                     const delta = Fr.sub(pols.x2[step][index], pols.x1[step][index]);
                     pols.xDeltaChunkInverse[index] = Fr.isZero(delta) ? 0n : Fr.inv(delta);
@@ -425,52 +622,31 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.xAreDifferent[nextIndex] = xAreDifferent ? 1n : 0n;
             }
 
-            // If either selEq3,selEq4,selEq5,selEq6 is selected, we need to ensure that x3, y3 is alias free.
-            // Recall that selEq3 work over the Secp256k1 curve, and selEq4,selEq5,selEq6 work over the BN254 curve.
-            if (pols.selEq[3][index] || pols.selEq[4][index] || pols.selEq[5][index] || pols.selEq[6][index]) {
+            // If either checkAliasFree is selected, we need to ensure that x3, y3 is alias free
+            if (arithInfo.checkAliasFree) {
                 const chunkValue = step < 16 ? pols.x3[15 - step16][offset] : pols.y3[15 - step16][offset];
-                const chunkPrime = pols.selEq[3][index] ? chunksPrimeSecp256k1[step16] : chunksPrimeBN254[step16];
+                const chunkPrime = PRIME_CHUNKS[arithInfo.primeIndex][step16];
                 const chunkLtPrime = valueLtPrime ? 0n : Fr.lt(chunkValue, chunkPrime);
                 valueLtPrime = valueLtPrime || chunkLtPrime;
                 pols.chunkLtPrime[index] = chunkLtPrime ? 1n : 0n;
                 pols.valueLtPrime[nextIndex] = valueLtPrime ? 1n : 0n;
             }
-
-            pols.selEq[0][offset + step] = BigInt(input[i].selEq0);
-            pols.selEq[1][offset + step] = BigInt(input[i].selEq1);
-            pols.selEq[2][offset + step] = BigInt(input[i].selEq2);
-            pols.selEq[3][offset + step] = BigInt(input[i].selEq3);
-            pols.selEq[4][offset + step] = BigInt(input[i].selEq4);
-            pols.selEq[5][offset + step] = BigInt(input[i].selEq5);
-            pols.selEq[6][offset + step] = BigInt(input[i].selEq6);
         }
         let carry = [0n, 0n, 0n];
-        const eqIndexToCarryIndex = [0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2];
-        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]
-
-        let eqIndexes = [];
-        if (pols.selEq[0][offset]) eqIndexes.push(0);
-        if (pols.selEq[1][offset]) eqIndexes.push(1);
-        if (pols.selEq[2][offset]) eqIndexes.push(2);
-        if (pols.selEq[3][offset]) eqIndexes = eqIndexes.concat([3, 4]);
-        if (pols.selEq[4][offset]) eqIndexes = eqIndexes.concat([5, 6]);
-        if (pols.selEq[5][offset]) eqIndexes = eqIndexes.concat([7, 8]);
-        if (pols.selEq[6][offset]) eqIndexes = eqIndexes.concat([9, 10]);
+        let eq = [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
 
         for (let step = 0; step < 32; ++step) {
-            eqIndexes.forEach((eqIndex) => {
-                let carryIndex = eqIndexToCarryIndex[eqIndex];
+            arithInfo.eqIndexes.forEach((eqIndex) => {
+                let carryIndex = EQ_INDEX_TO_CARRY_INDEX[eqIndex];
                 eq[eqIndex] = eqCalculates[eqIndex](pols, step, offset);
                 pols.carry[carryIndex][offset + step] = Fr.e(carry[carryIndex]);
                 if ((eq[eqIndex] + carry[carryIndex]) % (2n ** 16n) !== 0n && !continueOnError) {
-                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶.`);
+                    throw new Error(`Equation ${eqIndex}:${eq[eqIndex]} and carry ${carryIndex}:${carry[carryIndex]} do not sum 0 mod 2¹⁶ (step ${step}).`);
                 }
                 carry[carryIndex] = (eq[eqIndex] + carry[carryIndex]) / (2n ** 16n);
             });
         }
-        pols.resultEq0[offset + 31] = pols.selEq[0][offset] ? 1n : 0n;
-        pols.resultEq1[offset + 31] = ((pols.selEq[1][offset] && pols.selEq[3][offset]) || pols.selEq[4][offset] || pols.selEq[5][offset] || pols.selEq[6][offset]) ? 1n : 0n;
-        pols.resultEq2[offset + 31] = (pols.selEq[2][offset] && pols.selEq[3][offset]) ? 1n : 0n;
+        pols.resultEq[offset + 31] = 1n;
     }
 }
 
